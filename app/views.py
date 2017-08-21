@@ -5,7 +5,7 @@ from flask_sqlalchemy import get_debug_queries
 from flask_babel import gettext
 from app import app, db, lm, oid, babel
 from forms import LoginForm, EditForm, PostForm, SearchForm
-from models import User, ROLE_USER, ROLE_ADMIN, Post, HzToken, HzLocation
+from models import User, ROLE_USER, ROLE_ADMIN, Post, HzToken, HzLocation, DanceStudent
 from datetime import datetime
 from emails import follower_notification
 from guess_language import guessLanguage
@@ -297,16 +297,20 @@ def get_path():
 def dance_get_location():
     page_size = int(request.form['pageSize'])
     page_no = int(request.form['pageNo'])
+    if page_no <= 0:
+        page_no = 1
     rows = []
     total = HzLocation.query.count()
     offset = (page_no - 1) * page_size
     hz_location = HzLocation.query.order_by(HzLocation.id.desc()).limit(page_size).offset(offset)
     # hz_location = HzLocation.query.all()
     # hz_location = HzLocation.query.limit(100)
+    i = offset + 1
     for loc in hz_location:
         rows.append({"id": loc.id, "build_id": loc.build_id, "floor_no": loc.floor_no,
-                       "user_id": loc.user_id, "x": loc.x, "y": loc.y,
-                       "timestamp": loc.timestamp})
+                     "user_id": loc.user_id, "x": loc.x, "y": loc.y,
+                     "timestamp": loc.timestamp, 'no': i})
+        i += 1
     return jsonify({"total": total, "rows": rows})
 
 
@@ -317,3 +321,36 @@ def dance_get_user():
     for u in hz_user:
         users.append({"id": u.id, "nickname": u.nickname, "email": u.email})
     return jsonify(users)
+
+
+@app.route('/dance_get_student', methods=['POST'])
+def dance_get_student():
+    page_size = int(request.form['pageSize'])
+    page_no = int(request.form['pageNo'])
+    if page_no <= 0:
+        page_no = 1
+    rows = []
+    total = DanceStudent.query.count()
+    offset = (page_no - 1) * page_size
+    records = DanceStudent.query.order_by(DanceStudent.register_day.desc()).limit(page_size).offset(offset)
+    i = offset + 1
+    for r in records:
+        rows.append({"id": r.id, "sno": r.sno, "school_no": r.school_no,
+                     "school_name": r.school_name, "consult_no": r.consult_no, "name": r.name,
+                     "rem_code": r.rem_code, 'no': i, 'gender': r.gender,
+                     'degree': r.degree, 'birthday': r.birthday,
+                     'register_day': datetime.strftime(r.register_day,'%Y-%m-%d'),
+                     'information_source': r.information_source,
+                     'counselor': r.counselor, 'reading_school': r.reading_school,
+                     'grade': r.grade, 'phone': r.phone, 'tel': r.tel,
+                     'address': r.address, 'zipcode': r.zipcode, 'email': r.email,
+                     'qq': r.qq, 'wechat': r.wechat, 'mother_name': r.mother_name,
+                     'father_name': r.father_name, 'mother_phone': r.mother_phone,
+                     'father_phone': r.father_phone, 'mother_tel': r.mother_tel, 'father_tel': r.father_tel,
+                     'mother_company': r.mother_company, 'father_company': r.father_company,
+                     'card': r.card,
+                     'is_training': r.is_training,
+                     'points': r.points,
+                     'remark': r.remark, 'recorder': r.recorder})
+        i += 1
+    return jsonify({"total": total, "rows": rows})

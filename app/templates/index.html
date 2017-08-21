@@ -8,6 +8,9 @@
 	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/demo/demo.css">
 	<script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.min.js"></script>
 	<script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+
+    <script src="/static/js/dancestudent.js"></script>
+
 </head>
 <body class="easyui-layout">
 	<div data-options="region:'north',border:false" style="height:60px;background:#B3DFDA;padding:10px">north region</div>
@@ -65,16 +68,26 @@
     </div>
 
     <script>
+        'use strict';
+
         $('.easyui-tree').tree({
             onClick: function(node){
                 var id = this.id;
                 console.log(node.text + " " + id);  // node text property when clicked
                 console.log(node.id);
                 if($('#'+id).tree('isLeaf',node.target)){ //判断是否是叶子节点
-                    var tabId = id + node.id;
-                    addTab(node.text,'http://jeasyui.com/', tabId);
+
                 } else {
                     $('#'+id).tree('expand',node.target);
+                }
+
+                var tableId = id + node.id;
+                if(node.text == '学员列表') {
+                    console.log('enter 学员列表');
+                    danceAddTab('myTabs', node.text, tableId);
+                    danceCreateStudentDatagrid(tableId, '/dance_get_student');
+                }else {
+                    addTab(node.text,'http://jeasyui.com/', tableId);
                 }
             }
         });
@@ -159,7 +172,7 @@
             var dg = $('#' + datagridId);
 
             $(dg).datagrid({
-                title: '设备列表模式',
+                // title: '设备列表模式',
                 iconCls: 'icon-a_detail',
                 fit: true,
                 fitColumns: true,
@@ -173,18 +186,32 @@
                 pageList: [20, 30, 40, 50, 100],   //每页显示条数供选项
                 rownumbers: true,   // True to show a row number column.
                 toolbar: [{
-                    text: '查看详情',
-                    iconCls: 'icon-script_link',
-                    handler: function () {
-                        viewDetail();
+                    iconCls:'icon-add',
+                    text:"增加",
+                    handler:function(){
+                        alert('add');
+                    }}, {
+                    iconCls:'icon-edit',
+                    text:"编辑/查看",
+                    handler:function(){
+                        alert('edit');
+                    }}, {
+                    iconCls:'icon-remove',
+                    text:"删除",
+                    handler:function(){
+                        alert('del');
                     }}, '-', {
-                    iconCls: 'icon-help',
+                    text: '姓名：<select class="easyui-combobox" panelHeight="auto" style="width:100px"></select>'
+                    }, {
+                    iconCls: 'icon-search',
+                    text:"查询",
                     handler: function () {
-                        alert('帮助按钮');
+                        alert('查询');
                     }}
                 ],
                 columns: [[
                     {field: 'ck', checkbox:true },   // checkbox
+                    {field: 'no', title: '序号',  width: 15, align: 'center' },
                     {field: 'id', title: 'id',  width: 30, align: 'center' },
                     {field: 'build_id', title: '建筑ID', width: 70, align: 'center'},
                     {field: 'floor_no', title: '楼层', width: 100, align: 'center'},
@@ -277,7 +304,7 @@
                 });
             };
 
-            doAjax();
+            doAjax();   // 获取数据
 
             $.extend($.fn.datagrid.methods, {
                 fixRownumber : function (jq) {
