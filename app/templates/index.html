@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>舞蹈培训中心管理系统</title>
+	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/demo/demo.css">
+	<script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+</head>
+<body class="easyui-layout">
+	<div data-options="region:'north',border:false" style="height:60px;background:#B3DFDA;padding:10px">north region</div>
+	<div data-options="region:'west',split:true,hideCollapsedContent:false,title:'功能栏'" style="width:200px;">
+        <div class="easyui-accordion" data-options="fit:true,border:false">
+            <div title="学员管理" data-options="iconCls:'icon-ok'">
+                <ul id="treeStudent" class="easyui-tree" data-options="url:'/static/json/tree_data_student.json',method:'get',animate:true,dnd:true"></ul>
+            </div>
+            <div title="员工与老师" data-options="selected:true">
+                <ul id="treeTeacher" class="easyui-tree" data-options="url:'/static/json/tree_data1.json',method:'get',animate:true,dnd:true"></ul>
+            </div>
+            <div title="教学管理" data-options="iconCls:'icon-help'" style="padding:10px">
+                content3
+            </div>
+            <div title="物品管理" style="padding:10px">
+                content3
+            </div>
+            <div title="财务管理" style="padding:10px">
+                content3
+            </div>
+            <div title="数据管理" style="padding:10px">
+                content3
+            </div>
+        </div>
+	</div>
+
+	<div data-options="region:'south',border:false" style="height:50px;background:#A9FACD;padding:10px;">south region</div>
+	<div data-options="region:'center'">
+        <div class="easyui-tabs" data-options="fit:true,border:false,plain:true" id="myTabs">
+            <div title="About" data-options="href:'/static/html/_content.html'" style="padding:10px"></div>
+            <div title="Test" data-options="" style="padding:2px">
+                <table id="dg_machine_list"></table>
+            </div>
+            <div title="DataGrid" style="padding:2px">
+                <table class="easyui-datagrid"
+                       data-options="url:'/static/json/datagrid_data.json',method:'get',
+                       singleSelect: true,
+                       rownumbers: true,
+                       pagination: true,
+                       fit:true,
+                       fitColumns:true">
+                    <thead>
+                    <tr>
+                        <th data-options="field:'itemid'" width="80">Item ID</th>
+                        <th data-options="field:'productid'" width="100">Product ID</th>
+                        <th data-options="field:'listprice',align:'right'" width="80">List Price</th>
+                        <th data-options="field:'unitcost',align:'right'" width="80">Unit Cost</th>
+                        <th data-options="field:'attr1'" width="150">Attribute</th>
+                        <th data-options="field:'status',align:'center'" width="50">Status</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $('.easyui-tree').tree({
+            onClick: function(node){
+                var id = this.id;
+                console.log(node.text + " " + id);  // node text property when clicked
+                console.log(node.id);
+                if($('#'+id).tree('isLeaf',node.target)){ //判断是否是叶子节点
+                    var tabId = id + node.id;
+                    addTab(node.text,'http://jeasyui.com/', tabId);
+                } else {
+                    $('#'+id).tree('expand',node.target);
+                }
+            }
+        });
+
+        function addTab(title, url, tabId){
+            console.log(tabId);
+            if ($('#myTabs').tabs('exists', title)){
+                $('#myTabs').tabs('select', title);
+            } else {
+                var content = '<table id=' + tabId + '></table>';
+                $('#myTabs').tabs('add',{
+                    title:title,
+                    content:content,
+                    closable:true
+                });
+
+                var data = [];
+                // 用代码造30条数据
+                /*
+                for (var i = 1; i < 101; ++i) {
+                    data.push({
+                        "id":i,
+                        "name":"Student" + i
+                    })
+                }*/
+
+                $.ajax({
+                    method : 'POST',
+                    url : '/dance_get_user',
+                    async : true,
+                    dataType : 'json',
+                    success : function(dd) {
+                        console.log(dd);
+                        var pt = eval(dd); // 数组
+                        $.each(pt, function (index, item) {
+                            data[index] = {
+                                'id' : item.id,
+                                'name' : item.nickname
+                            };
+                        });
+                        $('#'+tabId).datagrid('loadData',data);
+                    },
+                    error : function() {
+                        console.log('error in ajax.');
+                    }
+                });
+
+                $('#'+tabId).datagrid({
+                    rownumbers:true,
+                    fitColumns:true,
+                    pagination:true,
+                    pageSize:10,
+                    fit:true,
+                    data:data.slice(0,10),
+                    columns:[
+                        [
+                            {field:'id', align:"center", title:"id",width:100},
+                            {field:'name', align:"center", title:"昵称",width:100}
+                        ]
+                    ]
+                });
+                var pager = $('#'+tabId).datagrid("getPager");
+                pager.pagination({
+                    total:data.length,
+                    onSelectPage:function (pageNo, pageSize) {
+                        var start = (pageNo - 1) * pageSize;
+                        var end = start + pageSize;
+                        $('#'+tabId).datagrid("loadData", data.slice(start, end));
+                        pager.pagination('refresh', {
+                            total:data.length,
+                            pageNumber:pageNo
+                        });
+                    }
+                });
+
+            }
+        }
+
+        function createDatagrid(datagridId) {
+            var _pageSize = 30;
+            var _pageNo = 1;
+            var dg = $('#' + datagridId);
+
+            $(dg).datagrid({
+                title: '设备列表模式',
+                iconCls: 'icon-a_detail',
+                fit: true,
+                fitColumns: true,
+                pagination: true,   // True to show a pagination toolbar on datagrid bottom.
+                // singleSelect: true, // True to allow selecting only one row.
+                border: false,
+                striped: true,
+                pageNumber: 1,
+                pageSize: _pageSize,     //每页显示条数
+                nowrap: true,   // True to display data in one line. Set to true can improve loading performance.
+                pageList: [20, 30, 40, 50, 100],   //每页显示条数供选项
+                rownumbers: true,   // True to show a row number column.
+                toolbar: [{
+                    text: '查看详情',
+                    iconCls: 'icon-script_link',
+                    handler: function () {
+                        viewDetail();
+                    }}, '-', {
+                    iconCls: 'icon-help',
+                    handler: function () {
+                        alert('帮助按钮');
+                    }}
+                ],
+                columns: [[
+                    {field: 'ck', checkbox:true },   // checkbox
+                    {field: 'id', title: 'id',  width: 30, align: 'center' },
+                    {field: 'build_id', title: '建筑ID', width: 70, align: 'center'},
+                    {field: 'floor_no', title: '楼层', width: 100, align: 'center'},
+                    {field: 'user_id', title: '用户ID', width: 70, align: 'center'},
+                    {field: 'x', title: 'x坐标', width: 70, align: 'center'},
+                    {field: 'y', title: 'y坐标', width: 70, align: 'center'},
+                    {field: 'timestamp', title: '时间戳', width: 120, align: 'center'}
+                ]]
+            });
+
+            var pager = dg.datagrid('getPager');
+            $(pager).pagination({
+                //pageSize: _pageSize,//每页显示的记录条数，默认为10
+                //pageList: [20, 30, 40, 50],//可以设置每页记录条数的列表
+                beforePageText: '第',//页数文本框前显示的汉字
+                afterPageText: '页, 共 {pages} 页',
+                displayMsg: '当前记录 {from} - {to} , 共 {total} 条记录',
+                onBeforeRefresh: function () {
+                    //$(this).pagination('loading');
+                    //alert('before refresh');
+                    //$(this).pagination('loaded');
+                },
+                onChangePageSize: function () {
+                    //alert("pagesized changed");
+                },
+                onSelectPage: function (pageNo, pageSize) {
+                    /*
+                     var start = (pageNo - 1) * pageSize;
+                     var end = start + pageSize;
+                     $('#'+tabId).datagrid("loadData", data.slice(start, end));
+                     p.pagination('refresh', {
+                     total:data.length,
+                     pageNumber:pageNo
+                     });*/
+                    console.log('pageNo=' + pageNo + " pageSize=" + pageSize);
+                    _pageSize = pageSize;
+                    _pageNo = pageNo;
+                    doAjax();
+                },
+                onLoadSuccess : function () {
+                    $(this).datagrid("fixRownumber");
+                }
+            });
+
+            // 先通过ajax获取数据，然后再传给datagrid
+            var doAjax = function () {
+                $.ajax({
+                    method: 'POST',
+                    url: '/dance_get_location',
+                    async: true,
+                    dataType: 'json',
+                    data: {'pageSize': _pageSize, 'pageNo': _pageNo},
+                    success: function (data) {
+                        console.log(data);
+                       /* var pt = eval(data.rows); // 数组
+                        var dt = [];
+                        $.each(pt, function (index, item) {
+                            dt[index] = {
+                                'id': item.id,
+                                'build_id': item.build_id,
+                                'floor_no': item.floor_no,
+                                'user_id': item.user_id,
+                                'x': item.x,
+                                'y': item.y,
+                                'timestamp': item.timestamp
+                            };
+                        });
+*/
+                        dg.datagrid('loadData', data);
+                        // 注意此处从数据库传来的data数据有记录总行数的total列
+                        var total = data.total;
+/*
+                        var start = (_pageNo - 1) * _pageSize;
+                        var rowNumbers = $('[table]'#'+ datagridId > .datagrid-cell-rownumber');
+                        $(rowNumbers).each(function(index){
+                            var row = parseInt($(rowNumbers[index]).html()) + parseInt(start);
+                            $(rowNumbers[index]).html("");
+                            $(rowNumbers[index]).html(row);
+                        });
+*/
+                        pager.pagination({          // 更新pagination的导航列表各参数
+                            total: total,            // 总数
+                            pageSize: _pageSize,    // 行数
+                            pageNumber: _pageNo     // 页数
+                        });
+                    },
+                    error: function () {
+                        console.log('error in ajax.');
+                    }
+                });
+            };
+
+            doAjax();
+
+            $.extend($.fn.datagrid.methods, {
+                fixRownumber : function (jq) {
+                    return jq.each(function () {
+                        var panel = $(this).datagrid("getPanel");
+                        //获取最后一行的number容器,并拷贝一份
+                        var clone = $(".datagrid-cell-rownumber", panel).last().clone();
+                        //由于在某些浏览器里面,是不支持获取隐藏元素的宽度,所以取巧一下
+                        clone.css({
+                            "position" : "absolute",
+                            left : -1000
+                        }).appendTo("body");
+                        var width = clone.width("auto").width();
+                        //默认宽度是25,所以只有大于25的时候才进行fix
+                        if (width > 25) {
+                            //多加5个像素,保持一点边距
+                            $(".datagrid-header-rownumber,.datagrid-cell-rownumber", panel).width(width + 5);
+                            //修改了宽度之后,需要对容器进行重新计算,所以调用resize
+                            $(this).datagrid("resize");
+                            //一些清理工作
+                            clone.remove();
+                            clone = null;
+                        } else {
+                            //还原成默认状态
+                            $(".datagrid-header-rownumber,.datagrid-cell-rownumber", panel).removeAttr("style");
+                        }
+                    });
+                }
+            });
+        }
+
+        createDatagrid('dg_machine_list');
+
+        /*
+        // 构建设备总览列表
+        $('#dg_machine_list').datagrid({
+            title : '设备列表模式',
+            iconCls : 'icon-a_detail',
+            fit : true,
+            fitColumns : true,
+            rownumbers : true,
+            pagination : true,
+            singleSelect : true,
+            border : false,
+            striped : true,
+            toolbar : [ {
+                text : '查看详情',
+                iconCls : 'icon-script_link',
+                handler : function() {
+                    viewDetail();
+                }
+            }, '-', {
+                iconCls : 'icon-help',
+                handler : function() {
+                    alert('帮助按钮');
+                }
+            } ],
+            columns : [ [ {
+                field : 'id',
+                title : 'id',
+                width : 30,
+                align : 'center'
+            }, {
+                field : 'build_id',
+                title : '建筑ID',
+                width : 70,
+                align : 'center'
+            }, {
+                field : 'floor_no',
+                title : '楼层',
+                width : 100,
+                align : 'center'
+            }, {
+                field : 'user_id',
+                title : '用户ID',
+                width : 70,
+                align : 'center'
+            }, {
+                field : 'x',
+                title : 'x坐标',
+                width : 70,
+                align : 'center'
+            }, {
+                field : 'y',
+                title : 'y坐标',
+                width : 70,
+                align : 'center'
+            }, {
+                field : 'timestamp',
+                title : '时间戳',
+                width : 120,
+                align : 'center'
+            } ] ]
+        });
+
+        var p = $('#dg_machine_list').datagrid('getPager');
+        $(p).pagination({
+            pageSize: 10,//每页显示的记录条数，默认为10
+            pageList: [5, 10, 15],//可以设置每页记录条数的列表
+            beforePageText: '第',//页数文本框前显示的汉字
+            afterPageText: '页, 共 {pages} 页',
+            displayMsg: '当前从 {from} 到 {to} 条, 共 {total} 条记录',
+            onBeforeRefresh:function(){
+                //$(this).pagination('loading');
+                //alert('before refresh');
+                //$(this).pagination('loaded');
+            },
+            onChangePageSize: function () {
+                //alert("pagesized changed");
+            },
+            onSelectPage:function (pageNo, pageSize) {
+                /*
+                var start = (pageNo - 1) * pageSize;
+                var end = start + pageSize;
+                $('#'+tabId).datagrid("loadData", data.slice(start, end));
+                p.pagination('refresh', {
+                    total:data.length,
+                    pageNumber:pageNo
+                });*/
+/*                console.log('pageNo=' + pageNo + " pageSize=" + pageSize);
+            }
+        });
+
+        // 先通过ajax获取数据，然后再传给datagrid
+        $.ajax({
+            method : 'GET',
+            url : '/dance_get_location',
+            async : true,
+            dataType : 'json',
+            success : function(data) {
+                console.log(data);
+                var pt = eval(data); // 数组
+                var a = [];
+                $.each(pt, function (index, item) {
+                    a[index] = {
+                        'id' : item.id,
+                        'build_id' : item.build_id,
+                        'floor_no' : item.floor_no,
+                        'user_id' : item.user_id,
+                        'x' : item.x,
+                        'y' : item.y,
+                        'timestamp' : item.timestamp
+                    };
+                });
+                $('#dg_machine_list').datagrid('loadData',a);
+            },
+            error : function() {
+                console.log('error in ajax.');
+            }
+        });
+        */
+
+    </script>
+
+</body>
+</html>
