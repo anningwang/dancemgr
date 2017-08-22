@@ -64,10 +64,14 @@ function danceCreateStudentDatagrid(datagridId, url) {
             iconCls:'icon-remove',
             text:"删除",
             handler:function(){
-                alert('del');
+                var recs = $(dg).datagrid('getSelections');
+                for(var i = 0; i<recs.length;i++) {
+                    alert("UID : "+recs[i]);
+                // alert(recs);
+                }
             }}, '-', {
             text: '姓名：<select class="easyui-combobox" panelHeight="auto" style="width:100px"></select>'
-        }, {
+            }, {
             iconCls: 'icon-search',
             text:"查询",
             handler: function () {
@@ -175,5 +179,30 @@ function danceCreateStudentDatagrid(datagridId, url) {
     };
 
     doAjax();   // 获取数据
+
+    var doAjaxDel = function (idList) {
+        $.ajax({
+            method: 'POST',
+            url: url,
+            async: true,
+            dataType: 'json',
+            data: {'id': idList, 'pageSize': _pageSize, 'pageNo': _pageNo},
+            success: function (data) {
+                console.log(data);
+
+                dg.datagrid('loadData', data);
+                // 注意此处从数据库传来的data数据有记录总行数的total列
+                var total = data.total;
+                pager.pagination({          // 更新pagination的导航列表各参数
+                    total: total,            // 总数
+                    pageSize: _pageSize,    // 行数
+                    pageNumber: _pageNo     // 页数
+                });
+            },
+            error: function () {
+                console.log('error in ajax.');
+            }
+        });
+    };
 }
 //}(jQuery));

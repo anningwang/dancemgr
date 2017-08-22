@@ -98,3 +98,14 @@ ENV/
 .idea/misc.xml
 .idea/preferred-vcs.xml
 search.db/Post/_MAIN_0.toc
+app.db
+app/uploads/
+db_repository/versions/016_migration.py
+db_repository/versions/017_migration.py
+db_repository/versions/018_migration.py
+db_repository/versions/019_migration.py
+db_repository/versions/020_migration.py
+tmp/associations/
+tmp/nonces/
+tmp/temp/
+/app.db
