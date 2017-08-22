@@ -100,13 +100,13 @@ function danceCreateStudentDatagrid(datagridId, url) {
         columns: [[
             {field: 'id', hidden:true },   // id, hidden
             {field: 'ck', checkbox:true },   // checkbox
-            {field: 'no', title: '序号',  width: 25, align: 'center' },
-            {field: 'school_name', title: '所属分校',  width: 40, align: 'center' },
-            {field: 'sno', title: '学号', width: 60, align: 'center'},
-            {field: 'name', title: '姓名', width: 60, align: 'center'},
+            {field: 'no', title: '序号',  width: 26, align: 'center' },
+            {field: 'school_name', title: '所属分校',  width: 46, align: 'center' },
+            {field: 'sno', title: '学号', width: 70, align: 'center'},
+            {field: 'name', title: '姓名', width: 50, align: 'center'},
             {field: 'gender', title: '性别', width: 20, align: 'center'},
-            {field: 'mother_phone', title: '妈妈手机', width: 60, align: 'center'},
-            {field: 'father_phone', title: '爸爸手机', width: 60, align: 'center'},
+            {field: 'mother_phone', title: '妈妈手机', width: 50, align: 'center'},
+            {field: 'father_phone', title: '爸爸手机', width: 50, align: 'center'},
             {field: 'phone', title: '本人手机', width: 60, align: 'center'},
             {field: 'register_day', title: '登记日期', width: 60, align: 'center'}
         ]]

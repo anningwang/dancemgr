@@ -14,30 +14,31 @@
 </head>
 <body class="easyui-layout">
 	<div data-options="region:'north',border:false" style="height:60px;background:#B3DFDA;padding:10px">north region</div>
+
 	<div data-options="region:'west',split:true,hideCollapsedContent:false,title:'功能栏'" style="width:200px;">
         <div class="easyui-accordion" data-options="fit:true,border:false">
-            <div title="学员管理" data-options="iconCls:'icon-ok'">
-                <ul id="treeStudent" class="easyui-tree" data-options="url:'/static/json/tree_data_student.json',method:'get',animate:true,dnd:true"></ul>
+            <div title="学员管理" data-options="iconCls:'icon-student'" style="padding:1px">
+                <ul id="treeStudent" class="easyui-tree" data-options="url:'/static/html/tree_data_student.json',method:'get',animate:true,dnd:true"></ul>
             </div>
-            <div title="员工与老师" data-options="selected:true">
-                <ul id="treeTeacher" class="easyui-tree" data-options="url:'/static/json/tree_data1.json',method:'get',animate:true,dnd:true"></ul>
+            <div title="员工与老师" data-options="iconCls:'icon-teacher', selected:true" style="padding:1px">
+                <ul id="treeTeacher" class="easyui-tree" data-options="url:'/static/html/tree_teacher.json',method:'get',animate:true,dnd:true"></ul>
             </div>
-            <div title="教学管理" data-options="iconCls:'icon-help'" style="padding:10px">
-                content3
+            <div title="教学管理" data-options="iconCls:'icon-book'" data-options="iconCls:'icon-help'" style="padding:1px">
+                <ul id="treeSchool" class="easyui-tree" data-options="url:'/static/html/tree_data_school.json',method:'get',animate:true,dnd:true"></ul>
             </div>
-            <div title="物品管理" style="padding:10px">
-                content3
+            <div title="物品管理" data-options="iconCls:'icon-computer'" style="padding:1px">
+                <ul id="treeAsset" class="easyui-tree" data-options="url:'/static/html/tree_data_asset.json',method:'get',animate:true,dnd:true"></ul>
             </div>
-            <div title="财务管理" style="padding:10px">
-                content3
+            <div title="财务管理" data-options="iconCls:'icon-money_yen'" style="padding:1px">
+                <ul id="treeFinance" class="easyui-tree" data-options="url:'/static/html/tree_data_finance.json',method:'get',animate:true,dnd:true"></ul>
             </div>
-            <div title="数据管理" style="padding:10px">
-                content3
+            <div title="数据管理" data-options="iconCls:'icon-databases'" style="padding:1px">
+                <ul id="treeDb" class="easyui-tree" data-options="url:'/static/html/tree_data_db.json',method:'get',animate:true,dnd:true"></ul>
             </div>
         </div>
 	</div>
-
 	<div data-options="region:'south',border:false" style="height:50px;background:#A9FACD;padding:10px;">south region</div>
+
 	<div data-options="region:'center'">
         <div class="easyui-tabs" data-options="fit:true,border:false,plain:true" id="myTabs">
             <div title="About" data-options="href:'/static/html/_content.html'" style="padding:10px"></div>
@@ -46,7 +47,7 @@
             </div>
             <div title="DataGrid" style="padding:2px">
                 <table class="easyui-datagrid"
-                       data-options="url:'/static/json/datagrid_data.json',method:'get',
+                       data-options="url:'/static/html/datagrid_data.json',method:'get',
                        singleSelect: true,
                        rownumbers: true,
                        pagination: true,
