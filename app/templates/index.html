@@ -5,7 +5,7 @@
 	<title>舞蹈培训中心管理系统</title>
 	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/default/easyui.css">
 	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/icon.css">
-	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/demo/demo.css">
+    <link rel="stylesheet" type="text/css" href="/static/IconExtension.css">
 	<script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.min.js"></script>
 	<script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
 
@@ -66,6 +66,9 @@
             </div>
         </div>
     </div>
+
+    <div id="win"></div>
+    <div id="winExport"></div>
 
     <script>
         'use strict';
@@ -172,7 +175,7 @@
             var dg = $('#' + datagridId);
 
             $(dg).datagrid({
-                // title: '设备列表模式',
+                // title: '和仲位置信息',
                 iconCls: 'icon-a_detail',
                 fit: true,
                 fitColumns: true,

@@ -14,6 +14,7 @@ from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY
 import random
 from dijkstra import min_dist2, get_nearest_vertex, hz_vertex
 from lbs import TEST_UID, CUR_MAP_SCALE, HZ_MAP_GEO_WIDTH, HZ_MAP_GEO_HEIGHT
+from app.tools.upload import *
 
 
 @lm.user_loader

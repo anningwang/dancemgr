@@ -241,7 +241,6 @@ class DanceStudent(db.Model):
         self.remark = remark
         self.recorder = recorder
 
-
     def __init__(self, para):
         if u'sno' in para:
             self.sno = para[u'sno']
@@ -262,8 +261,8 @@ class DanceStudent(db.Model):
         if u'birthday' in para:
             self.birthday = para[u'birthday']
         if u'register_day' in para:
-            self.register_day = para[u'register_day']
-            self.register_day = datetime.datetime.strptime(self.register_day, '%Y-%m-%d')
+            reg_day = para[u'register_day']
+            self.register_day = datetime.datetime.strptime(reg_day, '%Y-%m-%d')
         if u'information_source' in para:
             self.information_source = para[u'information_source']
         if u'counselor' in para:
@@ -296,7 +295,7 @@ class DanceStudent(db.Model):
             self.father_phone = para[u'father_phone']
         if u'mother_tel' in para:
             self.mother_tel = para[u'mother_tel']
-        if u'father_tel' in  para:
+        if u'father_tel' in para:
             self.father_tel = para[u'father_tel']
         if u'mother_company' in para:
             self.mother_company = para[u'mother_company']
@@ -306,6 +305,7 @@ class DanceStudent(db.Model):
             self.card = para[u'card']
         if u'is_training' in para:
             self.is_training = para[u'is_training']
+
         if u'points' in para:
             self.points = int(para[u'points'])
         if u'remark' in para:

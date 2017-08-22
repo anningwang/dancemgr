@@ -81,10 +81,10 @@ function danceCreateStudentDatagrid(datagridId, url) {
             {field: 'sno', title: '学号', width: 60, align: 'center'},
             {field: 'name', title: '姓名', width: 60, align: 'center'},
             {field: 'gender', title: '性别', width: 20, align: 'center'},
-            {field: 'mother_phone', title: '母亲手机', width: 70, align: 'center'},
-            {field: 'father_phone', title: '父亲手机', width: 70, align: 'center'},
-            {field: 'phone', title: '本人手机', width: 70, align: 'center'},
-            {field: 'register_day', title: '登记日期', width: 70, align: 'center'}
+            {field: 'mother_phone', title: '妈妈手机', width: 60, align: 'center'},
+            {field: 'father_phone', title: '爸爸手机', width: 60, align: 'center'},
+            {field: 'phone', title: '本人手机', width: 60, align: 'center'},
+            {field: 'register_day', title: '登记日期', width: 60, align: 'center'}
         ]]
     });
 
@@ -107,7 +107,45 @@ function danceCreateStudentDatagrid(datagridId, url) {
         },
         onLoadSuccess : function () {
             $(this).datagrid("fixRownumber");
-        }
+        },
+        buttons:[{
+            text:'导入',
+            iconCls: 'icon-page_excel',
+            handler:function(){
+                var upload = '<input id="fb" type="text" style="width:540px">';
+                $('#win').empty().css({'padding':'20px'}).window({
+                    title:'导入信息',
+                    iconCls:'icon-page_excel',
+                    width:600,
+                    height:400,
+                    modal:true,
+                    minimizable:false,
+                    collapsible:false
+                }).append(upload).window('open');
+                $('#fb').filebox({
+                    buttonText: '选择文件',
+                    buttonAlign: 'left',
+                    prompt:'请选择要导入的Excel文件...'
+                })
+            }
+        },{
+            text:'导出',
+            iconCls:' icon-page_white_excel ',
+            handler:function(){
+                $('#winExport').panel({
+                    href:'/static/html/_import_win.html',
+                    onLoad:function(){
+                        //alert('loaded successfully');
+                    }
+                });
+            }
+        },{
+            text:'打印',
+            iconCls:'icon-printer',
+            handler:function(){
+                alert('edit');
+            }
+        }]
     });
 
     // 先通过ajax获取数据，然后再传给datagrid

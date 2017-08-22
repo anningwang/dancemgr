@@ -62,10 +62,13 @@ def write_excel_test():
 
 
 def student_import_to_db(fn):
-    '''
+    """
     :param fn:   文件名，需要导入数据的Excel文件名
-    :return:     读取的 Excel 数据
-    '''
+    :return:     读取的 Excel 数据,
+                  信息: 'ok' -- 正确，其他错误,
+                  正确存入条数,
+                  错误条数
+    """
     workbook = xlrd.open_workbook(fn)
     worksheets = workbook.sheet_names()
     columns = ['sno', 'school_no', 'school_name', 'consult_no', 'name', 'rem_code', 'gender', 'degree',
@@ -75,6 +78,8 @@ def student_import_to_db(fn):
                'father_name', 'father_phone', 'father_tel', 'father_company',
                'card', 'is_training', 'points', 'remark', 'recorder']
     data_ret = {}
+    num_right = 0
+    num_wrong = 0
     for sheet in worksheets:
         if sheet != u'报名登记':
             continue
@@ -96,14 +101,21 @@ def student_import_to_db(fn):
                 elif rd == '咨询编号'
            '''
             if len(row_data) < len(columns):
-                return data_ret, "数据长度错误"
+                return data_ret, "数据长度错误", num_right, num_wrong
 
             for i in range(len(columns)):
                 rowdict[columns[i]] = row_data[i]
-            tb = DanceStudent(rowdict)
-            db.session.add(tb)
+
+            # 保证学号不能重复
+            has = DanceStudent.query.filter_by(sno=row_data[0]).first()
+            if has is None:
+                tb = DanceStudent(rowdict)
+                db.session.add(tb)
+                num_right += 1
+            else:
+                num_wrong += 1      # 重复数据
 
         db.session.commit()
         data_ret[sheet] = row_list
 
-    return data_ret, "ok"
+    return data_ret, "ok", num_right, num_wrong

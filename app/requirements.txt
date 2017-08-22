@@ -18,3 +18,5 @@ pip install eventlet == 0.21.0
 
 pip install xlrd==1.0.0
 pip install pyExcelerator==0.6.4.1
+
+pip install Flask-Uploads-0.2.1
