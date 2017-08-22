@@ -64,11 +64,31 @@ function danceCreateStudentDatagrid(datagridId, url) {
             iconCls:'icon-remove',
             text:"删除",
             handler:function(){
-                var recs = $(dg).datagrid('getSelections');
-                for(var i = 0; i<recs.length;i++) {
-                    alert("UID : "+recs[i]);
-                // alert(recs);
+                var row = $(dg).datagrid('getSelections');
+                if (row.length == 0) { alert('请选择数据行！'); return false }
+                var ids = [];
+                for (var i = 0; i < row.length; i++) {
+                    ids.push(row[i].id);
                 }
+                console.log('del:' + ids);
+                $.ajax({
+                    method: 'POST',
+                    url: '/dance_del_data',
+                    dataType: 'json',
+                    data: {'ids': ids, 'who': datagridId},
+                    success: function (data) {
+                        // $(dg).datagrid('reload');
+                        doAjax();
+                        console.log('success in ajax.')
+                    },
+                    error: function () {
+                        console.log('error in ajax.');
+                    },
+                    complete: function (xhr) {
+                        alert('操作完成！\n服务器返回内容：' + xhr.responseText);
+                    }
+                });
+
             }}, '-', {
             text: '姓名：<select class="easyui-combobox" panelHeight="auto" style="width:100px"></select>'
             }, {
@@ -79,6 +99,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
             }}
         ],
         columns: [[
+            {field: 'id', hidden:true },   // id, hidden
             {field: 'ck', checkbox:true },   // checkbox
             {field: 'no', title: '序号',  width: 25, align: 'center' },
             {field: 'school_name', title: '所属分校',  width: 40, align: 'center' },
