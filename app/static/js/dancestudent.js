@@ -40,6 +40,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
         // title: '学员列表',
         iconCls: 'icon-a_detail',
         fit: true,
+        url: url,
         fitColumns: true,
         pagination: true,   // True to show a pagination toolbar on datagrid bottom.
         // singleSelect: true, // True to allow selecting only one row.
@@ -76,16 +77,14 @@ function danceCreateStudentDatagrid(datagridId, url) {
                     url: '/dance_del_data',
                     dataType: 'json',
                     data: {'ids': ids, 'who': datagridId},
-                    success: function (data) {
-                        // $(dg).datagrid('reload');
-                        doAjax();
-                        console.log('success in ajax.')
+                    success: function (data,status) {
+                        $(dg).datagrid('reload');
+                        //doAjax();
+                        console.log('success in ajax. data.msg=' + data.msg + " status=" + status)
                     },
-                    error: function () {
-                        console.log('error in ajax.');
-                    },
-                    complete: function (xhr) {
-                        alert('操作完成！\n服务器返回内容：' + xhr.responseText);
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        console.log('error in ajax. XMLHttpRequest=', + XMLHttpRequest
+                            + ' textStatus=' + textStatus + ' errorThrown=' + errorThrown);
                     }
                 });
 
@@ -120,6 +119,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
         beforePageText: '第',//页数文本框前显示的汉字
         afterPageText: '页, 共 {pages} 页',
         displayMsg: '当前记录 {from} - {to} , 共 {total} 条记录',
+        /*
         onBeforeRefresh: function () {
         },
         onChangePageSize: function () {
@@ -128,11 +128,11 @@ function danceCreateStudentDatagrid(datagridId, url) {
             console.log('pageNo=' + pageNo + " pageSize=" + pageSize);
             _pageSize = pageSize;
             _pageNo = pageNo;
-            doAjax();
+            // doAjax();
         },
         onLoadSuccess : function () {
             $(this).datagrid("fixRownumber");
-        },
+        },*/
         buttons:[{
             text:'导入',
             iconCls: 'icon-page_excel',
@@ -172,7 +172,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
             }
         }]
     });
-
+/*
     // 先通过ajax获取数据，然后再传给datagrid
     var doAjax = function () {
         $.ajax({
@@ -180,7 +180,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
             url: url,
             async: true,
             dataType: 'json',
-            data: {'pageSize': _pageSize, 'pageNo': _pageNo},
+            data: {'rows': _pageSize, 'page': _pageNo},
             success: function (data) {
                 console.log(data);
 
@@ -198,16 +198,17 @@ function danceCreateStudentDatagrid(datagridId, url) {
             }
         });
     };
+    */
 
-    doAjax();   // 获取数据
-
+    // doAjax();   // 获取数据
+/*
     var doAjaxDel = function (idList) {
         $.ajax({
             method: 'POST',
             url: url,
             async: true,
             dataType: 'json',
-            data: {'id': idList, 'pageSize': _pageSize, 'pageNo': _pageNo},
+            data: {'id': idList, 'rows': _pageSize, 'page': _pageNo},
             success: function (data) {
                 console.log(data);
 
@@ -225,5 +226,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
             }
         });
     };
+
+    */
 }
 //}(jQuery));

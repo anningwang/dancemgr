@@ -31,9 +31,9 @@ def get_locale():
 def before_request():
     g.user = current_user
     if g.user.is_authenticated:
-        g.user.last_seen = datetime.utcnow()
-        db.session.add(g.user)
-        db.session.commit()
+        # g.user.last_seen = datetime.utcnow()
+        # db.session.add(g.user)
+        # db.session.commit()
         g.search_form = SearchForm()
     g.locale = get_locale()
 
@@ -324,11 +324,12 @@ def dance_get_user():
     return jsonify(users)
 
 
-@app.route('/dance_get_student', methods=['POST'])
+@app.route('/dance_get_student', methods=['POST', 'GET'])
 def dance_get_student():
-    page_size = int(request.form['pageSize'])
-    page_no = int(request.form['pageNo'])
-    if page_no <= 0:
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    print 'page_size=', page_size, ' page_no=', page_no
+    if page_no <= 0:    # 补丁
         page_no = 1
     rows = []
     total = DanceStudent.query.count()
@@ -355,3 +356,16 @@ def dance_get_student():
                      'remark': r.remark, 'recorder': r.recorder})
         i += 1
     return jsonify({"total": total, "rows": rows})
+
+
+@app.route('/dance_del_data', methods=['POST'])
+def dance_del_data():
+    # if request.has_key('ids'):
+    who = request.form['who']
+    ids = request.form.getlist('ids[]')
+    print 'who=', who, ' ids=', ids
+    for i in ids:
+        db.session.delete(DanceStudent.query.get(i))
+    db.session.commit()
+
+    return jsonify({"msg": "ok for del"})
