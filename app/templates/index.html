@@ -251,6 +251,12 @@
                      pageNumber:pageNo
                      });*/
                     console.log('pageNo=' + pageNo + " pageSize=" + pageSize);
+
+                    // 改变opts.pageNumber和opts.pageSize的参数值，用于下次查询传给数据层查询指定页码的数据
+                    var gridOpts = $(dg).datagrid('options');
+                    gridOpts.pageNumber = pageNo;
+                    gridOpts.pageSize = pageSize;
+
                     _pageSize = pageSize;
                     _pageNo = pageNo;
                     doAjax();
@@ -286,7 +292,7 @@
 */
                         dg.datagrid('loadData', data);
                         // 注意此处从数据库传来的data数据有记录总行数的total列
-                        var total = data.total;
+                        //var total = data.total;
 /*
                         var start = (_pageNo - 1) * _pageSize;
                         var rowNumbers = $('[table]'#'+ datagridId > .datagrid-cell-rownumber');
@@ -295,12 +301,12 @@
                             $(rowNumbers[index]).html("");
                             $(rowNumbers[index]).html(row);
                         });
-*/
+*/                      /*
                         pager.pagination({          // 更新pagination的导航列表各参数
                             total: total,            // 总数
                             pageSize: _pageSize,    // 行数
                             pageNumber: _pageNo     // 页数
-                        });
+                        });*/
                     },
                     error: function () {
                         console.log('error in ajax.');
