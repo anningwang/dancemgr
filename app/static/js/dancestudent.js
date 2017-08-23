@@ -5,12 +5,13 @@
 //(function($){
 
 /**
- *  danceAddTab     增加tab标签
+ * danceAddTab       增加tab标签
  * @param divId     父节点，在该节点上添加 Tab
  * @param title     Tab的标题
  * @param tableId   Datagrid id,创建在 table 上
+ * @param url       从服务器获取数据的url
  */
-function danceAddTab(divId, title, tableId) {
+function danceAddTab(divId, title, tableId, url) {
     console.log(tableId);
     var parentDiv = $('#'+divId);
     if ($(parentDiv).tabs('exists', title)) {
@@ -22,6 +23,8 @@ function danceAddTab(divId, title, tableId) {
             content: content,
             closable: true
         });
+
+        danceCreateStudentDatagrid(tableId, url);
     }
 }
 
@@ -33,8 +36,10 @@ function danceAddTab(divId, title, tableId) {
  */
 function danceCreateStudentDatagrid(datagridId, url) {
     var _pageSize = 30;
-    var _pageNo = 1;
-    var dg = $('#' + datagridId);
+    // var _pageNo = 1;
+    var ccId = 'cc' + datagridId;       // Combo box,姓名查找框ID
+    var ddId = 'dd' + datagridId;       // 对话框 ID
+    var dg = $('#' + datagridId);       // datagrid ID
 
     $(dg).datagrid({
         // title: '学员列表',
@@ -44,6 +49,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
         fitColumns: true,
         pagination: true,   // True to show a pagination toolbar on datagrid bottom.
         // singleSelect: true, // True to allow selecting only one row.
+        loadMsg: '正在加载数据...',
         border: false,
         striped: true,
         pageNumber: 1,
@@ -52,21 +58,58 @@ function danceCreateStudentDatagrid(datagridId, url) {
         pageList: [20, 30, 40, 50, 100],   //每页显示条数供选项
         rownumbers: true,   // True to show a row number column.
         toolbar: [{
-            iconCls:'icon-add',
-            text:"增加",
+            iconCls:'icon-add', text:"增加",
             handler:function(){
                 alert('add');
             }}, {
-            iconCls:'icon-edit',
-            text:"编辑/查看",
+            iconCls:'icon-edit', text:"编辑/查看",
             handler:function(){
                 alert('edit');
             }}, {
-            iconCls:'icon-remove',
-            text:"删除",
+            iconCls:'icon-remove', text:"删除",
             handler:function(){
                 var row = $(dg).datagrid('getSelections');
-                if (row.length == 0) { alert('请选择数据行！'); return false }
+                if (row.length == 0) {
+                    var msg = $('<div style="padding:20px"></div>').text('请选择要删除的数据行！').css('font-size',16).attr('id',ddId);
+                    $('body').append(msg);
+                    $('#'+ddId).dialog({
+                        title: '删除提示',
+                        width: 400,
+                        height: 200,
+                        closed: false,
+                        cache: false,
+                        iconCls: 'icon-save',
+                        buttons: [{
+                            text:'确定',
+                            iconCls:'icon-ok',
+                            handler:function(){
+                                $('#'+ddId).dialog('close');
+                            }
+                        }],
+                        // href: 'get_content.php',
+                        modal: true
+                    });
+                    // alert('请选择数据行！'); return false
+                    return false;
+                } else {
+                    $.messager.confirm('确认删除', '数据删除后不能恢复！\n是否要删除选中的 ' + row.length + '条 数据？', function(r){
+                        if (r){
+                            return false;
+                        }
+                    });
+
+                    // $.messager.alert('确认删除','数据删除后不能恢复！\n是否要删除选中的 '+row.length + '条 数据？' ,'info');
+                    /*
+                    $.messager.alert({
+                        title: '确认删除',
+                        msg: '数据删除后不能恢复！\n是否要删除选中的 ' + row.length + '条 数据？',
+                        icon: 'question',
+                        fn: function(){
+
+                        }
+                    });*/
+                }
+                // 删除数据
                 var ids = [];
                 for (var i = 0; i < row.length; i++) {
                     ids.push(row[i].id);
@@ -89,10 +132,9 @@ function danceCreateStudentDatagrid(datagridId, url) {
                 });
 
             }}, '-', {
-            text: '姓名：<select class="easyui-combobox" panelHeight="auto" style="width:100px"></select>'
-            }, {
-            iconCls: 'icon-search',
-            text:"查询",
+            text: '姓名：<input id=' + ccId + ' name="dept" value="">'
+            },{
+            iconCls: 'icon-search', text:"查询",
             handler: function () {
                 alert('查询');
             }}
@@ -100,7 +142,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
         columns: [[
             {field: 'id', hidden:true },   // id, hidden
             {field: 'ck', checkbox:true },   // checkbox
-            {field: 'no', title: '序号',  width: 26, align: 'center' },
+            // {field: 'no', title: '序号',  width: 26, align: 'center' }, // 能自动显示行号，则不再需要自己实现
             {field: 'school_name', title: '所属分校',  width: 46, align: 'center' },
             {field: 'sno', title: '学号', width: 70, align: 'center'},
             {field: 'name', title: '姓名', width: 50, align: 'center'},
@@ -112,6 +154,16 @@ function danceCreateStudentDatagrid(datagridId, url) {
         ]]
     });
 
+    $('#'+ccId).combobox({     // 姓名 搜索框 combo box
+        url: '/dance_search',
+        prompt: '姓名拼音首字母查找',
+        valueField: 'id',
+        textField: 'text',
+        width: 140
+        // panelHeight: "auto",
+       // label: '姓名：'
+    });
+
     var pager = dg.datagrid('getPager');
     $(pager).pagination({
         //pageSize: _pageSize,//每页显示的记录条数，默认为10
@@ -119,23 +171,8 @@ function danceCreateStudentDatagrid(datagridId, url) {
         beforePageText: '第',//页数文本框前显示的汉字
         afterPageText: '页, 共 {pages} 页',
         displayMsg: '当前记录 {from} - {to} , 共 {total} 条记录',
-        /*
-        onBeforeRefresh: function () {
-        },
-        onChangePageSize: function () {
-        },
-        onSelectPage: function (pageNo, pageSize) {
-            console.log('pageNo=' + pageNo + " pageSize=" + pageSize);
-            _pageSize = pageSize;
-            _pageNo = pageNo;
-            // doAjax();
-        },
-        onLoadSuccess : function () {
-            $(this).datagrid("fixRownumber");
-        },*/
         buttons:[{
-            text:'导入',
-            iconCls: 'icon-page_excel',
+            text:'导入', iconCls: 'icon-page_excel',
             handler:function(){
                 var upload = '<input id="fb" type="text" style="width:540px">';
                 $('#win').empty().css({'padding':'20px'}).window({
@@ -154,8 +191,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
                 })
             }
         },{
-            text:'导出',
-            iconCls:' icon-page_white_excel ',
+            text:'导出', iconCls:' icon-page_white_excel ',
             handler:function(){
                 $('#winExport').panel({
                     href:'/static/html/_import_win.html',
@@ -165,8 +201,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
                 });
             }
         },{
-            text:'打印',
-            iconCls:'icon-printer',
+            text:'打印', iconCls:'icon-printer',
             handler:function(){
                 alert('edit');
             }
