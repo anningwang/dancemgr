@@ -40,7 +40,7 @@
 	<div data-options="region:'south',border:false" style="height:50px;background:#A9FACD;padding:10px;">south region</div>
 
 	<div data-options="region:'center'">
-        <div class="easyui-tabs" data-options="fit:true,border:false,plain:true" id="myTabs">
+        <div class="easyui-tabs" data-options="fit:true,border:false,plain:true" id="danceTabs">
             <div title="About" data-options="href:'/static/html/_content.html'" style="padding:10px"></div>
             <div title="Test" data-options="" style="padding:2px">
                 <table id="dg_machine_list"></table>
@@ -76,20 +76,15 @@
 
         $('.easyui-tree').tree({
             onClick: function(node){
-                var id = this.id;
-                console.log(node.text + " " + id);  // node text property when clicked
-                console.log(node.id);
-                if($('#'+id).tree('isLeaf',node.target)){ //判断是否是叶子节点
-
-                } else {
-                    $('#'+id).tree('expand',node.target);
+                console.log('this.id=' + this.id + ', node.id=' + node.id + ', node.text=' + node.text);
+                if($(this).tree('isLeaf',node.target)){  // 判断是否是叶子节点
+                } else { $(this).tree('expand',node.target);
                 }
 
-                var tableId = id + node.id;
+                var tableId = this.id + node.id;
                 if(node.text == '学员列表') {
-                    console.log('enter 学员列表');
-                    danceAddTab('myTabs', node.text, tableId);
-                    danceCreateStudentDatagrid(tableId, '/dance_get_student');
+                    danceAddTab('danceTabs', node.text, tableId, '/dance_get_student');
+                    // danceCreateStudentDatagrid(tableId, '/dance_get_student');
                 }else {
                     addTab(node.text,'http://jeasyui.com/', tableId);
                 }
@@ -98,11 +93,11 @@
 
         function addTab(title, url, tabId){
             console.log(tabId);
-            if ($('#myTabs').tabs('exists', title)){
-                $('#myTabs').tabs('select', title);
+            if ($('#danceTabs').tabs('exists', title)){
+                $('#danceTabs').tabs('select', title);
             } else {
                 var content = '<table id=' + tabId + '></table>';
-                $('#myTabs').tabs('add',{
+                $('#danceTabs').tabs('add',{
                     title:title,
                     content:content,
                     closable:true
@@ -173,6 +168,7 @@
                 fitColumns: true,
                 pagination: true,   // True to show a pagination toolbar on datagrid bottom.
                 // singleSelect: true, // True to allow selecting only one row.
+                loadMsg: '正在加载数据...',
                 border: false,
                 striped: true,
                 pageNumber: 1,
@@ -181,32 +177,28 @@
                 pageList: [20, 30, 40, 50, 100],   //每页显示条数供选项
                 rownumbers: true,   // True to show a row number column.
                 toolbar: [{
-                    iconCls:'icon-add',
-                    text:"增加",
+                    text:"增加", iconCls:'icon-add',
                     handler:function(){
                         alert('add');
                     }}, {
-                    iconCls:'icon-edit',
-                    text:"编辑/查看",
+                    text:"编辑/查看", iconCls:'icon-edit',
                     handler:function(){
                         alert('edit');
                     }}, {
-                    iconCls:'icon-remove',
-                    text:"删除",
+                    text:"删除", iconCls:'icon-remove',
                     handler:function(){
                         alert('del');
                     }}, '-', {
                     text: '姓名：<select class="easyui-combobox" panelHeight="auto" style="width:100px"></select>'
                     }, {
-                    iconCls: 'icon-search',
-                    text:"查询",
+                    text:"查询", iconCls: 'icon-search',
                     handler: function () {
                         alert('查询');
                     }}
                 ],
                 columns: [[
                     {field: 'ck', checkbox:true },   // checkbox
-                    {field: 'no', title: '序号',  width: 15, align: 'center' },
+                    // {field: 'no', title: '序号',  width: 15, align: 'center' },  //能自动显示行号，则不再需要自己实现
                     {field: 'id', title: 'id',  width: 30, align: 'center' },
                     {field: 'build_id', title: '建筑ID', width: 70, align: 'center'},
                     {field: 'floor_no', title: '楼层', width: 100, align: 'center'},
@@ -216,7 +208,8 @@
                     {field: 'timestamp', title: '时间戳', width: 120, align: 'center'}
                 ]],
                 onLoadSuccess: function () {
-                    $(this).datagrid("fixRownumber");
+                    $(dg).datagrid("fixRownumber");
+                    $(dg).datagrid('loaded');
                 }
             });
 
@@ -227,24 +220,16 @@
                 beforePageText: '第',//页数文本框前显示的汉字
                 afterPageText: '页, 共 {pages} 页',
                 displayMsg: '当前记录 {from} - {to} , 共 {total} 条记录',
-                onBeforeRefresh: function () {
-                    //$(this).pagination('loading');
-                    //alert('before refresh');
-                    //$(this).pagination('loaded');
-                },
-                onChangePageSize: function () {
-                    //alert("pagesized changed");
-                },
-                onSelectPage: function (pageNo, pageSize) {
-                    console.log('pageNo=' + pageNo + " pageSize=" + pageSize);
-
+                onSelectPage: function (pageNumber, pageSize) {
+                    $(dg).datagrid('loading');  // 打开等待div
+                    console.log('pageNo=' + pageNumber + " pageSize=" + pageSize);
                     // 改变opts.pageNumber和opts.pageSize的参数值，用于下次查询传给数据层查询指定页码的数据
                     var gridOpts = $(dg).datagrid('options');
-                    gridOpts.pageNumber = pageNo;
+                    gridOpts.pageNumber = pageNumber;
                     gridOpts.pageSize = pageSize;
 
                     _pageSize = pageSize;
-                    _pageNo = pageNo;
+                    _pageNo = pageNumber;
                     doAjax();
                 }
             });

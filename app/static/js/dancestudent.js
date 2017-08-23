@@ -29,6 +29,21 @@ function danceAddTab(divId, title, tableId, url) {
 }
 
 
+function danceAddDetailInfo( page) {
+    var parentDiv = $('#danceTabs');
+    var title = '学员详细信息';
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+    } else {
+        $(parentDiv).tabs('add', {
+            title: title,
+            content: 'abc',
+            href: page,
+            closable: true
+        });
+    }
+}
+
 /**
  * danceCreateDatagrid       增加 Datagrid 组件，并格式化，包括列名，增/删/查等相应函数
  * @param datagridId        Datagrid id
@@ -38,7 +53,6 @@ function danceCreateStudentDatagrid(datagridId, url) {
     var _pageSize = 30;
     // var _pageNo = 1;
     var ccId = 'cc' + datagridId;       // Combo box,姓名查找框ID
-    var ddId = 'dd' + datagridId;       // 对话框 ID
     var dg = $('#' + datagridId);       // datagrid ID
 
     $(dg).datagrid({
@@ -60,7 +74,8 @@ function danceCreateStudentDatagrid(datagridId, url) {
         toolbar: [{
             iconCls:'icon-add', text:"增加",
             handler:function(){
-                alert('add');
+                danceAddDetailInfo('/static/html/_student.html');
+                //danceAddTab('danceTab', '学员详细信息', 'abcdefg', '/ttt');
             }}, {
             iconCls:'icon-edit', text:"编辑/查看",
             handler:function(){
@@ -70,66 +85,37 @@ function danceCreateStudentDatagrid(datagridId, url) {
             handler:function(){
                 var row = $(dg).datagrid('getSelections');
                 if (row.length == 0) {
-                    var msg = $('<div style="padding:20px"></div>').text('请选择要删除的数据行！').css('font-size',16).attr('id',ddId);
-                    $('body').append(msg);
-                    $('#'+ddId).dialog({
-                        title: '删除提示',
-                        width: 400,
-                        height: 200,
-                        closed: false,
-                        cache: false,
-                        iconCls: 'icon-save',
-                        buttons: [{
-                            text:'确定',
-                            iconCls:'icon-ok',
-                            handler:function(){
-                                $('#'+ddId).dialog('close');
-                            }
-                        }],
-                        // href: 'get_content.php',
-                        modal: true
-                    });
-                    // alert('请选择数据行！'); return false
+                    $.messager.alert('提示', '请选择要删除的数据行！' , 'info');
                     return false;
                 } else {
-                    $.messager.confirm('确认删除', '数据删除后不能恢复！\n是否要删除选中的 ' + row.length + '条 数据？', function(r){
+                    var text = '数据删除后不能恢复！是否要删除选中的 ' + row.length + '条 数据？';
+                    $.messager.confirm('确认删除', text , function(r){
                         if (r){
-                            return false;
+                            // 删除数据 //////////////////////////////////////
+                            var ids = [];
+                            for (var i = 0; i < row.length; i++) {
+                                ids.push(row[i].id);
+                            }
+                            console.log('del:' + ids);
+                            $.ajax({
+                                method: 'POST',
+                                url: '/dance_del_data',
+                                dataType: 'json',
+                                data: {'ids': ids, 'who': datagridId},
+                                success: function (data,status) {
+                                    $(dg).datagrid('reload');
+                                    //doAjax();
+                                    console.log('success in ajax. data.msg=' + data.msg + " status=" + status)
+                                },
+                                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                                    console.log('error in ajax. XMLHttpRequest=', + XMLHttpRequest
+                                        + ' textStatus=' + textStatus + ' errorThrown=' + errorThrown);
+                                }
+                            });
+                            // end of 删除数据 //////////////////////////////////////
                         }
                     });
-
-                    // $.messager.alert('确认删除','数据删除后不能恢复！\n是否要删除选中的 '+row.length + '条 数据？' ,'info');
-                    /*
-                    $.messager.alert({
-                        title: '确认删除',
-                        msg: '数据删除后不能恢复！\n是否要删除选中的 ' + row.length + '条 数据？',
-                        icon: 'question',
-                        fn: function(){
-
-                        }
-                    });*/
                 }
-                // 删除数据
-                var ids = [];
-                for (var i = 0; i < row.length; i++) {
-                    ids.push(row[i].id);
-                }
-                console.log('del:' + ids);
-                $.ajax({
-                    method: 'POST',
-                    url: '/dance_del_data',
-                    dataType: 'json',
-                    data: {'ids': ids, 'who': datagridId},
-                    success: function (data,status) {
-                        $(dg).datagrid('reload');
-                        //doAjax();
-                        console.log('success in ajax. data.msg=' + data.msg + " status=" + status)
-                    },
-                    error: function (XMLHttpRequest, textStatus, errorThrown) {
-                        console.log('error in ajax. XMLHttpRequest=', + XMLHttpRequest
-                            + ' textStatus=' + textStatus + ' errorThrown=' + errorThrown);
-                    }
-                });
 
             }}, '-', {
             text: '姓名：<input id=' + ccId + ' name="dept" value="">'
