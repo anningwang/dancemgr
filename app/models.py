@@ -314,6 +314,6 @@ class DanceStudent(db.Model):
             self.recorder = para[u'recorder']
 
     def __repr__(self):
-        return '<DanceStudent %r>' % self.user_id
+        return '<DanceStudent %r>' % self.sno
 
 whooshalchemy.whoosh_index(app, Post)

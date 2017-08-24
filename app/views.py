@@ -369,3 +369,40 @@ def dance_del_data():
     db.session.commit()
 
     return jsonify({"msg": "ok for del"})
+
+
+@app.route('/dance_get_student_details', methods=['POST', 'GET'])
+def dance_get_student_details():
+    sno = int(request.form['sno'])
+    page_size = 1
+    page_no = int(request.form['page'])
+    print 'page_size=', page_size, ' page_no=', page_no
+    if page_no <= 0:  # 补丁
+        page_no = 1
+    rows = []
+    total = DanceStudent.query.count()
+    offset = (page_no - 1) * page_size
+    records = DanceStudent.query.order_by(DanceStudent.register_day.desc()).limit(page_size).offset(offset)
+    i = offset + 1
+
+    for r in records:
+        rows.append({"id": r.id, "sno": r.sno, "school_no": r.school_no,
+                     "school_name": r.school_name, "consult_no": r.consult_no, "name": r.name,
+                     "rem_code": r.rem_code, 'no': i, 'gender': r.gender,
+                     'degree': r.degree, 'birthday': r.birthday,
+                     'register_day': datetime.strftime(r.register_day,'%Y-%m-%d'),
+                     'information_source': r.information_source,
+                     'counselor': r.counselor, 'reading_school': r.reading_school,
+                     'grade': r.grade, 'phone': r.phone, 'tel': r.tel,
+                     'address': r.address, 'zipcode': r.zipcode, 'email': r.email,
+                     'qq': r.qq, 'wechat': r.wechat, 'mother_name': r.mother_name,
+                     'father_name': r.father_name, 'mother_phone': r.mother_phone,
+                     'father_phone': r.father_phone, 'mother_tel': r.mother_tel, 'father_tel': r.father_tel,
+                     'mother_company': r.mother_company, 'father_company': r.father_company,
+                     'card': r.card,
+                     'is_training': r.is_training,
+                     'points': r.points,
+                     'remark': r.remark, 'recorder': r.recorder})
+        i += 1
+    return jsonify({"total": total, "rows": rows})
+
