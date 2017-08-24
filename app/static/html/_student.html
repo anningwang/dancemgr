@@ -1,32 +1,118 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>学员详细信息</title>
-    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/default/easyui.css">
-    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/icon.css">
-    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.min.js"></script>
-    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
-
-</head>
-<body>
 
 <div class="easyui-layout" data-options="fit:true" style="padding:2px;" >
-    <div id="panelStudent" class="easyui-panel" title="Fluid Panel" style="width:100%;height:100%;padding:5px" data-options="footer:'#footerStudent'">
+    <div id="panelStudent" class="easyui-panel" title="学员详细信息" style="width:100%;height:100%;padding:5px" data-options="footer:'#footerStudent'">
+        <!-- 开始区域，学号，姓名，... -->
+        <table width="75%" border="0px">
+            <tr>
+                <td width="25%">
+                    <input class="easyui-textbox" label="学号：" id="sno" labelPosition="left" style="width:98%;height:24px"
+                           data-options="label:'width: 50%', labelPosition:'left',
+                           prompt:'Enter a email address...',validType:'email'" >
 
-        <table class="easyui-datagrid" title="联系方式" style="width:100%;height:200px"
-               data-options="singleSelect:true,collapsible:true,url:'datagrid_data1.json',method:'get'" id="dgStudent_contact">
+                </td>
 
+                <td width="25%">
+                    <input class="easyui-textbox" label="姓名：" id="name" labelPosition="left" style="width:98%;height:24px"
+                           data-options="labelPosition:'left'">
+                </td>
+
+                <td width="25%">
+                    <select id="ccStudentDetail" class="easyui-combobox" id="gender" name="gender" label="性别：" style="width:98%;"
+                            data-options="labelPosition:'left',panelHeight:60">
+                        <option>女</option>
+                        <option>男</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr name="second">
+                <td>
+                    <input class="easyui-datebox" label="登记日期："  data-options="formatter:myformatter,parser:myparser" style="width:98%;"
+                           data-options="labelPosition:'left'">
+                </td>
+
+                <td>
+                    <select class="easyui-combobox" id="school_no" name="school_no" label="所属分校：" style="width:98%;"
+                            data-options="labelPosition:'left',panelHeight:60">
+                        <option>XX分校</option>
+                        <option>YY分校</option>
+                    </select>
+                </td>
+
+                <td>
+                    <select class="easyui-combobox" name="dept" label="信息来源：" style="width:98%;"
+                            data-options="labelPosition:'left',panelHeight:60">
+                        <option>XX分校</option>
+                        <option>YY分校</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr name="third">
+                <td>
+                    <input class="easyui-textbox" label="身份证号：" labelPosition="left" style="width:98%;height:24px"
+                           data-options="labelPosition:'left'">
+                </td>
+
+                <td>
+                    <select id="bb" class="easyui-combobox" name="dept" label="咨询师：" style="width:98%;"
+                            data-options="labelPosition:'left',panelHeight:60">
+                        <option>女</option>
+                        <option>男</option>
+                    </select>
+                </td>
+
+                <td>
+                    <select id="d" class="easyui-combobox" name="dept" label="文化程度：" style="width:98%;"
+                            data-options="labelPosition:'left',panelHeight:60">
+                        <option>女</option>
+                        <option>男</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr name="fourth">
+                <td>
+                    <input class="easyui-textbox" label="曾用名：" labelPosition="left" style="width:98%;height:24px"
+                           data-options="labelPosition:'left'">
+                </td>
+
+                <td>
+                    <input class="easyui-textbox" label="录入员:" labelPosition="left" style="width:98%;height:24px"
+                           data-options="labelPosition:'left'">
+                </td>
+
+                <td>
+
+                </td>
+            </tr>
+
+            <tr name="fifth">
+                <td colspan="5">
+                    <input class="easyui-textbox" label="备注:" labelPosition="left" multiline="true"
+                           value="多行文本" style="width:100%;height:80px">
+                </td>
+            </tr>
+        </table>
+
+
+        <!-- 中间区域，联系方式  -->
+        <table class="easyui-datagrid" title="联系方式" style="width:98%;height:200px" id="dgStudent_contact"
+               data-options="singleSelect:true,
+               collapsible:true,
+               fitColumns:true,
+               onLoadSuccess: StuContactLoadSuccess
+               ">
             <thead id="thStudent_contact">
             <tr>
-                <th data-options="field:'1',width:100,align:'center'">1</th>
-                <th data-options="field:'2',width:140,align:'center'">2</th>
-                <th data-options="field:'3',width:100,align:'center'">3</th>
-                <th data-options="field:'4',width:140,align:'center'">4</th>
-                <th data-options="field:'5',width:100,align:'center'">5</th>
-                <th data-options="field:'6',width:140,align:'center'">6</th>
-                <th data-options="field:'7',width:100,align:'center'">7</th>
-                <th data-options="field:'8',width:140,align:'center'">8</th>
+                <th data-options="field:'c1',width:100,align:'center'">1</th>
+                <th data-options="field:'c2',width:140,align:'center'">2</th>
+                <th data-options="field:'c3',width:100,align:'center'">3</th>
+                <th data-options="field:'c4',width:140,align:'center'">4</th>
+                <th data-options="field:'c5',width:100,align:'center'">5</th>
+                <th data-options="field:'c6',width:140,align:'center'">6</th>
+                <th data-options="field:'c7',width:100,align:'center'">7</th>
+                <th data-options="field:'c8',width:140,align:'center'">8</th>
             </tr>
             </thead>
 
@@ -76,11 +162,16 @@
 
         </table>
 
-        <table class="easyui-datagrid" title="报班信息" style="width:100%;height:200px;padding: 5px"
-               data-options="singleSelect:true, checkbox:true, rownumbers:true, collapsible:true,url:'datagrid_data1.json',method:'get'" id="dgStudent_class">
+        <!-- 下发区域，报班信息 -->
+        <table class="easyui-datagrid" title="报班信息" style="width:98%;height:150px;padding: 5px" id="dgStudent_class"
+               data-options="checkbox:true, rownumbers:true,
+               fitColumns: true,
+               collapsible:true
+               ">
 
             <thead>
             <tr>
+                <th data-options="field:'ck',checkbox:true"></th>
                 <th data-options="field:'reg',width:100,align:'center'">报班日期</th>
                 <th data-options="field:'class_no',width:140,align:'center'">班级编号</th>
                 <th data-options="field:'class_name',width:100,align:'center'">班级名称</th>
@@ -92,31 +183,31 @@
             </thead>
 
             <tr>  <!-- 第 1 行  -->
-                <td>所在学校</td>
-                <td></td>
-                <td>年级</td>
-                <td></td>
-                <td>本人手机</td>
-                <td></td>
+                <td>1</td>
+                <td>2</td>
+                <td>3</td>
+                <td>4</td>
+                <td>5</td>
+                <td>6</td>
             </tr>
 
             <tr>  <!-- 第 2 行  -->
-                <td>联系地址</td>
-                <td></td>
-                <td>年级</td>
-                <td></td>
-                <td>Email</td>
-                <td></td>
+                <td>1</td>
+                <td>2</td>
+                <td>3</td>
+                <td>4</td>
+                <td>5</td>
+                <td>6</td>
 
             </tr>
 
             <tr>  <!-- 第 3 行  -->
-                <td>妈妈姓名</td>
-                <td></td>
-                <td>妈妈手机</td>
-                <td></td>
-                <td>妈妈工作单位</td>
-                <td></td>
+                <td>1</td>
+                <td>2</td>
+                <td>3</td>
+                <td>4</td>
+                <td>5</td>
+                <td>6</td>
             </tr>
 
         </table>
@@ -134,28 +225,55 @@
 </div>
 
 <script type="text/javascript">
-    $(function(){
+
+    function StuContactLoadSuccess() {
         var pager = $('#pagerStudent');
         pager.pagination({
             buttons:[{
-                iconCls:'icon-search',
-                handler:function(){
+                text:'查找', iconCls:'icon-search', handler:function(){
                     alert('search');
                 }
             },{
-                iconCls:'icon-add',
-                handler:function(){
+                text:'保存', iconCls:'icon-save',  handler:function(){
+                    alert('search');
+                }
+            },{
+                text:'增加', iconCls:'icon-add',  handler:function(){
                     alert('add');
                 }
             },{
-                iconCls:'icon-edit',
-                handler:function(){
+                text:'编辑', iconCls:'icon-edit', handler:function(){
                     alert('edit');
                 }
             }]
         });
-    })
+
+        $('#dgStudent_contact').datagrid('mergeCells', {
+            index: 1,
+            field: 'c2',
+            colspan: 3
+        });
+    }
+
+    function myformatter(date){
+        var y = date.getFullYear();
+        var m = date.getMonth()+1;
+        var d = date.getDate();
+        return y+'-'+(m<10?('0'+m):m)+'-'+(d<10?('0'+d):d);
+    }
+    function myparser(s){
+        if (!s) return new Date();
+        var ss = (s.split('-'));
+        var y = parseInt(ss[0],10);
+        var m = parseInt(ss[1],10);
+        var d = parseInt(ss[2],10);
+        if (!isNaN(y) && !isNaN(m) && !isNaN(d)){
+            return new Date(y,m-1,d);
+        } else {
+            return new Date();
+        }
+    }
+
+
 </script>
 
-</body>
-</html>

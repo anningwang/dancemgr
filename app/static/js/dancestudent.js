@@ -89,6 +89,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
                     return false;
                 } else {
                     var text = '数据删除后不能恢复！是否要删除选中的 ' + row.length + '条 数据？';
+                    $.messager.defaults = { ok: "是", cancel: "否" };
                     $.messager.confirm('确认删除', text , function(r){
                         if (r){
                             // 删除数据 //////////////////////////////////////
@@ -145,8 +146,8 @@ function danceCreateStudentDatagrid(datagridId, url) {
         prompt: '姓名拼音首字母查找',
         valueField: 'id',
         textField: 'text',
-        width: 140
-        // panelHeight: "auto",
+        width: 140,
+        panelHeight: "auto"
        // label: '姓名：'
     });
 
