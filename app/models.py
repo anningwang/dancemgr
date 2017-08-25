@@ -400,4 +400,47 @@ class DanceClass(db.Model):
     def __repr__(self):
         return '<DanceClass %r>' % self.cno
 
+
+class DanceSchool(db.Model):
+    """
+    分校信息表 -- Anningwang
+    """
+    # __bind_key__ = 'dance_school'
+    id = db.Column(db.Integer, primary_key=True)    # id                01
+    school_no = db.Column(db.String(20))            # 分校编号          02
+    school_name = db.Column(db.String(40))          # 分校名称          03
+    address = db.Column(db.String(80))              # 分校地址          04
+    rem_code = db.Column(db.String(40))             # 助记码            05
+    zipcode = db.Column(db.String(10))              # 邮政编码          06
+    manager = db.Column(db.String(20))              # 负责人姓名        07
+    tel = db.Column(db.String(20))                  # 分校联系电话      08
+    manager_phone = db.Column(db.String(20))        # 负责人手机        09
+    remark = db.Column(db.String(140))              # 备注              10
+    recorder = db.Column(db.String(20))             # 录入员            11
+
+    def __init__(self, para):
+        if 'school_no' in para:
+            self.school_no = para['school_no']         # 分校编号          02
+        if 'school_name' in para:
+            self.school_name = para['school_name']      # 分校名称          03
+        if 'address' in para:
+            self.address = para['address']        # 分校地址          04
+        if 'rem_code' in para:
+            self.rem_code = para['rem_code']        # 助记码            05
+        if 'zipcode' in para:
+            self.zipcode = para['zipcode']  # 邮政编码          06
+        if 'manager' in para:
+            self.manager = para['manager']  # 负责人姓名        07
+        if 'tel' in para:
+            self.class_style = para['tel']  # 分校联系电话      08
+        if 'manager_phone' in para:
+            self.manager_phone = para['manager_phone']  # 负责人手机        09
+        if 'remark' in para:
+            self.remark = para['remark']  # 备注         10
+        if 'recorder' in para:
+            self.recorder = para['recorder']  # 录入员       11
+
+    def __repr__(self):
+        return '<DanceClass %r [%r]>' % (self.school_no, id)
+
 whooshalchemy.whoosh_index(app, Post)

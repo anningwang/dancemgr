@@ -49,4 +49,4 @@ if not app.debug:
 
 app.jinja_env.globals['momentjs'] = momentjs
 
-from app import views, models
+from app import views, models, dancedatamgr

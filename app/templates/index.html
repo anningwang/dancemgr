@@ -86,7 +86,11 @@
                 } else if (node.text == '班级信息') {
                     danceAddTab('danceTabs', node.text, tableId);
                     danceCreateClassDatagrid(tableId, '/dance_get_class');
-                }else {
+                }else if(node.text == '分校信息') {
+                    danceAddTab('danceTabs', node.text, tableId);
+                    danceCreateSchoolDatagrid(tableId, '/dance_get_school');
+                }
+                else {
                     addTab(node.text,'http://jeasyui.com/', tableId);
                 }
             }
@@ -263,6 +267,7 @@
     </script>
 
 </body>
-<script src="/static/js/dancestudent.js?ver=2"></script>
+<script src="/static/js/dancestudent.js"></script>
 <script src="/static/js/danceclass.js"></script>
+<script src="/static/js/dancedatamgr.js"></script>
 </html>
