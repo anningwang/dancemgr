@@ -9,8 +9,6 @@
 	<script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.min.js"></script>
 	<script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
 
-    <script src="/static/js/dancestudent.js"></script>
-
 </head>
 <body class="easyui-layout">
 	<div data-options="region:'north',border:false" style="height:60px;background:#B3DFDA;padding:10px">north region</div>
@@ -18,22 +16,22 @@
 	<div data-options="region:'west',split:true,hideCollapsedContent:false,title:'功能栏'" style="width:200px;">
         <div class="easyui-accordion" data-options="fit:true,border:false">
             <div title="学员管理" data-options="iconCls:'icon-student'" style="padding:1px">
-                <ul id="treeStudent" class="easyui-tree" data-options="url:'/static/html/tree_data_student.json',method:'get',animate:true,dnd:true"></ul>
+                <ul id="treeStudent" class="easyui-tree" data-options="url:'/static/html/tree_student.json',method:'get',animate:true,dnd:true"></ul>
             </div>
             <div title="员工与老师" data-options="iconCls:'icon-teacher', selected:true" style="padding:1px">
                 <ul id="treeTeacher" class="easyui-tree" data-options="url:'/static/html/tree_teacher.json',method:'get',animate:true,dnd:true"></ul>
             </div>
             <div title="教学管理" data-options="iconCls:'icon-book'" data-options="iconCls:'icon-help'" style="padding:1px">
-                <ul id="treeSchool" class="easyui-tree" data-options="url:'/static/html/tree_data_school.json',method:'get',animate:true,dnd:true"></ul>
+                <ul id="treeSchool" class="easyui-tree" data-options="url:'/static/html/tree_school.json',method:'get',animate:true,dnd:true"></ul>
             </div>
             <div title="物品管理" data-options="iconCls:'icon-computer'" style="padding:1px">
-                <ul id="treeAsset" class="easyui-tree" data-options="url:'/static/html/tree_data_asset.json',method:'get',animate:true,dnd:true"></ul>
+                <ul id="treeAsset" class="easyui-tree" data-options="url:'/static/html/tree_asset.json',method:'get',animate:true,dnd:true"></ul>
             </div>
             <div title="财务管理" data-options="iconCls:'icon-money_yen'" style="padding:1px">
-                <ul id="treeFinance" class="easyui-tree" data-options="url:'/static/html/tree_data_finance.json',method:'get',animate:true,dnd:true"></ul>
+                <ul id="treeFinance" class="easyui-tree" data-options="url:'/static/html/tree_finance.json',method:'get',animate:true,dnd:true"></ul>
             </div>
             <div title="数据管理" data-options="iconCls:'icon-databases'" style="padding:1px">
-                <ul id="treeDb" class="easyui-tree" data-options="url:'/static/html/tree_data_db.json',method:'get',animate:true,dnd:true"></ul>
+                <ul id="treeDb" class="easyui-tree" data-options="url:'/static/html/tree_db.json',method:'get',animate:true,dnd:true"></ul>
             </div>
         </div>
 	</div>
@@ -83,8 +81,11 @@
 
                 var tableId = this.id + node.id;
                 if(node.text == '学员列表') {
-                    danceAddTab('danceTabs', node.text, tableId, '/dance_get_student');
-                    // danceCreateStudentDatagrid(tableId, '/dance_get_student');
+                    danceAddTab('danceTabs', node.text, tableId);
+                    danceCreateStudentDatagrid(tableId, '/dance_get_student');
+                } else if (node.text == '班级信息') {
+                    danceAddTab('danceTabs', node.text, tableId);
+                    danceCreateClassDatagrid(tableId, '/dance_get_class');
                 }else {
                     addTab(node.text,'http://jeasyui.com/', tableId);
                 }
@@ -262,4 +263,6 @@
     </script>
 
 </body>
+<script src="/static/js/dancestudent.js?ver=2"></script>
+<script src="/static/js/danceclass.js"></script>
 </html>

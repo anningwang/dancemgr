@@ -20,10 +20,10 @@
 
                 <td width="25%">
                     <select class="easyui-combobox" id="gender" name="gender" style="width:98%;"
-                            data-options="labelPosition:'left',panelHeight:60, label:'性别：'
+                            data-options="labelPosition:'left',panelHeight:'auto', label:'性别：',editable:'false'
                             ">
-                        <option>女</option>
-                        <option>男</option>
+                        <option value="女">女</option>
+                        <option value="男">男</option>
                     </select>
                 </td>
             </tr>
@@ -38,18 +38,20 @@
 
                 <td>
                     <select class="easyui-combobox" id="school_name" style="width:98%;"
-                            data-options="labelPosition:'left',panelHeight:60, label:'所属分校：'
+                            data-options="labelPosition:'left',panelHeight:'auto', label:'所属分校：',editable:'false'
                             ">
-                        <option>dummy message</option>
+                        <option>　</option>
+                        <option>麒麟分校</option>
                     </select>
                 </td>
 
                 <td>
                     <select class="easyui-combobox" id="information_source" style="width:98%;"
-                            data-options="labelPosition:'left',panelHeight:60, label:'信息来源：'
+                            data-options="labelPosition:'left',panelHeight:'auto', label:'信息来源：',editable:'false'
                             ">
-                        <option>dummy message</option>
-                        <option></option>
+                        <option>　</option>
+                        <option>朋友推荐</option>
+                        <option>上门咨询</option>
                     </select>
                 </td>
             </tr>
@@ -63,19 +65,23 @@
 
                 <td>
                     <select id="bb" class="easyui-combobox" id="counselor" style="width:98%;"
-                            data-options="labelPosition:'left',panelHeight:60,label:'咨询师：'
+                            data-options="labelPosition:'left',panelHeight:60,label:'咨询师：',editable:'false'
                             ">
-                        <option>dummy message</option>
-                        <option></option>
+                        <option>　</option>
+                        <option>李老师</option>
                     </select>
                 </td>
 
                 <td>
                     <select id="d" class="easyui-combobox" id="degree" style="width:98%;"
-                            data-options="labelPosition:'left',panelHeight:60,label:'文化程度：'
+                            data-options="labelPosition:'left',panelHeight:'auto',label:'文化程度：',editable:'false'
                             ">
-                        <option>dummy message</option>
-                        <option></option>
+                        <option>　</option>
+                        <option>小学</option>
+                        <option>初中</option>
+                        <option>高中</option>
+                        <option>大学</option>
+                        <option>硕士</option>
                     </select>
                 </td>
             </tr>
@@ -101,7 +107,7 @@
             <tr name="fifth">
                 <td colspan="6">
                     <input class="easyui-textbox" id="remark" style="width:100%;height:80px"
-                           data-options="labelPosition:'top', multiline:'true', label:'备注:'
+                           data-options="labelPosition:'top', multiline:'true', label:'备注：'
                            " >
                 </td>
             </tr>
@@ -109,20 +115,20 @@
 
 
         <!-- 中间区域，联系方式  -->
-        <table class="easyui-datagrid" title="联系方式" style="width:98%;height:200px" id="dgStudent_contact"
-               data-options="singleSelect:true,
+        <table class="easyui-datagrid" title="联系方式" style="width:100%;height:200px" id="dgStudent_contact"
+               data-options="singleSelect:true,fitColumns:true,
                collapsible:true
                ">
             <thead id="thStudent_contact">
             <tr>
-                <th data-options="field:'c1',width:100,align:'center'">1</th>
-                <th data-options="field:'c2',width:140,align:'left'">2</th>
-                <th data-options="field:'c3',width:100,align:'center'">3</th>
-                <th data-options="field:'c4',width:140,align:'left'">4</th>
-                <th data-options="field:'c5',width:100,align:'center'">5</th>
-                <th data-options="field:'c6',width:140,align:'left'">6</th>
-                <th data-options="field:'c7',width:100,align:'center'">7</th>
-                <th data-options="field:'c8',width:140,align:'left'">8</th>
+                <th data-options="field:'c1',width:100,align:'center',fixed:'true'">1</th>
+                <th data-options="field:'c2',width:140,align:'left',fixed:'true'">2</th>
+                <th data-options="field:'c3',width:100,align:'center',fixed:'true'">3</th>
+                <th data-options="field:'c4',width:140,align:'left',fixed:'true'">4</th>
+                <th data-options="field:'c5',width:100,align:'center',fixed:'true'">5</th>
+                <th data-options="field:'c6',width:140,align:'left',fixed:'true'">6</th>
+                <th data-options="field:'c7',width:100,align:'center',fixed:'true'">7</th>
+                <th data-options="field:'c8',width:140,align:'left',fixed:'true'">8</th>
             </tr>
             </thead>
 
@@ -172,21 +178,23 @@
 
         </table>
 
+        <!-- 分割符================== -->
+        <div style="height: 2px"></div>
+
         <!-- 下发区域，报班信息 -->
-        <table class="easyui-datagrid" title="报班信息" style="width:98%;height:150px;padding: 5px" id="dgStudent_class"
-               data-options="checkbox:true, rownumbers:true,
-               fitColumns: true,
+        <table class="easyui-datagrid" title="报班信息" style="width:100%;height:150px;padding:5px" id="dgStudent_class"
+               data-options="checkbox:true, rownumbers:true,fitColumns:true,
                collapsible:true
                ">
 
             <thead>
             <tr>
                 <th data-options="field:'ck',checkbox:true"></th>
-                <th data-options="field:'reg',width:100,align:'center'">报班日期</th>
-                <th data-options="field:'class_no',width:140,align:'center'">班级编号</th>
-                <th data-options="field:'class_name',width:100,align:'center'">班级名称</th>
-                <th data-options="field:'status',width:140,align:'center'">状态</th>
-                <th data-options="field:'remark',width:100,align:'center'">备注</th>
+                <th data-options="field:'reg',width:100,align:'center',fixed:'true'">报班日期</th>
+                <th data-options="field:'class_no',width:140,align:'center',fixed:'true'">班级编号</th>
+                <th data-options="field:'class_name',width:100,align:'center',fixed:'true'">班级名称</th>
+                <th data-options="field:'status',width:140,align:'center',fixed:'true'">状态</th>
+                <th data-options="field:'remark',width:100,align:'center',fixed:'true'">备注</th>
                 <th data-options="field:'id',hidden:true">6</th>
 
             </tr>

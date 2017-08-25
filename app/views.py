@@ -5,7 +5,7 @@ from flask_sqlalchemy import get_debug_queries
 from flask_babel import gettext
 from app import app, db, lm, oid, babel
 from forms import LoginForm, EditForm, PostForm, SearchForm
-from models import User, ROLE_USER, ROLE_ADMIN, Post, HzToken, HzLocation, DanceStudent
+from models import User, ROLE_USER, ROLE_ADMIN, Post, HzToken, HzLocation, DanceStudent, DanceClass
 from datetime import datetime
 from emails import follower_notification
 from guess_language import guessLanguage
@@ -353,7 +353,9 @@ def dance_get_student():
                      'card': r.card,
                      'is_training': r.is_training,
                      'points': r.points,
-                     'remark': r.remark, 'recorder': r.recorder})
+                     'remark': r.remark, 'recorder': r.recorder,
+                     'idcard': r.idcard, 'mother_wechat': r.mother_wechat,'father_wechat':r.father_wechat
+                     })
         i += 1
     return jsonify({"total": total, "rows": rows})
 
@@ -364,11 +366,21 @@ def dance_del_data():
     who = request.form['who']
     ids = request.form.getlist('ids[]')
     print 'who=', who, ' ids=', ids
+
+    table = DanceStudent
+
+    if who == 'DanceClass':
+        table = DanceClass
+    elif who == 'DanceStudent':
+        table = DanceStudent
+    else:
+        return jsonify({'ErrorCode': 1, "MSG": "Table not found!"})     # error
+
     for i in ids:
-        db.session.delete(DanceStudent.query.get(i))
+        db.session.delete(table.query.get(i))
     db.session.commit()
 
-    return jsonify({"msg": "ok for del"})
+    return jsonify({'ErrorCode': 0, "MSG": "Ok for del."})
 
 
 @app.route('/dance_get_student_details', methods=['POST', 'GET'])
@@ -406,3 +418,27 @@ def dance_get_student_details():
         i += 1
     return jsonify({"total": total, "rows": rows})
 
+
+@app.route('/dance_get_class', methods=['POST'])
+def dance_get_class():
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    print 'dance_get_class: page_size=', page_size, ' page_no=', page_no
+    if page_no <= 0:    # 补丁
+        page_no = 1
+    rows = []
+    total = DanceClass.query.count()
+    offset = (page_no - 1) * page_size
+    records = DanceClass.query.order_by(DanceClass.begin_year.desc(),
+                                        DanceClass.class_name).limit(page_size).offset(offset)
+    i = offset + 1
+    for rec in records:
+        rows.append({"id": rec.id, "cno": rec.cno, "school_no": rec.school_no, "school_name": rec.school_name,
+                     "class_name": rec.class_name, "rem_code": rec.rem_code, "begin_year": rec.begin_year,
+                     'class_type': rec.class_type, 'class_style': rec.class_style, 'teacher': rec.teacher,
+                     'cost_mode': rec.cost_mode, 'cost': rec.cost, 'plan_students': rec.plan_students,
+                     'cur_students': rec.cur_students, 'is_ended': rec.is_ended, 'remark': rec.remark,
+                     'recorder': rec.recorder, 'no': i
+                     })
+        i += 1
+    return jsonify({"total": total, "rows": rows})

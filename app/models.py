@@ -12,6 +12,15 @@ ROLE_ADMIN = 1
 GENDER_MALE = '男'
 GENDER_FEMALE = '女'
 
+# 学生报班信息表 多 对 多。 同时可以看到 某个班级 有多少学生。
+DanceStudentClass = db.Table('dance_student_class',
+                             db.Column('student_id', db.Integer, db.ForeignKey('dance_student.id'), primary_key=True),
+                             db.Column('class_id', db.Integer, db.ForeignKey('dance_class.id'), primary_key=True),
+                             db.Column('join_date', db.DateTime),       # 报班日期
+                             db.Column('status', db.Integer),            # 报班状态 正常、退班、结束、续班
+                             db.Column('remark',db.String(140))
+                             )
+
 followers = db.Table('followers',
                      db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
                      db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
@@ -126,43 +135,48 @@ class HzLocation(db.Model):
 
 class DanceStudent(db.Model):
     """
-    学员表 -- WXG
+    学员表 -- Anningwang
     """
-    id = db.Column(db.Integer, primary_key=True)            # 自动编号，主键  唯一///
-    sno = db.Column(db.String(30), unique=True)             # 学号        不可重复 唯一///
-    school_no = db.Column(db.String(20))                    # 分校编号
-    school_name = db.Column(db.String(40))  # 分校名称
-    consult_no = db.Column(db.String(30))   # 咨询编号
-    name = db.Column(db.String(40))         # 姓名
-    rem_code = db.Column(db.String(40))     # 助记码
-    gender = db.Column(db.String(4))          # 性别：男/女
-    degree = db.Column(db.String(40))       # 文化程度
-    birthday = db.Column(db.String(10))       # 出生日期
-    register_day = db.Column(db.DateTime)   # 登记日期
-    information_source = db.Column(db.String(40))           # 信息来源
-    counselor = db.Column(db.String(20))    # 咨询师
-    reading_school = db.Column(db.String(40))  # 所在学校
-    grade = db.Column(db.String(20))        # 年级
-    phone = db.Column(db.String(20))           # 手机号码  不可重复 唯一///
-    tel = db.Column(db.String(20))          # 固定电话  ***保留
-    address = db.Column(db.String(60))      # 联系地址
-    zipcode = db.Column(db.String(10))      # 邮政编码  ***保留
-    email = db.Column(db.String(30))            # email  不可重复 唯一///
-    qq = db.Column(db.String(20))           # qq
-    wechat = db.Column(db.String(60))       # 微信标识  ***保留
-    mother_name = db.Column(db.String(14))  # 母亲姓名
-    father_name = db.Column(db.String(14))  # 父亲姓名
-    mother_phone = db.Column(db.String(20))     # 母亲手机
-    father_phone = db.Column(db.String(20))     # 父亲手机
-    mother_tel = db.Column(db.String(20))   # 母亲固话  ***保留
-    father_tel = db.Column(db.String(20))   # 父亲固话  ***保留
-    mother_company = db.Column(db.String(40))  # 母亲单位
-    father_company = db.Column(db.String(40))  # 父亲单位
-    card = db.Column(db.String(40))         # 卡号  ***保留
-    is_training = db.Column(db.String(4))     # 是否在读 是/否 （在本培训中心）
-    points = db.Column(db.Integer)          # 赠送积分  ***保留
-    remark = db.Column(db.String(140))      # 备注
-    recorder = db.Column(db.String(14))     # 录入员
+    # __bind_key__ = 'dance_student'
+    id = db.Column(db.Integer, primary_key=True)            # 自动编号，主键  唯一///        01
+    sno = db.Column(db.String(30), unique=True)             # 学号        不可重复 唯一///   02
+    school_no = db.Column(db.String(20))                    # 分校编号      03
+    school_name = db.Column(db.String(40))  # 分校名称      04
+    consult_no = db.Column(db.String(30))   # 咨询编号      05
+    name = db.Column(db.String(40))         # 姓名            06
+    rem_code = db.Column(db.String(40))     # 助记码           07
+    gender = db.Column(db.String(4))          # 性别：男/女      08
+    degree = db.Column(db.String(40))       # 文化程度          09
+    birthday = db.Column(db.String(10))       # 出生日期        10
+    register_day = db.Column(db.DateTime)   # 登记日期          11
+    information_source = db.Column(db.String(40))           # 信息来源  12
+    counselor = db.Column(db.String(20))    # 咨询师       13
+    reading_school = db.Column(db.String(40))  # 所在学校       14
+    grade = db.Column(db.String(20))        # 年级            15
+    phone = db.Column(db.String(20))           # 手机号码  不可重复 唯一///   16
+    tel = db.Column(db.String(20))          # 固定电话  ***保留       17
+    address = db.Column(db.String(60))      # 联系地址          18
+    zipcode = db.Column(db.String(10))      # 邮政编码  ***保留       19
+    email = db.Column(db.String(30))            # email  不可重复 唯一///     20
+    qq = db.Column(db.String(20))           # qq        21
+    wechat = db.Column(db.String(60))       # 微信标识  ***保留       22
+    mother_name = db.Column(db.String(14))  # 母亲姓名      23
+    father_name = db.Column(db.String(14))  # 父亲姓名      24
+    mother_phone = db.Column(db.String(20))     # 母亲手机      25
+    father_phone = db.Column(db.String(20))     # 父亲手机      26
+    mother_tel = db.Column(db.String(20))   # 母亲固话  ***保留       27
+    father_tel = db.Column(db.String(20))   # 父亲固话  ***保留       28
+    mother_company = db.Column(db.String(40))  # 母亲单位           29
+    father_company = db.Column(db.String(40))  # 父亲单位           30
+    card = db.Column(db.String(40))         # 卡号  ***保留         31
+    is_training = db.Column(db.String(4))     # 是否在读 是/否 （在本培训中心）       32
+    points = db.Column(db.Integer)          # 赠送积分  ***保留       33
+    remark = db.Column(db.String(140))      # 备注            34
+    recorder = db.Column(db.String(14))     # 录入员          35
+
+    idcard = db.Column(db.String(30))           # 身份证号       36
+    mother_wechat = db.Column(db.String(60))    # 微信标识  ***保留       37
+    father_wechat = db.Column(db.String(60))    # 微信标识  ***保留       38
 
     def __init__(self, name, sno, school_no, school_name,
                  consult_no, rem_code, gender, degree, birthday, register_day,
@@ -174,7 +188,9 @@ class DanceStudent(db.Model):
                  tel=None, zipcode=None, wechat=None,
                  mother_tel=None, father_tel=None,
                  card=None, is_training=None,
-                 points=None, remark=None):
+                 points=None, remark=None,
+                 idcard=None, mother_wechat=None, father_wechat=None
+                 ):
         self.name = name
         self.sno = sno
         self.school_no = school_no
@@ -313,7 +329,75 @@ class DanceStudent(db.Model):
         if u'recorder' in para:
             self.recorder = para[u'recorder']
 
+        if 'idcard' in para:
+            self.idcard = para['idcard']
+        if 'mother_wechat' in para:
+            self.mother_wechat = para['mother_wechat']
+        if 'father_wechat' in para:
+            self.father_wechat = para['father_wechat']
+
     def __repr__(self):
         return '<DanceStudent %r>' % self.sno
+
+
+class DanceClass(db.Model):
+    """
+    班级表 -- Anningwang
+    """
+    # __bind_key__ = 'dance_class'
+    id = db.Column(db.Integer, primary_key=True)    # id                01
+    cno = db.Column(db.String(20), unique=True)     # 班级编号          02
+    school_no = db.Column(db.String(20))            # 分校编号          03
+    school_name = db.Column(db.String(40))          # 分校名称          04
+    class_name = db.Column(db.String(40))           # 班级名称          05
+    rem_code = db.Column(db.String(40))             # 助记码            06
+    begin_year = db.Column(db.String(6))    # 开班年份      07
+    class_type = db.Column(db.String(20))   # 班级类型， 教授类别： 舞蹈、美术、跆拳道、国际象棋等   08
+    class_style = db.Column(db.String(20))  # 班级形式： 集体课, 1对1      09
+    teacher = db.Column(db.String(20))      # 授课老师姓名        10
+    cost_mode = db.Column(db.String(20))    # 收费模式            11
+    cost = db.Column(db.Integer)            # 收费标准            12
+    plan_students = db.Column(db.Integer)   # 计划招收人数        13
+    cur_students = db.Column(db.Integer)    # 当前人数            14
+    is_ended = db.Column(db.Integer)        # 是否结束      1 -- 结束； 0 -- 未结束       15
+    remark = db.Column(db.String(140))      # 备注         16
+    recorder = db.Column(db.String(20))     # 录入员       17
+
+    def __init__(self, para):
+        if 'cno' in para:
+            self.cno = para['cno']              # 02
+        if 'school_no' in para:
+            self.school_no = para['school_no']         # 03
+        if 'school_name' in para:
+            self.school_name = para['school_name']      # 04
+        if 'class_name' in para:
+            self.class_name = para['class_name']        # 班级名称          05
+        if 'rem_code' in para:
+            self.rem_code = para['rem_code']        # 助记码            06
+        if 'begin_year' in para:
+            self.begin_year = para['begin_year']        # 开班年份      07
+        if 'class_type' in para:
+            self.class_type = para['class_type']        # 班级类型， 教授类别： 舞蹈、美术、跆拳道、国际象棋等   08
+        if 'class_style' in para:
+            self.class_style = para['class_style']      # 班级形式： 集体课, 1对1      09
+        if 'teacher' in para:
+            self.teacher = para['teacher']              # 授课老师姓名        10
+        if 'cost_mode' in para:
+            self.cost_mode = para['cost_mode']          # 收费模式            11
+        if 'cost' in para:
+            self.cost = para['cost']                    # 收费标准            12
+        if 'plan_students' in para:
+            self.plan_students = para['plan_students']      # 计划招收人数        13
+        if 'cur_students' in para:
+            self.cur_students = para['cur_students']        # 当前人数            14
+        if 'is_ended' in para:
+            self.is_ended = para['is_ended']            # 是否结束      1 -- 结束； 0 -- 未结束       15
+        if 'remark' in para:
+            self.remark = para['remark']            # 备注         16
+        if 'recorder' in para:
+            self.recorder = para['recorder']        # 录入员       17
+
+    def __repr__(self):
+        return '<DanceClass %r>' % self.cno
 
 whooshalchemy.whoosh_index(app, Post)

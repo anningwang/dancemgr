@@ -2,6 +2,8 @@
  * dancestudent.js  界面实现 --by Anningwang
  */
 
+'use strict';
+
 //(function($){
 
 /**
@@ -9,9 +11,8 @@
  * @param divId     父节点，在该节点上添加 Tab
  * @param title     Tab的标题
  * @param tableId   Datagrid id,创建在 table 上
- * @param url       从服务器获取数据的url
  */
-function danceAddTab(divId, title, tableId, url) {
+function danceAddTab(divId, title, tableId) {
     console.log(tableId);
     var parentDiv = $('#'+divId);
     if ($(parentDiv).tabs('exists', title)) {
@@ -23,8 +24,6 @@ function danceAddTab(divId, title, tableId, url) {
             content: content,
             closable: true
         });
-
-        danceCreateStudentDatagrid(tableId, url);
     }
 }
 
@@ -95,17 +94,19 @@ function danceAddDetailInfo( page, uid, no) {
                 $('#name').textbox('setText',data.rows[0].name);
                 $('#register_day').textbox('setText',data.rows[0].register_day);
                 $('#school_name').textbox('setText',data.rows[0].school_name);
-                $('#information_source').textbox('setText',data.rows[0].information_source);
-                $('#counselor').textbox('setText',data.rows[0].counselor);
-                $('#degree').textbox('setText',data.rows[0].degree);
+                //$('#information_source').textbox('setText',data.rows[0].information_source);
+                //$('#counselor').textbox('setText',data.rows[0].counselor);
+                //$('#degree').textbox('setText',data.rows[0].degree);
                 $('#former_name').textbox('setText',data.rows[0].former_name);
                 $('#recorder').textbox('setText',data.rows[0].recorder);
-                $('#pagerStudent').pagination({total: data.total, pageNumber:no});
+                $('#gender').combobox('select',data.rows[0].gender);
+                $('#remark').textbox('setText',data.rows[0].remark);
 
-                $('#student_rec_id').val(data.rows[0].id);
+                $('#pagerStudent').pagination({total: data.total, pageNumber:no});  // 更新翻页控件 页码
+
+                $('#student_rec_id').val(data.rows[0].id);      // 记录 ID
 
                 // 更新联系方式 table
-
                 $('#dgStudent_contact').datagrid('updateRow',{
                     index: 0,
                     row: {
@@ -182,7 +183,8 @@ function danceCreateStudentDatagrid(datagridId, url) {
             handler:function(){
                 danceAddDetailInfo('/static/html/_student.html');
                 //danceAddTab('danceTab', '学员详细信息', 'abcdefg', '/ttt');
-            }}, {
+            }
+        }, {
             iconCls:'icon-edit', text:"编辑/查看",  ///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             handler:function(){
                 var row = $(dg).datagrid('getSelections');
@@ -192,7 +194,8 @@ function danceCreateStudentDatagrid(datagridId, url) {
                 } else {
                     danceAddDetailInfo('/static/html/_student.html', row[0].id, row[0].no);
                 }
-            }}, {
+            }
+        }, {
             iconCls:'icon-remove', text:"删除",  //////////////////////////////
             handler:function(){
                 var row = $(dg).datagrid('getSelections');
@@ -201,7 +204,6 @@ function danceCreateStudentDatagrid(datagridId, url) {
                     return false;
                 } else {
                     var text = '数据删除后不能恢复！是否要删除选中的 ' + row.length + '条 数据？';
-                    $.messager.defaults = { ok: "是", cancel: "否" };
                     $.messager.confirm('确认删除', text , function(r){
                         if (r){
                             // 删除数据 //////////////////////////////////////
@@ -214,11 +216,22 @@ function danceCreateStudentDatagrid(datagridId, url) {
                                 method: 'POST',
                                 url: '/dance_del_data',
                                 dataType: 'json',
-                                data: {'ids': ids, 'who': datagridId},
+                                data: {'ids': ids, 'who': 'DanceStudent'},
                                 success: function (data,status) {
+                                    console.log('success in ajax. data.MSG=' + data.MSG + " status=" + status);
+                                    if (data.ErrorCode != 0) {
+                                        $.messager.alert({
+                                            title: '错误',
+                                            msg: data.MSG,
+                                            icon:'error', // Available value are: error,question,info,warning.
+                                            fn: function(){
+                                                //...
+                                            }
+                                        });
+                                        return false;
+                                    }
                                     $(dg).datagrid('reload');
                                     //doAjax();
-                                    console.log('success in ajax. data.msg=' + data.msg + " status=" + status)
                                 },
                                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                                     console.log('error in ajax. XMLHttpRequest=', + XMLHttpRequest
@@ -229,15 +242,15 @@ function danceCreateStudentDatagrid(datagridId, url) {
                         }
                     });
                 }
-
-            }}, '-', {
-            text: '姓名：<input id=' + ccId + ' name="dept" value="">'
-            },{
+            }
+        }, '-', {
+            text: '姓名：<input id=' + ccId + ' name="dept">'
+        },{
             iconCls: 'icon-search', text:"查询",  /// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
             handler: function () {
                 alert('查询');
-            }}
-        ],
+            }
+        }],
         columns: [[
             {field: 'id', title: 'id',  width: 30, align: 'center'},   // id, hidden   hidden:true
             {field: 'ck', checkbox:true },   // checkbox
