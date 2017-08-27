@@ -440,7 +440,38 @@ class DanceSchool(db.Model):
         if 'recorder' in para:
             self.recorder = para['recorder']  # 录入员       11
 
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+        return self
+
+    def update(self):
+        db.session.commit()
+        return self
+
+    def update_data(self, para):
+        if 'school_no' in para:
+            self.school_no = para['school_no']         # 分校编号          02
+        if 'school_name' in para:
+            self.school_name = para['school_name']      # 分校名称          03
+        if 'address' in para:
+            self.address = para['address']        # 分校地址          04
+        if 'rem_code' in para:
+            self.rem_code = para['rem_code']        # 助记码            05
+        if 'zipcode' in para:
+            self.zipcode = para['zipcode']  # 邮政编码          06
+        if 'manager' in para:
+            self.manager = para['manager']  # 负责人姓名        07
+        if 'tel' in para:
+            self.class_style = para['tel']  # 分校联系电话      08
+        if 'manager_phone' in para:
+            self.manager_phone = para['manager_phone']  # 负责人手机        09
+        if 'remark' in para:
+            self.remark = para['remark']  # 备注         10
+        if 'recorder' in para:
+            self.recorder = para['recorder']  # 录入员       11
+
     def __repr__(self):
-        return '<DanceClass %r [%r]>' % (self.school_no, id)
+        return '<DanceClass %r>' % self.school_no
 
 whooshalchemy.whoosh_index(app, Post)
