@@ -3,6 +3,7 @@ from flask import render_template, flash, redirect, session, url_for, request, g
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db, lm, oid, babel
 from models import DanceSchool
+import json
 
 
 @app.route('/dance_get_school', methods=['POST'])
@@ -26,3 +27,36 @@ def dance_get_school():
                      })
         i += 1
     return jsonify({"total": total, "rows": rows})
+
+
+@app.route('/dance_school_update', methods=['POST'])
+def dance_school_update():
+    json_data = request.form['data']
+    obj_data = json.loads(json_data)
+
+    new_id = 0
+    for i in range(len(obj_data)):
+        if obj_data[i]['id'] <= 0:
+            # add record
+            if new_id == 0:
+                rec = DanceSchool.query.order_by(DanceSchool.school_no.desc()).first()
+                if rec is not None:
+                    new_id = int(rec.school_no) + 1
+                else:
+                    new_id += 1
+            else:
+                new_id += 1
+            school = DanceSchool(obj_data[i]['row'])
+            school.recorder = 'WXG'
+            school.school_no = '%04d' % new_id
+            db.session.add(school)
+        else:
+            # update record
+            school = DanceSchool.query.filter_by(id=obj_data[i]['id']).first()
+            if school is None:
+                continue
+            school.update_data(obj_data[i]['row'])
+            db.session.add(school)
+    db.session.commit()
+
+    return jsonify({'ErrorCode': 0, 'MSG': 'school information update success!'})

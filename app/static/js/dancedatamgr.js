@@ -12,6 +12,11 @@ function danceCreateSchoolDatagrid(datagridId, url) {
     var dataOriginal = {};          // 原始数据，未修改前的数据
     var dataChanged = [];           // 当编辑表格时，记录发生变化的行及变化内容
 
+    var btnSave = 'save' + datagridId;      // 增加按钮 ID  datagrid toolbar
+    var btnDel = 'del' + datagridId;        // 删除按钮 ID
+    var btnEdit = 'edit' + datagridId;      // 编辑按钮 ID
+    var btnUndo = 'undo' + datagridId;      // Undo button ID
+
     $(dg).datagrid({
         // title: '分校信息',
         iconCls: 'icon-a_detail',
@@ -28,31 +33,19 @@ function danceCreateSchoolDatagrid(datagridId, url) {
         pageList: [20, 30, 40, 50, 100],   //每页显示条数供选项
         rownumbers: true,   // True to show a row number column.
         toolbar: [{
-            text:"增加行", iconCls:'icon-add',
-            handler:function(){
-                $(dg).datagrid('appendRow',{});
-            }
+            text:"增加行", iconCls:'icon-add', handler:onAdd
         }, {
-            text:"编辑行", iconCls:'icon-edit',
-            handler:function(){
-                isEditStatus = true;
-                var row = $(dg).datagrid('getSelected');
-                if (row) {
-                    var rowIdx = $(dg).datagrid('getRowIndex', row);
-                    onClickCell(rowIdx, 'school_name');     /// *** 修改点 ***
-                }
-            }
+            text:"编辑表格", iconCls:'icon-edit_line', id:btnEdit, handler:onEdit
         }, {
-            text:"删除", iconCls:'icon-remove', handler: onDel
+            text:"撤销编辑", iconCls:'icon-undo', id:btnUndo, handler:onUndo
         }, {
-            text:"保存", iconCls:'icon-save', handler: onSave
+            text:"删除", iconCls:'icon-remove', id:btnDel, handler: onDel
+        }, {
+            text:"保存", iconCls:'icon-save', disabled:true, id:btnSave, handler: onSave
         }, '-',{
             text: '分校名称：<input id=' + ccId + ' name="dept" value="">'
         },{
-            iconCls: 'icon-search', text:"查询",  /// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-            handler: function () {
-                alert('查询');
-            }
+            iconCls: 'icon-search', text:"查询", handler: onSearch
         }],
         columns: [[
             {field: 'ck', checkbox:true },   // checkbox
@@ -73,25 +66,17 @@ function danceCreateSchoolDatagrid(datagridId, url) {
             $(dg).datagrid('loaded');
         },
         onClickCell: onClickCell,
-        onEndEdit: function (index,row,changes) {
-            ///console.info(index, row, changes);
-        },
         onAfterEdit: getChangedData,
-        onBeginEdit: function (index,row) {
-            ///console.info(index, row);
-        },
         onBeforeEdit: function (index,row) {
             ///console.info(index, row);
             if (!(index in dataOriginal)) {     // 不存在，则保存原始数据
                 dataOriginal[index] = {};
                 $.extend(dataOriginal[index], row);
             }
-        },
-        onCancelEdit: function (index,row) {
-            ///console.info(index, row);
         }
     });
 
+    $('#'+btnUndo).hide();      // 开始隐藏 Undo 按钮
     $('#'+ccId).combobox({     // 姓名 搜索框 combo box
         // url: '/dance_search',
         prompt: '校名拼音首字母查找',
@@ -123,7 +108,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
         }
     });
 
-    doAjaxGetData();
+    doAjaxGetData();        /// 开始打开页面，需要查询数据
 
     // 先通过ajax获取数据，然后再传给datagrid
     function doAjaxGetData () {
@@ -152,7 +137,53 @@ function danceCreateSchoolDatagrid(datagridId, url) {
         });
     }   /// end of doAjaxGetData()
 
+
+    /// 增加行
+    function onAdd() {
+        $(dg).datagrid('appendRow',{});
+    }
+
     //// 编辑datagrid begin //////////////////////////////////////////////////
+    /// toolbar edit button
+    function onEdit() {
+        //var editOpts = $('#'+btnEdit).linkbutton('options');
+        if (isEditStatus) {     /// 处于编辑状态
+            /*
+            editOpts.text = '编辑表格';
+            //$('#'+btnDel).linkbutton('enable');
+            //isEditStatus = false;
+            */
+
+        } else {    /// 未开启编辑, isEditStatus == false
+            ///editOpts.text = '撤销编辑';
+            isEditStatus = true;
+            var row = $(dg).datagrid('getSelected');
+            if (row) {
+                var rowIdx = $(dg).datagrid('getRowIndex', row);
+                onClickCell(rowIdx, 'school_name');     /// *** 修改点 ***
+            }
+
+            /// Disable the del button.
+            $('#'+btnDel).linkbutton('disable');
+            $(this).hide();
+            $('#'+btnUndo).show();
+        }
+    }
+
+    function onUndo() {
+        if (isEditStatus) {
+            isEditStatus = false;
+            $('#'+btnDel).linkbutton('enable');
+            $(this).hide();
+            $('#'+btnEdit).show();
+            $(dg).datagrid('rejectChanges');
+            editIndex = undefined;
+
+            var gridOpts = $(dg).datagrid('options');
+            gridOpts.singleSelect = false;
+        }
+    }
+
     function endEditing(){
         if (editIndex == undefined){return true}
         if ($(dg).datagrid('validateRow', editIndex)){
@@ -194,7 +225,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
             }
         }
         if (i == dataChanged.length) {
-            dataChanged[i]= {'rowIndex': index, 'row': changes};
+            dataChanged[i]= {'rowIndex': index, 'row': changes, 'id':row.id};
         }else {
             $.extend( dataChanged[i].row, changes );
         }
@@ -249,20 +280,26 @@ function danceCreateSchoolDatagrid(datagridId, url) {
     /// 保存单元格修改
     function onSave(){
         if (endEditing()){
-            var rows = $(dg).datagrid('getChanges');
+            ///var rows = $(dg).datagrid('getChanges');
             ///alert(rows.length+' rows are changed!');
             console.log('onSave---');
             console.log(dataChanged);
             var dataToServer = [];
             for (var i = 0; i< dataChanged.length; i++) {
+                dataToServer[i] = { 'id': dataChanged[i].id === undefined ? 0 : dataChanged[i].id ,
+                    'row': dataChanged[i].row };
+            }
 
+            if (!dataToServer.length){
+                $.messager.alert('提示', '信息没有变化，不需要保存。请修改后再保存。', 'info');
+                return false;
             }
 
             $.ajax({
                 method: 'POST',
                 url: '/dance_school_update',      /// *** 修改点 ***
                 dataType: 'json',
-                data: {'data': dataToServer },
+                data: {'data': JSON.stringify(dataToServer) },
                 success: function (data,status) {
                     console.log('success in ajax. data.MSG=' + data.MSG + " status=" + status);
                     if (data.ErrorCode != 0) {
@@ -295,9 +332,17 @@ function danceCreateSchoolDatagrid(datagridId, url) {
                         + ' textStatus=' + textStatus + ' errorThrown=' + errorThrown);
                 }
             });
+        } else {
+            var msg = '信息不完整，请检查后再保存!';
+            $.messager.alert('提示', msg, 'warning');
         }
     }
     //// 编辑datagrid end //////////////////////////////////////////////////
+
+    /// 查询 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    function onSearch() {
+
+    }
 
     // 删除数据
     function onDel() {
