@@ -16,6 +16,13 @@ function danceCreateSchoolDatagrid(datagridId, url) {
     var btnDel = 'del' + datagridId;        // 删除按钮 ID
     var btnEdit = 'edit' + datagridId;      // 编辑按钮 ID
     var btnUndo = 'undo' + datagridId;      // Undo button ID
+    var btnAdd = 'add' + datagridId;        // Add button ID
+
+    var defaultSelField = 'school_name';     // 编辑表格时，默认选择的列
+    var fieldValidate = {'school_name': checkNotEmpty};     // 需要验证的字段
+
+    var BTN_STATUS = {  EDIT: 1,  UNDO: 2,  SAVE: 3 };      // 状态机 EDIT<-> UNDO
+
 
     $(dg).datagrid({
         // title: '分校信息',
@@ -33,7 +40,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
         pageList: [20, 30, 40, 50, 100],   //每页显示条数供选项
         rownumbers: true,   // True to show a row number column.
         toolbar: [{
-            text:"增加行", iconCls:'icon-add', handler:onAdd
+            text:"增加行", iconCls:'icon-add',id:btnAdd,disabled:true, handler:onAdd
         }, {
             text:"编辑表格", iconCls:'icon-edit_line', id:btnEdit, handler:onEdit
         }, {
@@ -52,7 +59,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
             // {field: 'no', title: '序号',  width: 15, align: 'center' },  //能自动显示行号，则不再需要自己实现
             {field: 'id', title: 'id',  width: 30, align: 'center' },
             {field: 'school_no', title: '分校编号', width: 100, align: 'center'},
-            {field: 'school_name', title: '分校名称*', width: 140, align: 'center', editor: { type: 'validatebox', options: { required: true} }},
+            {field: 'school_name', title: '分校名称*', width: 140, align: 'center', editor: 'textbox'},
             {field: 'address', title: '分校地址', width: 400, align: 'center', editor:'textbox'},
             {field: 'manager', title: '负责人姓名', width: 70, align: 'center', editor:'textbox'},
             {field: 'manager_phone', title: '负责人手机', width: 120, align: 'center', editor:'textbox'},
@@ -77,6 +84,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
     });
 
     $('#'+btnUndo).hide();      // 开始隐藏 Undo 按钮
+
     $('#'+ccId).combobox({     // 姓名 搜索框 combo box
         // url: '/dance_search',
         prompt: '校名拼音首字母查找',
@@ -140,28 +148,22 @@ function danceCreateSchoolDatagrid(datagridId, url) {
 
     /// 增加行
     function onAdd() {
+        endEditing();
         $(dg).datagrid('appendRow',{});
+        //console.log($(dg).datagrid('getRows'));
+        $(dg).datagrid('selectRow', $(dg).datagrid('getRows').length - 1);
     }
 
     //// 编辑datagrid begin //////////////////////////////////////////////////
     /// toolbar edit button
     function onEdit() {
         if (!isEditStatus) {     /// 未开启编辑
-            isEditStatus = true;
-
-            var gridOpts = $(dg).datagrid('options');
-            gridOpts.singleSelect = true;           //  单选行
-
+            btnStatus(BTN_STATUS.EDIT);
             var row = $(dg).datagrid('getSelected');
             if (row) {
                 var rowIdx = $(dg).datagrid('getRowIndex', row);
-                onClickCell(rowIdx, 'school_name');     /// *** 修改点 ***
+                onClickCell(rowIdx, defaultSelField);
             }
-
-            /// Disable the del button.
-            $('#'+btnDel).linkbutton('disable');
-            $(this).hide();
-            $('#'+btnUndo).show();
         }
     }
 
@@ -172,59 +174,33 @@ function danceCreateSchoolDatagrid(datagridId, url) {
                 $.messager.confirm({
                     title: '询问',
                     msg: '修改的内容将会丢失，确定不保存，继续撤销修改吗？',
-                    fn: function(bOK) {if (bOK) {dealUndo()}}
+                    fn: function(bOK) {if (bOK) {btnStatus(BTN_STATUS.UNDO)}}
                 });
-            } else {dealUndo()}
+            } else {btnStatus(BTN_STATUS.UNDO)}
         }
-    }
-
-    function dealUndo() {
-        isEditStatus = false;
-        $('#'+btnDel).linkbutton('enable');
-        $('#'+btnSave).linkbutton('disable');
-        $('#'+btnUndo).hide();
-        $('#'+btnEdit).show();
-        $(dg).datagrid('rejectChanges');
-        editIndex = undefined;
-
-        dataChanged = [];       /// 清空
-        dataOriginal = {};
-        var gridOpts = $(dg).datagrid('options');
-        gridOpts.singleSelect = false;
     }
 
     function endEditing(){
-        if (editIndex == undefined){return true}
-        if ($(dg).datagrid('validateRow', editIndex)){
-            $(dg).datagrid('endEdit', editIndex);
-            editIndex = undefined;
-            return true;
-        } else {
-            return false;
-        }
+        if (editIndex == undefined){return;}
+        $(dg).datagrid('endEdit', editIndex);
+        editIndex = undefined;
     }
 
     function onClickCell(index, field){
         if (!isEditStatus) { return; }
         if (editIndex != index){
-            if (endEditing()){
-                $(dg).datagrid('selectRow', index)
-                    .datagrid('beginEdit', index);
-                var ed = $(dg).datagrid('getEditor', {index:index,field:field});
-                if (ed){
-                    ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
-                }
-                editIndex = index;
-            } else {
-                setTimeout(function(){
-                    $(dg).datagrid('selectRow', editIndex);
-                },0);
+            endEditing();
+            $(dg).datagrid('selectRow', index)
+                .datagrid('beginEdit', index);
+            var ed = $(dg).datagrid('getEditor', {index:index,field:field});
+            if (ed){
+                ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
             }
+            editIndex = index;
         }
-    }   // end of onClickCell()
+    }
 
     function getChangedData(index,row,changes){
-        //console.info(index, row, changes);
         var i;
         for (i = 0; i< dataChanged.length; i++) {
             if (dataChanged[i].rowIndex == index) {
@@ -232,68 +208,93 @@ function danceCreateSchoolDatagrid(datagridId, url) {
             }
         }
         if (i == dataChanged.length) {
-            dataChanged[i]= {'rowIndex': index, 'row': changes, 'id':row.id};
+            // 按照 index 排序
+            var p = 0;
+            while (p < i && index > dataChanged[p].rowIndex) {p++;}
+            dataChanged.splice(p, 0, {'rowIndex': index, 'row': changes, 'id':row.id});
+            i = p;
         }else {
             $.extend( dataChanged[i].row, changes );
         }
 
-        //console.log(dataChanged);
         var cmpChanges = {};
-        var bHasChg = false;
         for (var k in dataChanged[i].row) {
             if (dataChanged[i].row.hasOwnProperty(k)) {
                 if (dataOriginal[index][k] || dataChanged[i].row[k]) {
                     cmpChanges[k] = dataChanged[i].row[k];
-                    bHasChg = true;
                 }
             }
         }
-        if (bHasChg) {
-            dataChanged[i].row = cmpChanges;
-            //console.log(dataChanged);
-            // 给发生改变的单元格，增加颜色，以突出显示
-            setCellStyle(dg, cmpChanges, true);
+        if ($.isEmptyObject(cmpChanges)) {
+            //dataChanged.pop();
+            dataChanged.splice(i,1);
+            // 清除样式，datagrid自动清理了。不需要再显示清理
         } else {
-            dataChanged.pop();
+            dataChanged[i].row = cmpChanges;
+            setCellStyle(dg, dataChanged[i], true);      // 给发生改变的单元格，增加颜色，以突出显示
         }
 
-        $('#'+btnSave).linkbutton(isDataChanged() ? 'enable':'disable');
+        // $('#'+btnSave).linkbutton(isDataChanged() ? 'enable':'disable');
     }
 
     // 设置/清除 单元样式
     var _old_background = undefined;
     function setCellStyle(dg, fieldValue, bSet) {
         var panel =  $(dg).datagrid('getPanel');
-        var tr = panel.find('div.datagrid-body tr');
-        for (var kc in fieldValue) {
-            if (!fieldValue.hasOwnProperty(kc)) { continue; }
-            tr.each(function(){
-                var td = $(this).children('td[field=' + kc + ']');  // 取出行中这一列。
-                var textValue = td.children("div").text(); // 取出该列的值。
-                if(textValue == fieldValue[kc]){    // 如果该值，符合某个条件
-                    if (bSet) {
-                        _old_background = td.children("div").css("background");
-                        td.children("div").css({
-                            "background": "red", "color": "blue"
-                        });
-                    } else {    /// 清除
-                        td.children("div").css({
-                            "background": _old_background, "color": "black"
-                        });
+        var tr = panel.find('div.datagrid-body tr[id$="-2-' + fieldValue.rowIndex + '"]');
+        for (var kc in fieldValue.row) {
+            if (!fieldValue.row.hasOwnProperty(kc)) { continue; }
+            var td = $(tr).children('td[field=' + kc + ']');  // 取出行中这一列。
+            if (bSet) {
+                _old_background = td.children("div").css("background");
+                td.children("div").css({"background": "red", "color": "white"});
+            }else {  /// 清除
+                td.children("div").css({"background": _old_background, "color": "black"});
+            }
+        }
+
+        for (var check in fieldValidate) {
+            if (bSet) {
+                var td = $(tr).children('td[field=' + check + ']');  // 取出行中这一列。
+                if (!(check in fieldValue.row) || !fieldValidate[check](fieldValue.row[check]) ) {
+                    var textValue = td.children("div").text(); // 取出该列的值。
+                    if (!textValue) {
+                        td.children("div").text('[请填写]');
                     }
+                    _old_background = td.children("div").css("background");
+                    td.children("div").css({"background": "purple", "color": "white"});
                 }
-            });
+            } else {
+                td.children("div").css({"background": _old_background, "color": "black"});
+            }
         }
     }
 
     // 表格编辑后，是否有内容变化。 返回 true 有变化； 返回 false， 无变化
     function isDataChanged() {
-        return dataChanged.length;
+        //var rows = $(dg).datagrid('getChanges');
+        //console.log(rows.length+' rows are changed!');
+        return dataChanged.length/* || rows*/;
+    }
+
+    // 合法性校验，false: 返回第一个未通过的行号。true: 通过校验。
+    var whichRowInvalid = undefined;
+    function validateDatagrid() {
+        endEditing();
+        for (var i = 0; i < dataChanged.length; i++) {
+            for (var field in fieldValidate) {
+                if (!(field in dataChanged[i].row) || !(fieldValidate.school_name(dataChanged[i].row[field])) ) {
+                    whichRowInvalid = dataChanged[i].rowIndex;
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     // 保存单元格修改
     function onSave(){
-        if (endEditing()){
+        if (validateDatagrid()){
             //var rows = $(dg).datagrid('getChanges');
             //alert(rows.length+' rows are changed!');
             console.log('onSave---');
@@ -305,7 +306,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
             }
 
             if (!dataToServer.length){
-                $.messager.alert('提示', '信息没有变化，不需要保存。请修改后再保存。', 'info');
+                $.messager.alert('提示', '内容无变化，请修改后再保存。', 'info');
                 return false;
             }
 
@@ -320,7 +321,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
                         $.messager.alert({
                             title: '错误',
                             msg: data.MSG,
-                            icon:'error', // Available value are: error,question,info,warning.
+                            icon:'error' // Available value are: error,question,info,warning.
                         });
                         return false;
                     }
@@ -330,20 +331,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
                     if (_pageNo > 1 && (_pageNo-1)*_pageSize >= _total) { _pageNo--; }
                     doAjaxGetData();
 
-                    for (var i = 0; i <dataChanged.length; i++) {
-                        setCellStyle(dg, dataChanged[i].row, false);
-                    }
-                    dataChanged = [];       /// 清空
-                    dataOriginal = {};
-                    $(dg).datagrid('acceptChanges');
-                    isEditStatus = false;
-                    $('#'+btnUndo).hide();
-                    $('#'+btnEdit).show();
-                    $('#'+btnSave).linkbutton('disable');
-                    $('#'+btnDel).linkbutton('enable');
-                    var gridOpts = $(dg).datagrid('options');
-                    gridOpts.singleSelect = false;
-
+                    btnStatus(BTN_STATUS.SAVE);
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     console.log('error in ajax. XMLHttpRequest=', + XMLHttpRequest
@@ -362,7 +350,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
 
     }
 
-    // 删除数据
+    // 删除数据 //////////////////////////////////////
     function onDel() {
         var row = $(dg).datagrid('getSelections');
         if (row.length == 0) {
@@ -372,7 +360,6 @@ function danceCreateSchoolDatagrid(datagridId, url) {
             var text = '数据删除后不能恢复！是否要删除选中的 ' + row.length + '条 数据？';
             $.messager.confirm('确认删除', text , function(r){
                 if (r){
-                    // 删除数据 //////////////////////////////////////
                     var ids = [];
                     for (var i = 0; i < row.length; i++) {
                         ids.push(row[i].id);
@@ -389,7 +376,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
                                 $.messager.alert({
                                     title: '错误',
                                     msg: data.MSG,
-                                    icon:'error', // Available value are: error,question,info,warning.
+                                    icon:'error'
                                 });
                                 return false;
                             }
@@ -403,10 +390,56 @@ function danceCreateSchoolDatagrid(datagridId, url) {
                                 + ' textStatus=' + textStatus + ' errorThrown=' + errorThrown);
                         }
                     });
-                    // end of 删除数据 //////////////////////////////////////
                 }
             });
         }
-    }   // end of onDel()
+    }   // end of 删除数据 //////////////////////////////////////
+
+    // 字段校验函数 ////////////////////////////////////////////////////////////////////
+    function checkNotEmpty(text) {
+        return text;
+    }
+
+    function btnStatus(action) {
+        var gridOpts = $(dg).datagrid('options');
+
+        var height = 30;
+        if ($(pager).height()) { height = $(pager).height(); }
+        if (action === BTN_STATUS.EDIT) {
+            isEditStatus = true;
+            gridOpts.singleSelect = true;       //  单选行
+            $('#'+btnDel).linkbutton('disable');
+            $('#'+btnSave).linkbutton('enable');
+            $('#'+btnAdd).linkbutton('enable');
+            $('#'+btnEdit).hide();
+            $('#'+btnUndo).show();
+            $(pager).animate({height:'0px'}, 0);
+            $(dg).datagrid('resize');
+        } else if (action === BTN_STATUS.UNDO) {
+            isEditStatus = false;
+            gridOpts.singleSelect = false;
+            $('#'+btnDel).linkbutton('enable');
+            $('#'+btnSave).linkbutton('disable');
+            $('#'+btnAdd).linkbutton('disable');
+            $('#'+btnUndo).hide();
+            $('#'+btnEdit).show();
+            $(pager).animate({height:height}, 0);
+            $(dg).datagrid('resize');
+
+            $(dg).datagrid('rejectChanges');
+            editIndex = undefined;
+            dataChanged = [];       /// 清空
+            dataOriginal = {};
+        } else if (action === BTN_STATUS.SAVE) {
+             for (var i = 0; i <dataChanged.length; i++) {      /// 清除样式
+                 setCellStyle(dg, dataChanged[i], false);
+             }
+            dataChanged = [];       /// 清空
+            dataOriginal = {};
+            $(dg).datagrid('acceptChanges');
+        } else {
+            console.log('Unknown action:' + action );
+        }
+    }
 
 }   // end of danceCreateSchoolDatagrid()
