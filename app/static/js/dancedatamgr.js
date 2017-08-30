@@ -22,6 +22,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
     var fieldValidate = {'school_name': checkNotEmpty};     // 需要验证的字段
 
     var BTN_STATUS = {  EDIT: 1,  UNDO: 2,  SAVE: 3 };      // 状态机 EDIT<-> UNDO
+    var dance_condition = '';               // 主datagrid表查询条件
 
 
     $(dg).datagrid({
@@ -50,7 +51,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
         }, {
             text:"保存", iconCls:'icon-save', disabled:true, id:btnSave, handler: onSave
         }, '-',{
-            text: '分校名称：<input id=' + ccId + ' name="dept" value="">'
+            text: '分校名称：<input id=' + ccId + '>'
         },{
             iconCls: 'icon-search', text:"查询", handler: onSearch
         }],
@@ -75,7 +76,6 @@ function danceCreateSchoolDatagrid(datagridId, url) {
         onClickCell: onClickCell,
         onAfterEdit: getChangedData,
         onBeforeEdit: function (index,row) {
-            ///console.info(index, row);
             if (!(index in dataOriginal)) {     // 不存在，则保存原始数据
                 dataOriginal[index] = {};
                 $.extend(dataOriginal[index], row);
@@ -86,14 +86,36 @@ function danceCreateSchoolDatagrid(datagridId, url) {
     $('#'+btnUndo).hide();      // 开始隐藏 Undo 按钮
 
     $('#'+ccId).combobox({     // 姓名 搜索框 combo box
-        // url: '/dance_search',
+        //url: url + '_query',
+        //method:'post',
         prompt: '校名拼音首字母查找',
-        valueField: 'id',
+        valueField: 'value',
         textField: 'text',
         width: 140,
-        panelHeight: "auto"
-        // label: '姓名：'
+        panelHeight: "auto",
+        onChange:autoComplete,
+        /*
+        formatter: function(row){
+            var opts = $(this).combobox('options');
+            return row[opts.textField];
+        },
+        filter: function(q, row){
+            var opts = $(this).combobox('options');
+            return row[opts.textField].indexOf(q) >-1;;
+        }, */
+        onSelect:function(record) {
+            $('#'+ccId).focus();
+        }
     });
+
+    autoComplete('','');
+    function autoComplete (newValue,oldValue) {
+        console.log('newValue=' + newValue + ' oldValue=' + oldValue);
+        dance_condition = $.trim(newValue);
+        $.post(url+'_query',{'condition': dance_condition }, function(data){
+            $('#'+ccId).combobox('loadData', data);
+        },'json');
+    }
 
     var pager = dg.datagrid('getPager');
     $(pager).pagination({
@@ -122,10 +144,10 @@ function danceCreateSchoolDatagrid(datagridId, url) {
     function doAjaxGetData () {
         $.ajax({
             method: 'POST',
-            url: url,
+            url: url + '_get',
             async: true,
             dataType: 'json',
-            data: {'rows': _pageSize, 'page': _pageNo},
+            data: {'rows': _pageSize, 'page': _pageNo, 'condition': dance_condition},
             success: function (data) {
                 console.log(data);
                 // 注意此处从数据库传来的data数据有记录总行数的total列和 rows
@@ -143,7 +165,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
                 });
             }
         });
-    }   /// end of doAjaxGetData()
+    }
 
 
     /// 增加行
@@ -312,7 +334,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
 
             $.ajax({
                 method: 'POST',
-                url: '/dance_school_update',      /// *** 修改点 ***
+                url:  url + '_update',
                 dataType: 'json',
                 data: {'data': JSON.stringify(dataToServer) },
                 success: function (data,status) {
@@ -347,7 +369,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
 
     // 查询 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     function onSearch() {
-
+       doAjaxGetData();
     }
 
     // 删除数据 //////////////////////////////////////
@@ -441,5 +463,4 @@ function danceCreateSchoolDatagrid(datagridId, url) {
             console.log('Unknown action:' + action );
         }
     }
-
-}   // end of danceCreateSchoolDatagrid()
+}

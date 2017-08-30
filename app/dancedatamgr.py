@@ -6,18 +6,21 @@ from models import DanceSchool
 import json
 
 
-@app.route('/dance_get_school', methods=['POST'])
-def dance_get_school():
+@app.route('/dance_school_get', methods=['POST'])
+def dance_school_get():
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
+    condition = request.form['condition']
+
     print '[dance_get_school]: page_size=', page_size, ' page_no=', page_no
     if page_no <= 0:    # 补丁
         page_no = 1
     rows = []
     total = DanceSchool.query.count()
     offset = (page_no - 1) * page_size
-    records = DanceSchool.query.order_by(DanceSchool.school_no.asc(),
-                                         DanceSchool.school_name).limit(page_size).offset(offset)
+    records = DanceSchool.query.order_by(
+        DanceSchool.school_no.asc(), DanceSchool.school_name).filter(
+        DanceSchool.school_name.like('%'+condition+'%')).limit(page_size).offset(offset)
     i = offset + 1
     for rec in records:
         rows.append({"id": rec.id, "school_no": rec.school_no, "school_name": rec.school_name,
@@ -60,3 +63,16 @@ def dance_school_update():
     db.session.commit()
 
     return jsonify({'ErrorCode': 0, 'MSG': 'school information update success!'})
+
+
+@app.route('/dance_school_query', methods=['POST'])
+def dance_school_query():
+    json_data = request.form['condition']
+
+    ret = []
+    records = DanceSchool.query.order_by(
+        DanceSchool.school_no.asc()).filter(DanceSchool.school_name.like('%'+json_data + '%'))
+    for rec in records:
+        ret.append({'value': rec.school_name, 'text': rec.school_name})
+
+    return jsonify(ret)

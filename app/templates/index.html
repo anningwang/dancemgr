@@ -6,6 +6,7 @@
 	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/default/easyui.css">
 	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/icon.css">
     <link rel="stylesheet" type="text/css" href="/static/css/IconExtension.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/dancemgr.css">
 	<script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.min.js"></script>
 	<script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
 
@@ -88,7 +89,7 @@
                     danceCreateClassDatagrid(tableId, '/dance_get_class');
                 }else if(node.text == '分校信息') {
                     danceAddTab('danceTabs', node.text, tableId);
-                    danceCreateSchoolDatagrid(tableId, '/dance_get_school');
+                    danceCreateSchoolDatagrid(tableId, '/dance_school');
                 }
                 else {
                     addTab(node.text,'http://jeasyui.com/', tableId);
