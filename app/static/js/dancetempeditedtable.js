@@ -304,7 +304,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
 
         for (var check in fieldValidate) {
             if (bSet) {
-                var td = $(tr).children('td[field=' + check + ']');  // 取出行中这一列。
+                td = $(tr).children('td[field=' + check + ']');  // 取出行中这一列。
                 if (!(check in fieldValue.row) || !fieldValidate[check](fieldValue.row[check]) ) {
                     var textValue = td.children("div").text(); // 取出该列的值。
                     if (!textValue) {
@@ -442,11 +442,9 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         }
     }   // end of 删除数据 //////////////////////////////////////
 
+    var __pagerHeight = 30;
     function btnStatus(action) {
         var gridOpts = $(dg).datagrid('options');
-
-        var height = 30;
-        if ($(pager).height()) { height = $(pager).height(); }
         if (action === BTN_STATUS.EDIT) {
             isEditStatus = true;
             gridOpts.singleSelect = true;       //  单选行
@@ -457,6 +455,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             $('#'+ccId).combobox('disable');
             $('#'+btnEdit).hide();
             $('#'+btnUndo).show();
+            __pagerHeight = $(pager).height() ? $(pager).height() : 30;
             $(pager).animate({height:'0px'}, 0);
             $(dg).datagrid('resize');
         } else if (action === BTN_STATUS.UNDO) {
@@ -469,7 +468,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             $('#'+ccId).combobox('enable');
             $('#'+btnUndo).hide();
             $('#'+btnEdit).show();
-            $(pager).animate({height:height}, 0);
+            $(pager).animate({height:__pagerHeight}, 0);
             $(dg).datagrid('resize');
 
             $(dg).datagrid('rejectChanges');

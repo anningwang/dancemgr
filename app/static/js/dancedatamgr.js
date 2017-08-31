@@ -8,7 +8,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
     var ccId = 'cc' + datagridId;   // Combo box,姓名查找框ID
     var dg = $('#' + datagridId);
     var editIndex = undefined;      // 被编辑行的索引
-    var isEditStatus = false;      // 表格处于编辑状态
+    var isEditStatus = false;       // 表格处于编辑状态
     var dataOriginal = {};          // 原始数据，未修改前的数据
     var dataChanged = [];           // 当编辑表格时，记录发生变化的行及变化内容
 

@@ -4,6 +4,10 @@ from app import app, db
 from models import DanceSchool, DanceUser
 import json
 
+ERROR_CODE_USER_IS_EXIST = 100
+
+ERROR_MSG_USER_IS_EXIST = u'用户名称 [%s] 已经存在！'
+
 
 @app.route('/dance_school_get', methods=['POST'])
 def dance_school_get():
@@ -129,6 +133,12 @@ def dance_user_update():
                     new_id += 1
             else:
                 new_id += 1
+            # 查询是否存在重名用户，若存在，返回错误
+            is_exist = DanceUser.query.filter_by(name=obj_data[i]['row']['name']).first()
+            if is_exist is not None:
+                return jsonify({'errorCode': ERROR_CODE_USER_IS_EXIST,
+                                'msg': ERROR_MSG_USER_IS_EXIST % obj_data[i]['row']['name']})
+
             user = DanceUser(obj_data[i]['row'])
             user.recorder = 'WXG'
             user.user_no = '%03d' % new_id

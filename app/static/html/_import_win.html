@@ -14,20 +14,64 @@
 					data-options="iconCls:'icon-save', modal:true,minimizable:false,collapsible:false" 
 					style="width:600px;height:400px;padding:5px;">
 	<div class="easyui-layout" data-options="fit:true">
-		<div data-options="region:'north',split:false" style="height:100px; padding:15px 10px"">
-			<input class="easyui-filebox" label="请选择要导入的文件：" labelPosition="top" 
-			data-options="buttonText:'选择文件',buttonIcon:'icon-search',prompt:'请选择要导入的文件...',accept:'excel/*'" 
-			style="width:100%" id='uploadfile'>
-		</div>
-		<div data-options="region:'center'" style="padding:10px;">
-			导入选项：
-		</div>
-		<div data-options="region:'south',border:false" style="text-align:right;padding:5px 0 0;">
-			<a class="easyui-linkbutton" data-options="iconCls:'icon-ok'" href="javascript:void(0)" onclick="javascript:alert($('#uploadfile').filebox('getValue'))" style="width:80px">导入</a>
-			<a class="easyui-linkbutton" data-options="iconCls:'icon-cancel'" href="javascript:void(0)" onclick="javascript:$('#w').window('close')" style="width:80px">取消</a>
-		</div>
+		<form id="questionTypesManage"  method="post" action="/api/upload" enctype="multipart/form-data">
+			<div data-options="region:'north',split:false,border:false" style="height:100px; padding:15px 10px">
+				<input class="easyui-filebox" id="uploadExcel" name="uploadExcel" label="请选择要导入的文件：" labelPosition="top"
+					   data-options="buttonText:'选择文件',buttonIcon:'icon-search',prompt:'请选择要导入的文件...',accept:'excel/*'"
+					   style="width:100%">
+			</div>
+			<div data-options="region:'center',border:true" style="padding:10px;">
+				导入选项：
+			</div>
+			<div data-options="region:'south',border:false" style="text-align:right;padding:5px 0 0;">
+				<a class="easyui-linkbutton" data-options="iconCls:'icon-ok'" href="javascript:void(0)" onclick="uploadExcel()" style="width:80px">导入</a>
+				<a class="easyui-linkbutton" data-options="iconCls:'icon-cancel'" href="javascript:void(0)" onclick="javascript:$('#w').window('close')" style="width:80px">取消</a>
+			</div>
+		</form>
 	</div>
 </div>
+
+<script>
+	//'use strict';
+
+	function uploadExcel(){
+		//得到上传文件的全路径
+		var fileName= $('#uploadExcel').filebox('getValue');
+		console.log(fileName);
+		//获取题型
+		//var id= $('#questionType').combobox('getValue');
+		//var questionTypes=encodeURI(id);
+
+		//if(questionTypes !=""){
+			//进行基本校验
+			if(fileName==""){
+				$.messager.alert('提示','请选择上传文件！','info');
+			}else{
+				//对文件格式进行校验
+				var d1=/\.[^\.]+$/.exec(fileName);
+				if(d1==".xls"){
+					//获取题型
+					//var id= $('#questionType').combobox('getValue')
+					//var questionTypes=encodeURI(id);
+
+					//获取课程
+					//var courseTypeId =$('#courseTypeId').combobox('getValue')
+					//var courseType=encodeURI(courseTypeId);
+
+					//提交表单
+					//document.getElementById("questionTypesManage").action="${pageContext.request.contextPath}/leadtoQuestionTypes/leadInExcelQuestionBank?questionType="+questionTypes+"&courseType="+courseType;
+					document.getElementById("questionTypesManage").submit();
+					$.messager.alert('提示','操作成功！','info');
+				}else{
+					$.messager.alert('提示','请选择xls格式文件！','info');
+					//$('#uploadExcel').filebox('setValue','');
+				}
+			}
+		//}else{
+		//	$.messager.alert('提示','请选择课程题型！','info');
+		//}
+	}
+</script>
 	
 </body>
 </html>
