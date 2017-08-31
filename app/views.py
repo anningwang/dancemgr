@@ -5,7 +5,7 @@ from flask_sqlalchemy import get_debug_queries
 from flask_babel import gettext
 from app import app, db, lm, oid, babel
 from forms import LoginForm, EditForm, PostForm, SearchForm
-from models import User, ROLE_USER, ROLE_ADMIN, Post, HzToken, HzLocation, DanceStudent, DanceClass
+from models import User, ROLE_USER, ROLE_ADMIN, Post, HzLocation, DanceStudent, DanceClass, DanceSchool, DanceUser
 from datetime import datetime
 from emails import follower_notification
 from guess_language import guessLanguage
@@ -13,7 +13,6 @@ from translate import microsoft_translate
 from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY_TIMEOUT
 import random
 from dijkstra import min_dist2, get_nearest_vertex, hz_vertex
-from lbs import TEST_UID, CUR_MAP_SCALE, HZ_MAP_GEO_WIDTH, HZ_MAP_GEO_HEIGHT
 from app.tools.upload import *
 
 
@@ -294,8 +293,8 @@ def get_path():
     return jsonify(ret_loc_with_path)
 
 
-@app.route('/dance_get_location', methods=['POST'])
-def dance_get_location():
+@app.route('/dance_location_get', methods=['POST'])
+def dance_location_get():
     page_size = int(request.form['pageSize'])
     page_no = int(request.form['pageNo'])
     if page_no <= 0:
@@ -367,20 +366,22 @@ def dance_del_data():
     ids = request.form.getlist('ids[]')
     print 'who=', who, ' ids=', ids
 
-    table = DanceStudent
-
     if who == 'DanceClass':
         table = DanceClass
     elif who == 'DanceStudent':
         table = DanceStudent
+    elif who == 'DanceSchool':
+        table = DanceSchool
+    elif who == 'DanceUser':
+        table = DanceUser
     else:
-        return jsonify({'ErrorCode': 1, "MSG": "Table not found!"})     # error
+        return jsonify({'errorCode': 1, "msg": "Table not found!"})     # error
 
     for i in ids:
         db.session.delete(table.query.get(i))
     db.session.commit()
 
-    return jsonify({'ErrorCode': 0, "MSG": "Ok for del."})
+    return jsonify({'errorCode': 0, "msg": "Ok for del."})
 
 
 @app.route('/dance_get_student_details', methods=['POST', 'GET'])

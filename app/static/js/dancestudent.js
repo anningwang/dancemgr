@@ -218,11 +218,11 @@ function danceCreateStudentDatagrid(datagridId, url) {
                                 dataType: 'json',
                                 data: {'ids': ids, 'who': 'DanceStudent'},
                                 success: function (data,status) {
-                                    console.log('success in ajax. data.MSG=' + data.MSG + " status=" + status);
-                                    if (data.ErrorCode != 0) {
+                                    console.log('success in ajax. data.MSG=' + data.msg + " status=" + status);
+                                    if (data.errorCode != 0) {
                                         $.messager.alert({
                                             title: '错误',
-                                            msg: data.MSG,
+                                            msg: data.msg,
                                             icon:'error', // Available value are: error,question,info,warning.
                                             fn: function(){
                                                 //...

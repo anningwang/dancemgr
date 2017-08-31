@@ -1,7 +1,53 @@
 
 'use strict';
 
-function danceCreateSchoolDatagrid(datagridId, url) {
+var opts = {
+    'defaultSelField' : 'school_name',
+    'fieldValidate' : {'school_name': checkNotEmpty},
+    'queryText': '分校名称',
+    'queryPrompt': '校名拼音首字母查找',
+    'who': 'DanceSchool',
+    'columns': [[
+        {field: 'ck', checkbox:true },   // checkbox
+        // {field: 'no', title: '序号',  width: 15, align: 'center' },  // 能自动显示行号，则不再需要自己实现
+        // {field: 'id', title: 'id',  width: 30, align: 'center' },
+        {field: 'school_no', title: '分校编号', width: 100, align: 'center'},
+        {field: 'school_name', title: '分校名称*', width: 140, align: 'center', editor: 'textbox'},
+        {field: 'address', title: '分校地址', width: 400, align: 'center', editor:'textbox'},
+        {field: 'manager', title: '负责人姓名', width: 70, align: 'center', editor:'textbox'},
+        {field: 'manager_phone', title: '负责人手机', width: 120, align: 'center', editor:'textbox'},
+        {field: 'tel', title: '分校联系电话', width: 120, align: 'center', editor:'textbox'},
+        {field: 'zipcode', title: '邮政编码', width: 70, align: 'center', editor:'textbox'},
+        {field: 'remark', title: '备注', width: 200, align: 'center', editor:'textbox'},
+        {field: 'recorder', title: '录入员', width: 70, align: 'center'}
+    ]]
+};
+
+var opts_user = {
+    'defaultSelField' : 'name',
+    'fieldValidate' : {'name': checkNotEmpty},
+    'queryText': '用户名',
+    'queryPrompt': '用户拼音首字母查找',
+    'who': 'DanceUser',
+    'columns': [[
+        {field: 'ck', checkbox:true },   // checkbox
+        {field: 'user_no', title: '用户编号', width: 100, align: 'center'},
+        {field: 'name', title: '用户名称*', width: 140, align: 'center', editor: 'textbox'},
+        {field: 'pwd', title: '用户密码', width: 100, align: 'center', editor:'textbox'},
+        {field: 'phone', title: '联系电话', width: 140, align: 'center', editor:'textbox'},
+        {field: 'role', title: '所属角色', width: 120, align: 'center', editor:'textbox'},
+        {field: 'school_mgr', title: '允许管理分校', width: 300, align: 'center', editor:'textbox'},
+        {field: 'recorder', title: '录入员', width: 70, align: 'center'}
+    ]]
+};
+
+// 字段校验函数 ////////////////////////////////////////////////////////////////////
+// return value: true - check pass. false - not pass.
+function checkNotEmpty(text) {
+    return text;
+}
+
+function danceCreateEditedDatagrid(datagridId, url, options) {
     var _pageSize = 30;
     var _pageNo = 1;
     var _total = 0;
@@ -17,9 +63,11 @@ function danceCreateSchoolDatagrid(datagridId, url) {
     var btnEdit = 'edit' + datagridId;      // 编辑按钮 ID
     var btnUndo = 'undo' + datagridId;      // Undo button ID
     var btnAdd = 'add' + datagridId;        // Add button ID
+    var btnSearch = 'search' + datagridId;  // Search button ID
 
-    var defaultSelField = 'school_name';     // 编辑表格时，默认选择的列
-    var fieldValidate = {'school_name': checkNotEmpty};     // 需要验证的字段
+    //var defaultSelField = 'school_name';     // 编辑表格时，默认选择的列
+    //var fieldValidate = {'school_name': checkNotEmpty};     // 需要验证的字段
+    var fieldValidate = options.fieldValidate;
 
     var BTN_STATUS = {  EDIT: 1,  UNDO: 2,  SAVE: 3 };      // 状态机 EDIT<-> UNDO
     var dance_condition = '';               // 主datagrid表查询条件
@@ -27,7 +75,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
 
     $(dg).datagrid({
         // title: '分校信息',
-        iconCls: 'icon-a_detail',
+        // iconCls: 'icon-a_detail',
         fit: true,
         //fitColumns: true,
         pagination: true,   // True to show a pagination toolbar on datagrid bottom.
@@ -51,24 +99,11 @@ function danceCreateSchoolDatagrid(datagridId, url) {
         }, {
             text:"保存", iconCls:'icon-save', disabled:true, id:btnSave, handler: onSave
         }, '-',{
-            text: '分校名称：<input id=' + ccId + '>'
+            text: options.queryText + '：<input id=' + ccId + '>'
         },{
-            iconCls: 'icon-search', text:"查询", handler: onSearch
+            iconCls: 'icon-search', text:"查询", id:btnSearch, handler: onSearch
         }],
-        columns: [[
-            {field: 'ck', checkbox:true },   // checkbox
-            // {field: 'no', title: '序号',  width: 15, align: 'center' },  //能自动显示行号，则不再需要自己实现
-            // {field: 'id', title: 'id',  width: 30, align: 'center' },
-            {field: 'school_no', title: '分校编号', width: 100, align: 'center'},
-            {field: 'school_name', title: '分校名称*', width: 140, align: 'center', editor: 'textbox'},
-            {field: 'address', title: '分校地址', width: 400, align: 'center', editor:'textbox'},
-            {field: 'manager', title: '负责人姓名', width: 70, align: 'center', editor:'textbox'},
-            {field: 'manager_phone', title: '负责人手机', width: 120, align: 'center', editor:'textbox'},
-            {field: 'tel', title: '分校联系电话', width: 120, align: 'center', editor:'textbox'},
-            {field: 'zipcode', title: '邮政编码', width: 70, align: 'center', editor:'textbox'},
-            {field: 'remark', title: '备注', width: 200, align: 'center', editor:'textbox'},
-            {field: 'recorder', title: '录入员', width: 70, align: 'center'}
-        ]],
+        columns: options.columns,
         onLoadSuccess: function () {
             $(dg).datagrid("fixRownumber");
             $(dg).datagrid('loaded');
@@ -88,19 +123,19 @@ function danceCreateSchoolDatagrid(datagridId, url) {
     $('#'+ccId).combobox({     // 姓名 搜索框 combo box
         //url: url + '_query',
         //method:'post',
-        prompt: '校名拼音首字母查找',
+        prompt: options.queryPrompt,
         valueField: 'value',
         textField: 'text',
         width: 140,
         panelHeight: "auto",
         onChange:autoComplete,
         onSelect:function(record) {
-            $('#'+ccId).focus();
-            doAjaxGetData();
+            //$('#'+ccId).focus();
+            //doAjaxGetData();          // 1.52 当用户选择后，函数 onSelect 会执行两次!!!
         }
     });
 
-    autoComplete('','');
+    autoComplete(dance_condition,'');
     function autoComplete (newValue,oldValue) {
         console.log('newValue=' + newValue + ' oldValue=' + oldValue);
         dance_condition = $.trim(newValue);
@@ -176,7 +211,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
             var row = $(dg).datagrid('getSelected');
             if (row) {
                 var rowIdx = $(dg).datagrid('getRowIndex', row);
-                onClickCell(rowIdx, defaultSelField);
+                onClickCell(rowIdx, options.defaultSelField);
             }
         }
     }
@@ -286,9 +321,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
 
     // 表格编辑后，是否有内容变化。 返回 true 有变化； 返回 false， 无变化
     function isDataChanged() {
-        //var rows = $(dg).datagrid('getChanges');
-        //console.log(rows.length+' rows are changed!');
-        return dataChanged.length/* || rows*/;
+        return dataChanged.length;
     }
 
     // 合法性校验，false: 返回第一个未通过的行号。true: 通过校验。
@@ -297,7 +330,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
         endEditing();
         for (var i = 0; i < dataChanged.length; i++) {
             for (var field in fieldValidate) {
-                if (!(field in dataChanged[i].row) || !(fieldValidate.school_name(dataChanged[i].row[field])) ) {
+                if (!(field in dataChanged[i].row) || !(fieldValidate[field](dataChanged[i].row[field])) ) {
                     whichRowInvalid = dataChanged[i].rowIndex;
                     return false;
                 }
@@ -361,7 +394,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
 
     // 查询 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     function onSearch() {
-       doAjaxGetData();
+        doAjaxGetData();
     }
 
     // 删除数据 //////////////////////////////////////
@@ -383,7 +416,7 @@ function danceCreateSchoolDatagrid(datagridId, url) {
                         method: 'POST',
                         url: '/dance_del_data',
                         dataType: 'json',
-                        data: {'ids': ids, 'who': 'DanceSchool'},       /// *** 修改点 ***
+                        data: {'ids': ids, 'who':options.who},
                         success: function (data,status) {
                             console.log('success in ajax. data.msg=' + data.msg + " status=" + status);
                             if (data.errorCode != 0) {
@@ -409,12 +442,6 @@ function danceCreateSchoolDatagrid(datagridId, url) {
         }
     }   // end of 删除数据 //////////////////////////////////////
 
-    // 字段校验函数 ////////////////////////////////////////////////////////////////////
-    // return value: true - check pass. false - not pass.
-    function checkNotEmpty(text) {
-        return text;
-    }
-
     function btnStatus(action) {
         var gridOpts = $(dg).datagrid('options');
 
@@ -426,6 +453,8 @@ function danceCreateSchoolDatagrid(datagridId, url) {
             $('#'+btnDel).linkbutton('disable');
             $('#'+btnSave).linkbutton('enable');
             $('#'+btnAdd).linkbutton('enable');
+            $('#'+btnSearch).linkbutton('disable');
+            $('#'+ccId).combobox('disable');
             $('#'+btnEdit).hide();
             $('#'+btnUndo).show();
             $(pager).animate({height:'0px'}, 0);
@@ -436,6 +465,8 @@ function danceCreateSchoolDatagrid(datagridId, url) {
             $('#'+btnDel).linkbutton('enable');
             $('#'+btnSave).linkbutton('disable');
             $('#'+btnAdd).linkbutton('disable');
+            $('#'+btnSearch).linkbutton('enable');
+            $('#'+ccId).combobox('enable');
             $('#'+btnUndo).hide();
             $('#'+btnEdit).show();
             $(pager).animate({height:height}, 0);
@@ -446,9 +477,9 @@ function danceCreateSchoolDatagrid(datagridId, url) {
             dataChanged = [];       /// 清空
             dataOriginal = {};
         } else if (action === BTN_STATUS.SAVE) {
-             for (var i = 0; i <dataChanged.length; i++) {      /// 清除样式
-                 setCellStyle(dg, dataChanged[i], false);
-             }
+            for (var i = 0; i <dataChanged.length; i++) {      /// 清除样式
+                setCellStyle(dg, dataChanged[i], false);
+            }
             dataChanged = [];       /// 清空
             dataOriginal = {};
             $(dg).datagrid('acceptChanges');

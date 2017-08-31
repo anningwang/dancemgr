@@ -474,4 +474,53 @@ class DanceSchool(db.Model):
     def __repr__(self):
         return '<DanceClass %r>' % self.school_no
 
+
+class DanceUser(db.Model):
+    """
+        用户基本信息表 -- Anningwang
+    """
+    id = db.Column(db.Integer, primary_key=True)        # id  01
+    user_no = db.Column(db.String(10), unique=True)     # 用户编号 02
+    name = db.Column(db.String(20))                     # 用户名称 03
+    pwd = db.Column(db.String(20))                      # 用户密码 04
+    phone = db.Column(db.String(20))                    # 联系电话 05
+    role = db.Column(db.Integer)                        # 所属角色 06
+    school_mgr = db.Column(db.String(80))               # 允许管理分校 07
+    recorder = db.Column(db.String(20))                 # 录入员 08
+
+    def __init__(self, para):
+        if 'user_no' in para:
+            self.user_no = para['user_no']   # 用户编号 02
+        if 'name' in para:
+            self.name = para['name']        # 用户名称 03
+        if 'pwd' in para:
+            self.pwd = para['pwd']          # 用户密码 04
+        if 'phone' in para:
+            self.phone = para['phone']      # 联系电话 05
+        if 'role' in para:
+            self.role = para['role']        # 所属角色 06
+        if 'school_mgr' in para:
+            self.school_mgr = para['school_mgr']    # 允许管理分校 07
+        if 'recorder' in para:
+            self.recorder = para['recorder']    # 录入员 08
+
+    def update_data(self, para):
+        if 'user_no' in para:
+            self.user_no = para['user_no']  # 用户编号 02
+        if 'name' in para:
+            self.name = para['name']        # 用户名称 03
+        if 'pwd' in para:
+            self.pwd = para['pwd']          # 用户密码 04
+        if 'phone' in para:
+            self.phone = para['phone']      # 联系电话 05
+        if 'role' in para:
+            self.role = para['role']        # 所属角色 06
+        if 'school_mgr' in para:
+            self.school_mgr = para['school_mgr']    # 允许管理分校 07
+        if 'recorder' in para:
+            self.recorder = para['recorder']    # 录入员 08
+
+    def __repr__(self):
+        return '<DanceUser %r>' % self.no
+
 whooshalchemy.whoosh_index(app, Post)

@@ -1,8 +1,7 @@
 # -*- coding:utf-8 -*-
-from flask import render_template, flash, redirect, session, url_for, request, g, jsonify
-from flask_login import login_user, logout_user, current_user, login_required
-from app import app, db, lm, oid, babel
-from models import DanceSchool
+from flask import request, jsonify
+from app import app, db
+from models import DanceSchool, DanceUser
 import json
 
 
@@ -16,7 +15,11 @@ def dance_school_get():
     if page_no <= 0:    # 补丁
         page_no = 1
     rows = []
-    total = DanceSchool.query.count()
+    if condition == '':
+        total = DanceSchool.query.count()
+    else:
+        total = DanceSchool.query.filter(DanceSchool.school_name.like('%'+condition+'%')).count()
+
     offset = (page_no - 1) * page_size
     records = DanceSchool.query.order_by(
         DanceSchool.school_no.asc(), DanceSchool.school_name).filter(
@@ -62,7 +65,7 @@ def dance_school_update():
             db.session.add(school)
     db.session.commit()
 
-    return jsonify({'ErrorCode': 0, 'MSG': 'school information update success!'})
+    return jsonify({'errorCode': 0, 'msg': 'school information update success!'})
 
 
 @app.route('/dance_school_query', methods=['POST'])
@@ -74,5 +77,82 @@ def dance_school_query():
         DanceSchool.school_no.asc()).filter(DanceSchool.school_name.like('%'+json_data + '%'))
     for rec in records:
         ret.append({'value': rec.school_name, 'text': rec.school_name})
+
+    return jsonify(ret)
+
+###############################################################################
+
+
+@app.route('/dance_user_get', methods=['POST'])
+def dance_user_get():
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    condition = request.form['condition']
+
+    print '[dance_user_get]: page_size=', page_size, ' page_no=', page_no
+    if page_no <= 0:    # 补丁
+        page_no = 1
+    rows = []
+    if condition == '':
+        total = DanceUser.query.count()
+    else:
+        total = DanceUser.query.filter(DanceUser.school_name.like('%'+condition+'%')).count()
+
+    offset = (page_no - 1) * page_size
+    records = DanceUser.query.order_by(
+        DanceUser.user_no.asc(), DanceUser.name).filter(
+        DanceUser.name.like('%'+condition+'%')).limit(page_size).offset(offset)
+    i = offset + 1
+    for rec in records:
+        rows.append({"id": rec.id, "user_no": 'USER-' + rec.user_no, "name": rec.name,
+                     "pwd": '********', "phone": rec.phone, "role": rec.role,
+                     'school_mgr': rec.school_mgr, 'recorder': rec.recorder, 'no': i
+                     })
+        i += 1
+    return jsonify({"total": total, "rows": rows})
+
+
+@app.route('/dance_user_update', methods=['POST'])
+def dance_user_update():
+    json_data = request.form['data']
+    obj_data = json.loads(json_data)
+
+    new_id = 0
+    for i in range(len(obj_data)):
+        if obj_data[i]['id'] <= 0:
+            # add record
+            if new_id == 0:
+                rec = DanceUser.query.order_by(DanceUser.user_no.desc()).first()
+                if rec is not None:
+                    new_id = int(rec.user_no) + 1
+                else:
+                    new_id += 1
+            else:
+                new_id += 1
+            user = DanceUser(obj_data[i]['row'])
+            user.recorder = 'WXG'
+            user.user_no = '%03d' % new_id
+            db.session.add(user)
+        else:
+            # update record
+            user = DanceUser.query.filter_by(id=obj_data[i]['id']).first()
+            if user is None:
+                continue
+            user.update_data(obj_data[i]['row'])
+            db.session.add(user)
+    db.session.commit()
+
+    return jsonify({'errorCode': 0, 'msg': 'user information update success!'})
+
+
+@app.route('/dance_user_query', methods=['POST'])
+def dance_user_query():
+    json_data = request.form['condition']
+
+    ret = []
+    records = DanceUser.query.order_by(
+        DanceUser.user_no.asc()).filter(DanceUser.name.like('%'+json_data + '%'))
+    for rec in records:
+        ret.append({'value': rec.name, 'text': rec.name})
 
     return jsonify(ret)

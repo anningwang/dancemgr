@@ -17,22 +17,22 @@
 	<div data-options="region:'west',split:true,hideCollapsedContent:false,title:'功能栏'" style="width:200px;">
         <div class="easyui-accordion" data-options="fit:true,border:false">
             <div title="学员管理" data-options="iconCls:'icon-student'" style="padding:1px">
-                <ul id="treeStudent" class="easyui-tree" data-options="url:'/static/html/tree_student.json',method:'get',animate:true,dnd:true"></ul>
+                <ul id="treeStudent" class="easyui-tree" data-options="url:'/static/html/tree_student.json',method:'get',animate:true,lines:true"></ul>
             </div>
             <div title="员工与老师" data-options="iconCls:'icon-teacher', selected:true" style="padding:1px">
-                <ul id="treeTeacher" class="easyui-tree" data-options="url:'/static/html/tree_teacher.json',method:'get',animate:true,dnd:true"></ul>
+                <ul id="treeTeacher" class="easyui-tree" data-options="url:'/static/html/tree_teacher.json',method:'get',animate:true,lines:true"></ul>
             </div>
-            <div title="教学管理" data-options="iconCls:'icon-book'" data-options="iconCls:'icon-help'" style="padding:1px">
-                <ul id="treeSchool" class="easyui-tree" data-options="url:'/static/html/tree_school.json',method:'get',animate:true,dnd:true"></ul>
+            <div title="教学管理" data-options="iconCls:'icon-book'" style="padding:1px">
+                <ul id="treeSchool" class="easyui-tree" data-options="url:'/static/html/tree_school.json',method:'get',animate:true,lines:true"></ul>
             </div>
             <div title="物品管理" data-options="iconCls:'icon-computer'" style="padding:1px">
-                <ul id="treeAsset" class="easyui-tree" data-options="url:'/static/html/tree_asset.json',method:'get',animate:true,dnd:true"></ul>
+                <ul id="treeAsset" class="easyui-tree" data-options="url:'/static/html/tree_asset.json',method:'get',animate:true,lines:true"></ul>
             </div>
             <div title="财务管理" data-options="iconCls:'icon-money_yen'" style="padding:1px">
-                <ul id="treeFinance" class="easyui-tree" data-options="url:'/static/html/tree_finance.json',method:'get',animate:true,dnd:true"></ul>
+                <ul id="treeFinance" class="easyui-tree" data-options="url:'/static/html/tree_finance.json',method:'get',animate:true,lines:true"></ul>
             </div>
             <div title="数据管理" data-options="iconCls:'icon-databases'" style="padding:1px">
-                <ul id="treeDb" class="easyui-tree" data-options="url:'/static/html/tree_db.json',method:'get',animate:true,dnd:true"></ul>
+                <ul id="treeDb" class="easyui-tree" data-options="url:'/static/html/tree_db.json',method:'get',animate:true,lines:true"></ul>
             </div>
         </div>
 	</div>
@@ -40,29 +40,8 @@
 
 	<div data-options="region:'center'">
         <div class="easyui-tabs" data-options="fit:true,border:false,plain:true" id="danceTabs">
-            <div title="About" data-options="href:'/static/html/_content.html'" style="padding:10px"></div>
-            <div title="Test" data-options="" style="padding:2px">
+            <div title="Test">
                 <table id="dg_machine_list"></table>
-            </div>
-            <div title="DataGrid" style="padding:2px">
-                <table class="easyui-datagrid"
-                       data-options="url:'/static/html/datagrid_data.json',method:'get',
-                       singleSelect: true,
-                       rownumbers: true,
-                       pagination: true,
-                       fit:true,
-                       fitColumns:true">
-                    <thead>
-                    <tr>
-                        <th data-options="field:'itemid'" width="80">Item ID</th>
-                        <th data-options="field:'productid'" width="100">Product ID</th>
-                        <th data-options="field:'listprice',align:'right'" width="80">List Price</th>
-                        <th data-options="field:'unitcost',align:'right'" width="80">Unit Cost</th>
-                        <th data-options="field:'attr1'" width="150">Attribute</th>
-                        <th data-options="field:'status',align:'center'" width="50">Status</th>
-                    </tr>
-                    </thead>
-                </table>
             </div>
         </div>
     </div>
@@ -89,78 +68,19 @@
                     danceCreateClassDatagrid(tableId, '/dance_get_class');
                 }else if(node.text == '分校信息') {
                     danceAddTab('danceTabs', node.text, tableId);
-                    danceCreateSchoolDatagrid(tableId, '/dance_school');
+                    //danceCreateSchoolDatagrid(tableId, '/dance_school');
+                    danceCreateEditedDatagrid(tableId, '/dance_school', opts);
+                }else if(node.text == '用户管理') {
+                    danceAddTab('danceTabs', node.text, tableId);
+                    danceCreateEditedDatagrid(tableId, '/dance_user', opts_user);
                 }
                 else {
-                    addTab(node.text,'http://jeasyui.com/', tableId);
+
                 }
             }
         });
 
-        function addTab(title, url, tabId){
-            console.log(tabId);
-            if ($('#danceTabs').tabs('exists', title)){
-                $('#danceTabs').tabs('select', title);
-            } else {
-                var content = '<table id=' + tabId + '></table>';
-                $('#danceTabs').tabs('add',{
-                    title:title,
-                    content:content,
-                    closable:true
-                });
-
-                var data = [];
-                $.ajax({
-                    method : 'POST',
-                    url : '/dance_get_user',
-                    async : true,
-                    dataType : 'json',
-                    success : function(dd) {
-                        console.log(dd);
-                        var pt = eval(dd); // 数组
-                        $.each(pt, function (index, item) {
-                            data[index] = {
-                                'id' : item.id,
-                                'name' : item.nickname
-                            };
-                        });
-                        $('#'+tabId).datagrid('loadData',data);
-                    },
-                    error : function() {
-                        console.log('error in ajax.');
-                    }
-                });
-
-                $('#'+tabId).datagrid({
-                    rownumbers:true,
-                    fitColumns:true,
-                    pagination:true,
-                    pageSize:10,
-                    fit:true,
-                    data:data.slice(0,10),
-                    columns:[
-                        [
-                            {field:'id', align:"center", title:"id",width:100},
-                            {field:'name', align:"center", title:"昵称",width:100}
-                        ]
-                    ]
-                });
-                var pager = $('#'+tabId).datagrid("getPager");
-                pager.pagination({
-                    total:data.length,
-                    onSelectPage:function (pageNo, pageSize) {
-                        var start = (pageNo - 1) * pageSize;
-                        var end = start + pageSize;
-                        $('#'+tabId).datagrid("loadData", data.slice(start, end));
-                        pager.pagination('refresh', {
-                            total:data.length,
-                            pageNumber:pageNo
-                        });
-                    }
-                });
-
-            }
-        }
+        createDatagrid('dg_machine_list');
 
         function createDatagrid(datagridId) {
             var _pageSize = 30;
@@ -244,7 +164,7 @@
             var doAjax = function () {
                 $.ajax({
                     method: 'POST',
-                    url: '/dance_get_location',
+                    url: '/dance_location_get',
                     async: true,
                     dataType: 'json',
                     data: {'pageSize': _pageSize, 'pageNo': _pageNo},
@@ -263,12 +183,12 @@
             doAjax();   // 获取数据
         }
 
-        createDatagrid('dg_machine_list');
-
     </script>
 
 </body>
 <script src="/static/js/dancestudent.js"></script>
 <script src="/static/js/danceclass.js"></script>
 <script src="/static/js/dancedatamgr.js"></script>
+<script src="/static/js/dancetempeditedtable.js"></script>
+
 </html>
