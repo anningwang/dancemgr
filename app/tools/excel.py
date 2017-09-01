@@ -121,9 +121,12 @@ def student_import_to_db(fn):
     data_ret = {}
     num_right = 0
     num_wrong = 0
+    bNotFound = True
     for sheet in worksheets:
         if sheet != u'报名登记':
             continue
+
+        bNotFound = False
         sh = workbook.sheet_by_name(sheet)      # workbook.sheet_by_index()
         row = sh.nrows
         row_list = [sh.row_values(0)]
@@ -150,6 +153,9 @@ def student_import_to_db(fn):
         db.session.commit()
         data_ret[sheet] = row_list
 
+    if bNotFound:
+        return data_ret, u"未找到名为[报名登记]的sheet页！", num_right, num_wrong
+
     return data_ret, "ok", num_right, num_wrong
 
 
@@ -166,8 +172,8 @@ def class_import_to_db(fn):
 
     # table columns name
     columns = ['cno', 'school_no', 'school_name', 'class_name', 'rem_code',
-               'begin_year', 'class_type', 'class_style','teacher', 'cost_mode',
-               'cost', 'plan_students', 'cur_students','is_ended', 'remark',
+               'begin_year', 'class_type', 'class_style', 'teacher', 'cost_mode',
+               'cost', 'plan_students', 'cur_students', 'is_ended', 'remark',
                'recorder'
                ]
 

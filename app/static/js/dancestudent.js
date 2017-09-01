@@ -286,31 +286,18 @@ function danceCreateStudentDatagrid(datagridId, url) {
         buttons:[{
             text:'导入', iconCls: 'icon-page_excel',
             handler:function(){
-                var upload = '<input id="fb" type="text" style="width:540px">';
-                $('#win').empty().css({'padding':'20px'}).window({
-                    title:'导入信息',
-                    iconCls:'icon-page_excel',
-                    width:600,
-                    height:400,
-                    modal:true,
-                    minimizable:false,
-                    collapsible:false
-                }).append(upload).window('open');
-                $('#fb').filebox({
-                    buttonText: '选择文件',
-                    buttonAlign: 'left',
-                    prompt:'请选择要导入的Excel文件...'
-                })
+                $(document.body).append('<div id="danceCommWin"></div>');
+                $('#danceCommWin').panel({
+                    href:'/static/html/_import_win.html',
+                    onDestroy: function () {
+                        $(dg).datagrid('reload');
+                    }
+                });
             }
         },{
             text:'导出', iconCls:' icon-page_white_excel ',
             handler:function(){
-                $('#winExport').panel({
-                    href:'/static/html/_import_win.html',
-                    onLoad:function(){
-                        //alert('loaded successfully');
-                    }
-                });
+
             }
         },{
             text:'打印', iconCls:'icon-printer',
