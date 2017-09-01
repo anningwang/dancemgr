@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Window Layout - jQuery EasyUI Demo</title>
+	<link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/icon.css">
+	<script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+	<script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+</head>
+<body>
+
+<div id="danceWinExport" class="easyui-window" title="导出数据"
+					data-options="iconCls:'icon-save', modal:true,minimizable:false,collapsible:false,
+					onBeforeClose : function() {
+						//console.log('onBeforeClose.');
+						$('#danceWinExport').window('destroy');
+						$('#danceCommWin').panel('destroy');
+					}
+					" style="width:600px;height:400px;padding:5px;">
+	<div class="easyui-layout" data-options="fit:true">
+		<form id="danceFormUploadExcel"  method="post" enctype="multipart/form-data">
+			<div data-options="region:'north',split:false,border:false" style="height:100px; padding:15px 10px">
+                <a id="danceExcelExportA" style="display: none">下载文件</a>
+			</div>
+			<div data-options="region:'center',border:true" style="padding:10px;">
+				导出选项：
+			</div>
+			<div data-options="region:'south',border:false" style="text-align:right;padding:5px 0 0;">
+				<a class="easyui-linkbutton" data-options="iconCls:'icon-ok'" href="javascript:void(0)" onclick="danceExportExcel()" style="width:80px">导出</a>
+				<a class="easyui-linkbutton" data-options="iconCls:'icon-cancel'" href="javascript:void(0)" onclick="$('#danceWinExport').window('close')" style="width:80px">取消</a>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script>
+	var danceModuleName = 'danceStudent';
+	function danceExportExcel() {
+        $.ajax({
+            url: '/api/download',
+            type: 'POST',
+            dataType: 'JSON',
+            data: {'danceModuleName': danceModuleName}
+        }).done(function(ret){
+            if(ret['errorCode'] == 0){
+                var url = ret['url'];
+                var file = url.slice(url.lastIndexOf('/')+1);
+                var file_cn = decodeURIComponent(file.replace(/\+/g, " "));
+                $('#danceExcelExportA').show().attr('href', ret['url']).html(
+                        '下载文件 [' + file_cn + ']');
+                $.messager.alert('提示', ret['msg'] + ' 请下载文件！', 'info');
+            }else{
+                $('#danceExcelExportA').hide();
+                $.messager.alert('提示', '文件导出失敗！ ' + ret['msg'], 'info');
+            }
+        });
+	}
+</script>
+
+</body>
+</html>

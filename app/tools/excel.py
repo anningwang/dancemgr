@@ -17,7 +17,7 @@ def char2int(s):
 
     def char2num(c):
         return ord(c.upper())-64
-    return reduce(fn, map(char2num,s))
+    return reduce(fn, map(char2num, s))
 
 
 def excel_col2int(cols):
@@ -121,12 +121,12 @@ def student_import_to_db(fn):
     data_ret = {}
     num_right = 0
     num_wrong = 0
-    bNotFound = True
+    not_found = True
     for sheet in worksheets:
         if sheet != u'报名登记':
             continue
 
-        bNotFound = False
+        not_found = False
         sh = workbook.sheet_by_name(sheet)      # workbook.sheet_by_index()
         row = sh.nrows
         row_list = [sh.row_values(0)]
@@ -153,7 +153,7 @@ def student_import_to_db(fn):
         db.session.commit()
         data_ret[sheet] = row_list
 
-    if bNotFound:
+    if not_found:
         return data_ret, u"未找到名为[报名登记]的sheet页！", num_right, num_wrong
 
     return data_ret, "ok", num_right, num_wrong
@@ -226,3 +226,54 @@ def class_import_to_db(fn):
         data_ret[sheet] = row_list
 
     return data_ret, "ok", num_right, num_wrong
+
+
+def student_export_from_db(file_path, sheet_name, cols_wanted=None):
+    columns = ['sno', 'school_no', 'school_name', 'consult_no', 'name',
+               'rem_code', 'gender', 'degree', 'birthday', 'register_day',
+               'information_source', 'counselor', 'reading_school', 'grade', 'phone',
+               'tel', 'address', 'zipcode', 'email', 'qq',
+               'wechat', 'mother_name', 'mother_phone', 'mother_tel', 'mother_company',
+               'father_name', 'father_phone', 'father_tel', 'father_company', 'card',
+               'is_training', 'points', 'remark', 'recorder']
+
+    cols_cn = ['学号', '分校编号', '分校名称', '咨询编号', '姓名',
+               '助记码', '性别', '文化程度', '出生日期', '登记日期',
+               '信息来源', '咨询师', '所在学校', '年级', '本人手机',
+               '固定电话', '联系地址', '邮政编码', 'Email', 'QQ',
+               '微信标识', '母亲姓名', '母亲手机', '母亲固话', '母亲工作单位',
+               '父亲姓名', '父亲手机', '父亲固话', '父亲工作单位', '卡号',
+               '是否在读', '赠送积分', '备注', '录入员']
+    cols_num = []
+
+    if cols_wanted is None:
+        cols_wanted = columns
+
+    for i in range(len(cols_wanted)):
+        j = 0
+        for j in range(len(columns)):
+            if cols_wanted[i] == columns[j]:
+                cols_num.append(j)
+                break
+        if j == len(columns):
+            return 300, u'存在无效列名[%s]' % cols_wanted[i]
+
+    wb = xlwt.Workbook(encoding='utf-8')
+    style = xlwt.XFStyle()
+    font = xlwt.Font()
+    font.name = u'宋体'  # 宋体 SimSun
+    style.font = font
+    sheet = wb.add_sheet(sheet_name)
+
+    records = DanceStudent.query.all()
+    row_count = len(records)
+    col_count = len(cols_num)
+    for row in range(0, row_count):
+        for col in range(0, col_count):
+            if row == 0:
+                sheet.write(row, col, cols_cn[cols_num[col]], style)
+            else:
+                sheet.write(row, col, records[row].getval(columns[cols_num[col]]), style)
+
+    wb.save(file_path)
+    return 0, 'ok'

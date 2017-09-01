@@ -1,19 +1,21 @@
 # -*- coding:utf-8 -*-
 from flask_uploads import UploadSet, IMAGES, configure_uploads
-from flask import request, redirect, url_for, render_template, jsonify
+from flask import request, redirect, url_for, render_template, jsonify, send_from_directory, abort
 from app import app
 import os
 from config import basedir
 from werkzeug.utils import secure_filename
 import base64
 import time
+from excel import student_import_to_db, student_export_from_db
+from tools import get_filename
 
 
 app.config['UPLOADED_PHOTO_DEST'] = os.path.join(basedir, "app/uploads")
 app.config['UPLOADED_PHOTO_ALLOW'] = IMAGES
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
 
-UPLOAD_FOLDER='uploads'
+UPLOAD_FOLDER = 'app/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # ALLOWED_EXTENSIONS = set(['txt','png','jpg','xls','JPG','PNG','xlsx','gif','GIF'])
@@ -42,6 +44,7 @@ def upload():
 
 @app.route('/api/upload', methods=['POST'], strict_slashes=False)
 def api_upload():
+    dance_module_name = request.form['danceModuleName']
     file_dir = os.path.join(basedir, app.config['UPLOAD_FOLDER'])
     if not os.path.exists(file_dir):
         os.makedirs(file_dir)
@@ -50,14 +53,49 @@ def api_upload():
         fname = secure_filename(f.filename)
         print fname
         ext = fname.rsplit('.', 1)[1]    # 获取文件后缀
-        unix_time = int(time.time())
-        new_filename = str(unix_time)+'.'+ext   # 修改了上传的文件名
-        f.save(os.path.join(file_dir, new_filename))     # 保存文件到upload目录
+        time_tick = int(time.time())
+        new_filename = str(time_tick)+'.'+ext   # 修改了上传的文件名
+        new_fn_dir = os.path.join(file_dir, new_filename)
+        f.save(new_fn_dir)     # 保存文件到upload目录
         token = base64.b64encode(new_filename)
         print token
-        return jsonify({"errorCode": 0, "msg": "上传成功", "token": token})
+        return jsonify(dispatch_import_file(new_fn_dir, dance_module_name))
     else:
-        return jsonify({"errorCode": 1001, "msg": "上传失败"})
+        return jsonify({"errorCode": 1001, "msg": "上传失败！"})
+
+
+@app.route('/api/download', methods=['POST', 'GET'])
+def api_download():
+    if request.method == "POST":
+        dance_module_name = request.form['danceModuleName']
+        file_dir = os.path.join(basedir, app.config['UPLOAD_FOLDER'])
+
+        if dance_module_name == 'danceStudent':
+            sheet_name = u'报名登记'
+            filename = get_filename(sheet_name)
+            path_fn = os.path.join(file_dir, filename)
+
+            err, msg = student_export_from_db(path_fn, sheet_name)
+
+            if err == 0:
+                return jsonify({"errorCode": 0, "msg": "导出成功！", 'url': photos.url(filename)})
+        else:
+            return jsonify({"errorCode": 1002, "msg": u"Unknown module name[%s]" % dance_module_name})
+
+    return jsonify({"errorCode": 1001, "msg": "接口错误，只支持POST！"})
+
+'''
+@app.route('/api/download/<filename>', methods=['GET'])
+def download(filename):
+    if request.method == "GET":
+        file_dir = os.path.join(basedir, app.config['UPLOAD_FOLDER'])
+        if os.path.isfile(os.path.join(file_dir, filename)):
+            # return send_from_directory(file_dir, filename, as_attachment=True)
+            filepath = os.path.join(basedir, 'app/static/img/favicon.ico')
+            filepath = 'img/favicon.icon'
+            return app.send_static_file(filepath)
+    abort(404)
+'''
 
 
 @app.route('/photo/<name>')
@@ -67,3 +105,15 @@ def show(name):
 
     url = photos.url(name)
     return render_template('show.html', url=url, name=name)
+
+
+def dispatch_import_file(fn, dance_module_name):
+    if dance_module_name == 'danceStudent':
+        dict_data, msg, correct_num, wrong_num = student_import_to_db(fn)
+        if msg == 'ok':
+            return {'errorCode': 0, 'msg': u'上传成功！', 'correctNum': correct_num, 'wrongNum': wrong_num}
+        else:
+            return {'errorCode': 200, 'msg': msg, 'correctNum': correct_num, 'wrongNum': wrong_num}
+    else:
+        return {'errorCode': 201, 'msg': u'Unknown module name %s' % dance_module_name,
+                'correctNum': 0, 'wrongNum': 0}

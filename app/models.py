@@ -336,6 +336,86 @@ class DanceStudent(db.Model):
         if 'father_wechat' in para:
             self.father_wechat = para['father_wechat']
 
+    def getval(self, col_name):
+        if col_name == 'id':
+            return self.id
+        elif col_name == 'sno':
+            return self.sno
+        elif col_name == 'school_no':
+            return self.school_no
+        elif col_name == 'school_name':
+            return self.school_name
+        elif col_name == 'consult_no':
+            return self.consult_no
+        elif col_name == 'name':
+            return self.name
+        elif col_name == 'rem_code':
+            return self.rem_code
+        elif col_name == 'gender':
+            return self.gender
+        elif col_name == 'degree':
+            return self.degree
+        elif col_name == 'birthday':
+            return self.birthday
+        elif col_name == 'register_day':
+            return datetime.datetime.strftime(self.register_day, '%Y-%m-%d')
+        elif col_name == 'information_source':
+            return self.information_source
+        elif col_name == 'counselor':
+            return self.counselor
+        elif col_name == 'reading_school':
+            return self.reading_school
+        elif col_name == 'grade':
+            return self.grade
+        elif col_name == 'phone':
+            return self.phone
+        elif col_name == 'tel':
+            return self.tel
+        elif col_name == 'address':
+            return self.address
+        elif col_name == 'zipcode':
+            return self.zipcode
+        elif col_name == 'email':
+            return self.email
+        elif col_name == 'qq':
+            return self.qq
+        elif col_name == 'wechat':
+            return self.wechat
+        elif col_name == 'mother_name':
+            return self.mother_name
+        elif col_name == 'father_name':
+            return self.father_name
+        elif col_name == 'mother_phone':
+            return self.mother_phone
+        elif col_name == 'father_phone':
+            return self.father_phone
+        elif col_name == 'mother_tel':
+            return self.mother_tel
+        elif col_name == 'father_tel':
+            return self.father_tel
+        elif col_name == 'mother_company':
+            return self.mother_company
+        elif col_name == 'father_company':
+            return self.father_company
+        elif col_name == 'card':
+            return self.card
+        elif col_name == 'is_training':
+            return self.is_training
+        elif col_name == 'points':
+            return self.points
+        elif col_name == 'remark':
+            return self.remark
+        elif col_name == 'recorder':
+            return self.recorder
+        elif col_name == 'idcard':
+            return self.idcard
+        elif col_name == 'mother_wechat':
+            return self.mother_wechat
+        elif col_name == 'father_wechat':
+            return self.father_wechat
+        else:
+            return '<Unknown field name>'
+
     def __repr__(self):
         return '<DanceStudent %r>' % self.sno
 
