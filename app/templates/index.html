@@ -2,7 +2,8 @@
 <html>
 <head>
 	<meta charset="UTF-8">
-	<title>舞蹈培训中心管理系统</title>
+    <meta http-equiv="Content-Type" content="text/html;" />
+    <title>舞蹈培训中心管理系统</title>
 	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/default/easyui.css">
 	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/icon.css">
     <link rel="stylesheet" type="text/css" href="/static/css/IconExtension.css">
@@ -56,7 +57,8 @@
             onClick: function(node){
                 console.log('this.id=' + this.id + ', node.id=' + node.id + ', node.text=' + node.text);
                 if($(this).tree('isLeaf',node.target)){  // 判断是否是叶子节点
-                } else { $(this).tree('expand',node.target);
+                } else {
+                    $(this).tree('expand',node.target);
                 }
 
                 var tableId = this.id + node.id;

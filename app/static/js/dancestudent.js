@@ -297,7 +297,10 @@ function danceCreateStudentDatagrid(datagridId, url) {
         },{
             text:'导出', iconCls:' icon-page_white_excel ',
             handler:function(){
-
+                $(document.body).append('<div id="danceCommWin"></div>');
+                $('#danceCommWin').panel({
+                    href:'/static/html/_export_win.html'
+                });
             }
         },{
             text:'打印', iconCls:'icon-printer',

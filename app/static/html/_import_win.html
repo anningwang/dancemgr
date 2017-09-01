@@ -17,8 +17,7 @@
 						$('#danceWinImport').window('destroy');
 						$('#danceCommWin').panel('destroy');
 					}
-					"
-					style="width:600px;height:400px;padding:5px;">
+					" style="width:600px;height:400px;padding:5px;">
 	<div class="easyui-layout" data-options="fit:true">
 		<form id="danceFormUploadExcel"  method="post" enctype="multipart/form-data">
 			<div data-options="region:'north',split:false,border:false" style="height:100px; padding:15px 10px">
@@ -49,12 +48,8 @@
 			$.messager.alert('提示', '请选择上传文件！', 'info');
 		} else {
 			// 对文件格式进行校验
-			var d1 = /\.[^\.]+$/.exec(fileName);
-			if (d1 == ".xls") {
-				// 提交表单
-				//document.getElementById("danceFormUploadExcel").action="/api/upload";
-				//document.getElementById("danceFormUploadExcel").submit();
-				//$.messager.alert('提示', '操作成功！', 'info');
+			var  fnExtension = /\.[^\.]+$/.exec(fileName);
+			if (fnExtension == ".xls" || fnExtension == ".xlsx") {
 				var data = new FormData($('#danceFormUploadExcel')[0]);
 				data.append('danceModuleName', danceModuleName);
 				$.ajax({
@@ -67,11 +62,6 @@
 					contentType: false
 				}).done(function(ret){
 					if(ret['errorCode'] == 0){
-						//var result = '';
-						//result += 'name=' + ret['name'] + '<br>';
-						///result += 'gender=' + ret['gender'] + '<br>';
-						//result += '<img src="' + ret['photo']  + '" width="100">';
-						//$('#result').html(result);
 						$.messager.alert('提示', ret['msg'] + ' 成功导入 ' + ret['correctNum'] + ' 条数据。', 'info');
 					}else{
 						$.messager.alert('提示', '文件导入失敗！ ' + ret['msg'], 'info');
