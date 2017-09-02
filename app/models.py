@@ -12,15 +12,6 @@ ROLE_ADMIN = 1
 GENDER_MALE = '男'
 GENDER_FEMALE = '女'
 
-# 学生报班信息表 多 对 多。 同时可以看到 某个班级 有多少学生。
-DanceStudentClass = db.Table('dance_student_class',
-                             db.Column('student_id', db.Integer, db.ForeignKey('dance_student.id'), primary_key=True),
-                             db.Column('class_id', db.Integer, db.ForeignKey('dance_class.id'), primary_key=True),
-                             db.Column('join_date', db.DateTime),       # 报班日期
-                             db.Column('status', db.Integer),            # 报班状态 正常、退班、结束、续班
-                             db.Column('remark',db.String(140))
-                             )
-
 followers = db.Table('followers',
                      db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
                      db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
@@ -602,5 +593,31 @@ class DanceUser(db.Model):
 
     def __repr__(self):
         return '<DanceUser %r>' % self.no
+
+
+class DanceStudentClass(db.Model):
+    # 学生报班信息表 多 对 多。 同时可以看到 某个班级 有多少学生。
+    id = db.Column(db.Integer, primary_key=True)  # id  01
+    student_id = db.Column(db.Integer, db.ForeignKey('dance_student.id'))
+    class_id = db.Column(db.Integer, db.ForeignKey('dance_class.id'))
+    join_date = db.Column(db.DateTime)         # 报班日期
+    status = db.Column(db.Integer)             # 报班状态 正常、退班、结束、续班
+    remark = db.Column(db.String(140))
+
+    def __init__(self, para):
+        if 'student_id' in para:
+            self.student_id = para['student_id']
+        if 'class_id' in para:
+            self.class_id = para['class_id']
+        if 'join_date' in para:
+            my_date = para['join_date']
+            self.join_date = datetime.datetime.strptime(my_date, '%Y/%m/%d')
+        if 'status' in para:
+            self.status = para['status']
+        if 'remark' in para:
+            self.remark = para['remark']
+
+    def __repr__(self):
+        return '<DanceStudentClass %r,%r>' % (self.student_id, self.class_id)
 
 whooshalchemy.whoosh_index(app, Post)

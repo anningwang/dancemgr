@@ -127,7 +127,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         valueField: 'value',
         textField: 'text',
         width: 140,
-        panelHeight: "auto",
+        //panelHeight: "auto",
         onChange:autoComplete,
         onSelect:function(record) {
             //$('#'+ccId).focus();

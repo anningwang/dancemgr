@@ -28,12 +28,14 @@ function danceAddTab(divId, title, tableId) {
 }
 
 
-function danceAddDetailInfo( page, uid, no) {
+function danceAddStudentDetailInfo( page, url, uid, no) {
     var title = '学员详细信息';
-    uid = uid || 0;
+    uid = uid || 0;     // 第一次进入 学生详细信息页面 uid 有效，上下翻页时，无法提前获取上下记录的uid
     if (uid <= 0) {
         title +='[新曾]'
     }
+
+    
 
     var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
@@ -43,104 +45,113 @@ function danceAddDetailInfo( page, uid, no) {
             title: title,
             // content: page,
             href: page,
-            closable: true
-        });
+            closable: true,
+            onLoad : function (panel) {
+                // console.log(panel);
+                $('#pagerStudent').pagination({
+                    buttons:[{
+                        text:'查找', iconCls:'icon-search', handler:function(){
+                            alert('search');
+                        }
+                    },{
+                        text:'保存', iconCls:'icon-save',  handler:function(){
+                            alert('search');
+                        }
+                    },{
+                        text:'增加', iconCls:'icon-add',  handler:function(){
+                            alert('add');
+                        }
+                    },{
+                        text:'编辑', iconCls:'icon-edit', handler:function(){
+                            alert('edit');
+                        }
+                    }],
+                    onSelectPage:function(pageNumber, pageSize){
+                        no = pageNumber;
+                        doAjaxStuDetail();
+                    }
+                });
 
-        $.parser.onComplete = function(){
-            $('#pagerStudent').pagination({
-                buttons:[{
-                    text:'查找', iconCls:'icon-search', handler:function(){
-                        alert('search');
-                    }
-                },{
-                    text:'保存', iconCls:'icon-save',  handler:function(){
-                        alert('search');
-                    }
-                },{
-                    text:'增加', iconCls:'icon-add',  handler:function(){
-                        alert('add');
-                    }
-                },{
-                    text:'编辑', iconCls:'icon-edit', handler:function(){
-                        alert('edit');
-                    }
-                }],
-                onSelectPage:function(pageNumber, pageSize){
-                    //$.messager.alert('提示', $('#student_rec_id').val() + 'pageNumber=' + pageNumber, 'info');
-                    no = pageNumber;
+                if (uid > 0) {
                     doAjaxStuDetail();
                 }
-            });
-        };
-    }
-
-    if (uid > 0) {
-        doAjaxStuDetail();
+                $('#panelStudent').find('div.datagrid-view2>div.datagrid-header').first().hide();
+                $('#recorder').textbox('textbox').css('background','#e4e4e4');      // e4e4e4 #99ff99
+                $('#sno').textbox('textbox').css('background','#e4e4e4');      // #ccc #fff #ffee00 #6293BB
+            }
+        });
     }
 
     function doAjaxStuDetail() {
         $.ajax({
             method: 'POST',
-            url: '/dance_get_student_details',
+            url: url + '_get_details',
             async: true,
             dataType: 'json',
             data: {'sno': uid, 'page': no},
             success: function (data) {
                 console.log(data);
                 console.log(data.total);
-                console.log(data.rows[0].name);
+                console.log(data.rows[0]['name']);
 
-                $('#sno').textbox('setText',data.rows[0].sno);
-                $('#name').textbox('setText',data.rows[0].name);
-                $('#register_day').textbox('setText',data.rows[0].register_day);
-                $('#school_name').textbox('setText',data.rows[0].school_name);
+                $('#sno').textbox('setText',data.rows[0]['sno']);
+                $('#name').textbox('setText',data.rows[0]['name']);
+                $('#register_day').textbox('setText',data.rows[0]['register_day']);
+                $('#birthday').textbox('setText',data.rows[0]['birthday']);
+                $('#school_name').textbox('setText',data.rows[0]['school_name']);
                 //$('#information_source').textbox('setText',data.rows[0].information_source);
                 //$('#counselor').textbox('setText',data.rows[0].counselor);
                 //$('#degree').textbox('setText',data.rows[0].degree);
-                $('#former_name').textbox('setText',data.rows[0].former_name);
-                $('#recorder').textbox('setText',data.rows[0].recorder);
-                $('#gender').combobox('select',data.rows[0].gender);
-                $('#remark').textbox('setText',data.rows[0].remark);
+                $('#former_name').textbox('setText',data.rows[0]['former_name']);
+                $('#recorder').textbox('setText',data.rows[0]['recorder']);
+                $('#gender').combobox('select',data.rows[0]['gender']);
+                $('#remark').textbox('setText',data.rows[0]['remark']);
 
-                $('#pagerStudent').pagination({total: data.total, pageNumber:no});  // 更新翻页控件 页码
+                // 更新翻页控件 页码
+                $('#pagerStudent').pagination({total: data.total, pageNumber:no==-2?data.rows[0].no:no });
 
-                $('#student_rec_id').val(data.rows[0].id);      // 记录 ID
+                $('#student_rec_id').val(data.rows[0]['id']);      // ID
 
                 // 更新联系方式 table
                 $('#dgStudent_contact').datagrid('updateRow',{
                     index: 0,
                     row: {
-                        c2: data.rows[0].reading_school,
-                        c4: data.rows[0].grade,
-                        c6: data.rows[0].phone,
-                        c8: data.rows[0].tel
+                        c2: data.rows[0]['reading_school'],
+                        c4: data.rows[0]['grade'],
+                        c6: data.rows[0]['phone'],
+                        c8: data.rows[0]['tel']
                     }
                 }).datagrid('updateRow', {
                     index: 1,
                     row: {
-                        c2: data.rows[0].address,
-                        c6: data.rows[0].email,
-                        c8: data.rows[0].qq
+                        c2: data.rows[0]['address'],
+                        c6: data.rows[0]['email'],
+                        c8: data.rows[0]['qq']
                     }
                 }).datagrid('updateRow', {
                     index: 2,
                     row: {
-                        c2: data.rows[0].mother_name,
-                        c4: data.rows[0].mother_phone,
-                        c6: data.rows[0].mother_company
-
+                        c2: data.rows[0]['mother_name'],
+                        c4: data.rows[0]['mother_phone'],
+                        c6: data.rows[0]['mother_company']
                     }
                 }).datagrid('updateRow', {
                     index: 3,
                     row: {
-                        c2: data.rows[0].father_name,
-                        c6: data.rows[0].father_phone,
-                        c8: data.rows[0].father_company
+                        c2: data.rows[0]['father_name'],
+                        c6: data.rows[0]['father_phone'],
+                        c8: data.rows[0]['father_company']
                     }
                 }).datagrid('mergeCells', {
                     index: 1, field: 'c2', colspan: 3
                 });
 
+                // 更新报班信息 table
+                var len = data['class_info'].length;
+                $('#dgStudent_class').datagrid('loadData', data['class_info']);
+                for(var i = 0; i < 3 - len; i++ ) {
+                    $('#dgStudent_class').datagrid('appendRow', {});
+                }
             },
             error: function (XMLHttpRequest, textStatus, errorThrown) {
                 console.log('error in ajax. XMLHttpRequest=', + XMLHttpRequest
@@ -148,7 +159,6 @@ function danceAddDetailInfo( page, uid, no) {
             }
         });
     }
-
 }
 
 /**
@@ -162,11 +172,13 @@ function danceCreateStudentDatagrid(datagridId, url) {
     var ccId = 'cc' + datagridId;       // Combo box,姓名查找框ID
     var dg = $('#' + datagridId);       // datagrid ID
 
+    var dance_condition = '';               // 主datagrid表查询条件
+
     $(dg).datagrid({
         // title: '学员列表',
         iconCls: 'icon-a_detail',
         fit: true,
-        url: url,
+        url: url + '_get',
         fitColumns: true,
         pagination: true,   // True to show a pagination toolbar on datagrid bottom.
         // singleSelect: true, // True to allow selecting only one row.
@@ -181,8 +193,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
         toolbar: [{
             iconCls:'icon-add', text:"增加",      ///+++++++++++++++++++++++++++++++++++++++++++++
             handler:function(){
-                danceAddDetailInfo('/static/html/_student.html');
-                //danceAddTab('danceTab', '学员详细信息', 'abcdefg', '/ttt');
+                danceAddStudentDetailInfo('/static/html/_student.html',url);
             }
         }, {
             iconCls:'icon-edit', text:"编辑/查看",  ///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -192,7 +203,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
                     $.messager.alert('提示', '请选择要查看的行！' , 'info');
                     return false;
                 } else {
-                    danceAddDetailInfo('/static/html/_student.html', row[0].id, row[0].no);
+                    danceAddStudentDetailInfo('/static/html/_student.html', url, row[0].id, -2); // row[0].no
                 }
             }
         }, {
@@ -230,8 +241,8 @@ function danceCreateStudentDatagrid(datagridId, url) {
                                         });
                                         return false;
                                     }
+                                    $(dg).datagrid('options').queryParams={'condition': dance_condition};
                                     $(dg).datagrid('reload');
-                                    //doAjax();
                                 },
                                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                                     console.log('error in ajax. XMLHttpRequest=', + XMLHttpRequest
@@ -244,11 +255,12 @@ function danceCreateStudentDatagrid(datagridId, url) {
                 }
             }
         }, '-', {
-            text: '姓名：<input id=' + ccId + ' name="dept">'
+            text: '姓名：<input id=' + ccId + ' name="nameQuery" value="">'
         },{
             iconCls: 'icon-search', text:"查询",  /// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
             handler: function () {
-                alert('查询');
+                $(dg).datagrid('options').queryParams={'condition': dance_condition};
+                $(dg).datagrid('reload');
             }
         }],
         columns: [[
@@ -267,14 +279,22 @@ function danceCreateStudentDatagrid(datagridId, url) {
     });
 
     $('#'+ccId).combobox({     // 姓名 搜索框 combo box
-        // url: '/dance_search',
         prompt: '姓名拼音首字母查找',
-        valueField: 'id',
+        valueField: 'value',
         textField: 'text',
         width: 140,
-        panelHeight: "auto"
-       // label: '姓名：'
+        //panelHeight: "auto",
+        onChange:autoComplete
     });
+
+    autoComplete(dance_condition,'');
+    function autoComplete (newValue,oldValue) {
+        console.log('newValue=' + newValue + ' oldValue=' + oldValue);
+        dance_condition = $.trim(newValue);
+        $.post(url+'_query',{'condition': dance_condition }, function(data){
+            $('#'+ccId).combobox('loadData', data);
+        },'json');
+    }
 
     var pager = dg.datagrid('getPager');
     $(pager).pagination({
@@ -305,7 +325,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
         },{
             text:'打印', iconCls:'icon-printer',
             handler:function(){
-                alert('edit');
+                alert('print');
             }
         }]
     });

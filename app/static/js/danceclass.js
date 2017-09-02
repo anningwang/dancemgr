@@ -112,13 +112,11 @@ function danceCreateClassDatagrid(datagridId, url) {
     });
 
     $('#'+ccId).combobox({     // 姓名 搜索框 combo box
-        // url: '/dance_search',
         prompt: '班名拼音首字母查找',
         valueField: 'id',
         textField: 'text',
         width: 140,
         panelHeight: "auto"
-        // label: '姓名：'
     });
 
     var pager = dg.datagrid('getPager');
@@ -148,7 +146,7 @@ function danceCreateClassDatagrid(datagridId, url) {
     function doAjaxGetData () {
         $.ajax({
             method: 'POST',
-            url: url,
+            url: url + '_get',
             async: true,
             dataType: 'json',
             data: {'rows': _pageSize, 'page': _pageNo},

@@ -100,7 +100,7 @@ def dance_user_get():
     if condition == '':
         total = DanceUser.query.count()
     else:
-        total = DanceUser.query.filter(DanceUser.school_name.like('%'+condition+'%')).count()
+        total = DanceUser.query.filter(DanceUser.name.like('%'+condition+'%')).count()
 
     offset = (page_no - 1) * page_size
     records = DanceUser.query.order_by(

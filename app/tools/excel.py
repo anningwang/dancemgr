@@ -3,7 +3,7 @@ import xlrd                 # 读取 Excel 模块
 import xlwt                 # Excel 写模块
 from pyExcelerator import *     # 写入Excel 模块
 from app import db
-from app.models import DanceStudent, DanceClass
+from app.models import DanceStudent, DanceClass, DanceStudentClass
 
 
 def char2int(s):
@@ -130,8 +130,10 @@ def student_import_to_db(fn):
         sh = workbook.sheet_by_name(sheet)      # workbook.sheet_by_index()
         row = sh.nrows
         row_list = [sh.row_values(0)]
-        for rows in range(1, row):
-            row_data = sh.row_values(rows)
+
+        count = row - 1     # 倒序添加到数据库，因为导出的excel是按照 登记日期 倒序排列的。
+        while count > 0:
+            row_data = sh.row_values(count)
             row_list.append(row_data)           # sh.cell_value(0, 0), 获取第0行第0列数据
             rowdict = {}
 
@@ -149,6 +151,7 @@ def student_import_to_db(fn):
                 num_right += 1
             else:
                 num_wrong += 1      # 重复数据
+            count -= 1
 
         db.session.commit()
         data_ret[sheet] = row_list
@@ -217,6 +220,63 @@ def class_import_to_db(fn):
             has = DanceClass.query.filter_by(cno=row_data[0]).first()
             if has is None:
                 record = DanceClass(rowdict)
+                db.session.add(record)
+                num_right += 1
+            else:
+                num_wrong += 1      # 重复数据
+
+        db.session.commit()
+        data_ret[sheet] = row_list
+
+    return data_ret, "ok", num_right, num_wrong
+
+
+def student_class_import_to_db(fn, sheet_name):
+    workbook = xlrd.open_workbook(fn)
+    worksheets = workbook.sheet_names()
+
+    columns = ['student_id', 'class_id', 'join_date', 'status', 'remark']
+    cols_cn = [u'学号', u'班级编号', u'报班日期', u'状态', u'报班备注']
+    cols_num = []
+
+    data_ret = {}
+    num_right = 0
+    num_wrong = 0
+
+    for sheet in worksheets:
+        if sheet != sheet_name:
+            continue
+        sh = workbook.sheet_by_name(sheet)
+        row = sh.nrows
+        if row <= 1:
+            return data_ret, u"无有效数据！", num_right, num_wrong
+        row_list = [sh.row_values(0)]
+
+        for o in cols_cn:
+            p = 0
+            for p in range(len(sh.row_values(0))):
+                if o == sh.row_values(0)[p]:
+                    cols_num.append(p)
+                    break
+            if p == len(sh.row_values(0)):
+                return data_ret, u"文件中未找到列名[%s]！" % o, num_right, num_wrong
+
+        for rows in range(1, row):
+            row_data = sh.row_values(rows)
+            row_list.append(row_data)           # sh.cell_value(0, 0), 获取第0行第0列数据
+            rowdict = {}
+
+            if len(row_data) < len(columns):
+                return data_ret, u"数据长度错误！", num_right, num_wrong
+
+            for i in range(len(columns)):
+                rowdict[columns[i]] = row_data[cols_num[i]]
+
+            # 保证（学号+班级ID）不能重复
+            has = DanceStudentClass.query.filter_by(
+                student_id=row_data[cols_num[0]], class_id=row_data[cols_num[1]]).first()
+            if has is None:
+                record = DanceStudentClass(rowdict)
                 db.session.add(record)
                 num_right += 1
             else:

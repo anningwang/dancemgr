@@ -1,3 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Window Layout - jQuery EasyUI Demo</title>
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/icon.css">
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+</head>
+<body>
 
 <div class="easyui-layout" data-options="fit:true" style="padding:2px;" >
     <div id="panelStudent" class="easyui-panel" title="学员详细信息" style="width:100%;height:100%;padding:5px" data-options="footer:'#footerStudent'">
@@ -6,7 +17,7 @@
             <tr>
                 <td width="25%">
                     <input class="easyui-textbox" id="sno" style="width:98%;height:24px"
-                           data-options="label:'width: 50%', labelPosition:'left', label:'学号：',
+                           data-options="label:'width: 50%', labelPosition:'left', label:'学号：',editable:false,
                            prompt:'无需输入，自动生成学号', labelPosition:'left'
                            " >
 
@@ -14,13 +25,13 @@
 
                 <td width="25%">
                     <input class="easyui-textbox" id="name" style="width:98%;height:24px"
-                           data-options="labelPosition:'left',label:'姓名：'
+                           data-options="labelPosition:'left',label:'姓名*：'
                            ">
                 </td>
 
                 <td width="25%">
                     <select class="easyui-combobox" id="gender" name="gender" style="width:98%;"
-                            data-options="labelPosition:'left',panelHeight:'auto', label:'性别：',editable:'false'
+                            data-options="labelPosition:'left',panelHeight:'auto', label:'性别：',editable:false
                             ">
                         <option value="女">女</option>
                         <option value="男">男</option>
@@ -38,7 +49,7 @@
 
                 <td>
                     <select class="easyui-combobox" id="school_name" style="width:98%;"
-                            data-options="labelPosition:'left',panelHeight:'auto', label:'所属分校：',editable:'false'
+                            data-options="labelPosition:'left',panelHeight:'auto', label:'所属分校：',editable:false
                             ">
                         <option>　</option>
                         <option>麒麟分校</option>
@@ -47,7 +58,7 @@
 
                 <td>
                     <select class="easyui-combobox" id="information_source" style="width:98%;"
-                            data-options="labelPosition:'left',panelHeight:'auto', label:'信息来源：',editable:'false'
+                            data-options="labelPosition:'left',panelHeight:'auto', label:'信息来源：',editable:false
                             ">
                         <option>　</option>
                         <option>朋友推荐</option>
@@ -65,7 +76,7 @@
 
                 <td>
                     <select id="bb" class="easyui-combobox" id="counselor" style="width:98%;"
-                            data-options="labelPosition:'left',panelHeight:60,label:'咨询师：',editable:'false'
+                            data-options="labelPosition:'left',panelHeight:60,label:'咨询师：',editable:false
                             ">
                         <option>　</option>
                         <option>李老师</option>
@@ -74,7 +85,7 @@
 
                 <td>
                     <select id="d" class="easyui-combobox" id="degree" style="width:98%;"
-                            data-options="labelPosition:'left',panelHeight:'auto',label:'文化程度：',editable:'false'
+                            data-options="labelPosition:'left',panelHeight:'auto',label:'文化程度：',editable:false
                             ">
                         <option>　</option>
                         <option>小学</option>
@@ -94,20 +105,24 @@
                 </td>
 
                 <td>
-                    <input class="easyui-textbox" id="recorder" style="width:98%;height:24px"
-                           data-options="labelPosition:'left', label:'录入员:'
+                    <input class="easyui-datebox" id="birthday" style="width:98%;"
+                           data-options="labelPosition:'left',formatter:danceFormatter,parser:danceParser,
+                           label:'出生日期：'
                            ">
                 </td>
 
                 <td>
-
+                    <input class="easyui-textbox" id="recorder" style="width:98%;height:24px"
+                           data-options="labelPosition:'left', label:'录入员：',editable:false,
+                           prompt: '根据当前登录用户生成，不需要填写。'
+                           ">
                 </td>
             </tr>
 
             <tr name="fifth">
                 <td colspan="6">
                     <input class="easyui-textbox" id="remark" style="width:100%;height:80px"
-                           data-options="labelPosition:'top', multiline:'true', label:'备注：'
+                           data-options="labelPosition:'top', multiline:true, label:'备注：'
                            " >
                 </td>
             </tr>
@@ -115,11 +130,11 @@
 
 
         <!-- 中间区域，联系方式  -->
-        <table class="easyui-datagrid" title="联系方式" style="width:100%;height:200px" id="dgStudent_contact"
+        <table id="dgStudent_contact" class="easyui-datagrid" title="联系方式" style="width:100%;"
                data-options="singleSelect:true,fitColumns:true,
                collapsible:true
                ">
-            <thead id="thStudent_contact">
+            <thead>
             <tr>
                 <th data-options="field:'c1',width:100,align:'center',fixed:'true'">1</th>
                 <th data-options="field:'c2',width:140,align:'left',fixed:'true'">2</th>
@@ -182,60 +197,28 @@
         <div style="height: 2px"></div>
 
         <!-- 下发区域，报班信息 -->
-        <table class="easyui-datagrid" title="报班信息" style="width:100%;height:150px;padding:5px" id="dgStudent_class"
-               data-options="checkbox:true, rownumbers:true,fitColumns:true,
+        <table id="dgStudent_class" class="easyui-datagrid" title="报班信息" style="width:100%;padding:5px"
+               data-options="checkbox:true, rownumbers:true,fitColumns:true,singleSelect:true,
                collapsible:true
                ">
 
             <thead>
             <tr>
                 <th data-options="field:'ck',checkbox:true"></th>
-                <th data-options="field:'reg',width:100,align:'center',fixed:'true'">报班日期</th>
-                <th data-options="field:'class_no',width:140,align:'center',fixed:'true'">班级编号</th>
-                <th data-options="field:'class_name',width:100,align:'center',fixed:'true'">班级名称</th>
+                <th data-options="field:'join_date',width:100,align:'center',fixed:'true'">报班日期</th>
+                <th data-options="field:'class_id',width:140,align:'center',fixed:'true'">班级编号</th>
+                <th data-options="field:'class_name',width:200,align:'center',fixed:'true'">班级名称</th>
                 <th data-options="field:'status',width:140,align:'center',fixed:'true'">状态</th>
-                <th data-options="field:'remark',width:100,align:'center',fixed:'true'">备注</th>
+                <th data-options="field:'remark',width:200,align:'center',fixed:'true'">备注</th>
                 <th data-options="field:'id',hidden:true">6</th>
 
             </tr>
             </thead>
-
-            <tr>  <!-- 第 1 行  -->
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-                <td>4</td>
-                <td>5</td>
-                <td>6</td>
-            </tr>
-
-            <tr>  <!-- 第 2 行  -->
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-                <td>4</td>
-                <td>5</td>
-                <td>6</td>
-
-            </tr>
-
-            <tr>  <!-- 第 3 行  -->
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-                <td>4</td>
-                <td>5</td>
-                <td>6</td>
-            </tr>
-
         </table>
 
     </div>
 
-
     <input type="hidden" name="student_rec_id" id="student_rec_id" hidden />
-
-
 
     <div id="footerStudent">
         <div class="easyui-pagination" data-options="total: 0, pageSize: 1,
@@ -244,11 +227,9 @@
 				" id="pagerStudent">
         </div>
     </div>
-
 </div>
 
 <script type="text/javascript">
-
     function danceFormatter(date){
         var y = date.getFullYear();
         var m = date.getMonth()+1;
@@ -268,7 +249,7 @@
             return new Date();
         }
     }
-
-
 </script>
 
+</body>
+</html>

@@ -7,7 +7,7 @@ from config import basedir
 from werkzeug.utils import secure_filename
 import base64
 import time
-from excel import student_import_to_db, student_export_from_db
+from excel import student_import_to_db, student_export_from_db, student_class_import_to_db
 from tools import get_filename
 
 
@@ -110,10 +110,11 @@ def show(name):
 def dispatch_import_file(fn, dance_module_name):
     if dance_module_name == 'danceStudent':
         dict_data, msg, correct_num, wrong_num = student_import_to_db(fn)
-        if msg == 'ok':
+        dict_data2, msg2, correct_num2, wrong_num2 = student_class_import_to_db(fn, u'报班——选择班级')
+        if msg == 'ok' and msg2 == 'ok':
             return {'errorCode': 0, 'msg': u'上传成功！', 'correctNum': correct_num, 'wrongNum': wrong_num}
         else:
-            return {'errorCode': 200, 'msg': msg, 'correctNum': correct_num, 'wrongNum': wrong_num}
+            return {'errorCode': 200, 'msg': msg + msg2, 'correctNum': correct_num, 'wrongNum': wrong_num}
     else:
         return {'errorCode': 201, 'msg': u'Unknown module name %s' % dance_module_name,
                 'correctNum': 0, 'wrongNum': 0}

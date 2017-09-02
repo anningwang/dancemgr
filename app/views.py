@@ -5,7 +5,8 @@ from flask_sqlalchemy import get_debug_queries
 from flask_babel import gettext
 from app import app, db, lm, oid, babel
 from forms import LoginForm, EditForm, PostForm, SearchForm
-from models import User, ROLE_USER, ROLE_ADMIN, Post, HzLocation, DanceStudent, DanceClass, DanceSchool, DanceUser
+from models import User, ROLE_USER, ROLE_ADMIN, Post, HzLocation, DanceStudent, DanceClass, DanceSchool, DanceUser,\
+    DanceStudentClass
 from datetime import datetime
 from emails import follower_notification
 from guess_language import guessLanguage
@@ -314,26 +315,28 @@ def dance_location_get():
     return jsonify({"total": total, "rows": rows})
 
 
-@app.route('/dance_get_user', methods=['POST'])
-def dance_get_user():
-    users = []
-    hz_user = User.query.all()
-    for u in hz_user:
-        users.append({"id": u.id, "nickname": u.nickname, "email": u.email})
-    return jsonify(users)
-
-
-@app.route('/dance_get_student', methods=['POST', 'GET'])
-def dance_get_student():
+@app.route('/dance_student_get', methods=['POST', 'GET'])
+def dance_student_get():
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
+    if 'condition' in request.form:
+        condition = request.form['condition']
+    else:
+        condition = ''
+
     print 'page_size=', page_size, ' page_no=', page_no
     if page_no <= 0:    # 补丁
         page_no = 1
     rows = []
-    total = DanceStudent.query.count()
+    if condition == '':
+        total = DanceStudent.query.count()
+    else:
+        total = DanceStudent.query.filter(DanceStudent.name.like('%' + condition + '%')).count()
+
     offset = (page_no - 1) * page_size
-    records = DanceStudent.query.order_by(DanceStudent.register_day.desc()).limit(page_size).offset(offset)
+    records = DanceStudent.query.order_by(
+        DanceStudent.id.desc()).filter(
+        DanceStudent.name.like('%' + condition + '%')).limit(page_size).offset(offset)
     i = offset + 1
     for r in records:
         rows.append({"id": r.id, "sno": r.sno, "school_no": r.school_no,
@@ -357,6 +360,19 @@ def dance_get_student():
                      })
         i += 1
     return jsonify({"total": total, "rows": rows})
+
+
+@app.route('/dance_student_query', methods=['POST'])
+def dance_student_query():
+    json_data = request.form['condition']
+
+    ret = []
+    records = DanceStudent.query.order_by(
+        DanceStudent.id.desc()).filter(DanceStudent.name.like('%'+json_data + '%'))
+    for rec in records:
+        ret.append({'value': rec.name, 'text': rec.name})
+
+    return jsonify(ret)
 
 
 @app.route('/dance_del_data', methods=['POST'])
@@ -384,44 +400,57 @@ def dance_del_data():
     return jsonify({'errorCode': 0, "msg": "Ok for del."})
 
 
-@app.route('/dance_get_student_details', methods=['POST', 'GET'])
-def dance_get_student_details():
+@app.route('/dance_student_get_details', methods=['POST', 'GET'])
+def dance_student_get_details():
     sno = int(request.form['sno'])
     page_size = 1
     page_no = int(request.form['page'])
     print 'page_size=', page_size, ' page_no=', page_no
-    if page_no <= 0:  # 补丁
+    if page_no == -1 or page_no == 0:  # 补丁
         page_no = 1
-    rows = []
+
+    if page_no <= -2:
+        # 根据 sno 获取学生详细信息，并求出其序号。
+        r = DanceStudent.query.get(sno)
+        if r is None:
+            return jsonify({'errorCode': 400, 'msg': u'不存在学号为[%s]的学员！' % sno})
+        i = DanceStudent.query.order_by(
+            DanceStudent.id.desc()).filter(DanceStudent.id >= r.id).count()
+    else:
+        offset = (page_no - 1) * page_size
+        r = DanceStudent.query.order_by(DanceStudent.id.desc()).limit(page_size).offset(offset).first()
+        i = offset + 1
+
     total = DanceStudent.query.count()
-    offset = (page_no - 1) * page_size
-    records = DanceStudent.query.order_by(DanceStudent.register_day.desc()).limit(page_size).offset(offset)
-    i = offset + 1
 
-    for r in records:
-        rows.append({"id": r.id, "sno": r.sno, "school_no": r.school_no,
-                     "school_name": r.school_name, "consult_no": r.consult_no, "name": r.name,
-                     "rem_code": r.rem_code, 'no': i, 'gender': r.gender,
-                     'degree': r.degree, 'birthday': r.birthday,
-                     'register_day': datetime.strftime(r.register_day,'%Y-%m-%d'),
-                     'information_source': r.information_source,
-                     'counselor': r.counselor, 'reading_school': r.reading_school,
-                     'grade': r.grade, 'phone': r.phone, 'tel': r.tel,
-                     'address': r.address, 'zipcode': r.zipcode, 'email': r.email,
-                     'qq': r.qq, 'wechat': r.wechat, 'mother_name': r.mother_name,
-                     'father_name': r.father_name, 'mother_phone': r.mother_phone,
-                     'father_phone': r.father_phone, 'mother_tel': r.mother_tel, 'father_tel': r.father_tel,
-                     'mother_company': r.mother_company, 'father_company': r.father_company,
-                     'card': r.card,
-                     'is_training': r.is_training,
-                     'points': r.points,
-                     'remark': r.remark, 'recorder': r.recorder})
-        i += 1
-    return jsonify({"total": total, "rows": rows})
+    rows = [{"id": r.id, "sno": r.sno, "school_no": r.school_no, "school_name": r.school_name,
+             "consult_no": r.consult_no, "name": r.name, "rem_code": r.rem_code, 'no': i,
+             'gender': r.gender, 'degree': r.degree, 'birthday': r.birthday,
+             'register_day': datetime.strftime(r.register_day, '%Y-%m-%d'),
+             'information_source': r.information_source, 'counselor': r.counselor, 'reading_school': r.reading_school,
+             'grade': r.grade, 'phone': r.phone, 'tel': r.tel, 'address': r.address,
+             'zipcode': r.zipcode, 'email': r.email, 'qq': r.qq, 'wechat': r.wechat,
+             'mother_name': r.mother_name, 'father_name': r.father_name, 'mother_phone': r.mother_phone,
+             'father_phone': r.father_phone, 'mother_tel': r.mother_tel, 'father_tel': r.father_tel,
+             'mother_company': r.mother_company, 'father_company': r.father_company, 'card': r.card,
+             'is_training': r.is_training, 'points': r.points, 'remark': r.remark, 'recorder': r.recorder}]
+
+    class_info = []
+    if len(rows) > 0:
+        # 查询 学员 的报班信息
+        classes = DanceStudentClass.query.filter_by(student_id=rows[0]['sno']).join(
+            DanceClass, DanceClass.cno == DanceStudentClass.class_id).add_columns(DanceClass.class_name).all()
+        for cls in classes:
+            class_info.append({'join_date': datetime.strftime(cls[0].join_date, '%Y-%m-%d'),
+                               'status': cls[0].status, 'remark': cls[0].remark, 'class_id': cls[0].class_id,
+                               'id': cls[0].id,
+                               'class_name': cls[1]})
+
+    return jsonify({"total": total, "rows": rows, 'class_info': class_info, 'errorCode': 0, 'msg': 'ok'})
 
 
-@app.route('/dance_get_class', methods=['POST'])
-def dance_get_class():
+@app.route('/dance_class_get', methods=['POST'])
+def dance_class_get():
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
     print 'dance_get_class: page_size=', page_size, ' page_no=', page_no

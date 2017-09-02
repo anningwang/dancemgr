@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html;" />
-    <title>舞蹈培训中心管理系统</title>
+    <title>舞蹈培训管理系统</title>
 	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/default/easyui.css">
 	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/icon.css">
     <link rel="stylesheet" type="text/css" href="/static/css/IconExtension.css">
@@ -64,10 +64,10 @@
                 var tableId = this.id + node.id;
                 if(node.text == '学员列表') {
                     danceAddTab('danceTabs', node.text, tableId);
-                    danceCreateStudentDatagrid(tableId, '/dance_get_student');
+                    danceCreateStudentDatagrid(tableId, '/dance_student');
                 } else if (node.text == '班级信息') {
                     danceAddTab('danceTabs', node.text, tableId);
-                    danceCreateClassDatagrid(tableId, '/dance_get_class');
+                    danceCreateClassDatagrid(tableId, '/dance_class');
                 }else if(node.text == '分校信息') {
                     danceAddTab('danceTabs', node.text, tableId);
                     //danceCreateSchoolDatagrid(tableId, '/dance_school');
@@ -77,7 +77,7 @@
                     danceCreateEditedDatagrid(tableId, '/dance_user', opts_user);
                 }
                 else {
-
+                    $.messager.alert('提示', ' 制作中...', 'info');
                 }
             }
         });
@@ -188,9 +188,9 @@
     </script>
 
 </body>
-<script src="/static/js/dancestudent.js"></script>
-<script src="/static/js/danceclass.js"></script>
-<script src="/static/js/dancedatamgr.js"></script>
-<script src="/static/js/dancetempeditedtable.js"></script>
+<script src="/static/js/dancestudent.js"  type="text/javascript"></script>
+<script src="/static/js/danceclass.js"  type="text/javascript"></script>
+<script src="/static/js/dancedatamgr.js"  type="text/javascript"></script>
+<script src="/static/js/dancetempeditedtable.js"  type="text/javascript"></script>
 
 </html>
