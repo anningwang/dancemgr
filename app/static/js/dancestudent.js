@@ -27,6 +27,20 @@ function danceAddTab(divId, title, tableId) {
     }
 }
 
+//----------------------------------------------
+function danceAddTabClassStudentStat(title) {
+    var parentDiv = $('#danceTabs');
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+    } else {
+        $(parentDiv).tabs('add', {
+            title: title,
+            href: '/static/html/_class_student_stat.html',
+            closable: true
+        });
+    }
+}
+//----------------------------------------------
 
 function danceAddStudentDetailInfo( page, url, uid, no) {
     var title = '学员详细信息';

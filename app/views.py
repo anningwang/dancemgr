@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from flask import render_template, flash, redirect, session, url_for, request, g, jsonify
+from flask import render_template, flash, redirect, session, url_for, request, g, jsonify, json
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_sqlalchemy import get_debug_queries
 from flask_babel import gettext
@@ -343,7 +343,7 @@ def dance_student_get():
                      "school_name": r.school_name, "consult_no": r.consult_no, "name": r.name,
                      "rem_code": r.rem_code, 'no': i, 'gender': r.gender,
                      'degree': r.degree, 'birthday': r.birthday,
-                     'register_day': datetime.strftime(r.register_day,'%Y-%m-%d'),
+                     'register_day': datetime.strftime(r.register_day, '%Y-%m-%d'),
                      'information_source': r.information_source,
                      'counselor': r.counselor, 'reading_school': r.reading_school,
                      'grade': r.grade, 'phone': r.phone, 'tel': r.tel,
@@ -360,6 +360,42 @@ def dance_student_get():
                      })
         i += 1
     return jsonify({"total": total, "rows": rows})
+
+
+@app.route('/dance_class_student_condition_get', methods=['POST', 'GET'])
+def dance_class_student_condition_get():
+    # page_size = int(request.form['rows'])
+    # page_no = int(request.form['page'])
+    cno = request.form['cno']
+
+    rows = []
+    records = DanceStudent.query.join(DanceStudentClass, DanceStudentClass.student_id == DanceStudent.sno).filter(
+        DanceStudentClass.class_id == cno, DanceStudent.is_training == u'是').all()
+
+    total = len(records)
+    i = 1
+    for r in records:
+        rows.append({"id": r.id, "sno": r.sno, "school_no": r.school_no,
+                     "school_name": r.school_name, "consult_no": r.consult_no, "name": r.name,
+                     "rem_code": r.rem_code, 'no': i, 'gender': r.gender,
+                     'degree': r.degree, 'birthday': r.birthday,
+                     'register_day': datetime.strftime(r.register_day, '%Y-%m-%d'),
+                     'information_source': r.information_source,
+                     'counselor': r.counselor, 'reading_school': r.reading_school,
+                     'grade': r.grade, 'phone': r.phone, 'tel': r.tel,
+                     'address': r.address, 'zipcode': r.zipcode, 'email': r.email,
+                     'qq': r.qq, 'wechat': r.wechat, 'mother_name': r.mother_name,
+                     'father_name': r.father_name, 'mother_phone': r.mother_phone,
+                     'father_phone': r.father_phone, 'mother_tel': r.mother_tel, 'father_tel': r.father_tel,
+                     'mother_company': r.mother_company, 'father_company': r.father_company,
+                     'card': r.card,
+                     'is_training': r.is_training,
+                     'points': r.points,
+                     'remark': r.remark, 'recorder': r.recorder,
+                     'idcard': r.idcard, 'mother_wechat': r.mother_wechat,'father_wechat':r.father_wechat
+                     })
+        i += 1
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
 
 
 @app.route('/dance_student_query', methods=['POST'])
@@ -453,7 +489,7 @@ def dance_student_get_details():
 def dance_class_get():
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
-    print 'dance_get_class: page_size=', page_size, ' page_no=', page_no
+    print 'dance_class_get: page_size=', page_size, ' page_no=', page_no
     if page_no <= 0:    # 补丁
         page_no = 1
     rows = []
@@ -471,4 +507,38 @@ def dance_class_get():
                      'recorder': rec.recorder, 'no': i
                      })
         i += 1
-    return jsonify({"total": total, "rows": rows})
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_class_condition_get', methods=['POST'])
+def dance_class_condition_get():
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+
+    rows = []
+    if page_no <= 0:    # 补丁
+        page_no = 1
+    if page_size == -1:
+        page_size = 100
+    if 'is_ended' in request.form:
+        is_ended = request.form['is_ended']
+        records = DanceClass.query.order_by(DanceClass.id.desc()).filter(DanceClass.is_ended == is_ended).all()
+        total = len(records)
+        i = 1
+    else:
+        total = DanceClass.query.count()
+        offset = (page_no - 1) * page_size
+        records = DanceClass.query.order_by(DanceClass.begin_year.desc(),
+                                            DanceClass.class_name).limit(page_size).offset(offset)
+        i = offset + 1
+
+    for rec in records:
+        rows.append({"id": rec.id, "cno": rec.cno, "school_no": rec.school_no, "school_name": rec.school_name,
+                     "class_name": rec.class_name, "rem_code": rec.rem_code, "begin_year": rec.begin_year,
+                     'class_type': rec.class_type, 'class_style': rec.class_style, 'teacher': rec.teacher,
+                     'cost_mode': rec.cost_mode, 'cost': rec.cost, 'plan_students': rec.plan_students,
+                     'cur_students': rec.cur_students, 'is_ended': rec.is_ended, 'remark': rec.remark,
+                     'recorder': rec.recorder, 'no': i
+                     })
+        i += 1
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})

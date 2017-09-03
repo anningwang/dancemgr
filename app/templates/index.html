@@ -75,8 +75,9 @@
                 }else if(node.text == '用户管理') {
                     danceAddTab('danceTabs', node.text, tableId);
                     danceCreateEditedDatagrid(tableId, '/dance_user', opts_user);
-                }
-                else {
+                }else if (node.text == '班级学员统计') {
+                    danceAddTabClassStudentStat(node.text);
+                }else {
                     $.messager.alert('提示', ' 制作中...', 'info');
                 }
             }
