@@ -2,9 +2,11 @@
 from hashlib import md5
 from app import db
 from app import app
+from flask_login import UserMixin
 import flask_whooshalchemy as whooshalchemy
 import re
 import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 ROLE_USER = 0
 ROLE_ADMIN = 1
@@ -546,14 +548,14 @@ class DanceSchool(db.Model):
         return '<DanceClass %r>' % self.school_no
 
 
-class DanceUser(db.Model):
+class DanceUser(db.Model, UserMixin):
     """
         用户基本信息表 -- Anningwang
     """
-    id = db.Column(db.Integer, primary_key=True)        # id  01
-    user_no = db.Column(db.String(10), unique=True)     # 用户编号 02
-    name = db.Column(db.String(20))                     # 用户名称 03
-    pwd = db.Column(db.String(20))                      # 用户密码 04
+    id = db.Column(db.Integer, primary_key=True)                # id  01
+    user_no = db.Column(db.String(10), unique=True)             # 用户编号 02
+    name = db.Column(db.String(20, collation='NOCASE'), unique=True, index=True)    # 用户名称 03
+    pwd = db.Column(db.String(120))                    # 用户密码 04
     phone = db.Column(db.String(20))                    # 联系电话 05
     role = db.Column(db.Integer)                        # 所属角色 06
     school_mgr = db.Column(db.String(80))               # 允许管理分校 07
@@ -590,6 +592,9 @@ class DanceUser(db.Model):
             self.school_mgr = para['school_mgr']    # 允许管理分校 07
         if 'recorder' in para:
             self.recorder = para['recorder']    # 录入员 08
+
+    def check_password(self, password):
+        return check_password_hash(self.pwd, password)
 
     def __repr__(self):
         return '<DanceUser %r>' % self.no

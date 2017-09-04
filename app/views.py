@@ -4,7 +4,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from flask_sqlalchemy import get_debug_queries
 from flask_babel import gettext
 from app import app, db, lm, oid, babel
-from forms import LoginForm, EditForm, PostForm, SearchForm
+from forms import LoginForm, EditForm, PostForm, SearchForm, DanceLoginForm
 from models import User, ROLE_USER, ROLE_ADMIN, Post, HzLocation, DanceStudent, DanceClass, DanceSchool, DanceUser,\
     DanceStudentClass
 from datetime import datetime
@@ -19,7 +19,7 @@ from app.tools.upload import *
 
 @lm.user_loader
 def load_user(uid):
-    return User.query.get(int(uid))
+    return DanceUser.query.get(int(uid))
 
 
 @babel.localeselector
@@ -42,7 +42,8 @@ def before_request():
 def after_request(response):
     for query in get_debug_queries():
         if query.duration >= DATABASE_QUERY_TIMEOUT:
-            app.logger.warning("SLOW QUERY: %s\nParameters: %s\nDuration: %fs\nContext: %s\n" % (query.statement, query.parameters, query.duration, query.context))
+            app.logger.warning("SLOW QUERY: %s\nParameters: %s\nDuration: %fs\nContext: %s\n" % (
+                query.statement, query.parameters, query.duration, query.context))
     return response
 
 
@@ -57,6 +58,14 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/index', methods=['GET', 'POST'])
+@login_required
+def index():
+    return render_template('index.html',
+                           title='Home')
+
+'''
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
 @app.route('/index/<int:page>', methods=['GET', 'POST'])
@@ -81,8 +90,41 @@ def index(page=1):
                            title='Home',
                            form=form,
                            posts=posts)
+'''
 
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if g.user is not None and g.user.is_authenticated:
+        return redirect(url_for('index'))
+
+    form = DanceLoginForm()
+    '''
+    if 'username' not in request.form:
+        return render_template('login.html')
+
+    username = request.form['username']
+    password = request.form['password']
+    if 'remember_me' in request.form:
+        remember_me = True if request.form['remember_me'] == 'on' else False
+    else:
+        remember_me = False
+
+'''
+    user_dc = DanceUser.query.filter_by(name=form.username.data).first()
+    if form.validate_on_submit():
+        if user_dc is not None and user_dc.check_password(form.password.data):
+            login_user(user_dc, remember=form.remember_me.data)
+            return redirect(request.args.get('next') or url_for('index'))
+        else:
+            flash(u'用户名或者密码错误！')
+    else:
+        print form.errors
+
+    return render_template('login.html', form=form,
+                           username='' if form.username.data is None else form.username.data)
+
+'''
 @app.route('/login', methods=['GET', 'POST'])
 @oid.loginhandler
 def login():
@@ -96,7 +138,7 @@ def login():
                            title='Sign In',
                            form=form,
                            providers=app.config['OPENID_PROVIDERS'])
-
+'''
 
 @oid.after_login
 def after_login(resp):
@@ -245,6 +287,7 @@ def translate():
 
 # JoySuch get Token
 @app.route('/token', methods=['POST', 'GET'])
+@login_required
 def gettoken():
     return render_template('index.html')
 

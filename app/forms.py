@@ -46,3 +46,8 @@ class SearchForm(FlaskForm):
 class TokenForm(FlaskForm):
     token = StringField('token')
 
+
+class DanceLoginForm(FlaskForm):
+    username = StringField('username', validators=[DataRequired()])
+    password = StringField('password', validators=[DataRequired()])
+    remember_me = BooleanField('remember_me', default=False)

@@ -49,8 +49,6 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
         title +='[新曾]'
     }
 
-    
-
     var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);

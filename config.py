@@ -3,7 +3,7 @@ import os
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 CSRF_ENABLED = True
-SECRET_KEY = 'you-will-never-guess'
+SECRET_KEY = 'you-will-never-guess-A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 APP_NAME = 'dancemgr'
 
 OPENID_PROVIDERS = [

@@ -1,52 +1,98 @@
-<!-- extend base layout -->
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>舞蹈培训管理系统</title>
+    <link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/IconExtension.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/dancemgr.css">
+    <script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
 
-{% block content %}
-<script type="text/javascript">
-function set_openid(openid, pr)
-{
-    u = openid.search('<username>');
-    if (u != -1) {
-        // openid requires username
-        user = prompt('Enter your ' + pr + ' username:');
-        openid = openid.substr(0, u) + user;
-    }
-    form = document.forms['login'];
-    form.elements['openid'].value = openid;
-}
-</script>
-{% include 'flash.html' %}
-<div class="well">
-    <h3>{{ _('Please Sign In') }}</h3>
-    <form class="form" action="" method="post" name="login">
-        {{form.hidden_tag()}}
-        <div class="help-block">{{ _('Click on your OpenID provider below:') }}</div>
-        <div class="control-group">
-            {% for pr in providers %}
-            <a href="javascript:set_openid('{{pr.url}}', '{{pr.name}}');"><img src="/static/img/{{pr.name.lower()}}.png" class="img-polaroid" style="margin:2px;" /></a>
-            {% endfor %}
-        </div>
-        <div class="control-group{% if form.errors.openid %} error{% endif %}">
-            <label class="control-label" for="openid">{{ _('Or enter your OpenID here:') }}</label>
-            <div class="controls">
-                {{ form.openid(size = 80, class = "span4") }}
-                {% for error in form.errors.openid %}
-                    <span class="help-inline">[{{error}}]</span><br>
-                {% endfor %}
-            </div>
-        </div>
-        <div class="control-group">
-            <div class="controls">
-                <label class="checkbox" for="remember_me">
-                    {{ form.remember_me }} {{ _('Remember Me') }}
-                </label>
-            </div>
-        </div>
-        <div class="control-group">
-            <div class="controls">
-                <input class="btn btn-primary" type="submit" value="{{ _('Sign In') }}">
-            </div>
-        </div>
-    </form>
+    <link rel="shortcut icon" href="/static/img/favicon.ico" />
+    <link rel="bookmark" href="/static/img/favicon.ico" type="image/x-icon" />
+</head>
+<body>
+
+<div style="margin:20px 0;">
+    <h2 align="center">舞蹈培训管理系统</h2>
+    <!--
+    <a href="javascript:void(0)" class="easyui-linkbutton" onclick="addItem()">Add Item</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" onclick="removeItem()">Remove Item</a>
+    -->
 </div>
-{% endblock %}
+<div id="cc" style="width:100%;min-height:800px;height: auto">
+    <div data-options="region:'north',border:false" style="height:70px"></div>
+    <div data-options="region:'south',border:false" style="height:50px;"></div>
+    <div data-options="region:'west',border:false" style="width:38%;"></div>
+    <div data-options="region:'center',border:false" style="padding:20px">
+        <form class="form" action="/login" method="post" name="login">
+
+            {% for message in get_flashed_messages() %}
+            <p>{{ message }}</p>
+            {% endfor %}
+
+            {{form.hidden_tag()}}
+
+            <div class="easyui-panel" title="登录" style="width:100%;max-width:400px;padding:30px 60px;">
+                <div style="margin-bottom:10px">
+                    <input class="easyui-textbox" name="username" value="{{ username }}" style="width:100%;height:40px;padding:12px" data-options="prompt:'用户名',iconCls:'icon-man',iconWidth:38, required:true">
+                    {% for error in form.errors.username %}
+                    <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}<br>
+                </div>
+                <div style="margin-bottom:20px">
+                    <input class="easyui-textbox" name="password" type="password" style="width:100%;height:40px;padding:12px" data-options="prompt:'请输入密码',iconCls:'icon-lock',iconWidth:38,required:true">
+                    {% for error in form.errors.password %}
+                    <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}<br>
+                </div>
+                <div style="margin-bottom:20px">
+                    <input type="checkbox" name="remember_me" checked="checked">
+                    <span>记住我</span>
+                </div>
+                <div>
+                    <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-ok'" style="padding:5px 0;width:100%;" onclick="DanceLogin()">
+                        <span style="font-size:14px;">登录</span>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function DanceLogin() {
+        $('.form').submit();
+    }
+
+    $(function(){
+        $('#cc').layout();
+        setHeight();
+    });
+
+    function addItem(){
+        $('#cc').layout('panel','center').append('<p>More Panel Content.</p>');
+        setHeight();
+    }
+
+    function removeItem(){
+        $('#cc').layout('panel','center').find('p:last').remove();
+        setHeight();
+    }
+
+    function setHeight(){
+        var c = $('#cc');
+        var p = c.layout('panel','center');	// get the center panel
+        var oldHeight = p.panel('panel').outerHeight();
+        p.panel('resize', {height:'auto'});
+        var newHeight = p.panel('panel').outerHeight();
+        c.layout('resize',{
+            height: (c.height() + newHeight - oldHeight)
+        });
+    }
+</script>
+
+</body>
+</html>
