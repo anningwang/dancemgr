@@ -4,7 +4,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from flask_sqlalchemy import get_debug_queries
 from flask_babel import gettext
 from app import app, db, lm, oid, babel
-from forms import LoginForm, EditForm, PostForm, SearchForm, DanceLoginForm
+from forms import LoginForm, EditForm, PostForm, SearchForm, DanceLoginForm, DanceRegistrationForm
 from models import User, ROLE_USER, ROLE_ADMIN, Post, HzLocation, DanceStudent, DanceClass, DanceSchool, DanceUser,\
     DanceStudentClass
 from datetime import datetime
@@ -99,23 +99,15 @@ def login():
         return redirect(url_for('index'))
 
     form = DanceLoginForm()
-    '''
-    if 'username' not in request.form:
-        return render_template('login.html')
-
-    username = request.form['username']
-    password = request.form['password']
-    if 'remember_me' in request.form:
-        remember_me = True if request.form['remember_me'] == 'on' else False
-    else:
-        remember_me = False
-
-'''
     user_dc = DanceUser.query.filter_by(name=form.username.data).first()
     if form.validate_on_submit():
         if user_dc is not None and user_dc.check_password(form.password.data):
-            login_user(user_dc, remember=form.remember_me.data)
-            return redirect(request.args.get('next') or url_for('index'))
+            if user_dc.check_logged():
+                flash(u'用户[%s]已经登录!' % user_dc.name)
+            else:
+                user_dc.login()
+                login_user(user_dc, remember=form.remember_me.data)
+                return redirect(request.args.get('next') or url_for('index'))
         else:
             flash(u'用户名或者密码错误！')
     else:
@@ -168,8 +160,24 @@ def after_login(resp):
 
 @app.route('/logout')
 def logout():
+    g.user.logout()
     logout_user()
     return redirect(url_for('index'))
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = DanceRegistrationForm()
+    if request.method == 'POST' and form.validate():
+        user_dc = DanceUser(form.username.data, form.email.data, form.password.data, form.company.data)
+        db.session.add(user_dc)
+        db.session.commit()
+        flash('Thanks for registering')
+        return redirect(url_for('login'))
+    else:
+        print form.errors
+
+    return render_template('register.html', form=form)        # dance_register
 
 
 @app.route('/user/<nickname>')

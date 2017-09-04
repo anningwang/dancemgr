@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>舞蹈培训管理系统</title>
+	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="/static/css/IconExtension.css">
+	<link rel="stylesheet" type="text/css" href="/static/css/dancemgr.css">
+	<script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+
+	<link rel="shortcut icon" href="/static/img/favicon.ico" />
+	<link rel="bookmark" href="/static/img/favicon.ico" type="image/x-icon" />
+</head>
+<body>
+<h2>舞蹈培训管理系统</h2>
+<div style="margin:20px 0;"></div>
+<div class="easyui-panel" title="新用户注册" style="width:100%;max-width:450px;padding:30px 60px;">
+	<form id="danceRegister" name="register" action="" method="post">
+		{{form.hidden_tag()}}
+
+		<div style="margin-bottom:20px">
+			<input class="easyui-textbox" name="email" value="{% if form.email.data != None %}{{ form.email.data }} {% endif %}"  data-options="prompt:'请输入邮箱...',validType:'email',label:'邮箱：',labelPosition:'left'" style="width:100%;height:30px">
+			{% for error in form.errors.email %}
+			<span style="color: red;">[{{error}}]</span>
+			{% endfor %}<br>
+		</div>
+		<div style="margin-bottom:20px">
+			<input class="easyui-textbox" name="username" value="{% if form.username.data != None %}{{ form.username.data }} {% endif %}" data-options="prompt:'用户名或邮箱都可以登录...',label:'用户名：',labelPosition:'left'" style="width:100%;height:30px">
+			{% for error in form.errors.username %}
+			<span style="color: red;">[{{error}}]</span>
+			{% endfor %}<br>
+		</div>
+		<div style="margin-bottom:20px">
+			<input class="easyui-textbox" name="password" type="password" data-options="label:'密码：',labelPosition:'left'" style="width:100%;height:30px">
+			{% for error in form.errors.password %}
+			<span style="color: red;">[{{error}}]</span>
+			{% endfor %}<br>
+		</div>
+		<div style="margin-bottom:20px">
+			<input class="easyui-textbox" name="confirm_pwd" type="password"  data-options="prompt:'两次密码需要一致...',label:'确认密码：',labelPosition:'left'" style="width:100%;height:30px">
+			{% for error in form.errors.confirm_pwd %}
+			<span style="color: red;">[{{error}}]</span>
+			{% endfor %}<br>
+		</div>
+		<div style="margin-bottom:40px">
+			<input class="easyui-textbox" name="company" value="{% if form.company.data != None %}{{ form.company.data }} {% endif %}"  data-options="prompt:'在单位名称下可以创建分校...',label:'单位名称：',labelPosition:'left'" style="width:100%;height:30px">
+			{% for error in form.errors.company %}
+			<span style="color: red;">[{{error}}]</span>
+			{% endfor %}<br>
+		</div>
+
+		<div>
+			<a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="danceRegisterSubmit()" style="width:100%;height:32px">注册</a>
+		</div>
+	</form>
+</div>
+
+
+<p><a href="{{ url_for('index') }}" class="easyui-linkbutton" iconCls="icon-save" style="width:100px;height:32px">{{ _('主页') }}</a></p>
+
+
+<script>
+	function danceRegisterSubmit() {
+		//console.log('danceRegisterSubmit');
+		var form = new FormData(document.getElementById("danceRegister"));
+		$("form").submit();
+		/*
+		$.ajax({
+			url:"/register",
+			type:"post",
+			data:form,
+			processData:false,
+			contentType:false,
+			success:function(data){
+				//console.log(data);
+				console.log('done.');
+			},
+			error:function(e){
+				alert("错误！！" + e);
+				console.log('fail.');
+			}
+		});
+		*/
+	}
+
+</script>
+</body>
+</html>

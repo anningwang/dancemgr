@@ -18,6 +18,7 @@
 <body class="easyui-layout">
 	<div data-options="region:'north',border:false" style="height:60px;background:#B3DFDA;padding:10px">
         <a id="btnLogout" href="/logout" class="easyui-linkbutton" data-options="iconCls:'icon-search'">退出</a>
+        当前登录用户：{{ g.user.name }}
     </div>
 
 	<div data-options="region:'west',split:true,hideCollapsedContent:false,title:'功能栏'" style="width:200px;">

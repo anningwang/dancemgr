@@ -53,23 +53,31 @@
                     <span>记住我</span>
                 </div>
                 <div>
-                    <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-ok'" style="padding:5px 0;width:100%;" onclick="DanceLogin()">
+                    <a href="#" id="btnLogin" class="easyui-linkbutton" data-options="iconCls:'icon-ok'" style="padding:5px 0;width:100%;" onclick="danceLogin()">
                         <span style="font-size:14px;">登录</span>
                     </a>
                 </div>
+
+                <div style="margin-top:20px">
+                    <a href="/register" class="easyui-linkbutton" data-options="iconCls:'icon-add'" style="padding:5px 0;width:136px;" >注册</a>
+                    <a href="/forget_password" class="easyui-linkbutton" data-options="iconCls:'icon-save'" style="padding:5px 0;width:136px">忘记密码</a>
+                </div>
             </div>
+
         </form>
     </div>
 </div>
 
 <script>
-    function DanceLogin() {
+    function danceLogin() {
         $('.form').submit();
     }
 
     $(function(){
         $('#cc').layout();
         setHeight();
+
+        console.log($('#btnLogin').width());
     });
 
     function addItem(){

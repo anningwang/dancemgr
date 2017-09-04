@@ -560,6 +560,9 @@ class DanceUser(db.Model, UserMixin):
     role = db.Column(db.Integer)                        # 所属角色 06
     school_mgr = db.Column(db.String(80))               # 允许管理分校 07
     recorder = db.Column(db.String(20))                 # 录入员 08
+    email = db.Column(db.String(30, collation='NOCASE'), unique=True, index=True)
+    company = db.Column(db.String(30, collation='NOCASE'), unique=True)
+    is_logged = db.Column(db.Integer, index=True)     # 登录状态 1 - 登录， 0 - 未登录
 
     def __init__(self, para):
         if 'user_no' in para:
@@ -567,7 +570,7 @@ class DanceUser(db.Model, UserMixin):
         if 'name' in para:
             self.name = para['name']        # 用户名称 03
         if 'pwd' in para:
-            self.pwd = para['pwd']          # 用户密码 04
+            self.pwd = generate_password_hash(para['pwd'])          # 用户密码 04
         if 'phone' in para:
             self.phone = para['phone']      # 联系电话 05
         if 'role' in para:
@@ -576,6 +579,26 @@ class DanceUser(db.Model, UserMixin):
             self.school_mgr = para['school_mgr']    # 允许管理分校 07
         if 'recorder' in para:
             self.recorder = para['recorder']    # 录入员 08
+        if 'email' in para:
+            self.email = para['email']
+        if 'company' in para:
+            self.company = para['company']
+        self.is_logged = 0
+
+    def __init__(self, name, email, pwd, company, is_logged=None, phone=None, role=None, school_mgr=None, recorder=None):
+        rec = DanceUser.query.order_by(DanceUser.user_no.desc()).first()
+        self.user_no = 1 if rec is None else int(rec.user_no) + 1
+        self.name = name
+        self.pwd = generate_password_hash(pwd)
+        self.phone = phone
+        self.role = role
+        self.school_mgr = school_mgr
+        self.recorder = recorder
+        self.email = email
+        self.company = company
+        if is_logged is None:
+            is_logged = 0
+        self.is_logged = is_logged
 
     def update_data(self, para):
         if 'user_no' in para:
@@ -592,12 +615,26 @@ class DanceUser(db.Model, UserMixin):
             self.school_mgr = para['school_mgr']    # 允许管理分校 07
         if 'recorder' in para:
             self.recorder = para['recorder']    # 录入员 08
+        self.is_logged = 0 if 'is_logged' not in para else para['is_logged']
+
+    def check_logged(self):
+        return True if self.is_logged == 1 else False
+
+    def login(self):
+        self.is_logged = 1
+        db.session.commit()
+        return self
+
+    def logout(self):
+        self.is_logged = 0
+        db.session.commit()
+        return self
 
     def check_password(self, password):
         return check_password_hash(self.pwd, password)
 
     def __repr__(self):
-        return '<DanceUser %r>' % self.no
+        return '<DanceUser %r>' % self.user_no
 
 
 class DanceStudentClass(db.Model):
