@@ -5,7 +5,7 @@ from app import app
 from flask_login import UserMixin
 import flask_whooshalchemy as whooshalchemy
 import re
-import datetime
+from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 ROLE_USER = 0
@@ -271,7 +271,7 @@ class DanceStudent(db.Model):
             self.birthday = para[u'birthday']
         if u'register_day' in para:
             reg_day = para[u'register_day']
-            self.register_day = datetime.datetime.strptime(reg_day, '%Y-%m-%d')
+            self.register_day = datetime.strptime(reg_day, '%Y-%m-%d')
         if u'information_source' in para:
             self.information_source = para[u'information_source']
         if u'counselor' in para:
@@ -351,7 +351,7 @@ class DanceStudent(db.Model):
         elif col_name == 'birthday':
             return self.birthday
         elif col_name == 'register_day':
-            return datetime.datetime.strftime(self.register_day, '%Y-%m-%d')
+            return datetime.strftime(self.register_day, '%Y-%m-%d')
         elif col_name == 'information_source':
             return self.information_source
         elif col_name == 'counselor':
@@ -653,7 +653,7 @@ class DanceStudentClass(db.Model):
             self.class_id = para['class_id']
         if 'join_date' in para:
             my_date = para['join_date']
-            self.join_date = datetime.datetime.strptime(my_date, '%Y/%m/%d')
+            self.join_date = datetime.strptime(my_date, '%Y/%m/%d')
         if 'status' in para:
             self.status = para['status']
         if 'remark' in para:
@@ -661,5 +661,18 @@ class DanceStudentClass(db.Model):
 
     def __repr__(self):
         return '<DanceStudentClass %r,%r>' % (self.student_id, self.class_id)
+
+
+class DanceCompany(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company_name = db.Column(db.String(50, collation='NOCASE'), unique=True, index=True, nullable=False)
+    create_at = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, company_name):
+        self.company_name = company_name
+        self.create_at = datetime.today()
+
+    def __repr__(self):
+        return '<DanceCompany %r>' % self.id
 
 whooshalchemy.whoosh_index(app, Post)

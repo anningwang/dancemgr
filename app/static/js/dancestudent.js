@@ -42,136 +42,6 @@ function danceAddTabClassStudentStat(title) {
 }
 //----------------------------------------------
 
-function danceAddStudentDetailInfo( page, url, uid, no) {
-    var title = '学员详细信息';
-    uid = uid || 0;     // 第一次进入 学生详细信息页面 uid 有效，上下翻页时，无法提前获取上下记录的uid
-    if (uid <= 0) {
-        title +='[新曾]'
-    }
-
-    var parentDiv = $('#danceTabs');
-    if ($(parentDiv).tabs('exists', title)) {
-        $(parentDiv).tabs('select', title);
-    } else {
-        $(parentDiv).tabs('add', {
-            title: title,
-            // content: page,
-            href: page,
-            closable: true,
-            onLoad : function (panel) {
-                // console.log(panel);
-                $('#pagerStudent').pagination({
-                    buttons:[{
-                        text:'查找', iconCls:'icon-search', handler:function(){
-                            alert('search');
-                        }
-                    },{
-                        text:'保存', iconCls:'icon-save',  handler:function(){
-                            alert('search');
-                        }
-                    },{
-                        text:'增加', iconCls:'icon-add',  handler:function(){
-                            alert('add');
-                        }
-                    },{
-                        text:'编辑', iconCls:'icon-edit', handler:function(){
-                            alert('edit');
-                        }
-                    }],
-                    onSelectPage:function(pageNumber, pageSize){
-                        no = pageNumber;
-                        doAjaxStuDetail();
-                    }
-                });
-
-                if (uid > 0) {
-                    doAjaxStuDetail();
-                }
-                $('#panelStudent').find('div.datagrid-view2>div.datagrid-header').first().hide();
-                $('#recorder').textbox('textbox').css('background','#e4e4e4');      // e4e4e4 #99ff99
-                $('#sno').textbox('textbox').css('background','#e4e4e4');      // #ccc #fff #ffee00 #6293BB
-            }
-        });
-    }
-
-    function doAjaxStuDetail() {
-        $.ajax({
-            method: 'POST',
-            url: url + '_get_details',
-            async: true,
-            dataType: 'json',
-            data: {'sno': uid, 'page': no},
-            success: function (data) {
-                console.log(data);
-                console.log(data.total);
-                console.log(data.rows[0]['name']);
-
-                $('#sno').textbox('setText',data.rows[0]['sno']);
-                $('#name').textbox('setText',data.rows[0]['name']);
-                $('#register_day').textbox('setText',data.rows[0]['register_day']);
-                $('#birthday').textbox('setText',data.rows[0]['birthday']);
-                $('#school_name').textbox('setText',data.rows[0]['school_name']);
-                //$('#information_source').textbox('setText',data.rows[0].information_source);
-                //$('#counselor').textbox('setText',data.rows[0].counselor);
-                //$('#degree').textbox('setText',data.rows[0].degree);
-                $('#former_name').textbox('setText',data.rows[0]['former_name']);
-                $('#recorder').textbox('setText',data.rows[0]['recorder']);
-                $('#gender').combobox('select',data.rows[0]['gender']);
-                $('#remark').textbox('setText',data.rows[0]['remark']);
-
-                // 更新翻页控件 页码
-                $('#pagerStudent').pagination({total: data.total, pageNumber:no==-2?data.rows[0].no:no });
-
-                $('#student_rec_id').val(data.rows[0]['id']);      // ID
-
-                // 更新联系方式 table
-                $('#dgStudent_contact').datagrid('updateRow',{
-                    index: 0,
-                    row: {
-                        c2: data.rows[0]['reading_school'],
-                        c4: data.rows[0]['grade'],
-                        c6: data.rows[0]['phone'],
-                        c8: data.rows[0]['tel']
-                    }
-                }).datagrid('updateRow', {
-                    index: 1,
-                    row: {
-                        c2: data.rows[0]['address'],
-                        c6: data.rows[0]['email'],
-                        c8: data.rows[0]['qq']
-                    }
-                }).datagrid('updateRow', {
-                    index: 2,
-                    row: {
-                        c2: data.rows[0]['mother_name'],
-                        c4: data.rows[0]['mother_phone'],
-                        c6: data.rows[0]['mother_company']
-                    }
-                }).datagrid('updateRow', {
-                    index: 3,
-                    row: {
-                        c2: data.rows[0]['father_name'],
-                        c6: data.rows[0]['father_phone'],
-                        c8: data.rows[0]['father_company']
-                    }
-                }).datagrid('mergeCells', {
-                    index: 1, field: 'c2', colspan: 3
-                });
-
-                // 更新报班信息 table
-                var len = data['class_info'].length;
-                $('#dgStudent_class').datagrid('loadData', data['class_info']);
-                for(var i = 0; i < 3 - len; i++ ) {
-                    $('#dgStudent_class').datagrid('appendRow', {});
-                }
-            },
-            error: function (XMLHttpRequest, textStatus, errorThrown) {
-                console.log('error in ajax. XMLHttpRequest=', + XMLHttpRequest
-                    + ' textStatus=' + textStatus + ' errorThrown=' + errorThrown);
-            }
-        });
-    }
-}
 
 /**
  * danceCreateDatagrid       增加 Datagrid 组件，并格式化，包括列名，增/删/查等相应函数
@@ -342,4 +212,177 @@ function danceCreateStudentDatagrid(datagridId, url) {
         }]
     });
 }
+
+
+/**
+ * 查看/新增 学员 详细信息
+ * @param page          学员详细信息页面
+ * @param url           查询信息所用url
+ * @param uid           学员id，新增时，可以不传递此参数。
+ * @param no            学员所在数据库中的序号，方便翻页。传递 -2 则根据 uid 查询该学员的序号
+ */
+function danceAddStudentDetailInfo( page, url, uid, no) {
+    var title = '学员详细信息';
+    uid = uid || 0;     // 第一次进入 学生详细信息页面 uid 有效，上下翻页时，无法提前获取上下记录的uid
+    if (uid <= 0) {
+        title +='[新增]'
+    }
+
+    var pagerStu = 'pagerStudent';
+    var panelStu = 'panelStudent';
+    var stu_sno = 'sno';
+    var stu_name = 'name';
+    var stu_gender = 'gender';
+    var stu_register_day = 'register_day';
+    var stu_school_name = 'school_name';
+    var stu_information_source = 'information_source';
+    var stu_people_id = 'people_id';
+    var stu_counselor = 'counselor';
+    var stu_degree = 'degree';
+    var stu_former_name = 'former_name';
+    var stu_birthday = 'birthday';
+    var stu_recorder = 'recorder';
+    var stu_remark = 'remark';
+    var dgStu_contact = 'dgStudent_contact';
+    var dgStu_class = 'dgStudent_class';
+
+
+    var parentDiv = $('#danceTabs');
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+    } else {
+        $(parentDiv).tabs('add', {
+            title: title,
+            // content: page,
+            href: page,
+            closable: true,
+            onLoad : function (panel) {
+                // console.log(panel);
+                $('#'+pagerStu).pagination({
+                    buttons:[{
+                        text:'保存', iconCls:'icon-save',  handler:function(){
+                            alert('search');
+                        }
+                    },{
+                        text:'增加', iconCls:'icon-add',  handler:function(){
+                            alert('add');
+                        }
+                    },{
+                        text:'编辑', iconCls:'icon-edit', handler:function(){
+                            alert('edit');
+                        }
+                    }],
+                    onSelectPage:function(pageNumber, pageSize){
+                        no = pageNumber;
+                        doAjaxStuDetail();
+                    }
+                }).attr('id', pagerStu+=uid);        // 更新ID
+
+                if (uid > 0) {
+                    doAjaxStuDetail();
+                }
+                $('#'+panelStu).attr('id', panelStu+=uid).find('div.datagrid-view2>div.datagrid-header').first().hide();
+                $('#recorder').textbox('textbox').css('background','#e4e4e4');
+                // #ccc #fff #ffee00 #6293BB e4e4e4 #99ff99
+                $('#'+stu_sno).attr('id', stu_sno+=uid).textbox('textbox').css('background','#e4e4e4');
+                $('#'+stu_name).attr('id', stu_name+=uid);
+                $('#'+stu_gender).attr('id', stu_gender+=uid);
+                $('#'+stu_register_day).attr('id', stu_register_day+=uid);
+                $('#'+stu_school_name).attr('id', stu_school_name+=uid);
+                $('#'+stu_information_source).attr('id', stu_information_source+=uid);
+                $('#'+stu_people_id).attr('id', stu_people_id+=uid);
+                $('#'+stu_counselor).attr('id', stu_counselor+=uid);
+                $('#'+stu_degree).attr('id', stu_degree+=uid);
+                $('#'+stu_former_name).attr('id', stu_former_name+=uid);
+                $('#'+stu_birthday).attr('id', stu_birthday+=uid);
+                $('#'+stu_recorder).attr('id', stu_recorder+=uid);
+                $('#'+stu_remark).attr('id', stu_remark+=uid);
+                $('#'+dgStu_contact).attr('id', dgStu_contact+=uid);
+                $('#'+dgStu_class).attr('id', dgStu_class+=uid);
+            }
+        });
+    }
+
+    function doAjaxStuDetail() {
+        $.ajax({
+            method: 'POST',
+            url: url + '_get_details',
+            async: true,
+            dataType: 'json',
+            data: {'sno': uid, 'page': no},
+            success: function (data) {
+                console.log(data);
+                console.log(data.total);
+                console.log(data.rows[0]['name']);
+
+                $('#'+stu_sno).textbox('setText',data.rows[0]['sno']);
+                $('#'+stu_name).textbox('setText',data.rows[0]['name']);
+                $('#'+stu_register_day).textbox('setText',data.rows[0]['register_day']);
+                $('#'+stu_birthday).textbox('setText',data.rows[0]['birthday']);
+                $('#'+stu_school_name).textbox('setText',data.rows[0]['school_name']);
+                $('#'+stu_people_id).textbox('setText',data.rows[0]['people_id']);
+
+                $('#'+stu_information_source).textbox('setText',data.rows[0]['information_source']);
+                $('#'+stu_counselor).textbox('setText',data.rows[0]['counselor']);
+                $('#'+stu_degree).textbox('setText',data.rows[0]['degree']);
+
+                $('#'+stu_former_name).textbox('setText',data.rows[0]['former_name']);
+                $('#'+stu_recorder).textbox('setText',data.rows[0]['recorder']);
+                $('#'+stu_gender).combobox('select',data.rows[0]['gender']);
+                $('#'+stu_remark).textbox('setText',data.rows[0]['remark']);
+
+                // 更新翻页控件 页码
+                $('#'+pagerStu).pagination({total: data.total, pageNumber:no==-2?data.rows[0].no:no });
+
+                $('#student_rec_id').val(data.rows[0]['id']);      // ID
+
+                // 更新联系方式 table
+                $('#'+dgStu_contact).datagrid('updateRow',{
+                    index: 0,
+                    row: {
+                        c2: data.rows[0]['reading_school'],
+                        c4: data.rows[0]['grade'],
+                        c6: data.rows[0]['phone'],
+                        c8: data.rows[0]['tel']
+                    }
+                }).datagrid('updateRow', {
+                    index: 1,
+                    row: {
+                        c2: data.rows[0]['address'],
+                        c6: data.rows[0]['email'],
+                        c8: data.rows[0]['qq']
+                    }
+                }).datagrid('updateRow', {
+                    index: 2,
+                    row: {
+                        c2: data.rows[0]['mother_name'],
+                        c4: data.rows[0]['mother_phone'],
+                        c6: data.rows[0]['mother_company']
+                    }
+                }).datagrid('updateRow', {
+                    index: 3,
+                    row: {
+                        c2: data.rows[0]['father_name'],
+                        c6: data.rows[0]['father_phone'],
+                        c8: data.rows[0]['father_company']
+                    }
+                }).datagrid('mergeCells', {
+                    index: 1, field: 'c2', colspan: 3
+                });
+
+                // 更新报班信息 table
+                var len = data['class_info'].length;
+                $('#'+dgStu_class).datagrid('loadData', data['class_info']);
+                for(var i = 0; i < 3 - len; i++ ) {
+                    $('#'+dgStu_class).datagrid('appendRow', {});
+                }
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                console.log('error in ajax. XMLHttpRequest=', + XMLHttpRequest
+                    + ' textStatus=' + textStatus + ' errorThrown=' + errorThrown);
+            }
+        });
+    }
+}
+
 //}(jQuery));
