@@ -458,15 +458,6 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
             setTimeout(function(){
                 $('#'+dgStu_class).datagrid('endEdit', editIndexClass);
             },0);
-            setTimeout(function(){
-                editIndexClass = undefined;
-                onClickCell(editIndexClass, 'class_name');
-            },0);
-            /*
-            setTimeout(function(){
-                $('#'+dgStu_class).datagrid('beginEdit', editIndexClass);
-            },0);
-            */
         }
     }
 }
