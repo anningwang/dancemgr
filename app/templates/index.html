@@ -23,10 +23,10 @@
 
 	<div data-options="region:'west',split:true,hideCollapsedContent:false,title:'功能栏'" style="width:200px;">
         <div class="easyui-accordion" data-options="fit:true,border:false">
-            <div title="学员管理" data-options="iconCls:'icon-student'" style="padding:1px">
+            <div title="学员管理" data-options="iconCls:'icon-student',selected:true" style="padding:1px">
                 <ul id="treeStudent" class="easyui-tree" data-options="url:'/static/html/tree_student.json',method:'get',animate:true,lines:true"></ul>
             </div>
-            <div title="员工与老师" data-options="iconCls:'icon-teacher', selected:true" style="padding:1px">
+            <div title="员工与老师" data-options="iconCls:'icon-teacher'" style="padding:1px">
                 <ul id="treeTeacher" class="easyui-tree" data-options="url:'/static/html/tree_teacher.json',method:'get',animate:true,lines:true"></ul>
             </div>
             <div title="教学管理" data-options="iconCls:'icon-book'" style="padding:1px">

@@ -246,6 +246,8 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
     var dgStu_contact = 'dgStudent_contact';
     var dgStu_class = 'dgStudent_class';
 
+    var editIndexClass = undefined;
+    var classlist = [];
 
     var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
@@ -253,7 +255,6 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
     } else {
         $(parentDiv).tabs('add', {
             title: title,
-            // content: page,
             href: page,
             closable: true,
             onLoad : function (panel) {
@@ -278,11 +279,13 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
                     }
                 }).attr('id', pagerStu+=uid);        // 更新ID
 
-                if (uid > 0) {
+                if (uid > 0) {  // 修改，查看
                     doAjaxStuDetail();
+                } else {    // 新增
+                    newStudent()
                 }
                 $('#'+panelStu).attr('id', panelStu+=uid).find('div.datagrid-view2>div.datagrid-header').first().hide();
-                $('#recorder').textbox('textbox').css('background','#e4e4e4');
+                $('#'+stu_recorder).attr('id', stu_recorder+=uid).textbox('textbox').css('background','#e4e4e4');
                 // #ccc #fff #ffee00 #6293BB e4e4e4 #99ff99
                 $('#'+stu_sno).attr('id', stu_sno+=uid).textbox('textbox').css('background','#e4e4e4');
                 $('#'+stu_name).attr('id', stu_name+=uid);
@@ -295,12 +298,24 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
                 $('#'+stu_degree).attr('id', stu_degree+=uid);
                 $('#'+stu_former_name).attr('id', stu_former_name+=uid);
                 $('#'+stu_birthday).attr('id', stu_birthday+=uid);
-                $('#'+stu_recorder).attr('id', stu_recorder+=uid);
                 $('#'+stu_remark).attr('id', stu_remark+=uid);
-                $('#'+dgStu_contact).attr('id', dgStu_contact+=uid);
-                $('#'+dgStu_class).attr('id', dgStu_class+=uid);
+                $('#'+dgStu_contact).attr('id', dgStu_contact+=uid).datagrid('mergeCells', {
+                    index: 1, field: 'c2', colspan: 3
+                });
+                $('#'+dgStu_class).attr('id', dgStu_class+=uid).datagrid({
+                    onClickCell: onClickCell,
+                    onEndEdit : function onEndEdit(index, row){
+                        var ed = $(this).datagrid('getEditor', {
+                            index: index,
+                            field: 'class_name'
+                        });
+                        row.class_name = $(ed.target).combobox('getText');
+                    }
+                });
             }
         });
+
+        ajaxGetStudentExtras();
     }
 
     function doAjaxStuDetail() {
@@ -366,8 +381,6 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
                         c6: data.rows[0]['father_phone'],
                         c8: data.rows[0]['father_company']
                     }
-                }).datagrid('mergeCells', {
-                    index: 1, field: 'c2', colspan: 3
                 });
 
                 // 更新报班信息 table
@@ -382,6 +395,79 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
                     + ' textStatus=' + textStatus + ' errorThrown=' + errorThrown);
             }
         });
+    }
+
+    function newStudent() {
+        for(var i = 0; i < 3; i++ ) {
+            $('#'+dgStu_class).datagrid('appendRow', {});
+        }
+    }
+
+    function onClickCell(index, field) {
+        //console.log('onClickCell');
+        if (editIndexClass != index) {
+            if (editIndexClass != undefined) {
+                $('#'+dgStu_class).datagrid('endEdit', editIndexClass);
+            }
+            $('#'+dgStu_class).datagrid('selectRow', index)
+                .datagrid('beginEdit', index);
+
+            var classEd =  $('#'+dgStu_class).datagrid('getEditor', {index:index,field:'class_name'});
+            if (classEd){
+                $(classEd.target).combobox('loadData' , classlist);
+                $(classEd.target).combobox({
+                    //data: classlist,
+                    onClick: onClickClass
+                });
+                var row = $('#'+dgStu_class).datagrid("getSelected");
+                $(classEd.target).combobox('setValue', row['class_id']);
+            }
+
+            var ed = $('#'+dgStu_class).datagrid('getEditor', {index:index,field:field});
+            if (ed){
+                ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
+            }
+            editIndexClass = index;
+        }
+    }
+    
+    function ajaxGetStudentExtras() {
+        $.ajax({
+            method: 'POST',
+            url: '/dance_student_details_extras',
+            async: true,
+            dataType: 'json',
+            data: {'sno': uid, 'page': no},
+            success: function (data) {
+                if(data.errorCode == 0) {
+                    classlist = data['classlist'];
+                } else {
+                    $.messager.alert('错误',data.msg,'error');
+                }
+            }
+        });
+    }
+
+    function onClickClass(record) {
+        var row = $('#'+dgStu_class).datagrid("getSelected");
+        if (row) {
+            row['class_id'] =  record['class_id'];
+            row['class_name'] = record['class_name'];
+            //console.info(row);
+            $('#'+dgStu_class).datagrid('updateRow', {index: editIndexClass, row: row});
+            setTimeout(function(){
+                $('#'+dgStu_class).datagrid('endEdit', editIndexClass);
+            },0);
+            setTimeout(function(){
+                editIndexClass = undefined;
+                onClickCell(editIndexClass, 'class_name');
+            },0);
+            /*
+            setTimeout(function(){
+                $('#'+dgStu_class).datagrid('beginEdit', editIndexClass);
+            },0);
+            */
+        }
     }
 }
 

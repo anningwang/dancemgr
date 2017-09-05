@@ -145,14 +145,14 @@
                ">
                 <thead>
                 <tr>
-                    <th data-options="field:'c1',width:100,align:'center',fixed:'true'">1</th>
-                    <th data-options="field:'c2',width:140,align:'left',fixed:'true'">2</th>
-                    <th data-options="field:'c3',width:100,align:'center',fixed:'true'">3</th>
-                    <th data-options="field:'c4',width:140,align:'left',fixed:'true'">4</th>
-                    <th data-options="field:'c5',width:100,align:'center',fixed:'true'">5</th>
-                    <th data-options="field:'c6',width:140,align:'left',fixed:'true'">6</th>
-                    <th data-options="field:'c7',width:100,align:'center',fixed:'true'">7</th>
-                    <th data-options="field:'c8',width:140,align:'left',fixed:'true'">8</th>
+                    <th data-options="field:'c1',width:100,align:'center',fixed:true">1</th>
+                    <th data-options="field:'c2',width:140,align:'left',fixed:true">2</th>
+                    <th data-options="field:'c3',width:100,align:'center',fixed:true">3</th>
+                    <th data-options="field:'c4',width:140,align:'left',fixed:true">4</th>
+                    <th data-options="field:'c5',width:100,align:'center',fixed:true">5</th>
+                    <th data-options="field:'c6',width:140,align:'left',fixed:true">6</th>
+                    <th data-options="field:'c7',width:100,align:'center',fixed:true">7</th>
+                    <th data-options="field:'c8',width:140,align:'left',fixed:true">8</th>
                 </tr>
                 </thead>
 
@@ -206,7 +206,7 @@
             <div style="height: 2px"></div>
 
             <!-- 下发区域，报班信息 -->
-            <table id="dgStudent_class" class="easyui-datagrid" title="报班信息" style="width:100%;padding:5px"
+            <table id="dgStudent_class" class="easyui-datagrid" title="报班信息" style="width:100%;"
                    data-options="checkbox:true, rownumbers:true,fitColumns:true,singleSelect:true,
                collapsible:true
                ">
@@ -214,11 +214,20 @@
                 <thead>
                 <tr>
                     <th data-options="field:'ck',checkbox:true"></th>
-                    <th data-options="field:'join_date',width:100,align:'center',fixed:'true'">报班日期</th>
-                    <th data-options="field:'class_id',width:140,align:'center',fixed:'true'">班级编号</th>
-                    <th data-options="field:'class_name',width:200,align:'center',fixed:'true'">班级名称</th>
-                    <th data-options="field:'status',width:140,align:'center',fixed:'true'">状态</th>
-                    <th data-options="field:'remark',width:200,align:'center',fixed:'true'">备注</th>
+                    <th data-options="field:'join_date',width:100,align:'center',fixed:true">报班日期</th>
+                    <th data-options="field:'class_id',width:140,align:'center',fixed:true">班级编号</th>
+                    <th data-options="field:'class_name',width:200,align:'center',fixed:true,editor:{
+							type:'combobox',
+							options:{
+								valueField:'class_id',
+								textField:'class_name',
+								panelWidth: 260,
+								formatter: formatItem,
+								groupField:'class_type'
+							}
+						}">班级名称</th>
+                    <th data-options="field:'status',width:140,align:'center',fixed:true">状态</th>
+                    <th data-options="field:'remark',width:200,align:'center',fixed:true,editor:'textbox'">备注</th>
                     <th data-options="field:'id',hidden:true">6</th>
 
                 </tr>
@@ -251,6 +260,11 @@
         } else {
             return new Date();
         }
+    }
+
+    function formatItem(row){
+        return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
+                '<span style="color:#888">' + row['class_id'] + '</span>';
     }
 </script>
 

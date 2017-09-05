@@ -536,6 +536,16 @@ def dance_student_get_details():
     return jsonify({"total": total, "rows": rows, 'class_info': class_info, 'errorCode': 0, 'msg': 'ok'})
 
 
+@app.route('/dance_student_details_extras', methods=['POST'])
+def dance_student_details_extras():
+    classlist = DanceClass.query.order_by(DanceClass.id.desc()).filter(DanceClass.is_ended == u'否').all()
+    classes = []
+    for cls in classlist:
+        classes.append({'class_id': cls.cno, 'class_name': cls.class_name, 'class_type': cls.class_type})
+
+    return jsonify({'classlist': classes, 'errorCode': 0, 'msg': 'ok'})
+
+
 @app.route('/dance_class_get', methods=['POST'])
 def dance_class_get():
     page_size = int(request.form['rows'])
