@@ -366,7 +366,34 @@ def dance_location_get():
     return jsonify({"total": total, "rows": rows})
 
 
+@app.route('/dance_del_data', methods=['POST'])
+@login_required
+def dance_del_data():
+    # if request.has_key('ids'):
+    who = request.form['who']
+    ids = request.form.getlist('ids[]')
+    print 'who=', who, ' ids=', ids
+
+    if who == 'DanceClass':
+        table = DanceClass
+    elif who == 'DanceStudent':
+        table = DanceStudent
+    elif who == 'DanceSchool':
+        table = DanceSchool
+    elif who == 'DanceUser':
+        table = DanceUser
+    else:
+        return jsonify({'errorCode': 1, "msg": "Table not found!"})     # error
+
+    for i in ids:
+        db.session.delete(table.query.get(i))
+    db.session.commit()
+
+    return jsonify({'errorCode': 0, "msg": "Ok for del."})
+
+
 @app.route('/dance_student_get', methods=['POST', 'GET'])
+@login_required
 def dance_student_get():
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
@@ -414,6 +441,7 @@ def dance_student_get():
 
 
 @app.route('/dance_class_student_condition_get', methods=['POST', 'GET'])
+@login_required
 def dance_class_student_condition_get():
     # page_size = int(request.form['rows'])
     # page_no = int(request.form['page'])
@@ -443,13 +471,14 @@ def dance_class_student_condition_get():
                      'is_training': r.is_training,
                      'points': r.points,
                      'remark': r.remark, 'recorder': r.recorder,
-                     'idcard': r.idcard, 'mother_wechat': r.mother_wechat,'father_wechat':r.father_wechat
+                     'idcard': r.idcard, 'mother_wechat': r.mother_wechat, 'father_wechat': r.father_wechat
                      })
         i += 1
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
 
 
 @app.route('/dance_student_query', methods=['POST'])
+@login_required
 def dance_student_query():
     json_data = request.form['condition']
 
@@ -462,32 +491,8 @@ def dance_student_query():
     return jsonify(ret)
 
 
-@app.route('/dance_del_data', methods=['POST'])
-def dance_del_data():
-    # if request.has_key('ids'):
-    who = request.form['who']
-    ids = request.form.getlist('ids[]')
-    print 'who=', who, ' ids=', ids
-
-    if who == 'DanceClass':
-        table = DanceClass
-    elif who == 'DanceStudent':
-        table = DanceStudent
-    elif who == 'DanceSchool':
-        table = DanceSchool
-    elif who == 'DanceUser':
-        table = DanceUser
-    else:
-        return jsonify({'errorCode': 1, "msg": "Table not found!"})     # error
-
-    for i in ids:
-        db.session.delete(table.query.get(i))
-    db.session.commit()
-
-    return jsonify({'errorCode': 0, "msg": "Ok for del."})
-
-
 @app.route('/dance_student_get_details', methods=['POST', 'GET'])
+@login_required
 def dance_student_get_details():
     sno = int(request.form['sno'])
     page_size = 1
@@ -537,6 +542,7 @@ def dance_student_get_details():
 
 
 @app.route('/dance_student_details_extras', methods=['POST'])
+@login_required
 def dance_student_details_extras():
     classlist = DanceClass.query.order_by(DanceClass.id.desc()).filter(DanceClass.is_ended == u'否').all()
     classes = []
@@ -546,7 +552,35 @@ def dance_student_details_extras():
     return jsonify({'classlist': classes, 'errorCode': 0, 'msg': 'ok'})
 
 
+@app.route('/dance_student_add', methods=['POST'])
+@login_required
+def dance_student_add():
+    json_data = request.form['data']
+    obj_data = json.loads(json_data)
+
+    student = obj_data['student']
+    classes = obj_data['class']
+    print '[dance_student_add]', student
+    print classes
+    allow_same_name = True if 'allowSameName' in student and student['allowSameName'] == 'y'else False
+
+    if not allow_same_name:
+        stu = DanceStudent.query.filter_by(name=student['name']).first()
+        if stu is not None:
+            return jsonify({'errorCode': 100,
+                            'msg': u'学员[%s]已经存在！勾选[允许重名]可添加重名学员。' % student['name']})
+
+    new_stu = DanceStudent(student)
+    new_stu.school_no = 1
+    print new_stu.create_sno()
+    db.session.add(new_stu)
+    db.session.commit()
+
+    return jsonify({'errorCode': 0, 'msg': u'成功添加学员[%s](%s)' % (new_stu.name, new_stu.sno)})
+
+
 @app.route('/dance_class_get', methods=['POST'])
+@login_required
 def dance_class_get():
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
@@ -572,6 +606,7 @@ def dance_class_get():
 
 
 @app.route('/dance_class_condition_get', methods=['POST'])
+@login_required
 def dance_class_condition_get():
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])

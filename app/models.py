@@ -5,8 +5,10 @@ from app import app
 from flask_login import UserMixin
 import flask_whooshalchemy as whooshalchemy
 import re
-from datetime import datetime
+import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from tools.tools import get_stu_no
+from flask import g
 
 ROLE_USER = 0
 ROLE_ADMIN = 1
@@ -200,10 +202,7 @@ class DanceStudent(db.Model):
         self.grade = grade
         self.phone = phone
 
-        if tel is None:
-            tel = ''
         self.tel = tel
-
         self.address = address
 
         if zipcode is None:
@@ -248,7 +247,7 @@ class DanceStudent(db.Model):
         if remark is None:
             remark = ''
         self.remark = remark
-        self.recorder = recorder
+        self.recorder = g.user.name if recorder is None else recorder
 
     def __init__(self, para):
         if u'sno' in para:
@@ -270,8 +269,11 @@ class DanceStudent(db.Model):
         if u'birthday' in para:
             self.birthday = para[u'birthday']
         if u'register_day' in para:
-            reg_day = para[u'register_day']
-            self.register_day = datetime.strptime(reg_day, '%Y-%m-%d')
+            self.register_day = datetime.datetime.strptime(para[u'register_day'], '%Y-%m-%d')
+            if self.register_day.date() == datetime.date.today():
+                self.register_day = datetime.datetime.today()
+        else:
+            self.register_day = datetime.datetime.today()
         if u'information_source' in para:
             self.information_source = para[u'information_source']
         if u'counselor' in para:
@@ -319,8 +321,7 @@ class DanceStudent(db.Model):
             self.points = int(para[u'points'])
         if u'remark' in para:
             self.remark = para[u'remark']
-        if u'recorder' in para:
-            self.recorder = para[u'recorder']
+        self.recorder = para[u'recorder'] if u'recorder' in para else g.user.name
 
         if 'idcard' in para:
             self.idcard = para['idcard']
@@ -351,7 +352,7 @@ class DanceStudent(db.Model):
         elif col_name == 'birthday':
             return self.birthday
         elif col_name == 'register_day':
-            return datetime.strftime(self.register_day, '%Y-%m-%d')
+            return datetime.datetime.strftime(self.register_day, '%Y-%m-%d')
         elif col_name == 'information_source':
             return self.information_source
         elif col_name == 'counselor':
@@ -408,6 +409,14 @@ class DanceStudent(db.Model):
             return self.father_wechat
         else:
             return '<Unknown field name>'
+
+    def create_sno(self):
+        search_sno = get_stu_no(self.school_no)
+        stu = DanceStudent.query.filter(DanceStudent.sno.like(
+            '%' + search_sno + '%')).order_by(DanceStudent.id.desc()).first()
+        number = 1 if stu is None else int(stu.sno.rsplit('-', 1)[1]) + 1
+        self.sno = search_sno + ('%03d' % number)
+        return self.sno
 
     def __repr__(self):
         return '<DanceStudent %r>' % self.sno
@@ -653,7 +662,7 @@ class DanceStudentClass(db.Model):
             self.class_id = para['class_id']
         if 'join_date' in para:
             my_date = para['join_date']
-            self.join_date = datetime.strptime(my_date, '%Y/%m/%d')
+            self.join_date = datetime.datetime.strptime(my_date, '%Y/%m/%d')
         if 'status' in para:
             self.status = para['status']
         if 'remark' in para:
@@ -670,7 +679,7 @@ class DanceCompany(db.Model):
 
     def __init__(self, company_name):
         self.company_name = company_name
-        self.create_at = datetime.today()
+        self.create_at = datetime.datetime.today()
 
     def __repr__(self):
         return '<DanceCompany %r>' % self.id

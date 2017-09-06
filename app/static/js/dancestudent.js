@@ -4,6 +4,39 @@
 
 'use strict';
 
+(function($){
+    $.extend({
+        /** 使用方法：
+         *  一，字面量版：$.format ( "为什么{language}没有format" , { language : "javascript" } );
+         *  二，数组版：$.format ( "为什么{0}没有format" ,  [ "javascript" ] );
+         * @param source
+         * @param args
+         * @returns {*}
+         */
+        format : function(source,args){
+            var result = source;
+            if(typeof(args) == "object"){
+                if(args.length==undefined){
+                    for (var key in args) {
+                        if(args[key]!=undefined){
+                            var reg = new RegExp("({" + key + "})", "g");
+                            result = result.replace(reg, args[key]);
+                        }
+                    }
+                }else{
+                    for (var i = 0; i < args.length; i++) {
+                        if (args[i] != undefined) {
+                            var reg = new RegExp("({[" + i + "]})", "g");
+                            result = result.replace(reg, args[i]);
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+    })
+})(jQuery);
+
 //(function($){
 
 /**
@@ -28,6 +61,10 @@ function danceAddTab(divId, title, tableId) {
 }
 
 //----------------------------------------------
+/**
+ * 添加或者打开班级学员名单 Tab 页
+ * @param title         Tab页的标题
+ */
 function danceAddTabClassStudentStat(title) {
     var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
@@ -213,6 +250,30 @@ function danceCreateStudentDatagrid(datagridId, url) {
     });
 }
 
+/**
+ * 格式化日期，将日期格式化为 年-月-日 形式的字符串。
+ * @param date          日期, JavaScript Date() 对象
+ * @returns {string}    格式化后的字符串 yyyy-mm-dd
+ */
+function danceFormatter(date){
+    var y = date.getFullYear();
+    var m = date.getMonth()+1;
+    var d = date.getDate();
+    return y+'-'+(m<10?('0'+m):m)+'-'+(d<10?('0'+d):d);
+}
+
+function danceParser(s){
+    if (!s) return new Date();
+    var ss = (s.split('-'));
+    var y = parseInt(ss[0],10);
+    var m = parseInt(ss[1],10);
+    var d = parseInt(ss[2],10);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d)){
+        return new Date(y,m-1,d);
+    } else {
+        return new Date();
+    }
+}
 
 /**
  * 查看/新增 学员 详细信息
@@ -248,6 +309,7 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
 
     var editIndexClass = undefined;
     var classlist = [];
+    var stuInfo = {'student': {}, 'class': {}};
 
     var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
@@ -260,10 +322,8 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
             onLoad : function (panel) {
                 // console.log(panel);
                 $('#'+pagerStu).pagination({
-                    buttons:[{
-                        text:'保存', iconCls:'icon-save',  handler:function(){
-                            alert('search');
-                        }
+                    buttons:[
+                        { text:'保存', iconCls:'icon-save',  handler:onSave
                     },{
                         text:'增加', iconCls:'icon-add',  handler:function(){
                             alert('add');
@@ -326,9 +386,11 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
             dataType: 'json',
             data: {'sno': uid, 'page': no},
             success: function (data) {
-                console.log(data);
-                console.log(data.total);
-                console.log(data.rows[0]['name']);
+                //console.log(data);
+                //console.log(data.total);
+                //console.log(data.rows[0]['name']);
+
+                stuInfo['student'] = data.rows[0];
 
                 $('#'+stu_sno).textbox('setText',data.rows[0]['sno']);
                 $('#'+stu_name).textbox('setText',data.rows[0]['name']);
@@ -401,6 +463,10 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
         for(var i = 0; i < 3; i++ ) {
             $('#'+dgStu_class).datagrid('appendRow', {});
         }
+
+        //设置时间
+        var curr_time = new Date();
+        $("#"+stu_register_day).datebox("setValue",danceFormatter(curr_time));
     }
 
     function onClickCell(index, field) {
@@ -448,6 +514,12 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
         });
     }
 
+    function endEditingClass(){
+        if (editIndexClass != undefined){
+            $('#'+dgStu_class).datagrid('endEdit', editIndexClass);
+            editIndexClass = undefined;
+        }
+    }
     function onClickClass(record) {
         var row = $('#'+dgStu_class).datagrid("getSelected");
         if (row) {
@@ -456,9 +528,53 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
             //console.info(row);
             $('#'+dgStu_class).datagrid('updateRow', {index: editIndexClass, row: row});
             setTimeout(function(){
-                $('#'+dgStu_class).datagrid('endEdit', editIndexClass);
+                endEditingClass();
             },0);
         }
+    }
+    ////////////////////
+    function onSave() {
+        if (!validateStudentInfo()) {
+            return false;
+        }
+
+        packageStudentInfo();
+        //console.log(stuInfo);
+        $.ajax({
+            method: "POST",
+            url: "/dance_student_add",
+            data: { data: JSON.stringify(stuInfo) }
+        }).done(function(data) {
+            if (data.errorCode == 0) {
+                $.messager.alert('提示', data.msg, 'info');
+            } else {
+                $.messager.alert('提示', data.msg, 'info');
+            }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            console.log(jqXHR);
+            var msg = $.format("请求失败：{0}。错误码：{1}({2}) ", [textStatus, jqXHR.status, errorThrown]);
+            $.messager.alert('提示', msg, 'info');
+        });
+    }
+
+    function validateStudentInfo() {
+        if (!$('#'+stu_name).textbox('getText')) {
+            $.messager.alert({ title: '提示',icon:'info', msg: '学员姓名不能为空！',
+                fn: function(){
+                    $('#'+stu_name).textbox('textbox').focus();
+                }
+            });
+            return false;
+        }
+
+        return true;
+    }
+    
+    function packageStudentInfo() {
+        $.extend(stuInfo['student'], {'name': $('#'+stu_name).textbox('getText')});
+        stuInfo['student']['register_day'] = $('#'+stu_register_day).datebox('getValue');
+        stuInfo['student']['gender'] = $('#'+stu_gender).combobox('getValue');
+        stuInfo['student']['birthday'] = $('#'+stu_birthday).datebox('getValue');
     }
 }
 

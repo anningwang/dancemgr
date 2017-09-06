@@ -45,11 +45,11 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="/">主页</a>
+          <a class="brand" href="/">舞苗苗</a>
             <ul class="nav">
-              <li><a href="{{ url_for('index') }}">{{ _('Home') }}</a></li>
+              <li><a href="{{ url_for('index') }}">{{ _('主页') }}</a></li>
               {% if g.user.is_authenticated %}
-              <li><a href="{{ url_for('logout') }}">{{ _('Logout') }}</a></li>
+              <li><a href="{{ url_for('logout') }}">{{ _('退出') }}</a></li>
               {% endif %}
             </ul>
           <div class="nav-collapse collapse">

@@ -14,7 +14,7 @@
     <div data-options="region:'west',split:true,hideCollapsedContent:false" title="班级信息" style="width:40%;">
         <table id="danceClassStudentStat" class="easyui-datagrid"
                data-options="url:'/dance_class_condition_get',method:'post',border:false,singleSelect:true,fit:true,
-               fitColumns:true,rownumbers:true,
+               fitColumns:true,rownumbers:true,striped:true,
                queryParams: {page: 1, rows: -1, 'is_ended': '否'},
                onSelect:onSelect,
                onLoadSuccess
@@ -34,7 +34,7 @@
     <div data-options="region:'center'">
         <table id="danceStudentStat" class="easyui-datagrid"
                data-options="border:false,singleSelect:true,fit:true,border:false,title:'学员信息',iconCls:'icon-ok',
-               fitColumns:true,rownumbers:true
+               fitColumns:true,rownumbers:true,striped:true,
                ">
             <thead>
             <tr>

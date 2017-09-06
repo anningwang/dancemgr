@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 from flask import request, jsonify
+from flask_login import login_required
 from app import app, db
 from models import DanceSchool, DanceUser
 import json
@@ -10,6 +11,7 @@ ERROR_MSG_USER_IS_EXIST = u'用户名称 [%s] 已经存在！'
 
 
 @app.route('/dance_school_get', methods=['POST'])
+@login_required
 def dance_school_get():
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
@@ -40,6 +42,7 @@ def dance_school_get():
 
 
 @app.route('/dance_school_update', methods=['POST'])
+@login_required
 def dance_school_update():
     json_data = request.form['data']
     obj_data = json.loads(json_data)
@@ -73,6 +76,7 @@ def dance_school_update():
 
 
 @app.route('/dance_school_query', methods=['POST'])
+@login_required
 def dance_school_query():
     json_data = request.form['condition']
 
@@ -88,6 +92,7 @@ def dance_school_query():
 
 
 @app.route('/dance_user_get', methods=['POST'])
+@login_required
 def dance_user_get():
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
@@ -117,6 +122,7 @@ def dance_user_get():
 
 
 @app.route('/dance_user_update', methods=['POST'])
+@login_required
 def dance_user_update():
     json_data = request.form['data']
     obj_data = json.loads(json_data)
@@ -156,6 +162,7 @@ def dance_user_update():
 
 
 @app.route('/dance_user_query', methods=['POST'])
+@login_required
 def dance_user_query():
     json_data = request.form['condition']
 
