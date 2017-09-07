@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from flask import request, jsonify
+from flask import request, jsonify, g
 from flask_login import login_required
 from app import app, db
 from models import DanceSchool, DanceUser
@@ -103,22 +103,23 @@ def dance_user_get():
         page_no = 1
     rows = []
     if condition == '':
-        total = DanceUser.query.count()
+        total = DanceUser.query.filter_by(company_id=g.user.company_id).count()
     else:
-        total = DanceUser.query.filter(DanceUser.name.like('%'+condition+'%')).count()
+        total = DanceUser.query.filter_by(company_id=g.user.company_id).filter(
+            DanceUser.name.like('%'+condition+'%')).count()
 
     offset = (page_no - 1) * page_size
     records = DanceUser.query.order_by(
-        DanceUser.user_no.asc(), DanceUser.name).filter(
+        DanceUser.user_no.asc(), DanceUser.name).filter_by(company_id=g.user.company_id).filter(
         DanceUser.name.like('%'+condition+'%')).limit(page_size).offset(offset)
     i = offset + 1
     for rec in records:
-        rows.append({"id": rec.id, "user_no": 'USER-' + rec.user_no, "name": rec.name,
-                     "pwd": '********', "phone": rec.phone, "role": rec.role,
-                     'school_mgr': rec.school_mgr, 'recorder': rec.recorder, 'no': i
+        rows.append({"id": rec.id, "user_no": 'USER-%03d' % int(rec.user_no), "name": rec.name,
+                     "pwd": '********', "phone": rec.phone, "role_id": rec.role_id,
+                     'recorder': rec.recorder, 'no': i
                      })
         i += 1
-    return jsonify({"total": total, "rows": rows})
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
 
 
 @app.route('/dance_user_update', methods=['POST'])
@@ -130,9 +131,9 @@ def dance_user_update():
     new_id = 0
     for i in range(len(obj_data)):
         if obj_data[i]['id'] <= 0:
-            # add record
+            # add record 新增用户
             if new_id == 0:
-                rec = DanceUser.query.order_by(DanceUser.user_no.desc()).first()
+                rec = DanceUser.query.filter_by(company_id=g.user.company_id).order_by(DanceUser.user_no.desc()).first()
                 if rec is not None:
                     new_id = int(rec.user_no) + 1
                 else:
@@ -140,14 +141,15 @@ def dance_user_update():
             else:
                 new_id += 1
             # 查询是否存在重名用户，若存在，返回错误
-            is_exist = DanceUser.query.filter_by(name=obj_data[i]['row']['name']).first()
+            is_exist = DanceUser.query.filter_by(company_id=g.user.company_id).filter_by(
+                name=obj_data[i]['row']['name']).first()
             if is_exist is not None:
                 return jsonify({'errorCode': ERROR_CODE_USER_IS_EXIST,
                                 'msg': ERROR_MSG_USER_IS_EXIST % obj_data[i]['row']['name']})
 
             user = DanceUser(obj_data[i]['row'])
-            user.recorder = 'WXG'
-            user.user_no = '%03d' % new_id
+            user.recorder = g.user.name
+            user.user_no = str(new_id)
             db.session.add(user)
         else:
             # update record

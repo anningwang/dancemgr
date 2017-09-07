@@ -54,7 +54,7 @@ class DanceLoginForm(FlaskForm):
 
 
 class DanceRegistrationForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired(), Length(min=6, max=20)])
+    username = StringField('Username', validators=[DataRequired(), Length(min=2, max=20)])
     email = StringField('Email Address', [validators.Length(min=6, max=35)])
     password = PasswordField('New Password', [
         validators.DataRequired(),

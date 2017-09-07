@@ -16,6 +16,13 @@ ROLE_ADMIN = 1
 GENDER_MALE = '男'
 GENDER_FEMALE = '女'
 
+
+DanceUserSchool = db.Table('dance_user_school',
+                           db.Column('user_id', db.Integer, db.ForeignKey('dance_user.id')),
+                           db.Column('school_id', db.Integer, db.ForeignKey('dance_school.id'))
+                           )
+
+
 followers = db.Table('followers',
                      db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
                      db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
@@ -134,11 +141,11 @@ class DanceStudent(db.Model):
     """
     # __bind_key__ = 'dance_student'
     id = db.Column(db.Integer, primary_key=True)            # 自动编号，主键  唯一///        01
-    sno = db.Column(db.String(30), unique=True)             # 学号        不可重复 唯一///   02
+    sno = db.Column(db.String(30))             # 学号        不可重复 唯一///   02
     school_no = db.Column(db.String(20))                    # 分校编号      03
     school_name = db.Column(db.String(40))  # 分校名称      04
     consult_no = db.Column(db.String(30))   # 咨询编号      05
-    name = db.Column(db.String(40))         # 姓名            06
+    name = db.Column(db.String(40, collation='NOCASE'))        # 姓名            06
     rem_code = db.Column(db.String(40))     # 助记码           07
     gender = db.Column(db.String(4))          # 性别：男/女      08
     degree = db.Column(db.String(40))       # 文化程度          09
@@ -168,10 +175,10 @@ class DanceStudent(db.Model):
     points = db.Column(db.Integer)          # 赠送积分  ***保留       33
     remark = db.Column(db.String(140))      # 备注            34
     recorder = db.Column(db.String(14))     # 录入员          35
-
     idcard = db.Column(db.String(30))           # 身份证号       36
     mother_wechat = db.Column(db.String(60))    # 微信标识  ***保留       37
     father_wechat = db.Column(db.String(60))    # 微信标识  ***保留       38
+    school_id = db.Column(db.Integer, db.ForeignKey('dance_school.id'))
 
     def __init__(self, name, sno, school_no, school_name,
                  consult_no, rem_code, gender, degree, birthday, register_day,
@@ -428,11 +435,11 @@ class DanceClass(db.Model):
     """
     # __bind_key__ = 'dance_class'
     id = db.Column(db.Integer, primary_key=True)    # id                01
-    cno = db.Column(db.String(20), unique=True)     # 班级编号          02
+    cno = db.Column(db.String(20))     # 班级编号          02
     school_no = db.Column(db.String(20))            # 分校编号          03
     school_name = db.Column(db.String(40))          # 分校名称          04
-    class_name = db.Column(db.String(40))           # 班级名称          05
-    rem_code = db.Column(db.String(40))             # 助记码            06
+    class_name = db.Column(db.String(40, collation='NOCASE'))           # 班级名称          05
+    rem_code = db.Column(db.String(40, collation='NOCASE'))             # 助记码            06
     begin_year = db.Column(db.String(6))    # 开班年份      07
     class_type = db.Column(db.String(20))   # 班级类型， 教授类别： 舞蹈、美术、跆拳道、国际象棋等   08
     class_style = db.Column(db.String(20))  # 班级形式： 集体课, 1对1      09
@@ -444,6 +451,7 @@ class DanceClass(db.Model):
     is_ended = db.Column(db.Integer)        # 是否结束      1 -- 结束； 0 -- 未结束       15
     remark = db.Column(db.String(140))      # 备注         16
     recorder = db.Column(db.String(20))     # 录入员       17
+    school_id = db.Column(db.Integer, db.ForeignKey('dance_school.id'))
 
     def __init__(self, para):
         if 'cno' in para:
@@ -487,18 +495,19 @@ class DanceSchool(db.Model):
     """
     分校信息表 -- Anningwang
     """
-    # __bind_key__ = 'dance_school'
+    __tablename__ = 'dance_school'
     id = db.Column(db.Integer, primary_key=True)    # id                01
-    school_no = db.Column(db.String(20))            # 分校编号          02
-    school_name = db.Column(db.String(40))          # 分校名称          03
+    school_no = db.Column(db.String(20, collation='NOCASE'))            # 分校编号          02
+    school_name = db.Column(db.String(40, collation='NOCASE'))          # 分校名称          03
     address = db.Column(db.String(80))              # 分校地址          04
-    rem_code = db.Column(db.String(40))             # 助记码            05
+    rem_code = db.Column(db.String(40, collation='NOCASE'))             # 助记码            05
     zipcode = db.Column(db.String(10))              # 邮政编码          06
     manager = db.Column(db.String(20))              # 负责人姓名        07
     tel = db.Column(db.String(20))                  # 分校联系电话      08
     manager_phone = db.Column(db.String(20))        # 负责人手机        09
     remark = db.Column(db.String(140))              # 备注              10
     recorder = db.Column(db.String(20))             # 录入员            11
+    company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
 
     def __init__(self, para):
         if 'school_no' in para:
@@ -521,6 +530,7 @@ class DanceSchool(db.Model):
             self.remark = para['remark']  # 备注         10
         if 'recorder' in para:
             self.recorder = para['recorder']  # 录入员       11
+        self.company_id = int(para['company_id']) if 'company_id' in para['company_id'] else 0
 
     def save(self):
         db.session.add(self)
@@ -552,6 +562,7 @@ class DanceSchool(db.Model):
             self.remark = para['remark']  # 备注         10
         if 'recorder' in para:
             self.recorder = para['recorder']  # 录入员       11
+        self.company_id = int(para['company_id']) if 'company_id' in para['company_id'] else 0
 
     def __repr__(self):
         return '<DanceClass %r>' % self.school_no
@@ -561,53 +572,51 @@ class DanceUser(db.Model, UserMixin):
     """
         用户基本信息表 -- Anningwang
     """
-    id = db.Column(db.Integer, primary_key=True)                # id  01
-    user_no = db.Column(db.String(10), unique=True)             # 用户编号 02
-    name = db.Column(db.String(20, collation='NOCASE'), unique=True, index=True)    # 用户名称 03
-    pwd = db.Column(db.String(120))                    # 用户密码 04
-    phone = db.Column(db.String(20))                    # 联系电话 05
-    role = db.Column(db.Integer)                        # 所属角色 06
-    school_mgr = db.Column(db.String(80))               # 允许管理分校 07
-    recorder = db.Column(db.String(20))                 # 录入员 08
+    id = db.Column(db.Integer, primary_key=True)
+    user_no = db.Column(db.String(10, collation='NOCASE'), index=True)   # 用户编号
+    name = db.Column(db.String(40, collation='NOCASE'), index=True)    # 用户名称
+    pwd = db.Column(db.String(256))                 # 用户密码
+    phone = db.Column(db.String(20))                # 联系电话
+    role_id = db.Column(db.Integer)                 # 所属角色
+    recorder = db.Column(db.String(20, collation='NOCASE'))      # 录入员
     email = db.Column(db.String(30, collation='NOCASE'), unique=True, index=True)
-    company = db.Column(db.String(30, collation='NOCASE'), unique=True)
-    is_logged = db.Column(db.Integer, index=True)     # 登录状态 1 - 登录， 0 - 未登录
+    company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
+    is_logged = db.Column(db.Integer, index=True)   # 登录状态 1 - 登录， 0 - 未登录
+    is_creator = db.Column(db.Integer, index=True)  # 是否创始人 1 - 是创始人， 0 - 不是创始人
+    create_at = db.Column(db.DateTime)
 
     def __init__(self, para):
         if 'user_no' in para:
             self.user_no = para['user_no']   # 用户编号 02
+        else:
+            if g.user.is_authenticated:
+                rec = DanceUser.query.filter_by(company_id=g.user.company_id).order_by(DanceUser.user_no.desc()).first()
+                self.user_no = 1 if rec is None else int(rec.user_no) + 1
+            else:
+                self.user_no = 1
         if 'name' in para:
             self.name = para['name']        # 用户名称 03
+        else:
+            raise Exception(u'[name] field not found!')
         if 'pwd' in para:
             self.pwd = generate_password_hash(para['pwd'])          # 用户密码 04
+        else:
+            raise Exception(u'[pwd] field not found!')
         if 'phone' in para:
             self.phone = para['phone']      # 联系电话 05
-        if 'role' in para:
-            self.role = para['role']        # 所属角色 06
-        if 'school_mgr' in para:
-            self.school_mgr = para['school_mgr']    # 允许管理分校 07
-        if 'recorder' in para:
-            self.recorder = para['recorder']    # 录入员 08
+        self.role_id = ROLE_USER if 'role' not in para or para['role'] != ROLE_ADMIN else ROLE_ADMIN
+        self.recorder = g.user.name if g.user.is_authenticated else u'[系统]'
         if 'email' in para:
             self.email = para['email']
-        if 'company' in para:
-            self.company = para['company']
+        if 'company_id' in para:
+            self.company_id = para['company_id']
+        elif g.user.is_authenticated:
+            self.company_id = g.user.company_id
+        else:
+            raise Exception(u'[company_id] field not found!')
         self.is_logged = 0
-
-    def __init__(self, name, email, pwd, company, is_logged=None, phone=None, role=None, school_mgr=None, recorder=None):
-        rec = DanceUser.query.order_by(DanceUser.user_no.desc()).first()
-        self.user_no = 1 if rec is None else int(rec.user_no) + 1
-        self.name = name
-        self.pwd = generate_password_hash(pwd)
-        self.phone = phone
-        self.role = role
-        self.school_mgr = school_mgr
-        self.recorder = recorder
-        self.email = email
-        self.company = company
-        if is_logged is None:
-            is_logged = 0
-        self.is_logged = is_logged
+        self.is_creator = 0 if 'is_creator' not in para or para['is_creator'] != 1 else 1
+        self.create_at = datetime.datetime.today()
 
     def update_data(self, para):
         if 'user_no' in para:
@@ -619,9 +628,7 @@ class DanceUser(db.Model, UserMixin):
         if 'phone' in para:
             self.phone = para['phone']      # 联系电话 05
         if 'role' in para:
-            self.role = para['role']        # 所属角色 06
-        if 'school_mgr' in para:
-            self.school_mgr = para['school_mgr']    # 允许管理分校 07
+            self.role_id = para['role_id']        # 所属角色 06
         if 'recorder' in para:
             self.recorder = para['recorder']    # 录入员 08
         self.is_logged = 0 if 'is_logged' not in para else para['is_logged']
@@ -673,9 +680,12 @@ class DanceStudentClass(db.Model):
 
 
 class DanceCompany(db.Model):
+    __tablename__ = 'dance_company'
+
     id = db.Column(db.Integer, primary_key=True)
     company_name = db.Column(db.String(50, collation='NOCASE'), unique=True, index=True, nullable=False)
     create_at = db.Column(db.DateTime, nullable=False)
+    # employees = db.relationship('dance_user', backref='company', lazy='dynamic')
 
     def __init__(self, company_name):
         self.company_name = company_name

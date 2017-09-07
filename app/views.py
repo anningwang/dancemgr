@@ -6,7 +6,7 @@ from flask_babel import gettext
 from app import app, db, lm, oid, babel
 from forms import LoginForm, EditForm, PostForm, SearchForm, DanceLoginForm, DanceRegistrationForm
 from models import User, ROLE_USER, ROLE_ADMIN, Post, HzLocation, DanceStudent, DanceClass, DanceSchool, DanceUser,\
-    DanceStudentClass
+    DanceStudentClass, DanceCompany, DanceUserSchool
 from datetime import datetime
 from emails import follower_notification
 from guess_language import guessLanguage
@@ -169,10 +169,25 @@ def logout():
 def register():
     form = DanceRegistrationForm()
     if request.method == 'POST' and form.validate():
-        user_dc = DanceUser(form.username.data, form.email.data, form.password.data, form.company.data)
+        if DanceUser.query.filter_by(name=form.username.data).first() is not None:
+            flash(u'该用户已注册！')
+            return render_template('register.html', form=form)  # dance_register
+        if DanceCompany.query.filter_by(company_name=form.company.data).first() is not None:
+            flash(u'该公司名称已注册！')
+            return render_template('register.html', form=form)  # dance_register
+
+        company = DanceCompany(form.company.data)
+        db.session.add(company)
+        company = DanceCompany.query.filter_by(company_name=form.company.data).first()
+        user_dc = DanceUser({'name': form.username.data,
+                             'email': form.email.data,
+                             'pwd': form.password.data,
+                             'company_id': company.id,
+                             'user_no': 1,
+                             'role_id': ROLE_ADMIN,
+                             'is_creator': 1})
         db.session.add(user_dc)
         db.session.commit()
-        flash('Thanks for registering')
         return redirect(url_for('login'))
     else:
         print form.errors

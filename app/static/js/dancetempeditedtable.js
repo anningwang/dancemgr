@@ -35,7 +35,7 @@ var opts_user = {
         {field: 'name', title: '用户名称*', width: 140, align: 'center', editor: 'textbox'},
         {field: 'pwd', title: '用户密码', width: 100, align: 'center', editor:'textbox'},
         {field: 'phone', title: '联系电话', width: 140, align: 'center', editor:'textbox'},
-        {field: 'role', title: '所属角色', width: 120, align: 'center', editor:'textbox'},
+        {field: 'role_id', title: '所属角色', width: 120, align: 'center', editor:'textbox'},
         {field: 'school_mgr', title: '允许管理分校', width: 300, align: 'center', editor:'textbox'},
         {field: 'recorder', title: '录入员', width: 70, align: 'center'}
     ]]
@@ -174,23 +174,19 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             url: url + '_get',
             async: true,
             dataType: 'json',
-            data: {'rows': _pageSize, 'page': _pageNo, 'condition': dance_condition},
-            success: function (data) {
-                console.log(data);
+            data: {'rows': _pageSize, 'page': _pageNo, 'condition': dance_condition}
+        }).done(function(data) {
+            if (data.errorCode == 0) {
                 // 注意此处从数据库传来的data数据有记录总行数的total列和 rows
                 dg.datagrid('loadData', data);
                 _total = data.total;
-            },
-            error: function (XMLHttpRequest, textStatus, errorThrown) {
-                console.log('error in ajax. XMLHttpRequest=', + XMLHttpRequest
-                    + ' textStatus=' + textStatus + ' errorThrown=' + errorThrown);
-                dg.datagrid('loaded');
-                $.messager.alert({
-                    title: '错误',
-                    msg: XMLHttpRequest,
-                    icon:'error' // Available value are: error,question,info,warning.
-                });
+            } else {
+                $.messager.alert('提示', data.msg, 'info');
             }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            dg.datagrid('loaded');
+            var msg = $.format("请求失败：{0}。错误码：{1}({2}) ", [textStatus, jqXHR.status, errorThrown]);
+            $.messager.alert('提示', msg, 'info');
         });
     }
 
