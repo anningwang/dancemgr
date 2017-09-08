@@ -401,7 +401,10 @@ def dance_del_data():
         return jsonify({'errorCode': 1, "msg": "Table not found!"})     # error
 
     for i in ids:
-        db.session.delete(table.query.get(i))
+        rec = table.query.get(i)
+        if who == 'DanceUser' and rec.is_creator == 1:
+            return jsonify({'errorCode': 500, 'msg': u'账号[%s]为初始管理员，不能删除！' % rec.name})
+        db.session.delete(rec)
     db.session.commit()
 
     return jsonify({'errorCode': 0, "msg": "Ok for del."})

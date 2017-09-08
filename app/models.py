@@ -16,17 +16,24 @@ ROLE_ADMIN = 1
 GENDER_MALE = '男'
 GENDER_FEMALE = '女'
 
-
+'''
 DanceUserSchool = db.Table('dance_user_school',
                            db.Column('user_id', db.Integer, db.ForeignKey('dance_user.id')),
                            db.Column('school_id', db.Integer, db.ForeignKey('dance_school.id'))
                            )
-
+'''
 
 followers = db.Table('followers',
                      db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
                      db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
                      )
+
+
+class DanceUserSchool(db.Model):
+    __tablename__ = 'dance_user_school'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('dance_user.id'))
+    school_id = db.Column(db.Integer, db.ForeignKey('dance_school.id'))
 
 
 class User(db.Model):
@@ -670,6 +677,42 @@ class DanceUser(db.Model, UserMixin):
 
     def check_password(self, password):
         return check_password_hash(self.pwd, password)
+
+    def add_relationship2school(self, school_id):
+        if school_id == '':
+            return self
+        if DanceUserSchool.query.filter_by(user_id=self.id).filter_by(school_id=int(school_id)).first() is not None:
+            return self
+        user_school = DanceUserSchool(user_id=self.id, school_id=int(school_id))
+        db.session.add(user_school)
+        return self
+
+    def del_user(self):
+        user_schools = DanceUserSchool.query.filter_by(user_id=self.id).all()
+        for us in user_schools:
+            db.session.delete(us)
+
+    def update_relationship2school(self, data):
+        if g.user.id == self.id:
+            return self
+        # 全量更新关联关系。 若 school_ids为空，表示删除之前的所有关联。 即，以school_ids中的关系为最终结果。
+        if 'school_id' not in data:
+            return self
+        school_ids = data['school_id'].split(',')
+        old_ids = []
+        user_schools = DanceUserSchool.query.filter_by(user_id=self.id).all()
+        for us in user_schools:
+            old_ids.append(str(us.school_id))
+        to_add = list(set(school_ids).difference(set(old_ids)))
+        to_del = list(set(old_ids).difference(set(school_ids)))
+        for add_id in to_add:
+            self.add_relationship2school(add_id)
+        for del_id in to_del:
+            tmp = DanceUserSchool.query.filter(DanceUserSchool.school_id == int(del_id),
+                                               DanceUserSchool.user_id == self.id).all()
+            for tt in tmp:
+                db.session.delete(tt)
+        return self
 
     def __repr__(self):
         return '<DanceUser %r>' % self.user_no

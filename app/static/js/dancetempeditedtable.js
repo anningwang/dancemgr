@@ -19,7 +19,7 @@ var opts = {
         {field: 'tel', title: '分校联系电话', width: 120, align: 'center', editor:'textbox'},
         {field: 'zipcode', title: '邮政编码', width: 70, align: 'center', editor:'textbox'},
         {field: 'remark', title: '备注', width: 200, align: 'center', editor:'textbox'},
-        {field: 'recorder', title: '录入员', width: 70, align: 'center'}
+        {field: 'recorder', title: '录入员', width: 90, align: 'center'}
     ]]
 };
 
@@ -36,8 +36,24 @@ var opts_user = {
         {field: 'pwd', title: '用户密码', width: 100, align: 'center', editor:'textbox'},
         {field: 'phone', title: '联系电话', width: 140, align: 'center', editor:'textbox'},
         {field: 'role_id', title: '所属角色', width: 120, align: 'center', editor:'textbox'},
-        {field: 'school_mgr', title: '允许管理分校', width: 300, align: 'center', editor:'textbox'},
-        {field: 'recorder', title: '录入员', width: 70, align: 'center'}
+        {field: 'school_id', title: '允许管理分校', width: 400, align: 'center',
+            formatter:function(value,row){
+                return row.school_name;
+            },
+            editor: {
+                type:'combobox',
+                options:{
+                    url:'/dance_school_list_get',
+                    method:'post',
+                    valueField:'school_id',
+                    textField:'school_name',
+                    multiple:true,
+                    editable:false,
+                    panelHeight:'auto'
+                }
+            }
+        },
+        {field: 'recorder', title: '录入员', width: 90, align: 'center'}
     ]]
 };
 
@@ -114,6 +130,18 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             if (!(index in dataOriginal)) {     // 不存在，则保存原始数据
                 dataOriginal[index] = {};
                 $.extend(dataOriginal[index], row);
+            }
+        },
+        onEndEdit : function onEndEdit(index, row){
+            var ed = $(this).datagrid('getEditor', {
+                index: index,
+                field: 'school_id'
+            });
+
+            if (ed) {
+                console.log($(ed.target).combobox('getText'));
+                console.log(ed.type);
+                row.school_name = $(ed.target).combobox('getText');
             }
         }
     });
@@ -301,24 +329,23 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         for (var check in fieldValidate) {
             if (bSet) {
                 td = $(tr).children('td[field=' + check + ']');  // 取出行中这一列。
+                var isChged = false;
                 if (fieldValue.id === undefined) {   // 新增
                     if (!(check in fieldValue.row) || !fieldValidate[check](fieldValue.row[check]) ) {
-                        var textValue = td.children("div").text(); // 取出该列的值。
-                        if (!textValue) {
-                            td.children("div").text('[请填写]');
-                        }
-                        _old_background = td.children("div").css("background");
-                        td.children("div").css({"background": "purple", "color": "white"});
+                        isChged = true;
                     }
                 } else {   // 修改记录
                     if (check in fieldValue.row && !fieldValidate[check](fieldValue.row[check]) ) {
-                        var textValue = td.children("div").text(); // 取出该列的值。
-                        if (!textValue) {
-                            td.children("div").text('[请填写]');
-                        }
-                        _old_background = td.children("div").css("background");
-                        td.children("div").css({"background": "purple", "color": "white"});
+                        isChged = true;
                     }
+                }
+                if (isChged) {
+                    var textValue = td.children("div").text(); // 取出该列的值。
+                    if (!textValue) {
+                        td.children("div").text('[请填写]');
+                    }
+                    _old_background = td.children("div").css("background");
+                    td.children("div").css({"background": "purple", "color": "white"});
                 }
             } else {
                 td.children("div").css({"background": _old_background, "color": "black"});
@@ -367,7 +394,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             }
 
             if (!dataToServer.length){
-                $.messager.alert('提示', '内容无变化，请修改后再保存。', 'info');
+                $.messager.alert('提示', '内容无变化！', 'info');
                 return false;
             }
 

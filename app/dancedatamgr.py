@@ -2,7 +2,7 @@
 from flask import request, jsonify, g
 from flask_login import login_required
 from app import app, db
-from models import DanceSchool, DanceUser
+from models import DanceSchool, DanceUser, DanceUserSchool
 import json
 
 ERROR_CODE_USER_IS_EXIST = 100
@@ -42,6 +42,17 @@ def dance_school_get():
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
 
 
+@app.route('/dance_school_list_get', methods=['POST'])
+@login_required
+def dance_school_list_get():
+    records = DanceSchool.query.filter_by(company_id=g.user.company_id)
+    ret = []
+    for rec in records:
+        ret.append({'school_id': rec.id, 'school_name': rec.school_name, 'school_no': rec.school_no})
+
+    return jsonify(ret)
+
+
 @app.route('/dance_school_update', methods=['POST'])
 @login_required
 def dance_school_update():
@@ -64,6 +75,11 @@ def dance_school_update():
             school = DanceSchool(obj_data[i]['row'])
             school.school_no = '%04d' % new_id
             db.session.add(school)
+
+            # 增加 用户 管理 分校 的权限
+            sc = DanceSchool.query.filter_by(company_id=g.user.company_id).filter_by(
+                school_no=school.school_no).first()
+            g.user.add_relationship2school(sc.id)
         else:
             # update record
             school = DanceSchool.query.filter_by(id=obj_data[i]['id']).first()
@@ -113,9 +129,19 @@ def dance_user_get():
         DanceUser.name.like('%'+condition+'%')).limit(page_size).offset(offset)
     i = offset + 1
     for rec in records:
+        # 查询 用户 可以管理的 分校
+        school_list = DanceSchool.query.join(DanceUserSchool).filter(DanceUserSchool.user_id == rec.id).all()
+        school_id = []
+        school_name = []
+        for sc in school_list:
+            school_id.append(str(sc.id))
+            school_name.append(sc.school_name)
+
+        # 组装输出信息-- 用户信息
         rows.append({"id": rec.id, "user_no": 'USER-%03d' % int(rec.user_no), "name": rec.name,
                      "pwd": '********', "phone": rec.phone, "role_id": str(rec.role_id),
-                     'recorder': rec.recorder, 'no': i
+                     'recorder': rec.recorder, 'no': i,
+                     'school_name': ','.join(school_name), 'school_id': ','.join(school_id)
                      })
         i += 1
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
@@ -157,6 +183,7 @@ def dance_user_update():
                 continue
             user.update_data(obj_data[i]['row'])
             db.session.add(user)
+            user.update_relationship2school(obj_data[i]['row'])
     db.session.commit()
 
     return jsonify({'errorCode': 0, 'msg': 'user information update success!'})
