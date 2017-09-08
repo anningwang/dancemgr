@@ -4,6 +4,7 @@ import xlwt                 # Excel 写模块
 from pyExcelerator import *     # 写入Excel 模块
 from app import db
 from app.models import DanceStudent, DanceClass, DanceStudentClass, DanceSchool, DanceCompany, DanceUserSchool
+from flask import g
 
 
 def char2int(s):
@@ -110,54 +111,74 @@ def student_import_to_db(fn):
                   正确存入条数,
                   错误条数
     """
-    workbook = xlrd.open_workbook(fn)
-    worksheets = workbook.sheet_names()
-    columns = ['sno', 'school_no', 'school_name', 'consult_no', 'name', 'rem_code', 'gender', 'degree',
-               'birthday', 'register_day', 'information_source', 'counselor', 'reading_school',
-               'grade', 'phone', 'tel', 'address', 'zipcode', 'email', 'qq',
-               'wechat', 'mother_name', 'mother_phone', 'mother_tel', 'mother_company',
-               'father_name', 'father_phone', 'father_tel', 'father_company',
-               'card', 'is_training', 'points', 'remark', 'recorder']
+    columns = ['sno', 'school_id', 'consult_no', 'name', 'rem_code',
+               'gender', 'degree', 'birthday', 'register_day', 'information_source',
+               'counselor', 'reading_school', 'grade', 'phone', 'tel',
+               'address', 'zipcode', 'email', 'qq', 'wechat',
+               'mother_name', 'mother_phone', 'mother_tel', 'mother_company', 'card',
+               'father_name', 'father_phone', 'father_tel', 'father_company', 'points',
+               'is_training', 'remark', 'recorder', 'idcard', 'mother_wechat',
+               'father_wechat']
+    cols_cn = [u'学号', u'分校名称', u'咨询编号', u'姓名', u'助记码',
+               u'性别', u'文化程度', u'出生日期', u'登记日期', u'信息来源',
+               u'咨询师', u'所在学校', u'年级', u'本人手机', u'固定电话',
+               u'联系地址', u'邮政编码', u'Email', u'QQ', u'微信标识',
+               u'母亲姓名', u'母亲手机', u'母亲固话', u'母亲工作单位', u'卡号',
+               u'父亲姓名', u'父亲手机', u'父亲固话', u'父亲工作单位', u'赠送积分',
+               u'是否在读', u'备注', u'录入员', u'身份证', u'母亲微信标识',
+               u'父亲微信标识'
+               ]
+    cols_num = []
     data_ret = {}
     num_right = 0
     num_wrong = 0
-    not_found = True
+    workbook = xlrd.open_workbook(fn)
+    worksheets = workbook.sheet_names()
     for sheet in worksheets:
         if sheet != u'报名登记':
             continue
-
-        not_found = False
-        sh = workbook.sheet_by_name(sheet)      # workbook.sheet_by_index()
+        sh = workbook.sheet_by_name(sheet)
         row = sh.nrows
+        if row <= 1:
+            return data_ret, u"无有效数据！", num_right, num_wrong
         row_list = [sh.row_values(0)]
 
-        count = row - 1     # 倒序添加到数据库，因为导出的excel是按照 登记日期 倒序排列的。
-        while count > 0:
-            row_data = sh.row_values(count)
-            row_list.append(row_data)           # sh.cell_value(0, 0), 获取第0行第0列数据
+        for o in cols_cn:
+            p = 0
+            for p in range(len(sh.row_values(0))):
+                if o == sh.row_values(0)[p]:
+                    cols_num.append(p)
+                    break
+            if p == len(sh.row_values(0)):
+                return data_ret, u"文件中未找到列名[%s]！" % o, num_right, num_wrong
+
+        school_ids = DanceSchool.get_school_id_list()
+        # 逆序遍历。第一行为表头需要过滤掉
+        for rows in range(row - 1, 0, -1):
+            row_data = sh.row_values(rows)
+            row_list.append(row_data)
             rowdict = {}
 
-            if len(row_data) < len(columns):
-                return data_ret, "数据长度错误", num_right, num_wrong
+            for i in range(len(cols_num)):
+                rowdict[columns[i]] = row_data[cols_num[i]]
 
-            for i in range(len(columns)):
-                rowdict[columns[i]] = row_data[i]
+            # 特殊列的处理
+            if rowdict['school_id'].lower() not in school_ids:
+                raise Exception(u'分校[%s]不存在！' % rowdict['school_id'])
+            school_id = school_ids[rowdict['school_id'].lower()]
+            rowdict['school_id'] = school_id
 
             # 保证学号不能重复
-            has = DanceStudent.query.filter_by(sno=row_data[0]).first()
+            has = DanceStudent.query.filter_by(school_id=school_id).filter_by(sno=row_data[0]).first()
             if has is None:
                 tb = DanceStudent(rowdict)
                 db.session.add(tb)
                 num_right += 1
             else:
-                num_wrong += 1      # 重复数据
-            count -= 1
+                num_wrong += 1  # 重复数据
 
         db.session.commit()
         data_ret[sheet] = row_list
-
-    if not_found:
-        return data_ret, u"未找到名为[报名登记]的sheet页！", num_right, num_wrong
 
     return data_ret, "ok", num_right, num_wrong
 
@@ -211,10 +232,7 @@ def class_import_to_db(fn):
             row_list.append(row_data)
             rowdict = {}
 
-            if len(row_data) < len(columns):
-                return data_ret, u"数据长度错误！", num_right, num_wrong
-
-            for i in range(len(columns)):
+            for i in range(len(cols_num)):
                 rowdict[columns[i]] = row_data[cols_num[i]]
 
             # 特殊列的处理
@@ -241,17 +259,14 @@ def class_import_to_db(fn):
 
 
 def student_class_import_to_db(fn, sheet_name):
-    workbook = xlrd.open_workbook(fn)
-    worksheets = workbook.sheet_names()
-
     columns = ['student_id', 'class_id', 'join_date', 'status', 'remark']
     cols_cn = [u'学号', u'班级编号', u'报班日期', u'状态', u'报班备注']
     cols_num = []
-
     data_ret = {}
     num_right = 0
     num_wrong = 0
-
+    workbook = xlrd.open_workbook(fn)
+    worksheets = workbook.sheet_names()
     for sheet in worksheets:
         if sheet != sheet_name:
             continue
@@ -272,24 +287,25 @@ def student_class_import_to_db(fn, sheet_name):
 
         for rows in range(1, row):
             row_data = sh.row_values(rows)
-            row_list.append(row_data)           # sh.cell_value(0, 0), 获取第0行第0列数据
+            row_list.append(row_data)
             rowdict = {}
 
-            if len(row_data) < len(columns):
-                return data_ret, u"数据长度错误！", num_right, num_wrong
-
-            for i in range(len(columns)):
+            for i in range(len(cols_num)):
                 rowdict[columns[i]] = row_data[cols_num[i]]
 
+            # 特殊列的处理
+
+            ####################################################################################
             # 保证（学号+班级ID）不能重复
-            has = DanceStudentClass.query.filter_by(
+            has = DanceStudentClass.query.filter_by(company_id=g.user.company_id).filter_by(
                 student_id=row_data[cols_num[0]], class_id=row_data[cols_num[1]]).first()
             if has is None:
                 record = DanceStudentClass(rowdict)
                 db.session.add(record)
                 num_right += 1
             else:
-                num_wrong += 1      # 重复数据
+                num_wrong += 1  # 重复数据
+            ####################################################################################
 
         db.session.commit()
         data_ret[sheet] = row_list

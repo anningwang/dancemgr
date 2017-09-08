@@ -88,7 +88,7 @@ function danceCreateClassDatagrid(datagridId, url) {
             // {field: 'no', title: '序号',  width: 15, align: 'center' },  //能自动显示行号，则不再需要自己实现
             {field: 'id', title: 'id',  width: 30, align: 'center' },
             {field: 'cno', title: '班级编号', width: 100, align: 'center'},
-            {field: 'school_name', title: '分校名称', width: 100, align: 'center'},
+            {field: 'school_name', title: '分校名称', width: 140, align: 'center'},
             {field: 'class_name', title: '班级名称', width: 160, align: 'center'},
             {field: 'begin_year', title: '开班年份', width: 70, align: 'center'},
             {field: 'class_type', title: '班级类型', width: 70, align: 'center'},

@@ -35,6 +35,18 @@ class DanceUserSchool(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('dance_user.id'))
     school_id = db.Column(db.Integer, db.ForeignKey('dance_school.id'))
 
+    @staticmethod
+    def get_school_ids_by_uid():
+        """
+        根据登录用户用户的权限，获取用户能管理的分校 ID 列表
+        :return:
+        """
+        school_ids = []
+        schools = DanceUserSchool.query.filter_by(user_id=g.user.id).all()
+        for sc in schools:
+            school_ids.append(sc.school_id)
+        return school_ids
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -147,121 +159,45 @@ class DanceStudent(db.Model):
     学员表 -- Anningwang
     """
     # __bind_key__ = 'dance_student'
-    id = db.Column(db.Integer, primary_key=True)            # 自动编号，主键  唯一///        01
-    sno = db.Column(db.String(30))             # 学号        不可重复 唯一///   02
-    school_no = db.Column(db.String(20))                    # 分校编号      03
-    school_name = db.Column(db.String(40))  # 分校名称      04
-    consult_no = db.Column(db.String(30))   # 咨询编号      05
-    name = db.Column(db.String(40, collation='NOCASE'))        # 姓名            06
-    rem_code = db.Column(db.String(40))     # 助记码           07
-    gender = db.Column(db.String(4))          # 性别：男/女      08
-    degree = db.Column(db.String(40))       # 文化程度          09
-    birthday = db.Column(db.String(10))       # 出生日期        10
-    register_day = db.Column(db.DateTime)   # 登记日期          11
-    information_source = db.Column(db.String(40))           # 信息来源  12
-    counselor = db.Column(db.String(20))    # 咨询师       13
-    reading_school = db.Column(db.String(40))  # 所在学校       14
-    grade = db.Column(db.String(20))        # 年级            15
-    phone = db.Column(db.String(20))           # 手机号码  不可重复 唯一///   16
-    tel = db.Column(db.String(20))          # 固定电话  ***保留       17
-    address = db.Column(db.String(60))      # 联系地址          18
-    zipcode = db.Column(db.String(10))      # 邮政编码  ***保留       19
-    email = db.Column(db.String(30))            # email  不可重复 唯一///     20
-    qq = db.Column(db.String(20))           # qq        21
-    wechat = db.Column(db.String(60))       # 微信标识  ***保留       22
-    mother_name = db.Column(db.String(14))  # 母亲姓名      23
-    father_name = db.Column(db.String(14))  # 父亲姓名      24
-    mother_phone = db.Column(db.String(20))     # 母亲手机      25
-    father_phone = db.Column(db.String(20))     # 父亲手机      26
-    mother_tel = db.Column(db.String(20))   # 母亲固话  ***保留       27
-    father_tel = db.Column(db.String(20))   # 父亲固话  ***保留       28
-    mother_company = db.Column(db.String(40))  # 母亲单位           29
-    father_company = db.Column(db.String(40))  # 父亲单位           30
-    card = db.Column(db.String(40))         # 卡号  ***保留         31
-    is_training = db.Column(db.String(4))     # 是否在读 是/否 （在本培训中心）       32
-    points = db.Column(db.Integer)          # 赠送积分  ***保留       33
-    remark = db.Column(db.String(140))      # 备注            34
-    recorder = db.Column(db.String(14))     # 录入员          35
-    idcard = db.Column(db.String(30))           # 身份证号       36
-    mother_wechat = db.Column(db.String(60))    # 微信标识  ***保留       37
-    father_wechat = db.Column(db.String(60))    # 微信标识  ***保留       38
+    id = db.Column(db.Integer, primary_key=True)            # 自动编号，主键  唯一///
+    sno = db.Column(db.String(30))             # 学号，一个培训中心内唯一
+    name = db.Column(db.String(40, collation='NOCASE'))  # 姓名
+    school_no = db.Column(db.String(20))    # 分校编号 ***废弃***
+    school_name = db.Column(db.String(40))  # 分校名称 ***废弃***
+    consult_no = db.Column(db.String(30))   # 咨询编号
+    rem_code = db.Column(db.String(40))     # 助记码
+    gender = db.Column(db.String(4))          # 性别：男/女
+    degree = db.Column(db.String(40))       # 文化程度
+    birthday = db.Column(db.String(10))       # 出生日期
+    register_day = db.Column(db.DateTime)   # 登记日期
+    information_source = db.Column(db.String(40))    # 信息来源
+    counselor = db.Column(db.String(20))    # 咨询师
+    reading_school = db.Column(db.String(40))  # 所在学校
+    grade = db.Column(db.String(20))        # 年级
+    phone = db.Column(db.String(20), unique=True)  # 手机号码  不可重复 唯一///
+    tel = db.Column(db.String(20))          # 固定电话  ***保留
+    address = db.Column(db.String(60))      # 联系地址
+    zipcode = db.Column(db.String(10))      # 邮政编码  ***保留
+    email = db.Column(db.String(30), unique=True)   # email  不可重复 唯一///
+    qq = db.Column(db.String(20))           # qq
+    wechat = db.Column(db.String(60))       # 微信标识  ***保留
+    mother_name = db.Column(db.String(14))  # 母亲姓名
+    father_name = db.Column(db.String(14))  # 父亲姓名
+    mother_phone = db.Column(db.String(20))     # 母亲手机
+    father_phone = db.Column(db.String(20))     # 父亲手机
+    mother_tel = db.Column(db.String(20))   # 母亲固话  ***保留
+    father_tel = db.Column(db.String(20))   # 父亲固话  ***保留
+    mother_company = db.Column(db.String(40))  # 母亲单位
+    father_company = db.Column(db.String(40))  # 父亲单位
+    card = db.Column(db.String(40))         # 卡号  ***保留
+    is_training = db.Column(db.String(4))     # 是否在读 是/否 （在本培训中心）
+    points = db.Column(db.Integer)          # 赠送积分  ***保留
+    remark = db.Column(db.String(140))      # 备注
+    recorder = db.Column(db.String(14))     # 录入员
+    idcard = db.Column(db.String(30))           # 身份证号
+    mother_wechat = db.Column(db.String(60))    # 微信标识  ***保留
+    father_wechat = db.Column(db.String(60))    # 微信标识  ***保留
     school_id = db.Column(db.Integer, db.ForeignKey('dance_school.id'))
-
-    def __init__(self, name, sno, school_no, school_name,
-                 consult_no, rem_code, gender, degree, birthday, register_day,
-                 recorder,
-                 information_source, counselor, reading_school, grade,
-                 phone, address, email, qq,
-                 mother_name, mother_phone, mother_company,
-                 father_name, father_phone, father_company,
-                 tel=None, zipcode=None, wechat=None,
-                 mother_tel=None, father_tel=None,
-                 card=None, is_training=None,
-                 points=None, remark=None,
-                 idcard=None, mother_wechat=None, father_wechat=None
-                 ):
-        self.name = name
-        self.sno = sno
-        self.school_no = school_no
-        self.school_name = school_name
-        self.consult_no = consult_no
-        self.rem_code = rem_code
-        self.gender = gender
-        self.degree = degree
-        self.birthday = birthday
-        self.register_day = register_day
-        self.information_source = information_source
-        self.counselor = counselor
-        self.reading_school = reading_school
-        self.grade = grade
-        self.phone = phone
-
-        self.tel = tel
-        self.address = address
-
-        if zipcode is None:
-            zipcode = ''
-        self.zipcode = zipcode
-
-        self.email = email
-        self.qq = qq
-
-        if wechat is None:
-            wechat = ''
-        self.wechat = wechat
-
-        self.mother_name = mother_name
-        self.mother_phone = mother_phone
-
-        if mother_tel is None:
-            mother_tel = ''
-        self.mother_tel = mother_tel
-
-        self.mother_company = mother_company
-        self.father_name = father_name
-        self.father_phone = father_phone
-
-        if father_tel is None:
-            father_tel = ''
-        self.father_tel = father_tel
-        self.father_company = father_company
-
-        if card is None:
-            card = ''
-        self.card = card
-
-        if is_training is None:
-            is_training = True
-        self.is_training = is_training
-
-        if points is None:
-            points = 0
-        self.points = points
-
-        if remark is None:
-            remark = ''
-        self.remark = remark
-        self.recorder = g.user.name if recorder is None else recorder
 
     def __init__(self, para):
         if u'sno' in para:
@@ -330,19 +266,19 @@ class DanceStudent(db.Model):
             self.card = para[u'card']
         if u'is_training' in para:
             self.is_training = para[u'is_training']
-
         if u'points' in para:
             self.points = int(para[u'points'])
         if u'remark' in para:
             self.remark = para[u'remark']
         self.recorder = para[u'recorder'] if u'recorder' in para else g.user.name
-
         if 'idcard' in para:
             self.idcard = para['idcard']
         if 'mother_wechat' in para:
             self.mother_wechat = para['mother_wechat']
         if 'father_wechat' in para:
             self.father_wechat = para['father_wechat']
+        if 'school_id' in para:
+            self.school_id = int(para['school_id'])
 
     def getval(self, col_name):
         if col_name == 'id':
@@ -496,6 +432,17 @@ class DanceClass(db.Model):
         if 'school_id' in para:
             self.school_id = int(para['school_id'])
 
+    @staticmethod
+    def get_class_id_map():
+        school_ids = DanceSchool.get_school_id_lst()
+        if len(school_ids) == 0:
+            return {}
+        classes = DanceClass.query.filter_by(is_ended=0).filter(DanceClass.school_id.in_(school_ids)).all()
+        ret = {}
+        for cls in classes:
+            ret[cls.cno.lower()] = cls.id
+        return ret
+
     def __repr__(self):
         return '<DanceClass %r>' % self.cno
 
@@ -520,7 +467,7 @@ class DanceSchool(db.Model):
 
     def __init__(self, para):
         if 'school_no' in para:
-            self.school_no = para['school_no']         # 分校编号          02
+            self.school_no = para['school_no']   # 分校编号          02
         if 'school_name' in para:
             self.school_name = para['school_name']      # 分校名称          03
         if 'address' in para:
@@ -585,6 +532,14 @@ class DanceSchool(db.Model):
         school_list = {}
         for sc in schools:
             school_list[sc.school_name.lower()] = sc.id
+        return school_list
+
+    @staticmethod
+    def get_school_id_lst():
+        schools = DanceSchool.query.filter(DanceSchool.company_id == g.user.company_id).all()
+        school_list = []
+        for sc in schools:
+            school_list.append(sc.id)
         return school_list
 
     def __repr__(self):
@@ -720,11 +675,12 @@ class DanceUser(db.Model, UserMixin):
 
 class DanceStudentClass(db.Model):
     # 学生报班信息表 多 对 多。 同时可以看到 某个班级 有多少学生。
-    id = db.Column(db.Integer, primary_key=True)  # id  01
-    student_id = db.Column(db.Integer, db.ForeignKey('dance_student.id'))
-    class_id = db.Column(db.Integer, db.ForeignKey('dance_class.id'))
-    join_date = db.Column(db.DateTime)         # 报班日期
-    status = db.Column(db.Integer)             # 报班状态 正常、退班、结束、续班
+    id = db.Column(db.Integer, primary_key=True)  # id
+    student_id = db.Column(db.String(30, collation='NOCASE'), index=True)
+    class_id = db.Column(db.String(20, collation='NOCASE'), index=True)
+    company_id = db.Column(db.Integer, index=True)
+    join_date = db.Column(db.DateTime)       # 报班日期
+    status = db.Column(db.String(10))        # 报班状态 正常、退班、结束、续班
     remark = db.Column(db.String(140))
 
     def __init__(self, para):
@@ -739,6 +695,10 @@ class DanceStudentClass(db.Model):
             self.status = para['status']
         if 'remark' in para:
             self.remark = para['remark']
+        if 'company_id' in para:
+            self.company_id = para['company_id']
+        else:
+            self.company_id = g.user.company_id
 
     def __repr__(self):
         return '<DanceStudentClass %r,%r>' % (self.student_id, self.class_id)

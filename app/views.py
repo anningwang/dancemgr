@@ -423,20 +423,30 @@ def dance_student_get():
     print 'page_size=', page_size, ' page_no=', page_no
     if page_no <= 0:    # 补丁
         page_no = 1
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if len(school_ids) == 0:
+        return jsonify({'total': 0, 'rows': [], 'errorCode': 0, 'msg': 'ok'})
+
     rows = []
     if condition == '':
-        total = DanceStudent.query.count()
+        total = DanceStudent.query.filter(DanceStudent.school_id.in_(school_ids)).count()
     else:
-        total = DanceStudent.query.filter(DanceStudent.name.like('%' + condition + '%')).count()
+        total = DanceStudent.query.filter(DanceStudent.school_id.in_(school_ids))\
+            .filter(DanceStudent.name.like('%' + condition + '%')).count()
 
     offset = (page_no - 1) * page_size
-    records = DanceStudent.query.order_by(
-        DanceStudent.id.desc()).filter(
-        DanceStudent.name.like('%' + condition + '%')).limit(page_size).offset(offset)
+    records = DanceStudent.query.filter(DanceStudent.school_id.in_(school_ids))\
+        .filter(DanceStudent.name.like('%' + condition + '%'))\
+        .join(DanceSchool, DanceSchool.id == DanceStudent.school_id)\
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no)\
+        .order_by(DanceStudent.school_id, DanceStudent.id.desc())\
+        .limit(page_size).offset(offset).all()
     i = offset + 1
-    for r in records:
-        rows.append({"id": r.id, "sno": r.sno, "school_no": r.school_no,
-                     "school_name": r.school_name, "consult_no": r.consult_no, "name": r.name,
+    for rec in records:
+        r = rec[0]
+        rows.append({"id": r.id, "sno": r.sno, "school_no": rec[2],
+                     "school_name": rec[1], "consult_no": r.consult_no, "name": r.name,
                      "rem_code": r.rem_code, 'no': i, 'gender': r.gender,
                      'degree': r.degree, 'birthday': r.birthday,
                      'register_day': datetime.strftime(r.register_day, '%Y-%m-%d'),
@@ -448,11 +458,9 @@ def dance_student_get():
                      'father_name': r.father_name, 'mother_phone': r.mother_phone,
                      'father_phone': r.father_phone, 'mother_tel': r.mother_tel, 'father_tel': r.father_tel,
                      'mother_company': r.mother_company, 'father_company': r.father_company,
-                     'card': r.card,
-                     'is_training': r.is_training,
-                     'points': r.points,
-                     'remark': r.remark, 'recorder': r.recorder,
-                     'idcard': r.idcard, 'mother_wechat': r.mother_wechat,'father_wechat':r.father_wechat
+                     'card': r.card, 'is_training': r.is_training,
+                     'points': r.points, 'remark': r.remark, 'recorder': r.recorder,
+                     'idcard': r.idcard, 'mother_wechat': r.mother_wechat, 'father_wechat': r.father_wechat
                      })
         i += 1
     return jsonify({"total": total, "rows": rows})
@@ -466,14 +474,19 @@ def dance_class_student_condition_get():
     cno = request.form['cno']
 
     rows = []
-    records = DanceStudent.query.join(DanceStudentClass, DanceStudentClass.student_id == DanceStudent.sno).filter(
-        DanceStudentClass.class_id == cno, DanceStudent.is_training == u'是').all()
+    records = DanceStudent.query\
+        .join(DanceStudentClass, DanceStudentClass.student_id == DanceStudent.sno)\
+        .filter(DanceStudentClass.class_id == cno, DanceStudent.is_training == u'是')\
+        .join(DanceSchool, DanceSchool.id == DanceStudent.school_id)\
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no)\
+        .all()
 
     total = len(records)
     i = 1
-    for r in records:
-        rows.append({"id": r.id, "sno": r.sno, "school_no": r.school_no,
-                     "school_name": r.school_name, "consult_no": r.consult_no, "name": r.name,
+    for rec in records:
+        r = rec[0]
+        rows.append({"id": r.id, "sno": r.sno, "school_no": rec[2],
+                     "school_name": rec[1], "consult_no": r.consult_no, "name": r.name,
                      "rem_code": r.rem_code, 'no': i, 'gender': r.gender,
                      'degree': r.degree, 'birthday': r.birthday,
                      'register_day': datetime.strftime(r.register_day, '%Y-%m-%d'),
@@ -485,9 +498,7 @@ def dance_class_student_condition_get():
                      'father_name': r.father_name, 'mother_phone': r.mother_phone,
                      'father_phone': r.father_phone, 'mother_tel': r.mother_tel, 'father_tel': r.father_tel,
                      'mother_company': r.mother_company, 'father_company': r.father_company,
-                     'card': r.card,
-                     'is_training': r.is_training,
-                     'points': r.points,
+                     'card': r.card, 'is_training': r.is_training, 'points': r.points,
                      'remark': r.remark, 'recorder': r.recorder,
                      'idcard': r.idcard, 'mother_wechat': r.mother_wechat, 'father_wechat': r.father_wechat
                      })
@@ -605,14 +616,23 @@ def dance_class_get():
     print 'dance_class_get: page_size=', page_size, ' page_no=', page_no
     if page_no <= 0:    # 补丁
         page_no = 1
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if len(school_ids) == 0:
+        return jsonify({'total': 0, 'rows': [], 'errorCode': 0, 'msg': 'ok'})
+
     rows = []
-    total = DanceClass.query.count()
+    total = DanceClass.query.filter(DanceClass.school_id.in_(school_ids)).count()
     offset = (page_no - 1) * page_size
-    records = DanceClass.query.order_by(DanceClass.begin_year.desc(),
-                                        DanceClass.class_name).limit(page_size).offset(offset)
+    records = DanceClass.query.filter(DanceClass.school_id.in_(school_ids))\
+        .join(DanceSchool, DanceSchool.id == DanceClass.school_id)\
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no)\
+        .order_by(DanceClass.school_id, DanceClass.id.desc())\
+        .limit(page_size).offset(offset).all()
     i = offset + 1
-    for rec in records:
-        rows.append({"id": rec.id, "cno": rec.cno, "school_no": rec.school_no, "school_name": rec.school_name,
+    for recs in records:
+        rec = recs[0]
+        rows.append({"id": rec.id, "cno": rec.cno, "school_no": recs[2], "school_name": recs[1],
                      "class_name": rec.class_name, "rem_code": rec.rem_code, "begin_year": rec.begin_year,
                      'class_type': rec.class_type, 'class_style': rec.class_style, 'teacher': rec.teacher,
                      'cost_mode': rec.cost_mode, 'cost': rec.cost, 'plan_students': rec.plan_students,
@@ -626,6 +646,10 @@ def dance_class_get():
 @app.route('/dance_class_condition_get', methods=['POST'])
 @login_required
 def dance_class_condition_get():
+    """
+    根据查询条件返回 班级信息，暂时用于 班级学员名单的统计。 班级为 “未结束” 状态
+    :return:
+    """
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
 
@@ -634,20 +658,34 @@ def dance_class_condition_get():
         page_no = 1
     if page_size == -1:
         page_size = 100
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if len(school_ids) == 0:
+        return jsonify({'total': 0, 'rows': [], 'errorCode': 0, 'msg': 'ok'})
+
     if 'is_ended' in request.form:
         is_ended = request.form['is_ended']
-        records = DanceClass.query.order_by(DanceClass.id.desc()).filter(DanceClass.is_ended == is_ended).all()
+        records = DanceClass.query.filter(DanceClass.school_id.in_(school_ids)) \
+            .filter(DanceClass.is_ended == is_ended)\
+            .join(DanceSchool, DanceSchool.id == DanceClass.school_id) \
+            .add_columns(DanceSchool.school_name, DanceSchool.school_no) \
+            .order_by(DanceClass.school_id, DanceClass.id.desc()) \
+            .all()
         total = len(records)
         i = 1
     else:
-        total = DanceClass.query.count()
+        total = DanceClass.query.filter(DanceClass.school_id.in_(school_ids)).count()
         offset = (page_no - 1) * page_size
-        records = DanceClass.query.order_by(DanceClass.begin_year.desc(),
-                                            DanceClass.class_name).limit(page_size).offset(offset)
+        records = DanceClass.query.filter(DanceClass.school_id.in_(school_ids)) \
+            .join(DanceSchool, DanceSchool.id == DanceClass.school_id) \
+            .add_columns(DanceSchool.school_name, DanceSchool.school_no) \
+            .order_by(DanceClass.school_id, DanceClass.id.desc()) \
+            .limit(page_size).offset(offset).all()
         i = offset + 1
 
-    for rec in records:
-        rows.append({"id": rec.id, "cno": rec.cno, "school_no": rec.school_no, "school_name": rec.school_name,
+    for recs in records:
+        rec = recs[0]
+        rows.append({"id": rec.id, "cno": rec.cno, "school_no": recs[2], "school_name": recs[1],
                      "class_name": rec.class_name, "rem_code": rec.rem_code, "begin_year": rec.begin_year,
                      'class_type': rec.class_type, 'class_style': rec.class_style, 'teacher': rec.teacher,
                      'cost_mode': rec.cost_mode, 'cost': rec.cost, 'plan_students': rec.plan_students,
