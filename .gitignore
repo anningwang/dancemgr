@@ -109,3 +109,8 @@ tmp/associations/
 tmp/nonces/
 tmp/temp/
 /app.db
+*.xml
+
+db_repository/
+db_repository/versions/015_migration.py
+db_repository/versions/015_migration.py
