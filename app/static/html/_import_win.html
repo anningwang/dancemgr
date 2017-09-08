@@ -12,11 +12,8 @@
 
 <div id="danceWinImport" class="easyui-window" title="导入数据"
 					data-options="iconCls:'icon-save', modal:true,minimizable:false,collapsible:false,
-					onBeforeClose : function() {
-						//console.log('onBeforeClose.');
-						$('#danceWinImport').window('destroy');
-						$('#danceCommWin').panel('destroy');
-					}
+					onBeforeClose: onBeforeCloseImportWin,
+					onOpen: onOpenImportWin
 					" style="width:600px;height:400px;padding:5px;">
 	<div class="easyui-layout" data-options="fit:true">
 		<form id="danceFormUploadExcel"  method="post" enctype="multipart/form-data">
@@ -37,7 +34,7 @@
 </div>
 
 <script>
-	var danceModuleName = 'danceStudent';
+
 	function danceImportExcel() {
 		// 得到上传文件的全路径
 		var fileName = $('#uploadExcel').filebox('getValue');
@@ -64,7 +61,7 @@
 					if(ret['errorCode'] == 0){
 						$.messager.alert('提示', ret['msg'] + ' 成功导入 ' + ret['correctNum'] + ' 条数据。', 'info');
 					}else{
-						$.messager.alert('提示', '文件导入失敗！ ' + ret['msg'], 'info');
+						$.messager.alert('提示', '文件导入失败！ ' + ret['msg'], 'info');
 					}
 				});
 			} else {
@@ -72,6 +69,23 @@
 			}
 		}
 	}
+
+    function onOpenImportWin() {
+        //console.log('onOpenImportWin');
+        var title = '导入数据';
+        if (danceModuleName == 'danceClass') {
+            title = $.format('导入数据[{0}]', ['班级信息'])
+        } else if (danceModuleName == 'danceStudent') {
+            title = $.format('导入数据[{0}]', ['学员列表'])
+        }
+        $('#danceWinImport').window('setTitle', title);
+    }
+
+    function onBeforeCloseImportWin() {
+        //console.log('onBeforeCloseImportWin');
+        $('#danceWinImport').window('destroy');
+        $('#danceCommWin').panel('destroy');
+    }
 </script>
 
 </body>

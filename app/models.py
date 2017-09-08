@@ -486,6 +486,8 @@ class DanceClass(db.Model):
             self.remark = para['remark']            # 备注         16
         if 'recorder' in para:
             self.recorder = para['recorder']        # 录入员       17
+        if 'school_id' in para:
+            self.school_id = int(para['school_id'])
 
     def __repr__(self):
         return '<DanceClass %r>' % self.cno
@@ -528,9 +530,8 @@ class DanceSchool(db.Model):
             self.manager_phone = para['manager_phone']  # 负责人手机        09
         if 'remark' in para:
             self.remark = para['remark']  # 备注         10
-        if 'recorder' in para:
-            self.recorder = para['recorder']  # 录入员       11
-        self.company_id = int(para['company_id']) if 'company_id' in para['company_id'] else 0
+        self.recorder = g.user.name if 'recorder' not in para else para['recorder']
+        self.company_id = int(para['company_id']) if 'company_id' in para else g.user.company_id
 
     def save(self):
         db.session.add(self)
@@ -543,26 +544,41 @@ class DanceSchool(db.Model):
 
     def update_data(self, para):
         if 'school_no' in para:
-            self.school_no = para['school_no']         # 分校编号          02
+            self.school_no = para['school_no']         # 分校编号
         if 'school_name' in para:
-            self.school_name = para['school_name']      # 分校名称          03
+            self.school_name = para['school_name']      # 分校名称
         if 'address' in para:
-            self.address = para['address']        # 分校地址          04
+            self.address = para['address']        # 分校地址
         if 'rem_code' in para:
-            self.rem_code = para['rem_code']        # 助记码            05
+            self.rem_code = para['rem_code']        # 助记码
         if 'zipcode' in para:
-            self.zipcode = para['zipcode']  # 邮政编码          06
+            self.zipcode = para['zipcode']  # 邮政编码
         if 'manager' in para:
-            self.manager = para['manager']  # 负责人姓名        07
+            self.manager = para['manager']  # 负责人姓名
         if 'tel' in para:
-            self.class_style = para['tel']  # 分校联系电话      08
+            self.class_style = para['tel']  # 分校联系电话
         if 'manager_phone' in para:
-            self.manager_phone = para['manager_phone']  # 负责人手机        09
+            self.manager_phone = para['manager_phone']  # 负责人手机
         if 'remark' in para:
-            self.remark = para['remark']  # 备注         10
+            self.remark = para['remark']  # 备注
         if 'recorder' in para:
-            self.recorder = para['recorder']  # 录入员       11
-        self.company_id = int(para['company_id']) if 'company_id' in para['company_id'] else 0
+            self.recorder = para['recorder']  # 录入员
+        if 'company_id' in para:
+            self.company_id = int(para['company_id'])
+
+    @staticmethod
+    def get_school_id(school_name):
+        school = DanceSchool.query.filter(DanceSchool.school_name == school_name,
+                                          DanceSchool.company_id == g.user.company_id).first()
+        return -1 if school is None else school.id
+
+    @staticmethod
+    def get_school_id_list():
+        schools = DanceSchool.query.filter(DanceSchool.company_id == g.user.company_id).all()
+        school_list = {}
+        for sc in schools:
+            school_list[sc.school_name.lower()] = sc.id
+        return school_list
 
     def __repr__(self):
         return '<DanceClass %r>' % self.school_no
@@ -589,11 +605,8 @@ class DanceUser(db.Model, UserMixin):
         if 'user_no' in para:
             self.user_no = para['user_no']   # 用户编号 02
         else:
-            if g.user.is_authenticated:
-                rec = DanceUser.query.filter_by(company_id=g.user.company_id).order_by(DanceUser.user_no.desc()).first()
-                self.user_no = 1 if rec is None else int(rec.user_no) + 1
-            else:
-                self.user_no = 1
+            self.create_user_no()
+
         if 'name' in para:
             self.name = para['name']        # 用户名称 03
         else:
@@ -604,7 +617,7 @@ class DanceUser(db.Model, UserMixin):
             raise Exception(u'[pwd] field not found!')
         if 'phone' in para:
             self.phone = para['phone']      # 联系电话 05
-        self.role_id = ROLE_USER if 'role' not in para or para['role'] != ROLE_ADMIN else ROLE_ADMIN
+        self.role_id = ROLE_USER if 'role_id' not in para or para['role_id'] != ROLE_ADMIN else ROLE_ADMIN      # #################### role_id not ROLE_USER， ROLE_ADMIN
         self.recorder = g.user.name if g.user.is_authenticated else u'[系统]'
         if 'email' in para:
             self.email = para['email']
@@ -617,6 +630,15 @@ class DanceUser(db.Model, UserMixin):
         self.is_logged = 0
         self.is_creator = 0 if 'is_creator' not in para or para['is_creator'] != 1 else 1
         self.create_at = datetime.datetime.today()
+
+    def create_user_no(self):
+        if g.user.is_authenticated:
+            rec = DanceUser.query.filter_by(company_id=g.user.company_id).order_by(
+                DanceUser.user_no.desc()).first()
+            self.user_no = 1 if rec is None else int(rec.user_no) + 1
+        else:
+            self.user_no = 1
+        return self.user_no
 
     def update_data(self, para):
         if 'user_no' in para:

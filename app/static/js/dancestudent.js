@@ -4,6 +4,8 @@
 
 'use strict';
 
+var danceModuleName = 'danceStudent';       // 所在模块
+
 (function($){
     $.extend({
         /** 使用方法：
@@ -225,6 +227,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
         buttons:[{
             text:'导入', iconCls: 'icon-page_excel',
             handler:function(){
+                danceModuleName = 'danceStudent';
                 $(document.body).append('<div id="danceCommWin"></div>');
                 $('#danceCommWin').panel({
                     href:'/static/html/_import_win.html',
@@ -236,6 +239,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
         },{
             text:'导出', iconCls:' icon-page_white_excel ',
             handler:function(){
+                danceModuleName = 'danceStudent';
                 $(document.body).append('<div id="danceCommWin"></div>');
                 $('#danceCommWin').panel({
                     href:'/static/html/_export_win.html'

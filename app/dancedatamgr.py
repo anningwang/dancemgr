@@ -22,13 +22,14 @@ def dance_school_get():
         page_no = 1
     rows = []
     if condition == '':
-        total = DanceSchool.query.count()
+        total = DanceSchool.query.filter_by(company_id=g.user.company_id).count()
     else:
-        total = DanceSchool.query.filter(DanceSchool.school_name.like('%'+condition+'%')).count()
+        total = DanceSchool.query.filter_by(company_id=g.user.company_id).filter(
+            DanceSchool.school_name.like('%'+condition+'%')).count()
 
     offset = (page_no - 1) * page_size
     records = DanceSchool.query.order_by(
-        DanceSchool.school_no.asc(), DanceSchool.school_name).filter(
+        DanceSchool.school_no.asc(), DanceSchool.school_name).filter_by(company_id=g.user.company_id).filter(
         DanceSchool.school_name.like('%'+condition+'%')).limit(page_size).offset(offset)
     i = offset + 1
     for rec in records:
@@ -38,7 +39,7 @@ def dance_school_get():
                      'remark': rec.remark, 'recorder': rec.recorder, 'no': i
                      })
         i += 1
-    return jsonify({"total": total, "rows": rows})
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
 
 
 @app.route('/dance_school_update', methods=['POST'])
@@ -52,7 +53,8 @@ def dance_school_update():
         if obj_data[i]['id'] <= 0:
             # add record
             if new_id == 0:
-                rec = DanceSchool.query.order_by(DanceSchool.school_no.desc()).first()
+                rec = DanceSchool.query.filter_by(company_id=g.user.company_id).order_by(
+                    DanceSchool.school_no.desc()).first()
                 if rec is not None:
                     new_id = int(rec.school_no) + 1
                 else:
@@ -60,7 +62,6 @@ def dance_school_update():
             else:
                 new_id += 1
             school = DanceSchool(obj_data[i]['row'])
-            school.recorder = 'WXG'
             school.school_no = '%04d' % new_id
             db.session.add(school)
         else:
@@ -81,14 +82,12 @@ def dance_school_query():
     json_data = request.form['condition']
 
     ret = []
-    records = DanceSchool.query.order_by(
-        DanceSchool.school_no.asc()).filter(DanceSchool.school_name.like('%'+json_data + '%'))
+    records = DanceSchool.query.filter_by(company_id=g.user.company_id).order_by(DanceSchool.school_no.asc()).filter(
+        DanceSchool.school_name.like('%'+json_data + '%'))
     for rec in records:
-        ret.append({'value': rec.school_name, 'text': rec.school_name})
+        ret.append({'value': rec.school_name, 'text': rec.school_name, 'errorCode': 0, 'msg': 'ok'})
 
     return jsonify(ret)
-
-###############################################################################
 
 
 @app.route('/dance_user_get', methods=['POST'])
@@ -115,7 +114,7 @@ def dance_user_get():
     i = offset + 1
     for rec in records:
         rows.append({"id": rec.id, "user_no": 'USER-%03d' % int(rec.user_no), "name": rec.name,
-                     "pwd": '********', "phone": rec.phone, "role_id": rec.role_id,
+                     "pwd": '********', "phone": rec.phone, "role_id": str(rec.role_id),
                      'recorder': rec.recorder, 'no': i
                      })
         i += 1
@@ -169,7 +168,7 @@ def dance_user_query():
     json_data = request.form['condition']
 
     ret = []
-    records = DanceUser.query.order_by(
+    records = DanceUser.query.filter_by(company_id=g.user.company_id).order_by(
         DanceUser.user_no.asc()).filter(DanceUser.name.like('%'+json_data + '%'))
     for rec in records:
         ret.append({'value': rec.name, 'text': rec.name})

@@ -265,7 +265,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         var cmpChanges = {};
         for (var k in dataChanged[i].row) {
             if (dataChanged[i].row.hasOwnProperty(k)) {
-                if (dataOriginal[index][k] || dataChanged[i].row[k]) {
+                if ((dataOriginal[index][k] || dataChanged[i].row[k]) &&  dataOriginal[index][k] != dataChanged[i].row[k] ){
                     cmpChanges[k] = dataChanged[i].row[k];
                 }
             }
@@ -301,13 +301,24 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         for (var check in fieldValidate) {
             if (bSet) {
                 td = $(tr).children('td[field=' + check + ']');  // 取出行中这一列。
-                if (!(check in fieldValue.row) || !fieldValidate[check](fieldValue.row[check]) ) {
-                    var textValue = td.children("div").text(); // 取出该列的值。
-                    if (!textValue) {
-                        td.children("div").text('[请填写]');
+                if (fieldValue.id === undefined) {   // 新增
+                    if (!(check in fieldValue.row) || !fieldValidate[check](fieldValue.row[check]) ) {
+                        var textValue = td.children("div").text(); // 取出该列的值。
+                        if (!textValue) {
+                            td.children("div").text('[请填写]');
+                        }
+                        _old_background = td.children("div").css("background");
+                        td.children("div").css({"background": "purple", "color": "white"});
                     }
-                    _old_background = td.children("div").css("background");
-                    td.children("div").css({"background": "purple", "color": "white"});
+                } else {   // 修改记录
+                    if (check in fieldValue.row && !fieldValidate[check](fieldValue.row[check]) ) {
+                        var textValue = td.children("div").text(); // 取出该列的值。
+                        if (!textValue) {
+                            td.children("div").text('[请填写]');
+                        }
+                        _old_background = td.children("div").css("background");
+                        td.children("div").css({"background": "purple", "color": "white"});
+                    }
                 }
             } else {
                 td.children("div").css({"background": _old_background, "color": "black"});
@@ -326,9 +337,16 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         endEditing();
         for (var i = 0; i < dataChanged.length; i++) {
             for (var field in fieldValidate) {
-                if (!(field in dataChanged[i].row) || !(fieldValidate[field](dataChanged[i].row[field])) ) {
-                    whichRowInvalid = dataChanged[i].rowIndex;
-                    return false;
+                if (dataChanged[i].id === undefined ) {  // 新增
+                    if (!(field in dataChanged[i].row) || !(fieldValidate[field](dataChanged[i].row[field]))) {
+                        whichRowInvalid = dataChanged[i].rowIndex;
+                        return false;
+                    }
+                } else {    // 修改
+                    if (field in dataChanged[i].row && !(fieldValidate[field](dataChanged[i].row[field]))) {
+                        whichRowInvalid = dataChanged[i].rowIndex;
+                        return false;
+                    }
                 }
             }
         }
@@ -355,31 +373,25 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
 
             $.ajax({
                 method: 'POST',
-                url:  url + '_update',
+                url: url + '_update',
                 dataType: 'json',
-                data: {'data': JSON.stringify(dataToServer) },
-                success: function (data,status) {
-                    console.log('success in ajax. data.msg=' + data.msg + " status=" + status);
-                    if (data.errorCode != 0) {
-                        $.messager.alert({
-                            title: '错误',
-                            msg: data.msg,
-                            icon:'error' // Available value are: error,question,info,warning.
-                        });
-                        return false;
-                    }
+                data: {'data': JSON.stringify(dataToServer)}
+            }).done(function(data) {
+                if (data.errorCode == 0) {
+                    // $.messager.alert('提示', data.msg, 'info');
                     $(dg).datagrid('loading');
                     var gridOpts = $(dg).datagrid('getPager').pagination('options');
                     var _total = gridOpts.total;
                     if (_pageNo > 1 && (_pageNo-1)*_pageSize >= _total) { _pageNo--; }
                     doAjaxGetData();
-
                     btnStatus(BTN_STATUS.SAVE);
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    console.log('error in ajax. XMLHttpRequest=', + XMLHttpRequest
-                        + ' textStatus=' + textStatus + ' errorThrown=' + errorThrown);
+                } else {
+                    $.messager.alert({title: '错误', msg: data.msg, icon:'error'});
                 }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                //console.log(jqXHR);
+                var msg = $.format("请求失败：{0}。错误码：{1}({2}) ", [textStatus, jqXHR.status, errorThrown]);
+                $.messager.alert('提示', msg, 'info');
             });
         } else {
             var msg = '信息不完整，请检查后再保存!';

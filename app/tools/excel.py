@@ -3,7 +3,7 @@ import xlrd                 # 读取 Excel 模块
 import xlwt                 # Excel 写模块
 from pyExcelerator import *     # 写入Excel 模块
 from app import db
-from app.models import DanceStudent, DanceClass, DanceStudentClass
+from app.models import DanceStudent, DanceClass, DanceStudentClass, DanceSchool, DanceCompany, DanceUserSchool
 
 
 def char2int(s):
@@ -170,60 +170,69 @@ def class_import_to_db(fn):
                   3. 正确存入条数,
                   4. 错误条数
     """
-    workbook = xlrd.open_workbook(fn)
-    worksheets = workbook.sheet_names()
-
-    # table columns name
-    columns = ['cno', 'school_no', 'school_name', 'class_name', 'rem_code',
+    columns = ['cno', 'school_id', 'class_name', 'rem_code',
                'begin_year', 'class_type', 'class_style', 'teacher', 'cost_mode',
                'cost', 'plan_students', 'cur_students', 'is_ended', 'remark',
                'recorder'
                ]
-
-    # Excel文件中 和 上面 表列 对应的 列号，从 第 A 列开始
-    excel_col = ['A', 'B', 'C', 'D', 'E',
-                 'F', 'J', 'K', 'L', 'M',
-                 'N', 'P', 'R', 'S', 'T',
-                 'U'
-                 ]
-
+    cols_cn = [u'班级编号', u'分校名称', u'班级名称', u'助记码',
+               u'开班年份', u'课程类别', u'授课形式', u'默认授课老师',u'学费收费模式',
+               u'学费收费标准', u'计划招收人数', u'当前人数', u'是否结束', u'备注',
+               u'录入员'
+               ]
+    cols_num = []
     data_ret = {}
     num_right = 0
     num_wrong = 0
-
-    checked, msg = check_excel_col_name(excel_col)
-
-    if not checked:
-        print msg
-        return data_ret, msg, num_right, num_wrong
-
-    excel_col_num = excel_col2int(excel_col)
+    workbook = xlrd.open_workbook(fn)
+    worksheets = workbook.sheet_names()
     for sheet in worksheets:
         if sheet != u'班级信息':
             continue
-        sh = workbook.sheet_by_name(sheet)      # workbook.sheet_by_index()
+        sh = workbook.sheet_by_name(sheet)
         row = sh.nrows
+        if row <= 1:
+            return data_ret, u"无有效数据！", num_right, num_wrong
         row_list = [sh.row_values(0)]
-        # 最后一条为 “合计” 行，故 减一： row-1
-        for rows in range(1, row-1):
+
+        for o in cols_cn:
+            p = 0
+            for p in range(len(sh.row_values(0))):
+                if o == sh.row_values(0)[p]:
+                    cols_num.append(p)
+                    break
+            if p == len(sh.row_values(0)):
+                return data_ret, u"文件中未找到列名[%s]！" % o, num_right, num_wrong
+
+        school_ids = DanceSchool.get_school_id_list()
+        # 逆序遍历。最后一行为合计和第一行为表头需要过滤掉
+        for rows in range(row-2, 0, -1):
             row_data = sh.row_values(rows)
-            row_list.append(row_data)           # sh.cell_value(0, 0), 获取第0行第0列数据
+            row_list.append(row_data)
             rowdict = {}
 
-            if len(row_data) < len(columns) or len(row_data) < max(excel_col_num):
-                return data_ret, "数据长度错误", num_right, num_wrong
+            if len(row_data) < len(columns):
+                return data_ret, u"数据长度错误！", num_right, num_wrong
 
             for i in range(len(columns)):
-                rowdict[columns[i]] = row_data[excel_col_num[i]-1]
+                rowdict[columns[i]] = row_data[cols_num[i]]
+
+            # 特殊列的处理
+            if 'is_ended' in rowdict:
+                rowdict['is_ended'] = 1 if rowdict['is_ended'] == u'是' else 0
+            if rowdict['school_id'].lower() not in school_ids:
+                raise Exception(u'分校[%s]不存在！' % rowdict['school_id'])
+            school_id = school_ids[rowdict['school_id'].lower()]
+            rowdict['school_id'] = school_id
 
             # 保证班级不能重复
-            has = DanceClass.query.filter_by(cno=row_data[0]).first()
+            has = DanceClass.query.filter_by(school_id=school_id).filter_by(cno=row_data[0]).first()
             if has is None:
                 record = DanceClass(rowdict)
                 db.session.add(record)
                 num_right += 1
             else:
-                num_wrong += 1      # 重复数据
+                num_wrong += 1  # 重复数据
 
         db.session.commit()
         data_ret[sheet] = row_list

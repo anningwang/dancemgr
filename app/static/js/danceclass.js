@@ -1,6 +1,7 @@
 
 'use strict';
 
+
 function danceCreateClassDatagrid(datagridId, url) {
     var _pageSize = 30;
     var _pageNo = 1;
@@ -48,35 +49,26 @@ function danceCreateClassDatagrid(datagridId, url) {
                             for (var i = 0; i < row.length; i++) {
                                 ids.push(row[i].id);
                             }
-                            console.log('del:' + ids);
+                            //console.log('del:' + ids);
                             $.ajax({
                                 method: 'POST',
                                 url: '/dance_del_data',
                                 dataType: 'json',
-                                data: {'ids': ids, 'who': 'DanceClass'},
-                                success: function (data,status) {
-                                    console.log('success in ajax. data.MSG=' + data.MSG + " status=" + status);
-                                    if (data.ErrorCode != 0) {
-                                        $.messager.alert({
-                                            title: '错误',
-                                            msg: data.MSG,
-                                            icon:'error', // Available value are: error,question,info,warning.
-                                            fn: function(){
-                                                //...
-                                            }
-                                        });
-                                        return false;
-                                    }
+                                data: {'ids': ids, 'who': 'DanceClass'}
+                            }).done(function(data) {
+                                if (data.errorCode == 0) {
                                     $(dg).datagrid('loading');
                                     var gridOpts = $(dg).datagrid('getPager').pagination('options');
                                     var _total = gridOpts.total - row.length;
                                     if (_pageNo > 1 && (_pageNo-1)*_pageSize >= _total) { _pageNo--; }
                                     doAjaxGetData();
-                                },
-                                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                                    console.log('error in ajax. XMLHttpRequest=', + XMLHttpRequest
-                                        + ' textStatus=' + textStatus + ' errorThrown=' + errorThrown);
+                                } else {
+                                    $.messager.alert('提示', data.msg, 'error');
                                 }
+                            }).fail(function(jqXHR, textStatus, errorThrown) {
+                                dg.datagrid('loaded');
+                                var msg = $.format("请求失败：{0}。错误码：{1}({2}) ", [textStatus, jqXHR.status, errorThrown]);
+                                $.messager.alert('提示', msg, 'info');
                             });
                             // end of 删除数据 //////////////////////////////////////
                         }
@@ -126,6 +118,33 @@ function danceCreateClassDatagrid(datagridId, url) {
         beforePageText: '第',//页数文本框前显示的汉字
         afterPageText: '页, 共 {pages} 页',
         displayMsg: '当前记录 {from} - {to} , 共 {total} 条记录',
+        buttons:[{
+            text:'导入', iconCls: 'icon-page_excel',
+            handler:function(){
+                danceModuleName = 'danceClass';
+                $(document.body).append('<div id="danceCommWin"></div>');
+                $('#danceCommWin').panel({
+                    href:'/static/html/_import_win.html',
+                    onDestroy: function () {
+                        doAjaxGetData();
+                    }
+                });
+            }
+        },{
+            text:'导出', iconCls:' icon-page_white_excel ',
+            handler:function(){
+                danceModuleName = 'danceClass';
+                $(document.body).append('<div id="danceCommWin"></div>');
+                $('#danceCommWin').panel({
+                    href:'/static/html/_export_win.html'
+                });
+            }
+        },{
+            text:'打印', iconCls:'icon-printer',
+            handler:function(){
+                alert('print');
+            }
+        }],
         onSelectPage: function (pageNumber, pageSize) {
             $(dg).datagrid('loading');  // 打开等待div
             console.log('pageNo=' + pageNumber + " pageSize=" + pageSize);
