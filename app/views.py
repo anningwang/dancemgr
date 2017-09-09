@@ -573,7 +573,12 @@ def dance_student_get_details():
 @app.route('/dance_student_details_extras', methods=['POST'])
 @login_required
 def dance_student_details_extras():
-    classlist = DanceClass.query.order_by(DanceClass.id.desc()).filter(DanceClass.is_ended == u'否').all()
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if len(school_ids) == 0:
+        return jsonify({'classlist': [], 'errorCode': 0, 'msg': 'ok'})
+
+    classlist = DanceClass.query.filter(DanceClass.school_id.in_(school_ids))\
+        .filter(DanceClass.is_ended == 0).order_by(DanceClass.id.desc()).all()
     classes = []
     for cls in classlist:
         classes.append({'class_id': cls.cno, 'class_name': cls.class_name, 'class_type': cls.class_type})

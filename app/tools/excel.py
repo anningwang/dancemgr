@@ -162,12 +162,15 @@ def student_import_to_db(fn):
             for i in range(len(cols_num)):
                 rowdict[columns[i]] = row_data[cols_num[i]]
 
+            ####################################################################################
             # 特殊列的处理
+            # ---分校名称--转换为--分校ID---存入数据库
             if rowdict['school_id'].lower() not in school_ids:
                 raise Exception(u'分校[%s]不存在！' % rowdict['school_id'])
             school_id = school_ids[rowdict['school_id'].lower()]
             rowdict['school_id'] = school_id
 
+            ####################################################################################
             # 保证学号不能重复
             has = DanceStudent.query.filter_by(school_id=school_id).filter_by(sno=row_data[0]).first()
             if has is None:
@@ -176,7 +179,7 @@ def student_import_to_db(fn):
                 num_right += 1
             else:
                 num_wrong += 1  # 重复数据
-
+            ####################################################################################
         db.session.commit()
         data_ret[sheet] = row_list
 
@@ -235,6 +238,7 @@ def class_import_to_db(fn):
             for i in range(len(cols_num)):
                 rowdict[columns[i]] = row_data[cols_num[i]]
 
+            ####################################################################################
             # 特殊列的处理
             if 'is_ended' in rowdict:
                 rowdict['is_ended'] = 1 if rowdict['is_ended'] == u'是' else 0
@@ -243,6 +247,7 @@ def class_import_to_db(fn):
             school_id = school_ids[rowdict['school_id'].lower()]
             rowdict['school_id'] = school_id
 
+            ####################################################################################
             # 保证班级不能重复
             has = DanceClass.query.filter_by(school_id=school_id).filter_by(cno=row_data[0]).first()
             if has is None:
@@ -251,7 +256,7 @@ def class_import_to_db(fn):
                 num_right += 1
             else:
                 num_wrong += 1  # 重复数据
-
+            ####################################################################################
         db.session.commit()
         data_ret[sheet] = row_list
 
@@ -293,6 +298,7 @@ def student_class_import_to_db(fn, sheet_name):
             for i in range(len(cols_num)):
                 rowdict[columns[i]] = row_data[cols_num[i]]
 
+            ####################################################################################
             # 特殊列的处理
 
             ####################################################################################
@@ -314,21 +320,31 @@ def student_class_import_to_db(fn, sheet_name):
 
 
 def student_export_from_db(file_path, sheet_name, cols_wanted=None):
-    columns = ['sno', 'school_no', 'school_name', 'consult_no', 'name',
-               'rem_code', 'gender', 'degree', 'birthday', 'register_day',
-               'information_source', 'counselor', 'reading_school', 'grade', 'phone',
-               'tel', 'address', 'zipcode', 'email', 'qq',
-               'wechat', 'mother_name', 'mother_phone', 'mother_tel', 'mother_company',
-               'father_name', 'father_phone', 'father_tel', 'father_company', 'card',
-               'is_training', 'points', 'remark', 'recorder']
-
-    cols_cn = ['学号', '分校编号', '分校名称', '咨询编号', '姓名',
-               '助记码', '性别', '文化程度', '出生日期', '登记日期',
-               '信息来源', '咨询师', '所在学校', '年级', '本人手机',
-               '固定电话', '联系地址', '邮政编码', 'Email', 'QQ',
-               '微信标识', '母亲姓名', '母亲手机', '母亲固话', '母亲工作单位',
-               '父亲姓名', '父亲手机', '父亲固话', '父亲工作单位', '卡号',
-               '是否在读', '赠送积分', '备注', '录入员']
+    """
+    将学员 报名 登记 信息 从数据库导出
+    :param file_path:           要导出的文件，存于服务器，先从DB导出Excel，再由用户下载该文件
+    :param sheet_name:          写入Excel的 Sheet 页名
+    :param cols_wanted:         optional 要导出的 数据库 列名，为None，则导出数据库的所有列
+    :return:                    1. errorCode  0--成功，其他--失败
+                                 2. msg  若errorCode==0,msg=='ok', 其他情况，则为具体的错误信息
+    """
+    columns = ['sno', 'school_id', 'consult_no', 'name', 'rem_code',
+               'gender', 'degree', 'birthday', 'register_day', 'information_source',
+               'counselor', 'reading_school', 'grade', 'phone', 'tel',
+               'address', 'zipcode', 'email', 'qq', 'wechat',
+               'mother_name', 'mother_phone', 'mother_tel', 'mother_company', 'card',
+               'father_name', 'father_phone', 'father_tel', 'father_company', 'points',
+               'is_training', 'remark', 'recorder', 'idcard', 'mother_wechat',
+               'father_wechat']
+    cols_cn = [u'学号', u'分校名称', u'咨询编号', u'姓名', u'助记码',
+               u'性别', u'文化程度', u'出生日期', u'登记日期', u'信息来源',
+               u'咨询师', u'所在学校', u'年级', u'本人手机', u'固定电话',
+               u'联系地址', u'邮政编码', u'Email', u'QQ', u'微信标识',
+               u'母亲姓名', u'母亲手机', u'母亲固话', u'母亲工作单位', u'卡号',
+               u'父亲姓名', u'父亲手机', u'父亲固话', u'父亲工作单位', u'赠送积分',
+               u'是否在读', u'备注', u'录入员', u'身份证', u'母亲微信标识',
+               u'父亲微信标识'
+               ]
     cols_num = []
 
     if cols_wanted is None:
@@ -350,7 +366,10 @@ def student_export_from_db(file_path, sheet_name, cols_wanted=None):
     style.font = font
     sheet = wb.add_sheet(sheet_name)
 
-    records = DanceStudent.query.all()
+    ####################################################################################
+    # 在此控制导出分校
+    school_ids, school_map = DanceUserSchool.get_school_map_by_uid()
+    records = DanceStudent.query.filter(DanceStudent.school_id.in_(school_ids)).all()
     row_count = len(records)
     col_count = len(cols_num)
     for row in range(0, row_count):
@@ -358,7 +377,12 @@ def student_export_from_db(file_path, sheet_name, cols_wanted=None):
             if row == 0:
                 sheet.write(row, col, cols_cn[cols_num[col]], style)
             else:
-                sheet.write(row, col, records[row].getval(columns[cols_num[col]]), style)
+                val = records[row].getval(columns[cols_num[col]])
+                # --- 特殊列处理 --- school_id 转为 分校名称 -------------
+                if columns[cols_num[col]] == 'school_id':
+                    sheet.write(row, col, school_map[val], style)
+                else:
+                    sheet.write(row, col, val, style)
 
     wb.save(file_path)
     return 0, 'ok'

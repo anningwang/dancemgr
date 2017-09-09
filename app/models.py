@@ -47,6 +47,23 @@ class DanceUserSchool(db.Model):
             school_ids.append(sc.school_id)
         return school_ids
 
+    @staticmethod
+    def get_school_map_by_uid():
+        """
+        根据登录用户用户的权限，获取用户能管理的分校 ID、名称 列表
+        :return:
+        """
+        school_ids = []
+        school_ids_map = {}
+        schools = DanceUserSchool.query.filter_by(user_id=g.user.id)\
+            .join(DanceSchool, DanceSchool.id == DanceUserSchool.school_id)\
+            .add_columns(DanceSchool.school_name).all()
+        for rec in schools:
+            sc = rec[0]
+            school_ids.append(sc.school_id)
+            school_ids_map[sc.school_id] = rec[1]
+        return school_ids, school_ids_map
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -281,6 +298,11 @@ class DanceStudent(db.Model):
             self.school_id = int(para['school_id'])
 
     def getval(self, col_name):
+        """
+        根据列名获取属性信息，用于Excel导出的统一处理。
+        :param col_name:        要查询的列属性
+        :return:                返回列名对应的值
+        """
         if col_name == 'id':
             return self.id
         elif col_name == 'sno':
@@ -357,6 +379,8 @@ class DanceStudent(db.Model):
             return self.mother_wechat
         elif col_name == 'father_wechat':
             return self.father_wechat
+        elif col_name == 'school_id':
+            return self.school_id
         else:
             return '<Unknown field name>'
 
