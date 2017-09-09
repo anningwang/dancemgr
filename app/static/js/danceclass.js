@@ -170,11 +170,11 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
         }],
         onSelectPage: function (pageNumber, pageSize) {
             $(dg).datagrid('loading');  // 打开等待div
-            console.log('pageNo=' + pageNumber + " pageSize=" + pageSize);
+            //console.log('pageNo=' + pageNumber + " pageSize=" + pageSize);
             // 改变opts.pageNumber和opts.pageSize的参数值，用于下次查询传给数据层查询指定页码的数据
-            var gridOpts = $(dg).datagrid('options');
-            gridOpts.pageNumber = pageNumber;
-            gridOpts.pageSize = pageSize;
+            //var gridOpts = $(dg).datagrid('options');
+            //gridOpts.pageNumber = pageNumber;
+            //gridOpts.pageSize = pageSize;
 
             _pageSize = pageSize;
             _pageNo = pageNumber;
@@ -189,7 +189,8 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
             queryCondition = {};
             $.extend(queryCondition, cond);
             queryCondition['rows'] = _pageSize;
-            queryCondition['page'] = 1;
+            _pageNo = 1;
+            queryCondition['page'] = _pageNo;
         } else {
             queryCondition['rows'] = _pageSize;
             queryCondition['page'] = _pageNo;
@@ -203,6 +204,13 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
             success: function (data) {
                 console.log(data);
                 // 注意此处从数据库传来的data数据有记录总行数的total列和 rows
+                var gridOpts = $(dg).datagrid('options');
+                gridOpts.pageNumber = _pageNo;
+                gridOpts.pageSize = _pageSize;
+                var pagerOpts = $(dg).datagrid('getPager').pagination('options');
+                pagerOpts.pageNumber = _pageNo;
+                pagerOpts.pageSize = _pageSize;
+
                 dg.datagrid('loadData', data);
             },
             error: function () {
