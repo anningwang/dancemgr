@@ -626,15 +626,25 @@ def dance_class_get():
     if len(school_ids) == 0:
         return jsonify({'total': 0, 'rows': [], 'errorCode': 0, 'msg': 'ok'})
 
-    rows = []
-    total = DanceClass.query.filter(DanceClass.school_id.in_(school_ids)).count()
+    dcq = DanceClass.query
+
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        dcq = dcq.filter(DanceClass.school_id.in_(school_ids))
+    else:
+        dcq = dcq.filter(DanceClass.school_id.in_(request.form['school_id']))
+
+    if 'is_ended' in request.form:
+        is_ended = request.form['is_ended']
+        dcq = dcq.filter(DanceClass.is_ended == is_ended)
+
+    total = dcq.count()
     offset = (page_no - 1) * page_size
-    records = DanceClass.query.filter(DanceClass.school_id.in_(school_ids))\
-        .join(DanceSchool, DanceSchool.id == DanceClass.school_id)\
+    records = dcq.join(DanceSchool, DanceSchool.id == DanceClass.school_id)\
         .add_columns(DanceSchool.school_name, DanceSchool.school_no)\
         .order_by(DanceClass.school_id, DanceClass.id.desc())\
         .limit(page_size).offset(offset).all()
     i = offset + 1
+    rows = []
     for recs in records:
         rec = recs[0]
         rows.append({"id": rec.id, "cno": rec.cno, "school_no": recs[2], "school_name": recs[1],

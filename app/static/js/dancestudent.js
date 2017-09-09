@@ -52,6 +52,7 @@ function danceAddTab(divId, title, tableId) {
     var parentDiv = $('#'+divId);
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
+        return false;
     } else {
         var content = '<table id=' + tableId + '></table>';
         $(parentDiv).tabs('add', {
@@ -59,6 +60,7 @@ function danceAddTab(divId, title, tableId) {
             content: content,
             closable: true
         });
+        return true;
     }
 }
 

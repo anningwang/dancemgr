@@ -31,7 +31,7 @@
                 <ul id="treeTeacher" class="easyui-tree" data-options="url:'/static/html/tree_teacher.json',method:'get',animate:true,lines:true"></ul>
             </div>
             <div title="教学管理" data-options="iconCls:'icon-book'" style="padding:1px">
-                <ul id="treeSchool" class="easyui-tree" data-options="url:'/static/html/tree_school.json',method:'get',animate:true,lines:true"></ul>
+                <ul id="treeSchool" class="easyui-tree" data-options="url:'/dance_tree_school',method:'post',animate:true,lines:true"></ul>
             </div>
             <div title="物品管理" data-options="iconCls:'icon-computer'" style="padding:1px">
                 <ul id="treeAsset" class="easyui-tree" data-options="url:'/static/html/tree_asset.json',method:'get',animate:true,lines:true"></ul>
@@ -66,12 +66,24 @@
                 }
 
                 var tableId = this.id + node.id;
-                if(node.text == '学员列表') {
+                if(this.id === 'treeSchool') {
+                    if ((node.id + '').slice(0,4) === '1000') {
+                        var nodeSchool = $('#'+this.id).tree('find', 1000);
+                        danceAddTabClassDatagrid('danceTabs', nodeSchool.text, tableId, node.attributes);
+                        //if (danceAddTab('danceTabs', nodeSchool.text, tableId)) {
+                        //    danceCreateClassDatagrid(tableId, '/dance_class', node.attributes);
+                        //}
+                    } else {
+                        $.messager.alert('提示', ' 制作中...', 'info');
+                    }
+                }
+                else if(node.text == '学员列表') {
                     danceAddTab('danceTabs', node.text, tableId);
                     danceCreateStudentDatagrid(tableId, '/dance_student');
                 } else if (node.text == '班级信息') {
-                    danceAddTab('danceTabs', node.text, tableId);
-                    danceCreateClassDatagrid(tableId, '/dance_class');
+                    if (danceAddTab('danceTabs', node.text, tableId)) {
+                        danceCreateClassDatagrid(tableId, '/dance_class');
+                    }
                 }else if(node.text == '分校信息') {
                     danceAddTab('danceTabs', node.text, tableId);
                     //danceCreateSchoolDatagrid(tableId, '/dance_school');

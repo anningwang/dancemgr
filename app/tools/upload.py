@@ -75,7 +75,7 @@ def api_download():
             filename = get_filename(sheet_name)
             path_fn = os.path.join(file_dir, filename)
 
-            err, msg = student_export_from_db(path_fn, sheet_name)
+            err, msg = export_student(path_fn, sheet_name)
 
             if err == 0:
                 return jsonify({"errorCode": 0, "msg": "导出成功！", 'url': photos.url(filename)})
@@ -109,14 +109,14 @@ def show(name):
 
 def dispatch_import_file(fn, dance_module_name):
     if dance_module_name == 'danceStudent':
-        dict_data, msg, correct_num, wrong_num = student_import_to_db(fn)
-        dict_data2, msg2, correct_num2, wrong_num2 = student_class_import_to_db(fn, u'报班——选择班级')
+        dict_data, msg, correct_num, wrong_num = import_student(fn)
+        dict_data2, msg2, correct_num2, wrong_num2 = import_student_class(fn, u'报班——选择班级')
         if msg == 'ok' and msg2 == 'ok':
             return {'errorCode': 0, 'msg': u'上传成功！', 'correctNum': correct_num, 'wrongNum': wrong_num}
         else:
             return {'errorCode': 200, 'msg': msg + msg2, 'correctNum': correct_num, 'wrongNum': wrong_num}
     elif dance_module_name == 'danceClass':
-        dict_data, msg, correct_num, wrong_num = class_import_to_db(fn)
+        dict_data, msg, correct_num, wrong_num = import_class(fn)
         if msg == 'ok':
             return {'errorCode': 0, 'msg': u'上传成功！', 'correctNum': correct_num, 'wrongNum': wrong_num}
         else:

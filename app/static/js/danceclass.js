@@ -1,13 +1,34 @@
 
 'use strict';
 
+var danceClassCallFunc = undefined;
 
-function danceCreateClassDatagrid(datagridId, url) {
+function danceAddTabClassDatagrid(divId, title, tableId, condition) {
+    //console.log(tableId);
+    var parentDiv = $('#'+divId);
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+        danceClassCallFunc(condition);
+    } else {
+        var content = '<table id=' + tableId + '></table>';
+        $(parentDiv).tabs('add', {
+            title: title,
+            content: content,
+            closable: true
+        });
+        danceCreateClassDatagrid(tableId, '/dance_class', condition);
+    }
+}
+
+
+function danceCreateClassDatagrid(datagridId, url, condition) {
     var _pageSize = 30;
     var _pageNo = 1;
     var ccId = 'cc' + datagridId;       // Combo box,姓名查找框ID
     var dg = $('#' + datagridId);
+    var queryCondition = {};
 
+    $.extend(queryCondition, condition);
     $(dg).datagrid({
         // title: '班级信息',
         iconCls: 'icon-a_detail',
@@ -61,7 +82,8 @@ function danceCreateClassDatagrid(datagridId, url) {
                                     var gridOpts = $(dg).datagrid('getPager').pagination('options');
                                     var _total = gridOpts.total - row.length;
                                     if (_pageNo > 1 && (_pageNo-1)*_pageSize >= _total) { _pageNo--; }
-                                    doAjaxGetData();
+                                    //doAjaxGetData();
+                                    danceClassCallFunc();
                                 } else {
                                     $.messager.alert('提示', data.msg, 'error');
                                 }
@@ -111,7 +133,7 @@ function danceCreateClassDatagrid(datagridId, url) {
         panelHeight: "auto"
     });
 
-    var pager = dg.datagrid('getPager');
+    var pager = $(dg).datagrid('getPager');
     $(pager).pagination({
         //pageSize: _pageSize,//每页显示的记录条数，默认为10
         //pageList: [20, 30, 40, 50],//可以设置每页记录条数的列表
@@ -126,7 +148,8 @@ function danceCreateClassDatagrid(datagridId, url) {
                 $('#danceCommWin').panel({
                     href:'/static/html/_import_win.html',
                     onDestroy: function () {
-                        doAjaxGetData();
+                        //doAjaxGetData();
+                        danceClassCallFunc();
                     }
                 });
             }
@@ -155,20 +178,28 @@ function danceCreateClassDatagrid(datagridId, url) {
 
             _pageSize = pageSize;
             _pageNo = pageNumber;
-            doAjaxGetData();
+            //doAjaxGetData();
+            danceClassCallFunc();
         }
     });
 
-    doAjaxGetData();
-
     // 先通过ajax获取数据，然后再传给datagrid
-    function doAjaxGetData () {
+    danceClassCallFunc = function doAjaxGetData (cond) {
+        if (cond) {
+            queryCondition = {};
+            $.extend(queryCondition, cond);
+            queryCondition['rows'] = _pageSize;
+            queryCondition['page'] = 1;
+        } else {
+            queryCondition['rows'] = _pageSize;
+            queryCondition['page'] = _pageNo;
+        }
         $.ajax({
             method: 'POST',
             url: url + '_get',
             async: true,
             dataType: 'json',
-            data: {'rows': _pageSize, 'page': _pageNo},
+            data: queryCondition,
             success: function (data) {
                 console.log(data);
                 // 注意此处从数据库传来的data数据有记录总行数的total列和 rows
@@ -178,6 +209,8 @@ function danceCreateClassDatagrid(datagridId, url) {
                 console.log('error in ajax.');
             }
         });
-    }
+    };
 
+    danceClassCallFunc();
+    //doAjaxGetData();
 }

@@ -103,7 +103,7 @@ def write_excel_test():
     wb.save(file_path)
 
 
-def student_import_to_db(fn):
+def import_student(fn):
     """
     :param fn:   文件名，需要导入数据的Excel文件名
     :return:     读取的 Excel 数据,
@@ -186,7 +186,7 @@ def student_import_to_db(fn):
     return data_ret, "ok", num_right, num_wrong
 
 
-def class_import_to_db(fn):
+def import_class(fn):
     """
     :param fn:   文件名，需要导入数据的Excel文件名
     :return:     1. 读取的 Excel 数据,
@@ -263,7 +263,7 @@ def class_import_to_db(fn):
     return data_ret, "ok", num_right, num_wrong
 
 
-def student_class_import_to_db(fn, sheet_name):
+def import_student_class(fn, sheet_name):
     columns = ['student_id', 'class_id', 'join_date', 'status', 'remark']
     cols_cn = [u'学号', u'班级编号', u'报班日期', u'状态', u'报班备注']
     cols_num = []
@@ -319,10 +319,10 @@ def student_class_import_to_db(fn, sheet_name):
     return data_ret, "ok", num_right, num_wrong
 
 
-def student_export_from_db(file_path, sheet_name, cols_wanted=None):
+def export_student(fn, sheet_name, cols_wanted=None):
     """
     将学员 报名 登记 信息 从数据库导出
-    :param file_path:           要导出的文件，存于服务器，先从DB导出Excel，再由用户下载该文件
+    :param fn:                  要导出的文件及路径，存于服务器，先从DB导出Excel，再由用户下载该文件
     :param sheet_name:          写入Excel的 Sheet 页名
     :param cols_wanted:         optional 要导出的 数据库 列名，为None，则导出数据库的所有列
     :return:                    1. errorCode  0--成功，其他--失败
@@ -384,5 +384,5 @@ def student_export_from_db(file_path, sheet_name, cols_wanted=None):
                 else:
                     sheet.write(row, col, val, style)
 
-    wb.save(file_path)
+    wb.save(fn)
     return 0, 'ok'
