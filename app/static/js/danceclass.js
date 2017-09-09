@@ -200,8 +200,9 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
             url: url + '_get',
             async: true,
             dataType: 'json',
-            data: queryCondition,
-            success: function (data) {
+            data: queryCondition
+        }).done(function(data) {
+            if (data.errorCode == 0) {
                 console.log(data);
                 // 注意此处从数据库传来的data数据有记录总行数的total列和 rows
                 var gridOpts = $(dg).datagrid('options');
@@ -210,12 +211,14 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
                 var pagerOpts = $(dg).datagrid('getPager').pagination('options');
                 pagerOpts.pageNumber = _pageNo;
                 pagerOpts.pageSize = _pageSize;
-
-                dg.datagrid('loadData', data);
-            },
-            error: function () {
-                console.log('error in ajax.');
+            } else {
+                $.messager.alert({title: '错误', msg: data.msg, icon:'error'});
             }
+            dg.datagrid('loadData', data);
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            //console.log(jqXHR);
+            var msg = $.format("请求失败：{0}。错误码：{1}({2}) ", [textStatus, jqXHR.status, errorThrown]);
+            $.messager.alert('提示', msg, 'info');
         });
     };
 
