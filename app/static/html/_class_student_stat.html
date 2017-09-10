@@ -13,9 +13,8 @@
 <div class="easyui-layout" data-options="fit:true">
     <div data-options="region:'west',split:true,hideCollapsedContent:false" title="班级信息" style="width:40%;">
         <table id="danceClassStudentStat" class="easyui-datagrid"
-               data-options="url:'/dance_class_condition_get',method:'post',border:false,singleSelect:true,fit:true,
-               fitColumns:true,rownumbers:true,striped:true,
-               queryParams: {page: 1, rows: -1, 'is_ended': '0'},
+               data-options="border:false,singleSelect:true,fit:true,
+               fitColumns:true,rownumbers:true,striped:true,emptyMsg:'无数据',
                onSelect:onSelect,
                onLoadSuccess
                ">
@@ -34,7 +33,7 @@
     <div data-options="region:'center'">
         <table id="danceStudentStat" class="easyui-datagrid"
                data-options="border:false,singleSelect:true,fit:true,border:false,title:'学员信息',iconCls:'icon-ok',
-               fitColumns:true,rownumbers:true,striped:true,
+               fitColumns:true,rownumbers:true,striped:true,emptyMsg:'无数据'
                ">
             <thead>
             <tr>
@@ -56,16 +55,20 @@
         var dg = $('#danceStudentStat');
         $(dg).datagrid({
             title: '学员信息 [' + row['class_name']  + ']',
-            url: '/dance_class_student_condition_get',
-            queryParams: {page: 1, rows: -1, 'cno': row.cno}
+            url: '/dance_class_student_get',
+            queryParams: {page: 1, rows: 200, 'class_no': row.cno}
         });
     }
 
     function onLoadSuccess (data) {
         var dg = $('#danceClassStudentStat');
         //console.log(data);
-        if (data.rows) {
+        if (data.rows.length) {
             $(dg).datagrid('selectRow', 0);
+        } else {
+            console.log('no student data');
+            var dgStu = $('#danceStudentStat');
+            $(dgStu).datagrid({title: '学员信息', url: null}).datagrid('loadData', []);
         }
     }
 </script>

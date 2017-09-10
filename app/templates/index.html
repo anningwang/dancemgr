@@ -67,20 +67,22 @@
 
                 var tableId = this.id + node.id;
                 if(this.id === 'treeSchool') {
-                    if ((node.id + '').slice(0,4) === '1000') {
-                        var nodeSchool = $('#'+this.id).tree('find', 1000);
-                        danceAddTabClassDatagrid('danceTabs', nodeSchool.text, tableId, node.attributes);
-                        //if (danceAddTab('danceTabs', nodeSchool.text, tableId)) {
-                        //    danceCreateClassDatagrid(tableId, '/dance_class', node.attributes);
-                        //}
+                    var schClassId = 1000;
+                    if ((node.id + '').slice(0,4) === schClassId.toString()) {     // 班级信息
+                        var nodeSchool = $('#'+this.id).tree('find', schClassId);
+                        danceAddTabClassDatagrid('danceTabs', nodeSchool.text, this.id+schClassId, node.attributes);
                     } else {
                         $.messager.alert('提示', ' 制作中...', 'info');
                     }
                 } else if (this.id === 'treeStudent') {
                     var stuListId = 1000;
-                    if ((node.id + '').slice(0,4) === stuListId.toString()) {
+                    var stuClassId = 6000;
+                    if ((node.id + '').slice(0,4) === stuListId.toString()) {   // 学员列表
                         var nodeStudent = $('#'+this.id).tree('find', stuListId);
-                        danceAddTabStudentDatagrid('danceTabs', nodeStudent.text, this.id + stuListId , node.attributes);
+                        danceAddTabStudentDatagrid('danceTabs', nodeStudent.text, this.id+stuListId , node.attributes);
+                    } else if ((node.id + '').slice(0,4) === stuClassId.toString()) {   // 班级学员统计
+                        var nodeStuClass = $('#'+this.id).tree('find', stuClassId);
+                        danceAddTabClassStudentStat(nodeStuClass.text, node.attributes);
                     } else {
                         $.messager.alert('提示', ' 制作中...', 'info');
                     }
@@ -93,8 +95,7 @@
                     danceCreateClassDatagrid(tableId, '/dance_class');
                 }else if(node.text == '分校信息') {
                     danceAddTab('danceTabs', node.text, tableId);
-                    //danceCreateSchoolDatagrid(tableId, '/dance_school');
-                    danceCreateEditedDatagrid(tableId, '/dance_school', opts);
+                    danceCreateEditedDatagrid(tableId, '/dance_school', opts_school);
                 }else if(node.text == '用户管理') {
                     danceAddTab('danceTabs', node.text, tableId);
                     danceCreateEditedDatagrid(tableId, '/dance_user', opts_user);

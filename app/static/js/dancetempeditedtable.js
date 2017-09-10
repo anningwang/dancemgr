@@ -1,7 +1,7 @@
 
 'use strict';
 
-var opts = {
+var opts_school = {
     'defaultSelField' : 'school_name',
     'fieldValidate' : {'school_name': checkNotEmpty},
     'queryText': '分校名称',

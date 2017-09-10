@@ -420,8 +420,6 @@ def dance_student_get():
         page_no = 1
 
     school_ids = DanceUserSchool.get_school_ids_by_uid()
-    # if len(school_ids) == 0:
-    #    return jsonify({'total': 0, 'rows': [], 'errorCode': 0, 'msg': 'ok'})
 
     dcq = DanceStudent.query
     if 'school_id' not in request.form or request.form['school_id'] == 'all':
@@ -469,17 +467,20 @@ def dance_student_get():
     return jsonify({"total": total, "rows": rows})
 
 
-@app.route('/dance_class_student_condition_get', methods=['POST', 'GET'])
+@app.route('/dance_class_student_get', methods=['POST', 'GET'])
 @login_required
-def dance_class_student_condition_get():
-    # page_size = int(request.form['rows'])
-    # page_no = int(request.form['page'])
-    cno = request.form['cno']
+def dance_class_student_get():
+    """
+    统计 班级内 学员 名单。
+    :return:
+    """
+    cno = request.form['class_no']
 
     rows = []
     records = DanceStudent.query\
         .join(DanceStudentClass, DanceStudentClass.student_id == DanceStudent.sno)\
-        .filter(DanceStudentClass.class_id == cno, DanceStudent.is_training == u'是')\
+        .filter(DanceStudentClass.class_id == cno, DanceStudent.is_training == u'是',
+                DanceStudentClass.company_id == g.user.company_id)\
         .join(DanceSchool, DanceSchool.id == DanceStudent.school_id)\
         .add_columns(DanceSchool.school_name, DanceSchool.school_no)\
         .all()
@@ -512,6 +513,10 @@ def dance_class_student_condition_get():
 @app.route('/dance_student_query', methods=['POST'])
 @login_required
 def dance_student_query():
+    """
+    学员界面根据学员 姓名 combo box 自动完整功能。根据 姓名 模糊查询 所有匹配条件的 姓名列表，供操作员选择。
+    :return:
+    """
     school_ids = DanceUserSchool.get_school_ids_by_uid()
     if len(school_ids) == 0:
         return jsonify({'errorCode': 0, 'msg': 'no data'})
@@ -631,6 +636,10 @@ def dance_student_add():
 @app.route('/dance_class_get', methods=['POST'])
 @login_required
 def dance_class_get():
+    """
+    查询班级列表
+    :return:
+    """
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
     print 'dance_class_get: page_size=', page_size, ' page_no=', page_no
@@ -646,7 +655,10 @@ def dance_class_get():
     if 'school_id' not in request.form or request.form['school_id'] == 'all':
         dcq = dcq.filter(DanceClass.school_id.in_(school_ids))
     else:
-        dcq = dcq.filter(DanceClass.school_id.in_(request.form['school_id']))
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+        if len(school_id_intersection) == 0:
+            return jsonify({"total": 0, "rows": [], 'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+        dcq = dcq.filter(DanceClass.school_id.in_(school_id_intersection))
 
     if 'is_ended' in request.form:
         is_ended = request.form['is_ended']
@@ -660,59 +672,6 @@ def dance_class_get():
         .limit(page_size).offset(offset).all()
     i = offset + 1
     rows = []
-    for recs in records:
-        rec = recs[0]
-        rows.append({"id": rec.id, "cno": rec.cno, "school_no": recs[2], "school_name": recs[1],
-                     "class_name": rec.class_name, "rem_code": rec.rem_code, "begin_year": rec.begin_year,
-                     'class_type': rec.class_type, 'class_style': rec.class_style, 'teacher': rec.teacher,
-                     'cost_mode': rec.cost_mode, 'cost': rec.cost, 'plan_students': rec.plan_students,
-                     'cur_students': rec.cur_students, 'is_ended': rec.is_ended, 'remark': rec.remark,
-                     'recorder': rec.recorder, 'no': i
-                     })
-        i += 1
-    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
-
-
-@app.route('/dance_class_condition_get', methods=['POST'])
-@login_required
-def dance_class_condition_get():
-    """
-    根据查询条件返回 班级信息，暂时用于 班级学员名单的统计。 班级为 “未结束” 状态
-    :return:
-    """
-    page_size = int(request.form['rows'])
-    page_no = int(request.form['page'])
-
-    rows = []
-    if page_no <= 0:    # 补丁
-        page_no = 1
-    if page_size == -1:
-        page_size = 100
-
-    school_ids = DanceUserSchool.get_school_ids_by_uid()
-    if len(school_ids) == 0:
-        return jsonify({'total': 0, 'rows': [], 'errorCode': 0, 'msg': 'ok'})
-
-    if 'is_ended' in request.form:
-        is_ended = request.form['is_ended']
-        records = DanceClass.query.filter(DanceClass.school_id.in_(school_ids)) \
-            .filter(DanceClass.is_ended == is_ended)\
-            .join(DanceSchool, DanceSchool.id == DanceClass.school_id) \
-            .add_columns(DanceSchool.school_name, DanceSchool.school_no) \
-            .order_by(DanceClass.school_id, DanceClass.id.desc()) \
-            .all()
-        total = len(records)
-        i = 1
-    else:
-        total = DanceClass.query.filter(DanceClass.school_id.in_(school_ids)).count()
-        offset = (page_no - 1) * page_size
-        records = DanceClass.query.filter(DanceClass.school_id.in_(school_ids)) \
-            .join(DanceSchool, DanceSchool.id == DanceClass.school_id) \
-            .add_columns(DanceSchool.school_name, DanceSchool.school_no) \
-            .order_by(DanceClass.school_id, DanceClass.id.desc()) \
-            .limit(page_size).offset(offset).all()
-        i = offset + 1
-
     for recs in records:
         rec = recs[0]
         rows.append({"id": rec.id, "cno": rec.cno, "school_no": recs[2], "school_name": recs[1],

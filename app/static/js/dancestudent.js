@@ -64,18 +64,34 @@ function danceAddTab(divId, title, tableId) {
 
 //----------------------------------------------
 /**
- * 添加或者打开班级学员名单 Tab 页
+ * 添加或者打开 班级学员名单 Tab 页
  * @param title         Tab页的标题
  */
-function danceAddTabClassStudentStat(title) {
+function danceAddTabClassStudentStat(title, condition) {
+    //console.log(condition);
+    condition.page = 1;
+    condition.rows = 200;
     var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
+
+        var dgClass = $('#danceClassStudentStat');
+        dgClass.datagrid({
+            url: 'dance_class_get',
+            queryParams: condition
+        });
     } else {
         $(parentDiv).tabs('add', {
             title: title,
             href: '/static/html/_class_student_stat.html',
-            closable: true
+            closable: true,
+            onLoad: function () {
+                var dgClass = $('#danceClassStudentStat');
+                dgClass.datagrid({
+                    url: 'dance_class_get',
+                    queryParams: condition
+                });
+            }
         });
     }
 }
