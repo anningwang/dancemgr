@@ -15,8 +15,9 @@
         <table id="danceClassStudentStat" class="easyui-datagrid"
                data-options="border:false,singleSelect:true,fit:true,
                fitColumns:true,rownumbers:true,striped:true,emptyMsg:'无数据',
+               pagination:true,pageSize:100,pageNumber:1,pageList: [50,100],
                onSelect:onSelect,
-               onLoadSuccess
+               onLoadSuccess: onLoadSuccess
                ">
             <thead>
             <tr>
@@ -33,7 +34,8 @@
     <div data-options="region:'center'">
         <table id="danceStudentStat" class="easyui-datagrid"
                data-options="border:false,singleSelect:true,fit:true,border:false,title:'学员信息',iconCls:'icon-ok',
-               fitColumns:true,rownumbers:true,striped:true,emptyMsg:'无数据'
+               fitColumns:true,rownumbers:true,striped:true,emptyMsg:'无数据',
+               pagination:true,pageSize:100,pageNumber:1,pageList: [50,100]
                ">
             <thead>
             <tr>
@@ -56,7 +58,7 @@
         $(dg).datagrid({
             title: '学员信息 [' + row['class_name']  + ']',
             url: '/dance_class_student_get',
-            queryParams: {page: 1, rows: 200, 'class_no': row.cno}
+            queryParams: {'class_no': row.cno}
         });
     }
 

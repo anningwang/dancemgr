@@ -69,8 +69,8 @@ function danceAddTab(divId, title, tableId) {
  */
 function danceAddTabClassStudentStat(title, condition) {
     //console.log(condition);
-    condition.page = 1;
-    condition.rows = 200;
+    //condition.page = 1;
+    //condition.rows = 100;
     var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);

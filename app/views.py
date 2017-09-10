@@ -479,7 +479,7 @@ def dance_class_student_get():
     rows = []
     records = DanceStudent.query\
         .join(DanceStudentClass, DanceStudentClass.student_id == DanceStudent.sno)\
-        .filter(DanceStudentClass.class_id == cno, DanceStudent.is_training == u'是',
+        .filter(DanceStudentClass.class_id == cno, DanceStudentClass.status == u'正常',
                 DanceStudentClass.company_id == g.user.company_id)\
         .join(DanceSchool, DanceSchool.id == DanceStudent.school_id)\
         .add_columns(DanceSchool.school_name, DanceSchool.school_no)\
