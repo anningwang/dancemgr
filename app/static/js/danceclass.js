@@ -24,7 +24,7 @@ function danceAddTabClassDatagrid(divId, title, tableId, condition) {
 function danceCreateClassDatagrid(datagridId, url, condition) {
     var _pageSize = 30;
     var _pageNo = 1;
-    var ccId = 'cc' + datagridId;       // Combo box,姓名查找框ID
+    var ccId = 'cc' + datagridId;       // Combo box,班级名称查找框ID
     var dg = $('#' + datagridId);
     var queryCondition = {};
 

@@ -52,7 +52,6 @@ function danceAddTab(divId, title, tableId) {
     var parentDiv = $('#'+divId);
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
-        return false;
     } else {
         var content = '<table id=' + tableId + '></table>';
         $(parentDiv).tabs('add', {
@@ -60,7 +59,6 @@ function danceAddTab(divId, title, tableId) {
             content: content,
             closable: true
         });
-        return true;
     }
 }
 
@@ -81,15 +79,41 @@ function danceAddTabClassStudentStat(title) {
         });
     }
 }
-//----------------------------------------------
 
+var danceStudentListQueryCondition = undefined;
+/**
+ * danceAddTabStudentDatagrid 添加或者打开 学员列表 Tab页
+ * @param divId             父节点Tabs对象ID
+ * @param title             新打开/创建 的 Tab页标题
+ * @param tableId           Tab页内的Datagrid表格ID
+ * @param condition         查询条件
+ */
+function danceAddTabStudentDatagrid(divId, title, tableId, condition) {
+    //console.log(tableId);
+    danceStudentListQueryCondition = {};
+    $.extend(danceStudentListQueryCondition, condition);
+    var parentDiv = $('#'+divId);
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+        $('#'+tableId).datagrid('load', condition);
+    } else {
+        var content = '<table id=' + tableId + '></table>';
+        $(parentDiv).tabs('add', {
+            title: title,
+            content: content,
+            closable: true
+        });
+        danceCreateStudentDatagrid(tableId, '/dance_student', condition)
+    }
+}
 
 /**
  * danceCreateDatagrid       增加 Datagrid 组件，并格式化，包括列名，增/删/查等相应函数
  * @param datagridId        Datagrid id
  * @param url               从服务器获取数据的url
+ * @param condition         表格数据查询参数
  */
-function danceCreateStudentDatagrid(datagridId, url) {
+function danceCreateStudentDatagrid(datagridId, url, condition) {
     var _pageSize = 30;
     // var _pageNo = 1;
     var ccId = 'cc' + datagridId;       // Combo box,姓名查找框ID
@@ -113,6 +137,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
         nowrap: true,   // True to display data in one line. Set to true can improve loading performance.
         pageList: [20, 30, 40, 50, 100],   //每页显示条数供选项
         rownumbers: true,   // True to show a row number column.
+        queryParams: condition,
         toolbar: [{
             iconCls:'icon-add', text:"增加",      ///+++++++++++++++++++++++++++++++++++++++++++++
             handler:function(){
@@ -164,7 +189,7 @@ function danceCreateStudentDatagrid(datagridId, url) {
                                         });
                                         return false;
                                     }
-                                    $(dg).datagrid('options').queryParams={'condition': dance_condition};
+                                    // $(dg).datagrid('options').queryParams={'name': dance_condition};
                                     $(dg).datagrid('reload');
                                 },
                                 error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -182,8 +207,20 @@ function danceCreateStudentDatagrid(datagridId, url) {
         },{
             iconCls: 'icon-search', text:"查询",  /// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
             handler: function () {
-                $(dg).datagrid('options').queryParams={'condition': dance_condition};
-                $(dg).datagrid('reload');
+                /*
+                if (dance_condition) {
+                    $(dg).datagrid('options').queryParams={'name': dance_condition};
+                } else {
+                    if ('name' in $(dg).datagrid('options').queryParams) {
+                        delete $(dg).datagrid('options').queryParams['name'];
+                    }
+                }
+                */
+                var cond = $(dg).datagrid('options').queryParams;
+                cond['name'] = dance_condition;
+
+                // $(dg).datagrid('reload');
+                $(dg).datagrid('load', cond);
             }
         }],
         columns: [[
@@ -214,7 +251,10 @@ function danceCreateStudentDatagrid(datagridId, url) {
     function autoComplete (newValue,oldValue) {
         console.log('newValue=' + newValue + ' oldValue=' + oldValue);
         dance_condition = $.trim(newValue);
-        $.post(url+'_query',{'condition': dance_condition }, function(data){
+        var queryCondition = {};
+        $.extend(queryCondition, $(dg).datagrid('options').queryParams);
+        queryCondition['name'] = dance_condition;
+        $.post(url+'_query',queryCondition, function(data){
             $('#'+ccId).combobox('loadData', data);
         },'json');
     }

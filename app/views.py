@@ -390,18 +390,18 @@ def dance_del_data():
     print 'who=', who, ' ids=', ids
 
     if who == 'DanceClass':
-        table = DanceClass
+        dcq = DanceClass.query
     elif who == 'DanceStudent':
-        table = DanceStudent
+        dcq = DanceStudent.query
     elif who == 'DanceSchool':
-        table = DanceSchool
+        dcq = DanceSchool.query
     elif who == 'DanceUser':
-        table = DanceUser
+        dcq = DanceUser.query
     else:
         return jsonify({'errorCode': 1, "msg": "Table not found!"})     # error
 
     for i in ids:
-        rec = table.query.get(i)
+        rec = dcq.get(i)
         if who == 'DanceUser' and rec.is_creator == 1:
             return jsonify({'errorCode': 500, 'msg': u'账号[%s]为初始管理员，不能删除！' % rec.name})
         db.session.delete(rec)
@@ -415,34 +415,37 @@ def dance_del_data():
 def dance_student_get():
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
-    if 'condition' in request.form:
-        condition = request.form['condition']
-    else:
-        condition = ''
-
     print 'page_size=', page_size, ' page_no=', page_no
-    if page_no <= 0:    # 补丁
+    if page_no <= 0:    # 容错处理
         page_no = 1
 
     school_ids = DanceUserSchool.get_school_ids_by_uid()
-    if len(school_ids) == 0:
-        return jsonify({'total': 0, 'rows': [], 'errorCode': 0, 'msg': 'ok'})
+    # if len(school_ids) == 0:
+    #    return jsonify({'total': 0, 'rows': [], 'errorCode': 0, 'msg': 'ok'})
 
-    rows = []
-    if condition == '':
-        total = DanceStudent.query.filter(DanceStudent.school_id.in_(school_ids)).count()
+    dcq = DanceStudent.query
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        dcq = dcq.filter(DanceStudent.school_id.in_(school_ids))
     else:
-        total = DanceStudent.query.filter(DanceStudent.school_id.in_(school_ids))\
-            .filter(DanceStudent.name.like('%' + condition + '%')).count()
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+        if len(school_id_intersection) == 0:
+            return jsonify({"total": 0, "rows": [], 'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+        dcq = dcq.filter(DanceStudent.school_id.in_(school_id_intersection))
 
+    if 'is_training' in request.form:
+        dcq = dcq.filter_by(is_training=request.form['is_training'])
+
+    if 'name' in request.form and request.form['name'] != '':
+        dcq = dcq.filter(DanceStudent.name.like('%' + request.form['name'] + '%'))
+
+    total = dcq.count()
     offset = (page_no - 1) * page_size
-    records = DanceStudent.query.filter(DanceStudent.school_id.in_(school_ids))\
-        .filter(DanceStudent.name.like('%' + condition + '%'))\
-        .join(DanceSchool, DanceSchool.id == DanceStudent.school_id)\
+    records = dcq.join(DanceSchool, DanceSchool.id == DanceStudent.school_id)\
         .add_columns(DanceSchool.school_name, DanceSchool.school_no)\
         .order_by(DanceStudent.school_id, DanceStudent.id.desc())\
         .limit(page_size).offset(offset).all()
     i = offset + 1
+    rows = []
     for rec in records:
         r = rec[0]
         rows.append({"id": r.id, "sno": r.sno, "school_no": rec[2],
@@ -509,11 +512,23 @@ def dance_class_student_condition_get():
 @app.route('/dance_student_query', methods=['POST'])
 @login_required
 def dance_student_query():
-    json_data = request.form['condition']
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if len(school_ids) == 0:
+        return jsonify({'errorCode': 0, 'msg': 'no data'})
+
+    name = request.form['name']
+    dcq = DanceStudent.query.filter(DanceStudent.name.like('%' + name + '%'))
+
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        dcq = dcq.filter(DanceStudent.school_id.in_(school_ids))
+    else:
+        dcq = dcq.filter(DanceStudent.school_id.in_(request.form['school_id']))
+
+    if 'is_training' in request.form:
+        dcq = dcq.filter_by(is_training=request.form['is_training'])
 
     ret = []
-    records = DanceStudent.query.order_by(
-        DanceStudent.id.desc()).filter(DanceStudent.name.like('%'+json_data + '%'))
+    records = dcq.order_by(DanceStudent.id.desc()).all()
     for rec in records:
         ret.append({'value': rec.name, 'text': rec.name})
 
