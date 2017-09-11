@@ -367,6 +367,7 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
     var dgStu_class = 'dgStudent_class';
 
     var editIndexClass = undefined;
+    var edIndexContact = undefined;
     var classlist = [];
     var schoollist = [];
     var stuInfo = {'student': {}, 'class': []};
@@ -420,8 +421,21 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
                 $('#'+stu_former_name).attr('id', stu_former_name+=uid);
                 $('#'+stu_birthday).attr('id', stu_birthday+=uid);
                 $('#'+stu_remark).attr('id', stu_remark+=uid);
-                $('#'+dgStu_contact).attr('id', dgStu_contact+=uid).datagrid('mergeCells', {
-                    index: 1, field: 'c2', colspan: 3
+                $('#'+dgStu_contact).attr('id', dgStu_contact+=uid).datagrid({
+                    onClickCell: onClickContactCell,
+                    onLoadSuccess: function () {
+                        $('#'+dgStu_contact).datagrid('mergeCells', {
+                            index: 1, field: 'c2', colspan: 3
+                        })
+                    },
+                    onBeginEdit: function (index,row) {
+                        if (index == 1) {   // 地址所在行
+                            console.log(row);
+                        } else {
+                            //var rows = $(this).datagrid('getRows');
+                            //console.log(rows[1]);
+                        }
+                    }
                 });
                 $('#'+dgStu_class).attr('id', dgStu_class+=uid).datagrid({
                     onClickCell: onClickCell,
@@ -490,19 +504,23 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
                         c6: data.rows['email'],
                         c8: data.rows['qq']
                     }
+                }).datagrid('mergeCells', {
+                    index: 1, field: 'c2', colspan: 3
                 }).datagrid('updateRow', {
                     index: 2,
                     row: {
                         c2: data.rows['mother_name'],
                         c4: data.rows['mother_phone'],
-                        c6: data.rows['mother_company']
+                        c6: data.rows['mother_company'],
+                        c8: data.rows['mother_wechat']
                     }
                 }).datagrid('updateRow', {
                     index: 3,
                     row: {
                         c2: data.rows['father_name'],
-                        c6: data.rows['father_phone'],
-                        c8: data.rows['father_company']
+                        c4: data.rows['father_phone'],
+                        c6: data.rows['father_company'],
+                        c8: data.rows['father_wechat']
                     }
                 });
 
@@ -557,6 +575,19 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
             editIndexClass = index;
         }
     }
+
+    function onClickContactCell(index, field) {
+        if (edIndexContact != index) {
+            endEditingContact();
+            var dg = $('#'+dgStu_contact);
+            $(dg).datagrid('selectRow', index).datagrid('beginEdit', index);
+            var ed = $(dg).datagrid('getEditor', {index:index,field:field});
+            if (ed){
+                ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
+            }
+            edIndexContact = index;
+        }
+    }
     
     function ajaxGetStudentExtras() {
         $.ajax({
@@ -594,6 +625,15 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
             editIndexClass = undefined;
         }
     }
+
+    function endEditingContact(){
+        if (edIndexContact != undefined){
+            $('#'+dgStu_contact).datagrid('endEdit', edIndexContact)
+                .datagrid('mergeCells', { index: 1, field: 'c2', colspan: 3});
+            edIndexContact = undefined;
+        }
+    }
+
     function onClickClass(record) {
         var dg = $('#'+dgStu_class);
         var row = $(dg).datagrid("getSelected");
@@ -620,6 +660,8 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
     }
     ////////////////////
     function onSave() {
+        endEditingContact();
+        endEditingClass();
         if (!validateStudentInfo()) {
             return false;
         }
@@ -676,61 +718,51 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
         // 曾用名
 
         var dg = $('#'+dgStu_class);
-        endEditingClass();
         var data = dg.datagrid('getData');
         //console.log(data);
         for(var i = 0; i< data.rows.length; i++) {
-            console.log(data);
+            //console.log(data);
             if (data.rows[i].class_id) {
                 stuInfo.class.push(data.rows[i]);
             }
         }
+
+        var dgCnt = $('#'+dgStu_contact);
+        var rows = dgCnt.datagrid('getRows');
+        stuInfo.student.reading_school = rows[0].c2;
+        stuInfo.student.grade = rows[0].c4;
+        stuInfo.student.phone = rows[0].c6;
+        stuInfo.student.tel = rows[0].c8;
+
+        stuInfo.student.address = rows[1].c2;
+        stuInfo.student.email = rows[1].c6;
+        stuInfo.student.qq = rows[1].c8;
+
+        stuInfo.student.mother_name = rows[2].c2;
+        stuInfo.student.mother_phone = rows[2].c4;
+        stuInfo.student.mother_company = rows[2].c6;
+        stuInfo.student.mother_wechat = rows[2].c8;
+
+        stuInfo.student.father_name = rows[3].c2;
+        stuInfo.student.father_phone = rows[3].c4;
+        stuInfo.student.father_company = rows[3].c6;
+        stuInfo.student.father_wechat = rows[3].c8;
     }
 
     function danceAddRow() {
         $('#'+dgStu_class).datagrid('appendRow', {});
     }
-    function danceDelRow() {
-        console.log('del row');
-        var dg = $('#'+dgStu_class);
-        var row = dg.datagrid('getSelected');
-        console.log(row);
-        /*
-        if (row) {  // 删除选中行
-            var idx = dg.datagrid('getRowIndex', row);
-            if (row.class_id) { // 本行有数据，询问是否要删除
-                $.messager.confirm('确认删除', '确认删除第 '+(idx+1)+' 行数据吗？', function(r){
-                    if (r){
-                        dg.datagrid('deleteRow', idx);
-                    }
-                });
-            } else {
-                dg.datagrid('deleteRow', idx);
-            }
-        } else { // 删除最后一行
-            var rows = dg.datagrid('getRows');
-            if (rows.length == 0) {
-                $.messager.alert('提示','无数据可删！','info');
-            } else {
-                if (rows[rows.length-1].class_id) { // 本行有数据，询问是否要删除
-                    $.messager.confirm('确认删除', '确认删除第 '+rows.length+' 行数据吗？', function(r){
-                        if (r){
-                            dg.datagrid('deleteRow', rows.length-1);
-                        }
-                    });
-                } else {
-                    dg.datagrid('deleteRow', rows.length-1);
-                }
-            }
-        }
-        */
 
+    function danceDelRow() {
+        //console.log('del row');
+        var dg = $('#'+dgStu_class);
         var rows = dg.datagrid('getRows');
         if (rows.length == 0) {
             $.messager.alert('提示','无数据可删！','info');
             return;
         }
-        var rowToDel = row ? row : rows[rows.length-1];
+        var row = dg.datagrid('getSelected');
+        var rowToDel = row ? row : rows[rows.length-1]; // 删除选中行 或 最后一行
         var idx = dg.datagrid('getRowIndex', rowToDel);
         if (rowToDel.class_id) { // 本行有数据，询问是否要删除
             $.messager.confirm('确认删除', '确认删除第 '+(idx+1)+' 行数据吗？', function(r){
@@ -741,7 +773,6 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
         } else {
             dg.datagrid('deleteRow', idx);
         }
-
     }
 }
 
