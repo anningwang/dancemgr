@@ -217,8 +217,9 @@ class DanceStudent(db.Model):
     school_id = db.Column(db.Integer, db.ForeignKey('dance_school.id'))
 
     def __init__(self, para):
-        if u'sno' in para:
-            self.sno = para[u'sno']
+        if 'school_id' in para:
+            self.school_id = int(para['school_id'])
+        self.sno = self.create_sno() if u'sno' not in para else para[u'sno']
         if u'school_no' in para:
             self.school_no = para[u'school_no']
         if u'school_name' in para:
@@ -281,8 +282,7 @@ class DanceStudent(db.Model):
             self.father_company = para[u'father_company']
         if u'card' in para:
             self.card = para[u'card']
-        if u'is_training' in para:
-            self.is_training = para[u'is_training']
+        self.is_training = u'是' if u'is_training' not in para else para[u'is_training']
         if u'points' in para:
             self.points = int(para[u'points'])
         if u'remark' in para:
@@ -294,8 +294,6 @@ class DanceStudent(db.Model):
             self.mother_wechat = para['mother_wechat']
         if 'father_wechat' in para:
             self.father_wechat = para['father_wechat']
-        if 'school_id' in para:
-            self.school_id = int(para['school_id'])
 
     def getval(self, col_name):
         """
@@ -385,7 +383,9 @@ class DanceStudent(db.Model):
             return '<Unknown field name>'
 
     def create_sno(self):
-        search_sno = get_stu_no(self.school_no)
+        if self.school_id is None:
+            raise Exception('Please input school_id first!')
+        search_sno = get_stu_no(self.school_id)
         stu = DanceStudent.query.filter(DanceStudent.sno.like(
             '%' + search_sno + '%')).order_by(DanceStudent.id.desc()).first()
         number = 1 if stu is None else int(stu.sno.rsplit('-', 1)[1]) + 1

@@ -58,7 +58,8 @@
 
                     <td>
                         <select class="easyui-combobox" id="school_name" style="width:98%;"
-                                data-options="labelPosition:'left',panelHeight:'auto', label:'所属分校：',editable:false
+                                data-options="labelPosition:'left',panelHeight:'auto', label:'所属分校：',editable:false,
+                                valueField: 'school_id',textField: 'school_name',
                             ">
                             <option>　</option>
                             <option>麒麟分校</option>
@@ -78,13 +79,13 @@
 
                 <tr name="third">
                     <td>
-                        <input class="easyui-textbox" id="people_id" style="width:98%;height:24px"
+                        <input class="easyui-textbox" id="idcard" style="width:98%;height:24px"
                                data-options="labelPosition:'left',label:'身份证号：'
                            ">
                     </td>
 
                     <td>
-                        <select id="bb" class="easyui-combobox" id="counselor" style="width:98%;"
+                        <select class="easyui-combobox" id="counselor" style="width:98%;"
                                 data-options="labelPosition:'left',panelHeight:60,label:'咨询师：',editable:false
                             ">
                             <option>　</option>
@@ -93,7 +94,7 @@
                     </td>
 
                     <td>
-                        <select id="d" class="easyui-combobox" id="degree" style="width:98%;"
+                        <select class="easyui-combobox" id="degree" style="width:98%;"
                                 data-options="labelPosition:'left',panelHeight:'auto',label:'文化程度：',editable:false
                             ">
                             <option>　</option>

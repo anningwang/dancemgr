@@ -65,7 +65,8 @@ function danceAddTab(divId, title, tableId) {
 //----------------------------------------------
 /**
  * 添加或者打开 班级学员名单 Tab 页
- * @param title         Tab页的标题
+ * @param title             Tab页的标题
+ * @param condition         查询条件
  */
 function danceAddTabClassStudentStat(title, condition) {
     //console.log(condition);
@@ -157,7 +158,9 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
         toolbar: [{
             iconCls:'icon-add', text:"增加",      ///+++++++++++++++++++++++++++++++++++++++++++++
             handler:function(){
-                danceAddStudentDetailInfo('/static/html/_student.html',url);
+                var cond = $(dg).datagrid('options').queryParams;
+                //console.log(cond);
+                danceAddStudentDetailInfo('/static/html/_student.html',url,cond.school_id);
             }
         }, {
             iconCls:'icon-edit', text:"编辑/查看",  ///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -167,7 +170,9 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
                     $.messager.alert('提示', '请选择要查看的行！' , 'info');
                     return false;
                 } else {
-                    danceAddStudentDetailInfo('/static/html/_student.html', url, row[0].id, -2); // row[0].no
+                    var cond = $(dg).datagrid('options').queryParams;
+                    //console.log(cond);
+                    danceAddStudentDetailInfo('/static/html/_student.html', url, cond.school_id, row[0].id);
                 }
             }
         }, {
@@ -223,18 +228,8 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
         },{
             iconCls: 'icon-search', text:"查询",  /// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
             handler: function () {
-                /*
-                if (dance_condition) {
-                    $(dg).datagrid('options').queryParams={'name': dance_condition};
-                } else {
-                    if ('name' in $(dg).datagrid('options').queryParams) {
-                        delete $(dg).datagrid('options').queryParams['name'];
-                    }
-                }
-                */
                 var cond = $(dg).datagrid('options').queryParams;
                 cond['name'] = dance_condition;
-
                 // $(dg).datagrid('reload');
                 $(dg).datagrid('load', cond);
             }
@@ -341,15 +336,17 @@ function danceParser(s){
  * 查看/新增 学员 详细信息
  * @param page          学员详细信息页面
  * @param url           查询信息所用url
+ * @param school_id     分校id，取回范围： all  or 具体分校id
  * @param uid           学员id，新增时，可以不传递此参数。
- * @param no            学员所在数据库中的序号，方便翻页。传递 -2 则根据 uid 查询该学员的序号
  */
-function danceAddStudentDetailInfo( page, url, uid, no) {
+function danceAddStudentDetailInfo( page, url, school_id, uid) {
     var title = '学员详细信息';
     uid = uid || 0;     // 第一次进入 学生详细信息页面 uid 有效，上下翻页时，无法提前获取上下记录的uid
     if (uid <= 0) {
         title +='[新增]'
     }
+
+    var no = -2;    // 学员所在数据库中的序号，方便翻页。传递 -2 则根据 uid 查询该学员的序号
 
     var pagerStu = 'pagerStudent';
     var panelStu = 'panelStudent';
@@ -359,7 +356,7 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
     var stu_register_day = 'register_day';
     var stu_school_name = 'school_name';
     var stu_information_source = 'information_source';
-    var stu_people_id = 'people_id';
+    var stu_idcard = 'idcard';        // 身份证
     var stu_counselor = 'counselor';
     var stu_degree = 'degree';
     var stu_former_name = 'former_name';
@@ -371,6 +368,7 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
 
     var editIndexClass = undefined;
     var classlist = [];
+    var schoollist = [];
     var stuInfo = {'student': {}, 'class': {}};
 
     var parentDiv = $('#danceTabs');
@@ -415,7 +413,7 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
                 $('#'+stu_register_day).attr('id', stu_register_day+=uid);
                 $('#'+stu_school_name).attr('id', stu_school_name+=uid);
                 $('#'+stu_information_source).attr('id', stu_information_source+=uid);
-                $('#'+stu_people_id).attr('id', stu_people_id+=uid);
+                $('#'+stu_idcard).attr('id', stu_idcard+=uid);
                 $('#'+stu_counselor).attr('id', stu_counselor+=uid);
                 $('#'+stu_degree).attr('id', stu_degree+=uid);
                 $('#'+stu_former_name).attr('id', stu_former_name+=uid);
@@ -434,76 +432,73 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
                         row.class_name = $(ed.target).combobox('getText');
                     }
                 });
+                ajaxGetStudentExtras();
             }
         });
-
-        ajaxGetStudentExtras();
     }
 
     function doAjaxStuDetail() {
         $.ajax({
             method: 'POST',
-            url: url + '_get_details',
+            url: url + '_details_get',
             async: true,
             dataType: 'json',
-            data: {'sno': uid, 'page': no},
+            data: {'student_id': uid, 'page': no, 'rows': 1},
             success: function (data) {
                 //console.log(data);
-                //console.log(data.total);
-                //console.log(data.rows[0]['name']);
+                stuInfo['student'] = data.rows;
+                //$.extend(stuInfo.student, data.rows);
 
-                stuInfo['student'] = data.rows[0];
+                $('#'+stu_sno).textbox('setText',data.rows['sno']);
+                $('#'+stu_name).textbox('setText',data.rows['name']);
+                $('#'+stu_register_day).datebox('setValue',data.rows['register_day']);
+                $('#'+stu_birthday).datebox('setValue',data.rows['birthday']);
+                $('#'+stu_school_name).combobox('loadData', [{school_id: data.rows.school_id,
+                    school_name: data.rows.school_name}]).combobox('setValue', data.rows.school_id);
+                $('#'+stu_idcard).textbox('setText',data.rows['idcard']);     // 身份证号
+                $('#'+stu_information_source).combobox('setText',data.rows['information_source']);
+                $('#'+stu_counselor).combobox('setText',data.rows['counselor']);
+                $('#'+stu_degree).combobox('setText',data.rows['degree']);
 
-                $('#'+stu_sno).textbox('setText',data.rows[0]['sno']);
-                $('#'+stu_name).textbox('setText',data.rows[0]['name']);
-                $('#'+stu_register_day).textbox('setText',data.rows[0]['register_day']);
-                $('#'+stu_birthday).textbox('setText',data.rows[0]['birthday']);
-                $('#'+stu_school_name).textbox('setText',data.rows[0]['school_name']);
-                $('#'+stu_people_id).textbox('setText',data.rows[0]['people_id']);
-
-                $('#'+stu_information_source).textbox('setText',data.rows[0]['information_source']);
-                $('#'+stu_counselor).textbox('setText',data.rows[0]['counselor']);
-                $('#'+stu_degree).textbox('setText',data.rows[0]['degree']);
-
-                $('#'+stu_former_name).textbox('setText',data.rows[0]['former_name']);
-                $('#'+stu_recorder).textbox('setText',data.rows[0]['recorder']);
-                $('#'+stu_gender).combobox('select',data.rows[0]['gender']);
-                $('#'+stu_remark).textbox('setText',data.rows[0]['remark']);
+                $('#'+stu_former_name).textbox('setText',data.rows['former_name']);
+                $('#'+stu_recorder).textbox('setText',data.rows['recorder']);
+                $('#'+stu_gender).combobox('select',data.rows['gender']);
+                $('#'+stu_remark).textbox('setText',data.rows['remark']);
 
                 // 更新翻页控件 页码
-                $('#'+pagerStu).pagination({total: data.total, pageNumber:no==-2?data.rows[0].no:no });
+                $('#'+pagerStu).pagination({total: data.total, pageNumber:no==-2?data.rows.no:no });
 
-                $('#student_rec_id').val(data.rows[0]['id']);      // ID
+                $('#student_rec_id').val(data.rows['id']);      // ID
 
                 // 更新联系方式 table
                 $('#'+dgStu_contact).datagrid('updateRow',{
                     index: 0,
                     row: {
-                        c2: data.rows[0]['reading_school'],
-                        c4: data.rows[0]['grade'],
-                        c6: data.rows[0]['phone'],
-                        c8: data.rows[0]['tel']
+                        c2: data.rows['reading_school'],
+                        c4: data.rows['grade'],
+                        c6: data.rows['phone'],
+                        c8: data.rows['tel']
                     }
                 }).datagrid('updateRow', {
                     index: 1,
                     row: {
-                        c2: data.rows[0]['address'],
-                        c6: data.rows[0]['email'],
-                        c8: data.rows[0]['qq']
+                        c2: data.rows['address'],
+                        c6: data.rows['email'],
+                        c8: data.rows['qq']
                     }
                 }).datagrid('updateRow', {
                     index: 2,
                     row: {
-                        c2: data.rows[0]['mother_name'],
-                        c4: data.rows[0]['mother_phone'],
-                        c6: data.rows[0]['mother_company']
+                        c2: data.rows['mother_name'],
+                        c4: data.rows['mother_phone'],
+                        c6: data.rows['mother_company']
                     }
                 }).datagrid('updateRow', {
                     index: 3,
                     row: {
-                        c2: data.rows[0]['father_name'],
-                        c6: data.rows[0]['father_phone'],
-                        c8: data.rows[0]['father_company']
+                        c2: data.rows['father_name'],
+                        c6: data.rows['father_phone'],
+                        c8: data.rows['father_company']
                     }
                 });
 
@@ -565,15 +560,28 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
             url: '/dance_student_details_extras',
             async: true,
             dataType: 'json',
-            data: {'sno': uid, 'page': no},
+            data: {'student_id': uid, 'school_id': school_id},
             success: function (data) {
                 if(data.errorCode == 0) {
                     classlist = data['classlist'];
+                    schoollist = data.schoollist;
+                    setSchoolName(schoollist);
                 } else {
                     $.messager.alert('错误',data.msg,'error');
                 }
             }
         });
+    }
+
+    /**
+     * 设置分校名称/id
+     * @param schoollist        分校id,名称 列表
+     */
+    function setSchoolName(schoollist) {
+        if (schoollist.length) {
+            $('#'+stu_school_name).combobox('loadData', schoollist)
+                .combobox('setValue', schoollist[0].school_id);
+        }
     }
 
     function endEditingClass(){
@@ -602,6 +610,12 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
 
         packageStudentInfo();
         //console.log(stuInfo);
+
+        if (uid > 0) {
+            $.messager.alert('提示', '功能未实现', 'info');
+            return;
+        }
+
         $.ajax({
             method: "POST",
             url: "/dance_student_add",
@@ -633,10 +647,17 @@ function danceAddStudentDetailInfo( page, url, uid, no) {
     }
     
     function packageStudentInfo() {
-        $.extend(stuInfo['student'], {'name': $('#'+stu_name).textbox('getText')});
-        stuInfo['student']['register_day'] = $('#'+stu_register_day).datebox('getValue');
-        stuInfo['student']['gender'] = $('#'+stu_gender).combobox('getValue');
-        stuInfo['student']['birthday'] = $('#'+stu_birthday).datebox('getValue');
+        stuInfo.student.name = $('#'+stu_name).textbox('getText');     // 姓名
+        stuInfo.student.register_day = $('#'+stu_register_day).datebox('getValue');   // 注册日期
+        stuInfo.student.gender = $('#'+stu_gender).combobox('getValue');      // 性别
+        stuInfo.student.school_id = $('#'+stu_school_name).combobox('getValue');      // 所属分校 名称/id
+        stuInfo.student.information_source = $('#'+stu_information_source).combobox('getText');   // 信息来源
+        stuInfo.student.idcard = $('#'+stu_idcard).textbox('getText');   // 身份证
+        stuInfo.student.counselor = $('#'+stu_counselor).combobox('getText');   // 咨询师
+        stuInfo.student.degree = $('#'+stu_degree).combobox('getText');   // 文化程度
+        stuInfo.student.birthday = $('#'+stu_birthday).datebox('getValue');   // 出生日期
+        stuInfo.student.remark = $('#'+stu_remark).textbox('getText');   // 备注
+        // 曾用名
     }
 }
 

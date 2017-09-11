@@ -413,6 +413,15 @@ def dance_del_data():
 @app.route('/dance_student_get', methods=['POST', 'GET'])
 @login_required
 def dance_student_get():
+    """
+    查询 学员列表
+        查询条件：rows          每页显示的条数
+                  page          页码，第几页，从1开始
+                  school_id     分校ID
+                  is_training   是否在读
+                  name          学员姓名过滤条件
+    :return:    符合条件的学员列表
+    """
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
     print 'page_size=', page_size, ' page_no=', page_no
@@ -540,47 +549,83 @@ def dance_student_query():
     return jsonify(ret)
 
 
-@app.route('/dance_student_get_details', methods=['POST', 'GET'])
+@app.route('/dance_student_details_get', methods=['POST', 'GET'])
 @login_required
-def dance_student_get_details():
-    sno = int(request.form['sno'])
-    page_size = 1
+def dance_student_details_get():
+    """
+    查询学员的详细信息，包括学员的报班信息
+        查询条件：rows          每页显示的条数
+                  page          页码，第几页，从1开始
+                                特殊值 -2，表示根据 student_id 查询，并求出该学员的 序号
+                  student_id    学员id, optional, 当 page==-2,必须传递student_id
+                  school_id     分校ID
+                  is_training   是否在读
+                  name          学员姓名过滤条件
+    :return:        学员的详细信息，包括报班信息
+    """
+    page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
     print 'page_size=', page_size, ' page_no=', page_no
-    if page_no == -1 or page_no == 0:  # 补丁
-        page_no = 1
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    dcq = DanceStudent.query
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        dcq = dcq.filter(DanceStudent.school_id.in_(school_ids))
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+        if len(school_id_intersection) == 0:
+            return jsonify({"total": 0, "rows": [], 'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+        dcq = dcq.filter(DanceStudent.school_id.in_(school_id_intersection))
+
+    if 'is_training' in request.form:
+        dcq = dcq.filter_by(is_training=request.form['is_training'])
+
+    if 'name' in request.form and request.form['name'] != '':
+        dcq = dcq.filter(DanceStudent.name.like('%' + request.form['name'] + '%'))
+
+    total = dcq.count()
+
+    dcq = dcq.join(DanceSchool, DanceSchool.id == DanceStudent.school_id) \
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no,) \
+        .order_by(DanceStudent.school_id, DanceStudent.id.desc())
 
     if page_no <= -2:
+        student_id = int(request.form['student_id'])
         # 根据 sno 获取学生详细信息，并求出其序号。
-        r = DanceStudent.query.get(sno)
+        r = DanceStudent.query.get(student_id)
         if r is None:
-            return jsonify({'errorCode': 400, 'msg': u'不存在学号为[%s]的学员！' % sno})
-        i = DanceStudent.query.order_by(
-            DanceStudent.id.desc()).filter(DanceStudent.id >= r.id).count()
+            return jsonify({'errorCode': 400, 'msg': u'不存在学号为[%s]的学员！' % student_id})
+        i = dcq.filter(DanceStudent.id >= r.id).count()
+        dcq = dcq.filter(DanceStudent.id == student_id)
     else:
+        if page_no <= 0:  # 容错处理
+            page_no = 1
         offset = (page_no - 1) * page_size
-        r = DanceStudent.query.order_by(DanceStudent.id.desc()).limit(page_size).offset(offset).first()
+        dcq = dcq.limit(page_size).offset(offset).first()
         i = offset + 1
 
-    total = DanceStudent.query.count()
-
-    rows = [{"id": r.id, "sno": r.sno, "school_no": r.school_no, "school_name": r.school_name,
-             "consult_no": r.consult_no, "name": r.name, "rem_code": r.rem_code, 'no': i,
-             'gender': r.gender, 'degree': r.degree, 'birthday': r.birthday,
-             'register_day': datetime.strftime(r.register_day, '%Y-%m-%d'),
-             'information_source': r.information_source, 'counselor': r.counselor, 'reading_school': r.reading_school,
-             'grade': r.grade, 'phone': r.phone, 'tel': r.tel, 'address': r.address,
-             'zipcode': r.zipcode, 'email': r.email, 'qq': r.qq, 'wechat': r.wechat,
-             'mother_name': r.mother_name, 'father_name': r.father_name, 'mother_phone': r.mother_phone,
-             'father_phone': r.father_phone, 'mother_tel': r.mother_tel, 'father_tel': r.father_tel,
-             'mother_company': r.mother_company, 'father_company': r.father_company, 'card': r.card,
-             'is_training': r.is_training, 'points': r.points, 'remark': r.remark, 'recorder': r.recorder}]
+    records = dcq.first()
+    r = records[0]
+    rows = {"id": r.id, "sno": r.sno, "school_no": records[2], "school_name": records[1], 'school_id': r.school_id,
+            "consult_no": r.consult_no, "name": r.name, "rem_code": r.rem_code, 'no': i,
+            'gender': r.gender, 'degree': r.degree, 'birthday': r.birthday,
+            'register_day': datetime.strftime(r.register_day, '%Y-%m-%d'),
+            'information_source': r.information_source, 'counselor': r.counselor, 'reading_school': r.reading_school,
+            'grade': r.grade, 'phone': r.phone, 'tel': r.tel, 'address': r.address,
+            'zipcode': r.zipcode, 'email': r.email, 'qq': r.qq, 'wechat': r.wechat,
+            'mother_name': r.mother_name, 'father_name': r.father_name, 'mother_phone': r.mother_phone,
+            'father_phone': r.father_phone, 'mother_tel': r.mother_tel, 'father_tel': r.father_tel,
+            'mother_company': r.mother_company, 'father_company': r.father_company, 'card': r.card,
+            'is_training': r.is_training, 'points': r.points, 'remark': r.remark, 'recorder': r.recorder,
+            'idcard': r.idcard, 'mother_wechat': r.mother_wechat, 'father_wechat': r.father_wechat
+            }
 
     class_info = []
     if len(rows) > 0:
         # 查询 学员 的报班信息
-        classes = DanceStudentClass.query.filter_by(student_id=rows[0]['sno']).join(
-            DanceClass, DanceClass.cno == DanceStudentClass.class_id).add_columns(DanceClass.class_name).all()
+        classes = DanceStudentClass.query.filter_by(student_id=rows['sno']).filter_by(company_id=g.user.company_id)\
+            .join(DanceClass, DanceClass.cno == DanceStudentClass.class_id)\
+            .add_columns(DanceClass.class_name).all()
         for cls in classes:
             class_info.append({'join_date': datetime.strftime(cls[0].join_date, '%Y-%m-%d'),
                                'status': cls[0].status, 'remark': cls[0].remark, 'class_id': cls[0].class_id,
@@ -593,17 +638,39 @@ def dance_student_get_details():
 @app.route('/dance_student_details_extras', methods=['POST'])
 @login_required
 def dance_student_details_extras():
-    school_ids = DanceUserSchool.get_school_ids_by_uid()
-    if len(school_ids) == 0:
-        return jsonify({'classlist': [], 'errorCode': 0, 'msg': 'ok'})
+    """
+    学员详细信息页面，查询学员的附加信息：1. 包括学员所在分校的可报班级（班级编号 和 班级名称）
+        2. 分校id, 分校名称 列表
+    :return:
+    """
+    dcq = DanceClass.query.filter(DanceClass.is_ended == 0)
 
-    classlist = DanceClass.query.filter(DanceClass.school_id.in_(school_ids))\
-        .filter(DanceClass.is_ended == 0).order_by(DanceClass.id.desc()).all()
+    if 'student_id' in request.form:
+        stu = DanceStudent.query.get(request.form['student_id'])
+        if stu is not None:
+            dcq = dcq.filter(DanceClass.school_id == stu.school_id)
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(DanceClass.school_id.in_(school_id_intersection))
+    records = dcq.order_by(DanceClass.id.desc()).all()
+
     classes = []
-    for cls in classlist:
+    for cls in records:
         classes.append({'class_id': cls.cno, 'class_name': cls.class_name, 'class_type': cls.class_type})
 
-    return jsonify({'classlist': classes, 'errorCode': 0, 'msg': 'ok'})
+    schoollist = []
+    school_rec = DanceSchool.query.filter(DanceSchool.id.in_(school_id_intersection)).all()
+    for sc in school_rec:
+        schoollist.append({'school_id': sc.id, 'school_name': sc.school_name})
+
+    return jsonify({'classlist': classes, 'schoollist': schoollist, 'errorCode': 0, 'msg': 'ok'})
 
 
 @app.route('/dance_student_add', methods=['POST'])
@@ -614,8 +681,12 @@ def dance_student_add():
 
     student = obj_data['student']
     classes = obj_data['class']
-    print '[dance_student_add]', student
-    print classes
+
+    if 'school_id' not in student:
+        return jsonify({'errorCode': 800, 'msg': u'请提供[分校id]'})
+    if 'register_day' not in student or student['register_day'] == '':
+        return jsonify({'errorCode': 800, 'msg': u'请填写注册日期'})
+
     allow_same_name = True if 'allowSameName' in student and student['allowSameName'] == 'y'else False
 
     if not allow_same_name:
@@ -625,8 +696,7 @@ def dance_student_add():
                             'msg': u'学员[%s]已经存在！勾选[允许重名]可添加重名学员。' % student['name']})
 
     new_stu = DanceStudent(student)
-    new_stu.school_no = 1
-    print new_stu.create_sno()
+
     db.session.add(new_stu)
     db.session.commit()
 
