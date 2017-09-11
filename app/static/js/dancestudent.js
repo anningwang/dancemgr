@@ -369,7 +369,7 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
     var editIndexClass = undefined;
     var classlist = [];
     var schoollist = [];
-    var stuInfo = {'student': {}, 'class': {}};
+    var stuInfo = {'student': {}, 'class': []};
 
     var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
@@ -379,6 +379,7 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
             title: title,
             href: page,
             closable: true,
+            loadingMessage: '加载中...',
             onLoad : function (panel) {
                 // console.log(panel);
                 $('#'+pagerStu).pagination({
@@ -430,7 +431,10 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
                             field: 'class_name'
                         });
                         row.class_name = $(ed.target).combobox('getText');
-                    }
+                    },
+                    toolbar: [{iconCls: 'icon-add', text: '增加行', handler: danceAddRow},
+                        {iconCls: 'icon-remove', text: '删除行', handler: danceDelRow}
+                    ]
                 });
                 ajaxGetStudentExtras();
             }
@@ -529,24 +533,24 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
     function onClickCell(index, field) {
         //console.log('onClickCell');
         if (editIndexClass != index) {
+            var dg = $('#'+dgStu_class);
             if (editIndexClass != undefined) {
-                $('#'+dgStu_class).datagrid('endEdit', editIndexClass);
+                $(dg).datagrid('endEdit', editIndexClass);
             }
-            $('#'+dgStu_class).datagrid('selectRow', index)
-                .datagrid('beginEdit', index);
+            $(dg).datagrid('selectRow', index).datagrid('beginEdit', index);
 
-            var classEd =  $('#'+dgStu_class).datagrid('getEditor', {index:index,field:'class_name'});
+            var classEd =  $(dg).datagrid('getEditor', {index:index,field:'class_name'});
             if (classEd){
                 $(classEd.target).combobox('loadData' , classlist);
                 $(classEd.target).combobox({
                     //data: classlist,
                     onClick: onClickClass
                 });
-                var row = $('#'+dgStu_class).datagrid("getSelected");
+                var row = $(dg).datagrid("getSelected");
                 $(classEd.target).combobox('setValue', row['class_id']);
             }
 
-            var ed = $('#'+dgStu_class).datagrid('getEditor', {index:index,field:field});
+            var ed = $(dg).datagrid('getEditor', {index:index,field:field});
             if (ed){
                 ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
             }
@@ -591,12 +595,24 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
         }
     }
     function onClickClass(record) {
-        var row = $('#'+dgStu_class).datagrid("getSelected");
+        var dg = $('#'+dgStu_class);
+        var row = $(dg).datagrid("getSelected");
         if (row) {
             row['class_id'] =  record['class_id'];
             row['class_name'] = record['class_name'];
+            //row['status'] = '正常';
+            //row['join_date'] = new Date();
             //console.info(row);
-            $('#'+dgStu_class).datagrid('updateRow', {index: editIndexClass, row: row});
+            var edStatus =  $(dg).datagrid('getEditor', {index:editIndexClass,field:'status'});
+            if (edStatus && !$(edStatus.target).combobox('getValue')){
+                $(edStatus.target).combobox('setValue', '正常');
+            }
+            var edJoin =  $(dg).datagrid('getEditor', {index:editIndexClass,field:'join_date'});
+            if (edJoin && !$(edJoin.target).combobox('getValue')){
+                $(edJoin.target).datebox('setValue', danceFormatter(new Date()));
+            }
+
+            $(dg).datagrid('updateRow', {index: editIndexClass, row: row});
             setTimeout(function(){
                 endEditingClass();
             },0);
@@ -658,6 +674,74 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
         stuInfo.student.birthday = $('#'+stu_birthday).datebox('getValue');   // 出生日期
         stuInfo.student.remark = $('#'+stu_remark).textbox('getText');   // 备注
         // 曾用名
+
+        var dg = $('#'+dgStu_class);
+        endEditingClass();
+        var data = dg.datagrid('getData');
+        //console.log(data);
+        for(var i = 0; i< data.rows.length; i++) {
+            console.log(data);
+            if (data.rows[i].class_id) {
+                stuInfo.class.push(data.rows[i]);
+            }
+        }
+    }
+
+    function danceAddRow() {
+        $('#'+dgStu_class).datagrid('appendRow', {});
+    }
+    function danceDelRow() {
+        console.log('del row');
+        var dg = $('#'+dgStu_class);
+        var row = dg.datagrid('getSelected');
+        console.log(row);
+        /*
+        if (row) {  // 删除选中行
+            var idx = dg.datagrid('getRowIndex', row);
+            if (row.class_id) { // 本行有数据，询问是否要删除
+                $.messager.confirm('确认删除', '确认删除第 '+(idx+1)+' 行数据吗？', function(r){
+                    if (r){
+                        dg.datagrid('deleteRow', idx);
+                    }
+                });
+            } else {
+                dg.datagrid('deleteRow', idx);
+            }
+        } else { // 删除最后一行
+            var rows = dg.datagrid('getRows');
+            if (rows.length == 0) {
+                $.messager.alert('提示','无数据可删！','info');
+            } else {
+                if (rows[rows.length-1].class_id) { // 本行有数据，询问是否要删除
+                    $.messager.confirm('确认删除', '确认删除第 '+rows.length+' 行数据吗？', function(r){
+                        if (r){
+                            dg.datagrid('deleteRow', rows.length-1);
+                        }
+                    });
+                } else {
+                    dg.datagrid('deleteRow', rows.length-1);
+                }
+            }
+        }
+        */
+
+        var rows = dg.datagrid('getRows');
+        if (rows.length == 0) {
+            $.messager.alert('提示','无数据可删！','info');
+            return;
+        }
+        var rowToDel = row ? row : rows[rows.length-1];
+        var idx = dg.datagrid('getRowIndex', rowToDel);
+        if (rowToDel.class_id) { // 本行有数据，询问是否要删除
+            $.messager.confirm('确认删除', '确认删除第 '+(idx+1)+' 行数据吗？', function(r){
+                if (r){
+                    dg.datagrid('deleteRow', idx);
+                }
+            });
+        } else {
+            dg.datagrid('deleteRow', idx);
+        }
+
     }
 }
 

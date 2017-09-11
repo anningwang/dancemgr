@@ -714,15 +714,13 @@ class DanceStudentClass(db.Model):
             self.class_id = para['class_id']
         if 'join_date' in para:
             my_date = para['join_date']
-            self.join_date = datetime.datetime.strptime(my_date, '%Y/%m/%d')
+            datefmt = '%Y/%m/%d' if '/' in my_date else '%Y-%m-%d'
+            self.join_date = datetime.datetime.strptime(my_date, datefmt)
         if 'status' in para:
             self.status = para['status']
         if 'remark' in para:
             self.remark = para['remark']
-        if 'company_id' in para:
-            self.company_id = para['company_id']
-        else:
-            self.company_id = g.user.company_id
+        self.company_id = para['company_id'] if 'company_id' in para else g.user.company_id
 
     def __repr__(self):
         return '<DanceStudentClass %r,%r>' % (self.student_id, self.class_id)

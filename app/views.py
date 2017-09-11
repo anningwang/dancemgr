@@ -601,7 +601,7 @@ def dance_student_details_get():
         if page_no <= 0:  # 容错处理
             page_no = 1
         offset = (page_no - 1) * page_size
-        dcq = dcq.limit(page_size).offset(offset).first()
+        dcq = dcq.limit(page_size).offset(offset)
         i = offset + 1
 
     records = dcq.first()
@@ -696,6 +696,11 @@ def dance_student_add():
                             'msg': u'学员[%s]已经存在！勾选[允许重名]可添加重名学员。' % student['name']})
 
     new_stu = DanceStudent(student)
+
+    for cls in classes:
+        cls['student_id'] = new_stu.sno
+        dcstucls = DanceStudentClass(cls)
+        db.session.add(dcstucls)
 
     db.session.add(new_stu)
     db.session.commit()

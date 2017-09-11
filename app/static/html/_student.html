@@ -206,10 +206,10 @@
             <!-- 分割符================== -->
             <div style="height: 2px"></div>
 
-            <!-- 下发区域，报班信息 -->
+            <!-- 下方区域，报班信息 -->
             <table id="dgStudent_class" class="easyui-datagrid" title="报班信息" style="width:100%;"
                    data-options="checkbox:true, rownumbers:true,fitColumns:true,singleSelect:true,
-               collapsible:true
+                   collapsible:true
                ">
 
                 <thead>
@@ -240,7 +240,6 @@
 							editable:false,
 							panelHeight:'auto',
 							data: [{
-							    selected:true,
 			                    status_id:'正常',
 			                    status:'正常'
 		                    },{
@@ -274,6 +273,7 @@
         return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
                 '<span style="color:#888">' + row['class_id'] + '</span>';
     }
+
 </script>
 
 </body>
