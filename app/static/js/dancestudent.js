@@ -196,27 +196,17 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
                                 method: 'POST',
                                 url: '/dance_del_data',
                                 dataType: 'json',
-                                data: {'ids': ids, 'who': 'DanceStudent'},
-                                success: function (data,status) {
-                                    console.log('success in ajax. data.MSG=' + data.msg + " status=" + status);
-                                    if (data.errorCode != 0) {
-                                        $.messager.alert({
-                                            title: '错误',
-                                            msg: data.msg,
-                                            icon:'error', // Available value are: error,question,info,warning.
-                                            fn: function(){
-                                                //...
-                                            }
-                                        });
-                                        return false;
-                                    }
-                                    // $(dg).datagrid('options').queryParams={'name': dance_condition};
+                                data: {'ids': ids, 'who': 'DanceStudent'}
+                            }).done(function(data) {
+                                if (data.errorCode == 0) {
                                     $(dg).datagrid('reload');
-                                },
-                                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                                    console.log('error in ajax. XMLHttpRequest=', + XMLHttpRequest
-                                        + ' textStatus=' + textStatus + ' errorThrown=' + errorThrown);
+                                    $.messager.alert('提示', data.msg, 'info');
+                                } else {
+                                    $.messager.alert('错误', data.msg, 'error');
                                 }
+                            }).fail(function(jqXHR, textStatus, errorThrown) {
+                                var msg = $.format("请求失败。错误码：{1}({2}) ", [jqXHR.status, errorThrown]);
+                                $.messager.alert('提示', msg, 'info');
                             });
                             // end of 删除数据 //////////////////////////////////////
                         }

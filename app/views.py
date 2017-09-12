@@ -384,7 +384,6 @@ def dance_location_get():
 @app.route('/dance_del_data', methods=['POST'])
 @login_required
 def dance_del_data():
-    # if request.has_key('ids'):
     who = request.form['who']
     ids = request.form.getlist('ids[]')
     print 'who=', who, ' ids=', ids
@@ -402,12 +401,26 @@ def dance_del_data():
 
     for i in ids:
         rec = dcq.get(i)
-        if who == 'DanceUser' and rec.is_creator == 1:
-            return jsonify({'errorCode': 500, 'msg': u'账号[%s]为初始管理员，不能删除！' % rec.name})
-        db.session.delete(rec)
-    db.session.commit()
+        if rec is not None:
+            if who == 'DanceUser' and rec.is_creator == 1:
+                return jsonify({'errorCode': 500, 'msg': u'账号[%s]为初始管理员，不能删除！' % rec.name})
+            elif who == 'DanceStudent':
+                del_student_class(rec.sno)
+            db.session.delete(rec)
 
-    return jsonify({'errorCode': 0, "msg": "Ok for del."})
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
+
+
+def del_student_class(sno):
+    """
+    根据学员编号，删除该学员的所有报班信息。 用于删除学员的 关联删除。 未做最后的数据库提交 commit
+    :param sno:         学员编号
+    :return:
+    """
+    records = DanceStudentClass.query.filter_by(company_id=g.user.company_id).filter_by(student_id=sno).all()
+    for rec in records:
+        db.session.delete(rec)
 
 
 @app.route('/dance_student_get', methods=['POST', 'GET'])
