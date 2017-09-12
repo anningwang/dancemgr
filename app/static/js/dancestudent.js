@@ -371,6 +371,7 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
     var classlist = [];
     var schoollist = [];
     var stuInfo = {'student': {}, 'class': []};
+    var oldStu = {};        // 修改学员记录时，保存原始信息
 
     var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
@@ -384,20 +385,16 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
             onLoad : function (panel) {
                 // console.log(panel);
                 $('#'+pagerStu).pagination({
-                    buttons:[
-                        { text:'保存', iconCls:'icon-save',  handler:onSave
-                    },{
-                        text:'增加', iconCls:'icon-add',  handler:function(){
-                            alert('add');
-                        }
-                    },{
-                        text:'编辑', iconCls:'icon-edit', handler:function(){
-                            alert('edit');
-                        }
-                    }],
+                    showRefresh: uid > 0,
+                    buttons:[{ text:'保存', iconCls:'icon-save',  handler:onSave}],
+                    total: 0, pageSize: 1,
+                    beforePageText: '第', afterPageText: '条，总 {pages} 条',
+                    showPageList: false, showPageInfo: false,
                     onSelectPage:function(pageNumber, pageSize){
-                        no = pageNumber;
-                        doAjaxStuDetail();
+                        if (uid> 0) {
+                            no = pageNumber;
+                            doAjaxStuDetail();
+                        }
                     }
                 }).attr('id', pagerStu+=uid);        // 更新ID
 
@@ -464,8 +461,7 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
             data: {'student_id': uid, 'page': no, 'rows': 1},
             success: function (data) {
                 //console.log(data);
-                stuInfo['student'] = data.rows;
-                //$.extend(stuInfo.student, data.rows);
+                $.extend(true, oldStu, data);
 
                 $('#'+stu_sno).textbox('setText',data.rows['sno']);
                 $('#'+stu_name).textbox('setText',data.rows['name']);
@@ -666,20 +662,40 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
             return false;
         }
 
+        stuInfo = {'student': {}, 'class': []};
         packageStudentInfo();
         //console.log(stuInfo);
 
+        var url =  uid > 0 ? '/dance_student_modify' : '/dance_student_add';
         if (uid > 0) {
-            $.messager.alert('提示', '功能未实现', 'info');
-            return;
+            stuInfo.student.id = oldStu.rows.id;
+            // find student's class for delete
+            var delClass = [];
+            var m,n;
+            for (m=0; m<oldStu.class_info.length; m++) {
+                for (n=0; n<stuInfo.class.length; n++) {
+                    if ('id' in stuInfo.class[n] && stuInfo.class[n].id == oldStu.class_info[m].id){
+                        break;
+                    }
+                }
+                if (n>=stuInfo.class.length) {  // not find
+                    delClass.push({'id': oldStu.class_info[m].id, 'oper': 2})
+                }
+            }
+            for (n=0; n<delClass.length; n++){
+                stuInfo.class.push(delClass[n]);
+            }
         }
 
         $.ajax({
             method: "POST",
-            url: "/dance_student_add",
+            url: url,
             data: { data: JSON.stringify(stuInfo) }
         }).done(function(data) {
             if (data.errorCode == 0) {
+                if (uid > 0) {
+                    doAjaxStuDetail();  // 更新学员信息
+                }
                 $.messager.alert('提示', data.msg, 'info');
             } else {
                 $.messager.alert('提示', data.msg, 'info');

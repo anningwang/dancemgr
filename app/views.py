@@ -562,6 +562,11 @@ def dance_student_details_get():
                   is_training   是否在读
                   name          学员姓名过滤条件
     :return:        学员的详细信息，包括报班信息
+                  errorCode     错误码
+                  msg           错误信息
+                  rows          学员基本信息
+                  total         学员个数 == 1
+                  class_info    该学员的报班列表
     """
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
@@ -706,6 +711,51 @@ def dance_student_add():
     db.session.commit()
 
     return jsonify({'errorCode': 0, 'msg': u'成功添加学员[%s](%s)' % (new_stu.name, new_stu.sno)})
+
+
+@app.route('/dance_student_modify', methods=['POST'])
+@login_required
+def dance_student_modify():
+    """
+    修改学员信息，每次只能修改一条
+    :return:
+    """
+    json_data = request.form['data']
+    obj_data = json.loads(json_data)
+
+    student = obj_data['student']
+    classes = obj_data['class']
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    stu = DanceStudent.query.get(student['id'])
+    if stu.school_id not in school_ids:
+        return jsonify({'errorCode': 1000, 'msg': u'你没有修改该分校学员的权限！'})
+    stu.update(student)
+    db.session.add(stu)
+
+    # 更新学员报班信息
+    for cls in classes:
+        if 'id' in cls:
+            rec = DanceStudentClass.query.get(cls['id'])
+            if rec is not None:
+                if 'oper' in cls:
+                    db.session.delete(rec)  # 删除
+                else:
+                    rec.update(cls)  # 更新
+                    db.session.add(rec)
+        else:
+            # 新增
+            stucls = DanceStudentClass.query.filter_by(company_id=g.user.company_id).filter_by(student_id=stu.sno)\
+                .filter_by(class_id=cls['class_id']).first()
+            if stucls is None:
+                stucls = DanceStudentClass(cls)
+                stucls.student_id = stu.sno
+            else:
+                stucls.update(cls)
+            db.session.add(stucls)
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
 
 
 @app.route('/dance_class_get', methods=['POST'])

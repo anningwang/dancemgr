@@ -382,6 +382,80 @@ class DanceStudent(db.Model):
         else:
             return '<Unknown field name>'
 
+    def update(self, para):
+        """
+        更新学员信息
+        :param para:        要更新的字段。其中不可以更新的字段有 school_id, sno, consult_no, school_no, school_name,
+            is_training, recorder。若传入这些字段，会被忽略。
+        :return:
+        """
+        if u'name' in para:
+            self.name = para[u'name']
+        if u'rem_code' in para:
+            self.rem_code = para[u'rem_code']
+        if u'gender' in para:
+            self.gender = para[u'gender']
+        if u'degree' in para:
+            self.degree = para[u'degree']
+        if u'birthday' in para:
+            self.birthday = para[u'birthday']
+        if u'register_day' in para:
+            self.register_day = datetime.datetime.strptime(para[u'register_day'], '%Y-%m-%d')
+            if self.register_day.date() == datetime.date.today():
+                self.register_day = datetime.datetime.today()
+        else:
+            self.register_day = datetime.datetime.today()
+        if u'information_source' in para:
+            self.information_source = para[u'information_source']
+        if u'counselor' in para:
+            self.counselor = para[u'counselor']
+        if u'reading_school' in para:
+            self.reading_school = para[u'reading_school']
+        if u'grade' in para:
+            self.grade = para[u'grade']
+        if u'phone' in para:
+            self.phone = para[u'phone']
+        if u'tel' in para:
+            self.tel = para[u'tel']
+        if u'address' in para:
+            self.address = para[u'address']
+        if u'zipcode' in para:
+            self.zipcode = para[u'zipcode']
+        if u'email' in para:
+            self.email = para[u'email']
+        if u'qq' in para:
+            self.qq = para[u'qq']
+        if u'wechat' in para:
+            self.wechat = para[u'wechat']
+        if u'mother_name' in para:
+            self.mother_name = para[u'mother_name']
+        if u'father_name' in para:
+            self.father_name = para[u'father_name']
+        if u'mother_phone' in para:
+            self.mother_phone = para[u'mother_phone']
+        if u'father_phone' in para:
+            self.father_phone = para[u'father_phone']
+        if u'mother_tel' in para:
+            self.mother_tel = para[u'mother_tel']
+        if u'father_tel' in para:
+            self.father_tel = para[u'father_tel']
+        if u'mother_company' in para:
+            self.mother_company = para[u'mother_company']
+        if u'father_company' in para:
+            self.father_company = para[u'father_company']
+        if u'card' in para:
+            self.card = para[u'card']
+        if u'points' in para:
+            self.points = int(para[u'points'])
+        if u'remark' in para:
+            self.remark = para[u'remark']
+        if 'idcard' in para:
+            self.idcard = para['idcard']
+        if 'mother_wechat' in para:
+            self.mother_wechat = para['mother_wechat']
+        if 'father_wechat' in para:
+            self.father_wechat = para['father_wechat']
+
     def create_sno(self):
         if self.school_id is None:
             raise Exception('Please input school_id first!')
@@ -510,15 +584,6 @@ class DanceSchool(db.Model):
             self.remark = para['remark']  # 备注         10
         self.recorder = g.user.name if 'recorder' not in para else para['recorder']
         self.company_id = int(para['company_id']) if 'company_id' in para else g.user.company_id
-
-    def save(self):
-        db.session.add(self)
-        db.session.commit()
-        return self
-
-    def update(self):
-        db.session.commit()
-        return self
 
     def update_data(self, para):
         if 'school_no' in para:
@@ -700,9 +765,9 @@ class DanceUser(db.Model, UserMixin):
 class DanceStudentClass(db.Model):
     # 学生报班信息表 多 对 多。 同时可以看到 某个班级 有多少学生。
     id = db.Column(db.Integer, primary_key=True)  # id
-    student_id = db.Column(db.String(30, collation='NOCASE'), index=True)
-    class_id = db.Column(db.String(20, collation='NOCASE'), index=True)
-    company_id = db.Column(db.Integer, index=True)
+    student_id = db.Column(db.String(30, collation='NOCASE'), nullable=False, index=True)
+    class_id = db.Column(db.String(20, collation='NOCASE'), nullable=False, index=True)
+    company_id = db.Column(db.Integer, nullable=False, index=True)
     join_date = db.Column(db.DateTime)       # 报班日期
     status = db.Column(db.String(10))        # 报班状态 正常、退班、结束、续班
     remark = db.Column(db.String(140))
@@ -721,6 +786,23 @@ class DanceStudentClass(db.Model):
         if 'remark' in para:
             self.remark = para['remark']
         self.company_id = para['company_id'] if 'company_id' in para else g.user.company_id
+
+    def update(self, para):
+        """
+        更新 学员报班信息。 不可改变的字段：student_id, company_id
+        :param para:
+        :return:
+        """
+        if 'join_date' in para:
+            my_date = para['join_date']
+            datefmt = '%Y/%m/%d' if '/' in my_date else '%Y-%m-%d'
+            self.join_date = datetime.datetime.strptime(my_date, datefmt)
+        if 'class_id' in para:
+            self.class_id = para['class_id']
+        if 'status' in para:
+            self.status = para['status']
+        if 'remark' in para:
+            self.remark = para['remark']
 
     def __repr__(self):
         return '<DanceStudentClass %r,%r>' % (self.student_id, self.class_id)
