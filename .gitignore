@@ -114,3 +114,11 @@ tmp/temp/
 db_repository/
 db_repository/versions/015_migration.py
 db_repository/versions/015_migration.py
+db_repository/versions/__init__.py
+db_repository/versions/__init__.py
+db_repository/migrate.cfg
+db_repository/__init__.py
+db_repository/manage.py
+db_repository/migrate.cfg
+db_repository/README
+db_repository/versions/__init__.py

@@ -65,33 +65,27 @@
                     $(this).tree('expand',node.target);
                 }
 
-                var rootNode = node;
-                var parentNode = $(this).tree('getParent', rootNode.target);
+                var root = node;
+                var parentNode = $(this).tree('getParent', root.target);
                 while (parentNode) {
-                    rootNode  = parentNode;
-                    parentNode = $(this).tree('getParent', rootNode.target);
+                    root  = parentNode;
+                    parentNode = $(this).tree('getParent', root.target);
                 }
-                //console.log(rootNode.id + ' ' + rootNode.text);
 
-                var nd = null;
                 var tableId = this.id + node.id;
                 if(this.id === 'treeSchool') {
-                    if ((node.id + '').slice(0,2) === '10') {     // 班级信息
-                        nd = $('#'+this.id).tree('find', 10);
-                        danceAddTabClassDatagrid('danceTabs', nd.text, this.id+nd.id, node.attributes);
+                    if (root.id == 10) {     // 班级信息
+                        danceAddTabClassDatagrid('danceTabs',root.text,this.id+root.id,node.attributes);
                     } else {
                         $.messager.alert('提示', ' 制作中...', 'info');
                     }
                 } else if (this.id === 'treeStudent') {
-                    if ((node.id + '').slice(0,2) === '10') {   // 学员列表
-                        nd = $('#'+this.id).tree('find', 10);
-                        danceAddTabStudentDatagrid('danceTabs', nd.text, this.id+nd.id , node.attributes);
-                    } else if ((node.id + '').slice(0,2) === '60') {   // 班级学员统计
-                        nd = $('#'+this.id).tree('find', 60);
-                        danceAddTabClassStudentStat(nd.text, node.attributes);
-                    } else if ((node.id + '').slice(0,2) === '30') {    // '收费单（学费）'
-                        nd = $('#'+this.id).tree('find', 30);
-                        danceAddTabFeeStudyDatagrid('danceTabs',nd.text,this.id+nd.id,node.attributes);
+                    if (root.id == 10) {   // 学员列表
+                        danceAddTabStudentDatagrid('danceTabs',root.text,this.id+root.id,node.attributes);
+                    } else if (root.id == 60) {   // 班级学员统计
+                        danceAddTabClassStudentStat(root.text, node.attributes);
+                    } else if (root.id == 30) {    // '收费单（学费）'
+                        danceAddTabFeeStudyDatagrid('danceTabs',root.text,this.id+root.id,node.attributes);
                     } else {
                         $.messager.alert('提示', ' 制作中...', 'info');
                     }

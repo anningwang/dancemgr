@@ -15,8 +15,8 @@ def dance_tree_school():
 
     school_ids, school_map = DanceUserSchool.get_school_map_by_uid()
     if len(school_ids) == 1:
-        t1 = [{'id': 101, 'text': '已结束班级', 'attributes': {'school_id': 'all', 'is_ended': 1}},
-              {'id': 102, 'text': '全部班级', 'attributes': {'school_id': 'all'}}]
+        t1 = [{'text': '已结束班级', 'attributes': {'school_id': 'all', 'is_ended': 1}},
+              {'text': '全部班级', 'attributes': {'school_id': 'all'}}]
         tree[0]['children'] = t1
     elif len(school_ids) > 1:
         t1 = []
@@ -24,9 +24,9 @@ def dance_tree_school():
             name = school_map[school_ids[i]]
             sid = school_ids[i]
 
-            t11 = [{'id': (101+i)*10+1, 'text': '已结束班级', 'attributes': {'school_id': sid, 'is_ended': 1}},
-                   {'id': (101+i)*10+2, 'text': '全部班级', 'attributes': {'school_id': sid}}]
-            t1.append({'id': 101+i, 'text': name, 'state': 'closed', 'children': t11,
+            t11 = [{'text': '已结束班级', 'attributes': {'school_id': sid, 'is_ended': 1}},
+                   {'text': '全部班级', 'attributes': {'school_id': sid}}]
+            t1.append({'text': name, 'state': 'closed', 'children': t11,
                        'attributes': {'school_id': sid, 'is_ended': 0}})
 
             tree[0]['children'] = t1
@@ -48,8 +48,8 @@ def dance_tree_student():
 
     school_ids, school_map = DanceUserSchool.get_school_map_by_uid()
     if len(school_ids) == 1:
-        t1 = [{'id': 101, 'text': '流失学员', 'attributes': {'school_id': 'all', 'is_training': u'否'}},
-              {'id': 102, 'text': '全部学员', 'attributes': {'school_id': 'all'}} ]
+        t1 = [{'text': '流失学员', 'attributes': {'school_id': 'all', 'is_training': u'否'}},
+              {'text': '全部学员', 'attributes': {'school_id': 'all'}} ]
         tree[0]['children'] = t1
     elif len(school_ids) > 1:
         t1 = []
@@ -58,14 +58,14 @@ def dance_tree_student():
         for i in range(len(school_ids)):
             name = school_map[school_ids[i]]
             sid = school_ids[i]
-            t11 = [{'id': (101+i)*10+1, 'text': '流失学员', 'attributes': {'school_id': sid, 'is_training': u'否'}},
-                   {'id': (101+i)*10+2, 'text': '全部学员',  'attributes': {'school_id': sid}}]
-            t1.append({'id': 101+i, 'text': name, 'state': 'closed', 'children': t11,
+            t11 = [{'text': '流失学员', 'attributes': {'school_id': sid, 'is_training': u'否'}},
+                   {'text': '全部学员',  'attributes': {'school_id': sid}}]
+            t1.append({'text': name, 'state': 'closed', 'children': t11,
                        'attributes': {'school_id': sid, 'is_training': u'是'}})
 
-            t3.append({'id': 301+i, 'text': name, 'attributes': {'school_id': sid}})
+            t3.append({'text': name, 'attributes': {'school_id': sid}})
 
-            t6.append({'id': 601+i, 'text': name, 'attributes': {'school_id': sid, 'is_ended': 0}})
+            t6.append({'text': name, 'attributes': {'school_id': sid, 'is_ended': 0}})
 
         tree[0]['children'] = t1
         tree[2]['children'] = t3
