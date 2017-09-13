@@ -4,7 +4,7 @@
 var opts_school = {
     'defaultSelField' : 'school_name',
     'fieldValidate' : {'school_name': checkNotEmpty},
-    'queryText': '分校名称',
+    'queryText': '分校名称：',
     'queryPrompt': '校名拼音首字母查找',
     'who': 'DanceSchool',
     'columns': [[
@@ -26,7 +26,7 @@ var opts_school = {
 var opts_user = {
     'defaultSelField' : 'name',
     'fieldValidate' : {'name': checkNotEmpty},
-    'queryText': '用户名',
+    'queryText': '用户名：',
     'queryPrompt': '用户拼音首字母查找',
     'who': 'DanceUser',
     'columns': [[
@@ -53,6 +53,21 @@ var opts_user = {
                 }
             }
         },
+        {field: 'recorder', title: '录入员', width: 90, align: 'center'}
+    ]]
+};
+
+var opts_feeitem = {
+    'defaultSelField' : 'fee_item',
+    'fieldValidate' : {'fee_item': checkNotEmpty},
+    'queryText': '收费项目：',
+    'queryPrompt': '收费项目拼音首字母查找',
+    'who': 'DanceFeeItem',
+    'columns': [[
+        {field: 'ck', checkbox:true },   // checkbox
+        {field: 'id', title: 'id',  width: 30, align: 'center' },
+        {field: 'fee_item', title: '收费项目*', width: 160, align: 'center', editor: 'textbox'},
+        {field: 'create_at', title: '创建日期', width: 140, align: 'center'},
         {field: 'recorder', title: '录入员', width: 90, align: 'center'}
     ]]
 };
@@ -115,7 +130,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         }, {
             text:"保存", iconCls:'icon-save', disabled:true, id:btnSave, handler: onSave
         }, '-',{
-            text: options.queryText + '：<input id=' + ccId + '>'
+            text: options.queryText + '<input id=' + ccId + '>'
         },{
             iconCls: 'icon-search', text:"查询", id:btnSearch, handler: onSearch
         }],
@@ -213,7 +228,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             }
         }).fail(function(jqXHR, textStatus, errorThrown) {
             dg.datagrid('loaded');
-            var msg = $.format("请求失败：{0}。错误码：{1}({2}) ", [textStatus, jqXHR.status, errorThrown]);
+            var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
             $.messager.alert('提示', msg, 'info');
         });
     }
@@ -417,7 +432,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
                 }
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 //console.log(jqXHR);
-                var msg = $.format("请求失败：{0}。错误码：{1}({2}) ", [textStatus, jqXHR.status, errorThrown]);
+                var msg = $.format("请求失败。错误码：{1}({2}) ", [jqXHR.status, errorThrown]);
                 $.messager.alert('提示', msg, 'info');
             });
         } else {

@@ -1,10 +1,11 @@
 # -*- coding:utf-8 -*-
 import xlrd                 # 读取 Excel 模块
 import xlwt                 # Excel 写模块
-from pyExcelerator import *     # 写入Excel 模块
 from app import db
-from app.models import DanceStudent, DanceClass, DanceStudentClass, DanceSchool, DanceCompany, DanceUserSchool
+from app.models import DanceStudent, DanceClass, DanceStudentClass, DanceSchool, DanceReceipt, DanceUserSchool
 from flask import g
+
+progressbar = {}         # 进度条的值  用户id(key) = value
 
 
 def char2int(s):
@@ -46,61 +47,6 @@ def check_excel_col_name(cols):
             if c < 65 or c > 122:
                 return False, 'has invalid char'
     return True, 'ok'
-
-
-def read_excel(fn):
-    workbook = xlrd.open_workbook(fn)
-    worksheets = workbook.sheet_names()
-
-    data_ret = {}
-    for sheet in worksheets:
-        sh = workbook.sheet_by_name(sheet)      # workbook.sheet_by_index()
-        row = sh.nrows
-        row_list = []
-        for r in range(row):
-            row_data = sh.row_values(r)
-            row_list.append(row_data)           # sh.cell_value(0, 0), 获取第0行第0列数据
-
-        data_ret[sheet] = row_list
-
-    return data_ret
-
-
-# print read_excel('D:/1.xlsx')
-# print read_excel( u'D:\\师之伴侣数据备份\\报名登记_2017-08-21_13-09-34.xls')
-
-
-def test_write():
-    w = Workbook()  # 创建一个工作簿
-    ws = w.add_sheet('Hey, Hades')  # 创建一个工作表
-    ws.write(0, 0, 'bit')  # 在1行1列写入bit
-    ws.write(0, 1, 'huang')  # 在1行2列写入huang
-    ws.write(1, 0, 'xuan')  # 在2行1列写入xuan
-    w.save('d:/mini.xls')  # 保存     ，无法保存 xlsx 格式的文件
-
-
-def write_excel_test():
-    datas = [['a', 'b', 'c'], ['d', 'e', 'f'], ['g', 'h']]  # 二维数组
-    file_path = 'D:\\test.xls'
-
-    wb = xlwt.Workbook()
-    sheet = wb.add_sheet('test')  # sheet的名称为test
-
-    # 单元格的格式
-    style = 'pattern: pattern solid, fore_colour yellow; '  # 背景颜色为黄色
-    style += 'font: bold on; '  # 粗体字
-    style += 'align: horz centre, vert center; '  # 居中
-    header_style = xlwt.easyxf(style)
-
-    row_count = len(datas)
-    for row in range(0, row_count):
-        col_count = len(datas[row])
-        for col in range(0, col_count):
-            if row == 0:  # 设置表头单元格的格式
-                sheet.write(row, col, datas[row][col], header_style)
-            else:
-                sheet.write(row, col, datas[row][col])
-    wb.save(file_path)
 
 
 def import_student(fn):
@@ -261,6 +207,93 @@ def import_class(fn):
         data_ret[sheet] = row_list
 
     return data_ret, "ok", num_right, num_wrong
+
+
+def import_receipt(fn):
+    """
+    :param fn:   文件名，需要导入数据的Excel文件名
+    :return:     errorCode     0 成功， 非0 错误
+                  msg           信息: 'ok' -- 正确，其他错误,
+    """
+    global progressbar
+    progressbar[str(g.user.id)] = 1
+    columns = ['receipt_no', 'school_id', 'student_id', 'deal_date', 'receivable_fee',
+               'teaching_fee', 'other_fee', 'total', 'real_fee', 'arrearage',
+               'counselor', 'remark', 'recorder', 'fee_mode']
+    cols_cn = [u'收费单号', u'分校名称', u'学号', u'收费日期', u'应收学费',
+               u'教材费', u'其他费', u'费用合计', u'实收费', u'学费欠费',
+               u'咨询师', u'备注', u'录入员', u'收费方式']
+    cols_num = []
+    num_right = 0
+    num_wrong = 0
+    workbook = xlrd.open_workbook(fn)
+    worksheets = workbook.sheet_names()
+
+    sheet_pages = [u'收费单', u'班级——学费', u'教材费', u'其他费']
+    for page in sheet_pages:
+        if page not in worksheets:
+            return {'errorCode': 880, 'msg': u'未找到页面[%s]' % page}
+
+    sh = workbook.sheet_by_name(sheet_pages[0])
+    cnt = sh.nrows
+    if cnt <= 1:
+        return {'errorCode': 2000, 'msg': u"无有效数据！"}
+
+    for o in cols_cn:
+        p = 0
+        for p in range(len(sh.row_values(0))):
+            if o == sh.row_values(0)[p]:
+                cols_num.append(p)
+                break
+        if p == len(sh.row_values(0)):
+            return {'errorCode': 2000, 'msg': u"文件中未找到列名[%s]！" % o}
+
+    school_ids = DanceSchool.get_school_id_list()
+    # 逆序遍历。第一行为表头需要过滤掉
+    for row in range(cnt - 1, 0, -1):
+        r = sh.row_values(row)
+        if r[0] == u'合计':
+            continue
+
+        para = {}
+        for i in range(len(cols_num)):
+            para[columns[i]] = r[cols_num[i]]
+
+        ####################################################################################
+        # 特殊列的处理
+        # ---分校名称--转换为--分校ID---存入数据库
+        if para['school_id'].lower() not in school_ids:
+            raise Exception(u'分校[%s]不存在！' % para['school_id'])
+        school_id = school_ids[para['school_id'].lower()]
+        para['school_id'] = school_id
+
+        # 学号 转 学员id
+        student_id = DanceStudent.get_id(school_id, para['student_id'])
+        if student_id == -1:
+            raise Exception(u'学号[%s]的学员不存在！' % para['student_id'])
+
+        para['student_id'] = student_id
+
+        ####################################################################################
+        # 保证学号不能重复
+        has = DanceReceipt.query.filter_by(school_id=school_id).filter_by(receipt_no=r[0])\
+            .filter_by(student_id=student_id).first()
+        if has is None:
+            tb = DanceReceipt(para)
+            db.session.add(tb)
+            num_right += 1
+        else:
+            num_wrong += 1  # 重复数据
+        ####################################################################################
+
+        value = int((num_wrong+num_right)*100.0/(cnt-1))
+        progressbar[str(g.user.id)] = value + 1 if value == 0 else value
+    db.session.commit()
+
+    progressbar[str(g.user.id)] = 100
+    msg = u"成功导入 %d 条数据！" % num_right
+    msg += '' if num_wrong == 0 else (u'重复数据 %d 条。' % num_wrong)
+    return {'errorCode': 0, 'msg': msg}
 
 
 def import_student_class(fn, sheet_name):

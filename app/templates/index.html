@@ -65,42 +65,44 @@
                     $(this).tree('expand',node.target);
                 }
 
+                var rootNode = node;
+                var parentNode = $(this).tree('getParent', rootNode.target);
+                while (parentNode) {
+                    rootNode  = parentNode;
+                    parentNode = $(this).tree('getParent', rootNode.target);
+                }
+                //console.log(rootNode.id + ' ' + rootNode.text);
+
+                var nd = null;
                 var tableId = this.id + node.id;
                 if(this.id === 'treeSchool') {
-                    var schClassId = 1000;
-                    if ((node.id + '').slice(0,4) === schClassId.toString()) {     // 班级信息
-                        var nodeSchool = $('#'+this.id).tree('find', schClassId);
-                        danceAddTabClassDatagrid('danceTabs', nodeSchool.text, this.id+schClassId, node.attributes);
+                    if ((node.id + '').slice(0,2) === '10') {     // 班级信息
+                        nd = $('#'+this.id).tree('find', 10);
+                        danceAddTabClassDatagrid('danceTabs', nd.text, this.id+nd.id, node.attributes);
                     } else {
                         $.messager.alert('提示', ' 制作中...', 'info');
                     }
                 } else if (this.id === 'treeStudent') {
-                    var stuListId = 1000;
-                    var stuClassId = 6000;
-                    if ((node.id + '').slice(0,4) === stuListId.toString()) {   // 学员列表
-                        var nodeStudent = $('#'+this.id).tree('find', stuListId);
-                        danceAddTabStudentDatagrid('danceTabs', nodeStudent.text, this.id+stuListId , node.attributes);
-                    } else if ((node.id + '').slice(0,4) === stuClassId.toString()) {   // 班级学员统计
-                        var nodeStuClass = $('#'+this.id).tree('find', stuClassId);
-                        danceAddTabClassStudentStat(nodeStuClass.text, node.attributes);
+                    if ((node.id + '').slice(0,2) === '10') {   // 学员列表
+                        nd = $('#'+this.id).tree('find', 10);
+                        danceAddTabStudentDatagrid('danceTabs', nd.text, this.id+nd.id , node.attributes);
+                    } else if ((node.id + '').slice(0,2) === '60') {   // 班级学员统计
+                        nd = $('#'+this.id).tree('find', 60);
+                        danceAddTabClassStudentStat(nd.text, node.attributes);
+                    } else if ((node.id + '').slice(0,2) === '30') {    // '收费单（学费）'
+                        nd = $('#'+this.id).tree('find', 30);
+                        danceAddTabFeeStudyDatagrid('danceTabs',nd.text,this.id+nd.id,node.attributes);
                     } else {
                         $.messager.alert('提示', ' 制作中...', 'info');
                     }
-                }
-                else if(node.text == '学员列表') {
-                    danceAddTab('danceTabs', node.text, tableId);
-                    danceCreateStudentDatagrid(tableId, '/dance_student');
-                } else if (node.text == '班级信息') {
-                    danceAddTab('danceTabs', node.text, tableId);
-                    danceCreateClassDatagrid(tableId, '/dance_class');
+                }else if(node.text == '收费项目') {
+                    danceAddTabFeeItem(node.text, tableId);
                 }else if(node.text == '分校信息') {
                     danceAddTab('danceTabs', node.text, tableId);
                     danceCreateEditedDatagrid(tableId, '/dance_school', opts_school);
                 }else if(node.text == '用户管理') {
                     danceAddTab('danceTabs', node.text, tableId);
                     danceCreateEditedDatagrid(tableId, '/dance_user', opts_user);
-                }else if (node.text == '班级学员统计') {
-                    danceAddTabClassStudentStat(node.text);
                 }else {
                     $.messager.alert('提示', ' 制作中...', 'info');
                 }

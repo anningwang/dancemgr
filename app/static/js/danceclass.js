@@ -89,7 +89,7 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
                                 }
                             }).fail(function(jqXHR, textStatus, errorThrown) {
                                 dg.datagrid('loaded');
-                                var msg = $.format("请求失败：{0}。错误码：{1}({2}) ", [textStatus, jqXHR.status, errorThrown]);
+                                var msg = $.format("请求失败}。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
                                 $.messager.alert('提示', msg, 'info');
                             });
                             // end of 删除数据 //////////////////////////////////////
@@ -217,7 +217,7 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
             dg.datagrid('loadData', data);
         }).fail(function(jqXHR, textStatus, errorThrown) {
             //console.log(jqXHR);
-            var msg = $.format("请求失败：{0}。错误码：{1}({2}) ", [textStatus, jqXHR.status, errorThrown]);
+            var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
             $.messager.alert('提示', msg, 'info');
         });
     };

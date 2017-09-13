@@ -8,33 +8,28 @@ from models import DanceSchool, DanceUser, DanceUserSchool
 @app.route('/dance_tree_school', methods=['POST', 'GET'])
 @login_required
 def dance_tree_school():
-    tree = [{"id": 1000, "text": "班级信息", 'attributes': {'school_id': 'all', 'is_ended': 0}},
-            {"id": 2000, "text": "课程表"},
-            {"id": 3000, "text": "教室列表"}
+    tree = [{"id": 10, "text": "班级信息", 'attributes': {'school_id': 'all', 'is_ended': 0}},
+            {"id": 20, "text": "课程表"},
+            {"id": 30, "text": "教室列表"}
             ]
-    t1_class_id = 1000
+
     school_ids, school_map = DanceUserSchool.get_school_map_by_uid()
     if len(school_ids) == 1:
-        t1_2_class_id = t1_class_id * 10
-        t1_2_class = [{'id': t1_2_class_id + 1, 'text': '已结束班级',
-                       'attributes': {'school_id': 'all', 'is_ended': 1}},
-                      {'id': t1_2_class_id + 2, 'text': '全部班级',
-                       'attributes': {'school_id': 'all'}}
-                      ]
-        tree[0]['children'] = t1_2_class
+        t1 = [{'id': 101, 'text': '已结束班级', 'attributes': {'school_id': 'all', 'is_ended': 1}},
+              {'id': 102, 'text': '全部班级', 'attributes': {'school_id': 'all'}}]
+        tree[0]['children'] = t1
     elif len(school_ids) > 1:
-        t1_2_class = []
+        t1 = []
         for i in range(len(school_ids)):
-            t1_2_class_id = t1_class_id*10+i+1
-            t1_3_class = [{'id': t1_2_class_id*10+1, 'text': '已结束班级',
-                           'attributes': {'school_id': school_ids[i], 'is_ended': 1}},
-                          {'id': t1_2_class_id*10+2, 'text': '全部班级',
-                           'attributes': {'school_id': school_ids[i]}}
-                          ]
-            t1_2_class.append({'id': t1_2_class_id, 'text': school_map[school_ids[i]],
-                               'attributes': {'school_id': school_ids[i], 'is_ended': 0},
-                               'state': 'closed', 'children': t1_3_class})
-            tree[0]['children'] = t1_2_class
+            name = school_map[school_ids[i]]
+            sid = school_ids[i]
+
+            t11 = [{'id': (101+i)*10+1, 'text': '已结束班级', 'attributes': {'school_id': sid, 'is_ended': 1}},
+                   {'id': (101+i)*10+2, 'text': '全部班级', 'attributes': {'school_id': sid}}]
+            t1.append({'id': 101+i, 'text': name, 'state': 'closed', 'children': t11,
+                       'attributes': {'school_id': sid, 'is_ended': 0}})
+
+            tree[0]['children'] = t1
         # tree[0]['state'] = 'closed'
 
     return jsonify(tree)
@@ -43,51 +38,37 @@ def dance_tree_school():
 @app.route('/dance_tree_student', methods=['POST', 'GET'])
 @login_required
 def dance_tree_student():
-    tree = [{"id": 1000, "text": "学员列表", 'attributes': {'school_id': 'all', 'is_training': u'是'}},
-            {"id": 2000, "text": "准学员列表"},
-            {"id": 3000, "text": "收费单（学费）"},
-            {"id": 4000, "text": "收费单（演出）"},
-            {"id": 5000, "text": "收费单（普通）"},
-            {"id": 6000, "text": "班级学员统计", 'attributes': {'school_id': 'all', 'is_ended': 0}}
+    tree = [{"id": 10, "text": "学员列表", 'attributes': {'school_id': 'all', 'is_training': u'是'}},
+            {"id": 20, "text": "准学员列表"},
+            {"id": 30, "text": "收费单（学费）", 'attributes': {'school_id': 'all'}},
+            {"id": 40, "text": "收费单（演出）"},
+            {"id": 50, "text": "收费单（普通）"},
+            {"id": 60, "text": "班级学员统计", 'attributes': {'school_id': 'all', 'is_ended': 0}}
             ]
 
-    t1_stu_id = 1000
-    t6_statstu_id = 6000
     school_ids, school_map = DanceUserSchool.get_school_map_by_uid()
     if len(school_ids) == 1:
-        t1_2_stu_id = t1_stu_id * 10
-        t1_2_stu = [{'id': t1_2_stu_id + 1, 'text': '流失学员',
-                     'attributes': {'school_id': 'all', 'is_training': u'否'}},
-                    {'id': t1_2_stu_id + 2, 'text': '全部学员',
-                     'attributes': {'school_id': 'all'}}
-                    ]
-        tree[0]['children'] = t1_2_stu
+        t1 = [{'id': 101, 'text': '流失学员', 'attributes': {'school_id': 'all', 'is_training': u'否'}},
+              {'id': 102, 'text': '全部学员', 'attributes': {'school_id': 'all'}} ]
+        tree[0]['children'] = t1
     elif len(school_ids) > 1:
-        t1_2_stu = []
-        t6_2_statstu = []
+        t1 = []
+        t3 = []
+        t6 = []
         for i in range(len(school_ids)):
-            t1_2_stu_id = t1_stu_id * 10 + i + 1
-            t1_3_stu = [{'id': t1_2_stu_id*10+1, 'text': '流失学员',
-                         'attributes': {'school_id': school_ids[i], 'is_training': u'否'}},
-                        {'id': t1_2_stu_id*10+2, 'text': '全部学员',
-                         'attributes': {'school_id': school_ids[i]}}
-                        ]
-            t1_2_stu.append({'id': t1_2_stu_id, 'text': school_map[school_ids[i]],
-                             'attributes': {'school_id': school_ids[i], 'is_training': u'是'},
-                             'state': 'closed', 'children': t1_3_stu})
+            name = school_map[school_ids[i]]
+            sid = school_ids[i]
+            t11 = [{'id': (101+i)*10+1, 'text': '流失学员', 'attributes': {'school_id': sid, 'is_training': u'否'}},
+                   {'id': (101+i)*10+2, 'text': '全部学员',  'attributes': {'school_id': sid}}]
+            t1.append({'id': 101+i, 'text': name, 'state': 'closed', 'children': t11,
+                       'attributes': {'school_id': sid, 'is_training': u'是'}})
 
-            t6_2_statstu_id = t6_statstu_id * 10 + i + 1
-            '''
-            t6_3_statstu = [{'id': t6_2_statstu_id * 10 + 1, 'text': '已结束班级',
-                             'attributes': {'school_id': school_ids[i], 'is_ended': 1}},
-                            {'id': t6_2_statstu_id * 10 + 2, 'text': '全部班级',
-                             'attributes': {'school_id': school_ids[i]}}
-                            ]
-            '''
-            t6_2_statstu.append({'id': t6_2_statstu_id, 'text': school_map[school_ids[i]],
-                                 'attributes': {'school_id': school_ids[i], 'is_ended': 0}})
-        tree[0]['children'] = t1_2_stu
-        tree[5]['children'] = t6_2_statstu
-        # tree[0]['state'] = 'closed'
+            t3.append({'id': 301+i, 'text': name, 'attributes': {'school_id': sid}})
+
+            t6.append({'id': 601+i, 'text': name, 'attributes': {'school_id': sid, 'is_ended': 0}})
+
+        tree[0]['children'] = t1
+        tree[2]['children'] = t3
+        tree[5]['children'] = t6
 
     return jsonify(tree)

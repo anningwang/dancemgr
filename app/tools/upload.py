@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 from flask_uploads import UploadSet, IMAGES, configure_uploads
-from flask import request, redirect, url_for, render_template, jsonify, send_from_directory, abort
+from flask import request, redirect, url_for, render_template, jsonify
 from app import app
 import os
 from config import basedir
@@ -13,7 +13,7 @@ from tools import get_filename
 
 app.config['UPLOADED_PHOTO_DEST'] = os.path.join(basedir, "app/uploads")
 app.config['UPLOADED_PHOTO_ALLOW'] = IMAGES
-app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 3 * 1024 * 1024
 
 UPLOAD_FOLDER = 'app/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -108,19 +108,20 @@ def show(name):
 
 
 def dispatch_import_file(fn, dance_module_name):
-    if dance_module_name == 'danceStudent':
+    if dance_module_name == 'DanceStudent':
         dict_data, msg, correct_num, wrong_num = import_student(fn)
         dict_data2, msg2, correct_num2, wrong_num2 = import_student_class(fn, u'报班——选择班级')
         if msg == 'ok' and msg2 == 'ok':
             return {'errorCode': 0, 'msg': u'上传成功！', 'correctNum': correct_num, 'wrongNum': wrong_num}
         else:
             return {'errorCode': 200, 'msg': msg + msg2, 'correctNum': correct_num, 'wrongNum': wrong_num}
-    elif dance_module_name == 'danceClass':
+    elif dance_module_name == 'DanceClass':
         dict_data, msg, correct_num, wrong_num = import_class(fn)
         if msg == 'ok':
             return {'errorCode': 0, 'msg': u'上传成功！', 'correctNum': correct_num, 'wrongNum': wrong_num}
         else:
             return {'errorCode': 200, 'msg': msg, 'correctNum': correct_num, 'wrongNum': wrong_num}
+    elif dance_module_name == 'DanceReceipt':
+        return import_receipt(fn)
     else:
-        return {'errorCode': 201, 'msg': u'Unknown module name %s' % dance_module_name,
-                'correctNum': 0, 'wrongNum': 0}
+        return {'errorCode': 201, 'msg': u'Unknown module name %s' % dance_module_name}

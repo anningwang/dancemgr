@@ -97,7 +97,7 @@ function danceAddTabClassStudentStat(title, condition) {
     }
 }
 
-var danceStudentListQueryCondition = undefined;
+
 /**
  * danceAddTabStudentDatagrid 添加或者打开 学员列表 Tab页
  * @param divId             父节点Tabs对象ID
@@ -106,9 +106,6 @@ var danceStudentListQueryCondition = undefined;
  * @param condition         查询条件
  */
 function danceAddTabStudentDatagrid(divId, title, tableId, condition) {
-    //console.log(tableId);
-    danceStudentListQueryCondition = {};
-    $.extend(danceStudentListQueryCondition, condition);
     var parentDiv = $('#'+divId);
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
@@ -205,7 +202,7 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
                                     $.messager.alert('错误', data.msg, 'error');
                                 }
                             }).fail(function(jqXHR, textStatus, errorThrown) {
-                                var msg = $.format("请求失败。错误码：{1}({2}) ", [jqXHR.status, errorThrown]);
+                                var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
                                 $.messager.alert('提示', msg, 'info');
                             });
                             // end of 删除数据 //////////////////////////////////////
@@ -692,7 +689,7 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
             }
         }).fail(function(jqXHR, textStatus, errorThrown) {
             console.log(jqXHR);
-            var msg = $.format("请求失败：{0}。错误码：{1}({2}) ", [textStatus, jqXHR.status, errorThrown]);
+            var msg = $.format("请求失败。错误码：{1}({2}) ", [jqXHR.status, errorThrown]);
             $.messager.alert('提示', msg, 'info');
         });
     }
@@ -722,6 +719,10 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
         stuInfo.student.birthday = $('#'+stu_birthday).datebox('getValue');   // 出生日期
         stuInfo.student.remark = $('#'+stu_remark).textbox('getText');   // 备注
         // 曾用名
+
+        stuInfo.student.information_source = stuInfo.student.information_source.replace('　', '');    // 删除全角空格
+        stuInfo.student.counselor = stuInfo.student.counselor.replace('　', '');
+        stuInfo.student.degree = stuInfo.student.degree.replace('　', '');
 
         var dg = $('#'+dgStu_class);
         var data = dg.datagrid('getData');
@@ -778,6 +779,216 @@ function danceAddStudentDetailInfo( page, url, school_id, uid) {
             });
         } else {
             dg.datagrid('deleteRow', idx);
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * 添加或者打开 收费单（学费） Tab页
+ * @param divId             父节点Tabs对象ID
+ * @param title             新打开/创建 的 Tab页标题
+ * @param tableId           Tab页内的Datagrid表格ID
+ * @param condition         查询条件
+ */
+function danceAddTabFeeStudyDatagrid(divId, title, tableId, condition) {
+    var parentDiv = $('#'+divId);
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+        $('#'+tableId).datagrid('load', condition);
+    } else {
+        var content = '<table id=' + tableId + '></table>';
+        $(parentDiv).tabs('add', {
+            title: title,
+            content: content,
+            closable: true
+        });
+
+        var opts = {
+            'queryText': '姓名：',
+            'queryPrompt': '姓名拼音首字母查找',
+            'who': 'DanceReceipt',
+            'danceModuleName': 'DanceReceipt',
+            'columns': [[
+                {field: 'ck', checkbox:true },
+                {field: 'id', hidden:true },
+                {field: 'receipt_no', title: '收费单号', width: 140, align: 'center'},
+                {field: 'school_name', title: '分校名称', width: 110, align: 'center'},
+                {field: 'student_sno', title: '学号', width: 140, align: 'center'},
+                {field: 'student_name', title: '学员姓名', width: 80, align: 'center'},
+                {field: 'deal_date', title: '收费日期', width: 90, align: 'center'},
+                {field: 'receivable_fee', title: '应收学费', width: 80, align: 'center'},
+                {field: 'teaching_fee', title: '教材费', width: 80, align: 'center'},
+                {field: 'other_fee', title: '其他费', width: 80, align: 'center'},
+                {field: 'total', title: '费用合计', width: 80, align: 'center'},
+                {field: 'real_fee', title: '实收费', width: 80, align: 'center'},
+                {field: 'arrearage', title: '学费欠费', width: 80, align: 'center'},
+                {field: 'fee_mode', title: '收费方式', width: 70, align: 'center'},
+                {field: 'counselor', title: '咨询师', width: 90, align: 'center'},
+                {field: 'remark', title: '备注', width: 90, align: 'center'},
+                {field: 'recorder', title: '录入员', width: 90, align: 'center'}
+            ]]
+        };
+
+        danceCreateCommDatagrid(tableId, '/dance_receipt_study', condition, opts)
+    }
+}
+
+/**
+ * 增加 Datagrid 组件，并格式化，包括列名，增/删/查等相应函数
+ * @param datagridId        Datagrid id
+ * @param url               从服务器获取数据的url
+ * @param condition         表格数据查询参数
+ * @param options           创建表格所需要的 列名、查询提示文字、删除模块等信息
+ */
+function danceCreateCommDatagrid(datagridId, url, condition, options) {
+    var _pageSize = 30;
+    // var _pageNo = 1;
+    var ccId = 'cc' + datagridId;       // Combo box,姓名查找框ID
+    var dg = $('#' + datagridId);       // datagrid ID
+
+    var dance_condition = '';               // 主datagrid表查询条件
+
+    $(dg).datagrid({
+        // title: '学员列表',
+        iconCls: 'icon-a_detail',
+        fit: true,
+        url: url + '_get',
+        //fitColumns: true,
+        pagination: true,   // True to show a pagination toolbar on datagrid bottom.
+        // singleSelect: true, // True to allow selecting only one row.
+        loadMsg: '正在加载数据...',
+        border: false,
+        striped: true,
+        pageNumber: 1,
+        pageSize: _pageSize,     //每页显示条数
+        nowrap: true,   // True to display data in one line. Set to true can improve loading performance.
+        pageList: [20, 30, 40, 50, 100],   //每页显示条数供选项
+        rownumbers: true,   // True to show a row number column.
+        queryParams: condition,
+        toolbar: [{
+            iconCls:'icon-add', text:"增加",      ///+++++++++++++++++++++++++++++++++++++++++++++
+            handler:function(){
+                var cond = $(dg).datagrid('options').queryParams;
+                //console.log(cond);
+                ////danceAddStudentDetailInfo('/static/html/_student.html',url,cond.school_id);
+            }
+        }, {
+            iconCls:'icon-edit', text:"编辑/查看",  ///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            handler:function(){
+                var row = $(dg).datagrid('getSelections');
+                if (row.length == 0) {
+                    $.messager.alert('提示', '请选择要查看的行！' , 'info');
+                    return false;
+                } else {
+                    var cond = $(dg).datagrid('options').queryParams;
+                    //console.log(cond);
+                    ////danceAddStudentDetailInfo('/static/html/_student.html', url, cond.school_id, row[0].id);
+                }
+            }
+        },
+            {iconCls:'icon-remove', text:"删除",  handler:doDel}, '-',
+            {text: options.queryText + '<input id=' + ccId + '>'},
+            {iconCls: 'icon-search', text:"查询", handler: function () {
+                var cond = {};
+                $.extend(cond, $(dg).datagrid('options').queryParams);
+                cond['name'] = dance_condition;
+                $(dg).datagrid('load', cond);
+            }}
+        ],
+        columns: options.columns
+    });
+
+    $('#'+ccId).combobox({     // 搜索框 combo box
+        prompt: options.queryPrompt,
+        valueField: 'value',
+        textField: 'text',
+        width: 140,
+        //panelHeight: "auto",
+        onChange:autoComplete
+    });
+
+    autoComplete(dance_condition,'');
+    function autoComplete (newValue,oldValue) {
+        console.log('newValue=' + newValue + ' oldValue=' + oldValue);
+        dance_condition = $.trim(newValue);
+        var queryCondition = {};
+        $.extend(queryCondition, $(dg).datagrid('options').queryParams);
+        queryCondition['name'] = dance_condition;
+        $.post(url+'_query',queryCondition, function(data){
+            $('#'+ccId).combobox('loadData', data);
+        },'json');
+    }
+
+    var pager = dg.datagrid('getPager');
+    $(pager).pagination({
+        //pageSize: _pageSize,//每页显示的记录条数，默认为10
+        //pageList: [20, 30, 40, 50],//可以设置每页记录条数的列表
+        beforePageText: '第',//页数文本框前显示的汉字
+        afterPageText: '页, 共 {pages} 页',
+        displayMsg: '当前记录 {from} - {to} , 共 {total} 条记录',
+        buttons:[{
+            text:'导入', iconCls: 'icon-page_excel',
+            handler:function(){
+                danceModuleName = options.danceModuleName;
+                $(document.body).append('<div id="danceCommWin"></div>');
+                $('#danceCommWin').panel({
+                    href:'/static/html/_import_win.html',
+                    onDestroy: function () {
+                        $(dg).datagrid('reload');
+                    }
+                });
+            }
+        },{
+            text:'导出', iconCls:' icon-page_white_excel ',
+            handler:function(){
+                danceModuleName = options.danceModuleName;
+                $(document.body).append('<div id="danceCommWin"></div>');
+                $('#danceCommWin').panel({
+                    href:'/static/html/_export_win.html'
+                });
+            }
+        },{
+            text:'打印', iconCls:'icon-printer',
+            handler:function(){
+                alert('print');
+            }
+        }]
+    });
+
+    function doDel() {
+        var row = $(dg).datagrid('getSelections');
+        if (row.length == 0) {
+            $.messager.alert('提示', '请选择要删除的数据行！' , 'info');
+            return false;
+        } else {
+            var text = '数据删除后不能恢复！是否要删除选中的 ' + row.length + '条 数据？';
+            $.messager.confirm('确认删除', text , function(r){
+                if (r){
+                    var ids = [];
+                    for (var i = 0; i < row.length; i++) {
+                        ids.push(row[i].id);
+                    }
+                    console.log('del:' + ids);
+                    $.ajax({
+                        method: 'POST',
+                        url: '/dance_del_data',
+                        dataType: 'json',
+                        data: {'ids': ids, 'who': options.who}
+                    }).done(function(data) {
+                        if (data.errorCode == 0) {
+                            $(dg).datagrid('reload');
+                            $.messager.alert('提示', data.msg, 'info');
+                        } else {
+                            $.messager.alert('错误', data.msg, 'error');
+                        }
+                    }).fail(function(jqXHR, textStatus, errorThrown) {
+                        var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+                        $.messager.alert('提示', msg, 'info');
+                    });
+                }
+            });
         }
     }
 }

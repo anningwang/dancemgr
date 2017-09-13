@@ -17,10 +17,13 @@
 					" style="width:600px;height:400px;padding:5px;">
 	<div class="easyui-layout" data-options="fit:true">
 		<form id="danceFormUploadExcel"  method="post" enctype="multipart/form-data">
-			<div data-options="region:'north',split:false,border:false" style="height:100px; padding:15px 10px">
+			<div data-options="region:'north',split:false,border:false" style="height:100px; padding:5px">
 				<input class="easyui-filebox" id="uploadExcel" name="uploadExcel" label="请选择要导入的文件：" labelPosition="top"
-					   data-options="buttonText:'选择文件',buttonIcon:'icon-search',prompt:'请选择要导入的文件...',accept:'excel/*'"
-					   style="width:100%">
+					   data-options="buttonText:'选择文件',buttonIcon:'icon-search',prompt:'请选择要导入的文件...',accept:'excel/*',
+					   onChange : clearProgressBar
+					   " style="width:100%">
+                <div style="padding-top:5px"></div>
+                <div id="danceProgress" class="easyui-progressbar" data-options="value:0" style="width:100%"></div>
 			</div>
 			<div data-options="region:'center',border:true" style="padding:10px;">
 				导入选项：
@@ -34,7 +37,7 @@
 </div>
 
 <script>
-
+    var dcTimer = null;
 	function danceImportExcel() {
 		// 得到上传文件的全路径
 		var fileName = $('#uploadExcel').filebox('getValue');
@@ -49,7 +52,7 @@
 			if (fnExtension == ".xls" || fnExtension == ".xlsx") {
 				var data = new FormData($('#danceFormUploadExcel')[0]);
 				data.append('danceModuleName', danceModuleName);
-				$.ajax({
+                $.ajax({
 					url: '/api/upload',
 					type: 'POST',
 					data: data,
@@ -58,12 +61,19 @@
 					processData: false,
 					contentType: false
 				}).done(function(ret){
-					if(ret['errorCode'] == 0){
-						$.messager.alert('提示', ret['msg'] + ' 成功导入 ' + ret['correctNum'] + ' 条数据。', 'info');
+					if(ret.errorCode == 0){
+                        $('#danceProgress').progressbar('setValue', 100);
+						$.messager.alert('提示', ret.msg, 'info');
 					}else{
-						$.messager.alert('提示', '文件导入失败！ ' + ret['msg'], 'info');
+						$.messager.alert('提示', '文件导入失败！ '+ret.msg, 'info');
 					}
-				});
+				}).fail(function(jqXHR, textStatus, errorThrown) {
+                    var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+                    $.messager.alert('提示', msg, 'info');
+                }).always(function () {
+                    if (dcTimer) {dcTimer = window.clearInterval(dcTimer);}
+                });
+                dcTimer = window.setInterval("changeProgressBar()", 500);
 			} else {
 				$.messager.alert('提示', '请选择xls格式文件！', 'info');
 			}
@@ -73,11 +83,13 @@
     function onOpenImportWin() {
         //console.log('onOpenImportWin');
         var title = '导入数据';
-        if (danceModuleName == 'danceClass') {
+        if (danceModuleName === 'DanceClass') {
             title = $.format('导入数据[{0}]', ['班级信息'])
-        } else if (danceModuleName == 'danceStudent') {
+        } else if (danceModuleName === 'DanceStudent') {
             title = $.format('导入数据[{0}]', ['学员列表'])
-        }
+        } else if (danceModuleName === 'DanceReceipt') {
+            title = $.format('导入数据[{0}]', ['收费单（学费）'])
+		}
         $('#danceWinImport').window('setTitle', title);
     }
 
@@ -86,6 +98,18 @@
         $('#danceWinImport').window('destroy');
         $('#danceCommWin').panel('destroy');
     }
+
+    function clearProgressBar() {
+        $('#danceProgress').progressbar('setValue', 0);
+    }
+
+    function changeProgressBar() {
+        $.post( "/dance_progressbar", function(data){
+            //console.log(data.value);
+            $('#danceProgress').progressbar('setValue', data.value);
+        } );
+    }
+
 </script>
 
 </body>

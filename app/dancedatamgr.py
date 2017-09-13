@@ -2,8 +2,12 @@
 from flask import request, jsonify, g
 from flask_login import login_required
 from app import app, db
-from models import DanceSchool, DanceUser, DanceUserSchool
+from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent
+from views import dance_student_query
 import json
+import datetime
+import tools.excel
+
 
 ERROR_CODE_USER_IS_EXIST = 100
 
@@ -201,3 +205,105 @@ def dance_user_query():
         ret.append({'value': rec.name, 'text': rec.name})
 
     return jsonify(ret)
+
+
+@app.route('/dance_fee_item_get', methods=['POST'])
+@login_required
+def dance_fee_item_get():
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    if page_no <= 0:    # 补丁
+        page_no = 1
+
+    dcq = DcFeeItem.query.filter_by(company_id=g.user.company_id)
+
+    if 'condition' in request.form and request.form['condition'] != '':
+        dcq = dcq.filter(DcFeeItem.fee_item.like('%'+request.form['condition']+'%'))
+
+    total = dcq.count()
+
+    offset = (page_no - 1) * page_size
+    records = dcq.order_by(DcFeeItem.id).limit(page_size).offset(offset)
+    i = offset + 1
+    rows = []
+    for rec in records:
+        rows.append({'no': i, 'id': rec.id, "fee_item":rec.fee_item, 'recorder': rec.recorder,
+                     'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d %H:%M:%S')
+                     })
+        i += 1
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_fee_item_query', methods=['POST'])
+@login_required
+def dance_fee_item_query():
+    name = request.form['condition']
+
+    ret = []
+    records = DcFeeItem.query.filter_by(company_id=g.user.company_id)\
+        .order_by(DcFeeItem.id.asc()).filter(DcFeeItem.fee_item.like('%'+name + '%'))
+    for rec in records:
+        ret.append({'value': rec.DcFeeItem, 'text': rec.DcFeeItem})
+
+    return jsonify(ret)
+
+
+@app.route('/dance_receipt_study_query', methods=['POST'])
+@login_required
+def dance_receipt_study_query():
+    return dance_student_query()
+
+
+@app.route('/dance_receipt_study_get', methods=['POST'])
+@login_required
+def dance_receipt_study_get():
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    if page_no <= 0:    # 补丁
+        page_no = 1
+
+    dcq = DanceReceipt.query
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(DanceReceipt.school_id.in_(school_id_intersection))
+
+    dcq = dcq.join(DanceStudent, DanceStudent.id == DanceReceipt.student_id)
+    if 'name' in request.form and request.form['name'] != '':
+        dcq = dcq.filter(DanceStudent.name.like('%' + request.form['name'] + '%'))
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.join(DanceSchool, DanceSchool.id == DanceReceipt.school_id)\
+        .add_columns(DanceSchool.school_name, DanceStudent.sno, DanceStudent.name)\
+        .order_by(DanceReceipt.id.desc()).limit(page_size).offset(offset).all()
+    i = offset + 1
+    rows = []
+    for dcr in records:
+        rec = dcr[0]
+        rows.append({'no': i, 'id': rec.id, "receipt_no": rec.receipt_no, 'recorder': rec.recorder,
+                     'deal_date': datetime.datetime.strftime(rec.deal_date, '%Y-%m-%d'),
+                     'receivable_fee': rec.receivable_fee,
+                     'teaching_fee': rec.teaching_fee,
+                     'other_fee': rec.other_fee,
+                     'total': rec.total,
+                     'real_fee': rec.real_fee,
+                     'arrearage': rec.arrearage,
+                     'counselor': rec.counselor,
+                     'remark': rec.remark,
+                     'fee_mode': rec.fee_mode,
+                     'school_name': dcr[1], 'student_sno': dcr[2], 'student_name': dcr[3]
+                     })
+        i += 1
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_progressbar', methods=['POST'])
+@login_required
+def dance_progressbar():
+    return jsonify({'value': tools.excel.progressbar[str(g.user.id)]})

@@ -466,6 +466,11 @@ class DanceStudent(db.Model):
         self.sno = search_sno + ('%03d' % number)
         return self.sno
 
+    @staticmethod
+    def get_id(school_id, sno):
+        stu = DanceStudent.query.filter(DanceStudent.school_id == school_id, DanceStudent.sno == sno).first()
+        return -1 if stu is None else stu.id
+
     def __repr__(self):
         return '<DanceStudent %r>' % self.sno
 
@@ -822,5 +827,121 @@ class DanceCompany(db.Model):
 
     def __repr__(self):
         return '<DanceCompany %r>' % self.id
+
+
+class DanceReceipt(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    receipt_no = db.Column(db.String(20, collation='NOCASE'), index=True, nullable=False)
+    school_id = db.Column(db.Integer, db.ForeignKey('dance_school.id'))
+    student_id = db.Column(db.Integer, db.ForeignKey('dance_student.id'))
+    deal_date = db.Column(db.DateTime, nullable=False)      # 收费日期
+    receivable_fee = db.Column(db.Float)    # 应收学费
+    teaching_fee = db.Column(db.Float)    # 教材费
+    other_fee = db.Column(db.Float)    # 其他费
+    total = db.Column(db.Float)  # 费用合计
+    real_fee = db.Column(db.Float)  # 应收费
+    arrearage = db.Column(db.Float)    # 学费欠费
+    counselor = db.Column(db.String(20, collation='NOCASE'))      # 咨询师
+    remark = db.Column(db.String(40))
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    fee_mode = db.Column(db.String(6))
+
+    def __init__(self, para):
+        if 'receipt_no' in para:
+            self.receipt_no = para['receipt_no']
+        else:
+            raise Exception('need receipt_no field!')
+        if 'school_id' in para:
+            self.school_id = para['school_id']
+        else:
+            raise Exception('need school_id field!')
+        if 'student_id' in para:
+            self.student_id = para['student_id']
+        else:
+            raise Exception('need student_id field!')
+        if u'deal_date' in para:
+            self.deal_date = datetime.datetime.strptime(para[u'deal_date'], '%Y-%m-%d')
+            if self.deal_date.date() == datetime.date.today():
+                self.deal_date = datetime.datetime.today()
+        else:
+            self.deal_date = datetime.datetime.today()
+        if 'receivable_fee' in para and para['receivable_fee'] != '':
+            self.receivable_fee = para['receivable_fee']
+        if 'teaching_fee' in para and para['teaching_fee'] != '':
+            self.teaching_fee = para['teaching_fee']
+        if 'other_fee' in para and para['other_fee'] != '':
+            self.other_fee = para['other_fee']
+        if 'total' in para and para['total'] != '':
+            self.total = para['total']
+        if 'real_fee' in para and para['real_fee']:
+            self.real_fee = para['real_fee']
+        self.arrearage = para['arrearage'] if 'arrearage' in para and para['arrearage'] != '' else 0
+        if 'counselor' in para:
+            self.counselor = para['counselor']
+        if 'remark' in para:
+            self.remark = para['remark']
+        self.recorder = para['recorder'] if 'recorder' in para else g.user.name
+        if 'fee_mode' in para:
+            self.fee_mode = para['fee_mode']
+
+
+class DanceClassReceipt(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    receipt_id = db.Column(db.Integer, db.ForeignKey('dance_receipt.id'))
+    class_id = db.Column(db.Integer, db.ForeignKey('dance_class.id'))
+    term = db.Column(db.Integer, nullable=False)  # 学期长度
+    sum = db.Column(db.Float, nullable=False)  # 优惠前学费
+    discount = db.Column(db.Float)  # 优惠 金额
+    discount_rate = db.Column(db.Float)  # 折扣率
+    total = db.Column(db.Float, nullable=False)     # 应收学费
+    real_fee = db.Column(db.Float, nullable=False)  # 实收学费
+    arrearage = db.Column(db.Float)  # 学费欠费
+    begin_date = db.Column(db.Date)  # 计费日期
+    end_date = db.Column(db.Date)  # 到期日期
+    remark = db.Column(db.String(40))
+
+
+class DanceTeaching(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    receipt_id = db.Column(db.Integer, db.ForeignKey('dance_receipt.id'))
+    class_id = db.Column(db.Integer)
+    material_id = db.Column(db.Integer)     # 教材 id
+    is_got = db.Column(db.String(2), nullable=False)  # 是否领取
+    fee = db.Column(db.Integer, nullable=False)     # 教材费
+    remark = db.Column(db.String(40))
+
+
+class DanceOtherFee(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    receipt_id = db.Column(db.Integer, db.ForeignKey('dance_receipt.id'))
+    class_id = db.Column(db.Integer)
+    fee_item_id = db.Column(db.Integer)     # 收费项目 id
+    summary = db.Column(db.String(40, collation='NOCASE'))  # 摘要
+    real_fee = db.Column(db.Float, nullable=False)  # 收费
+    remark = db.Column(db.String(40))
+
+
+class DcFeeItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    fee_item = db.Column(db.String(20, collation='NOCASE'))  # 收费项目
+    company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    create_at = db.Column(db.DateTime, nullable=False)
+
+
+class DcTeachingMaterial(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
+    material_no = db.Column(db.String(10, collation='NOCASE'))  # 教材编号
+    material_name = db.Column(db.String(20, collation='NOCASE'))  # 教材名称
+    rem_code = db.Column(db.String(20, collation='NOCASE'))
+    unit = db.Column(db.String(4, collation='NOCASE'))      # 单位
+    price_buy = db.Column(db.Float)
+    price_sell = db.Column(db.Float)
+    summary = db.Column(db.String(140, collation='NOCASE'))   # 内容简介
+    is_use = db.Column(db.String(2), nullable=False)   # 是否启用
+    remark = db.Column(db.String(40))
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+
 
 whooshalchemy.whoosh_index(app, Post)
