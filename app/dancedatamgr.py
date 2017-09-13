@@ -306,4 +306,6 @@ def dance_receipt_study_get():
 @app.route('/dance_progressbar', methods=['POST'])
 @login_required
 def dance_progressbar():
-    return jsonify({'value': tools.excel.progressbar[str(g.user.id)]})
+    key = str(g.user.id)
+    value = tools.excel.progressbar[key] if key in tools.excel.progressbar else 0
+    return jsonify({'value': value})

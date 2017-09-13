@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
-from flask import request, jsonify, g
+from flask import jsonify
 from flask_login import login_required
-from app import app, db
-from models import DanceSchool, DanceUser, DanceUserSchool
+from app import app
+from models import DanceUserSchool
 
 
 @app.route('/dance_tree_school', methods=['POST', 'GET'])

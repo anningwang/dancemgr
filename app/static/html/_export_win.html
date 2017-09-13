@@ -56,9 +56,9 @@
     function onOpenExportWin() {
         //console.log('onOpenExportWin');
         var title = '导出数据';
-        if (danceModuleName == 'danceClass') {
+        if (danceModuleName == 'DanceClass') {
             title = $.format('导出数据[{0}]', ['班级信息'])
-        } else if (danceModuleName == 'danceStudent') {
+        } else if (danceModuleName == 'DanceStudent') {
             title = $.format('导出数据[{0}]', ['学员列表'])
         }
         $('#danceWinExport').window('setTitle', title);

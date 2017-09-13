@@ -2,7 +2,8 @@
 import xlrd                 # 读取 Excel 模块
 import xlwt                 # Excel 写模块
 from app import db
-from app.models import DanceStudent, DanceClass, DanceStudentClass, DanceSchool, DanceReceipt, DanceUserSchool
+from app.models import DanceStudent, DanceClass, DanceStudentClass, DanceSchool, DanceReceipt, DanceUserSchool,\
+    DcFeeItem, DanceOtherFee
 from flask import g
 
 progressbar = {}         # 进度条的值  用户id(key) = value
@@ -249,6 +250,9 @@ def import_receipt(fn):
             return {'errorCode': 2000, 'msg': u"文件中未找到列名[%s]！" % o}
 
     school_ids = DanceSchool.get_school_id_list()
+    sid = list(school_ids.values())
+    students = DanceStudent.get_records(sid)
+
     # 逆序遍历。第一行为表头需要过滤掉
     for row in range(cnt - 1, 0, -1):
         r = sh.row_values(row)
@@ -259,22 +263,18 @@ def import_receipt(fn):
         for i in range(len(cols_num)):
             para[columns[i]] = r[cols_num[i]]
 
-        ####################################################################################
         # 特殊列的处理
-        # ---分校名称--转换为--分校ID---存入数据库
+        # 分校名称 转为 分校ID
         if para['school_id'].lower() not in school_ids:
             raise Exception(u'分校[%s]不存在！' % para['school_id'])
         school_id = school_ids[para['school_id'].lower()]
         para['school_id'] = school_id
 
         # 学号 转 学员id
-        student_id = DanceStudent.get_id(school_id, para['student_id'])
-        if student_id == -1:
-            raise Exception(u'学号[%s]的学员不存在！' % para['student_id'])
-
+        student_id = students[para['student_id']].id
         para['student_id'] = student_id
 
-        ####################################################################################
+        # -----------------------------------------------------------------------------------------
         # 保证学号不能重复
         has = DanceReceipt.query.filter_by(school_id=school_id).filter_by(receipt_no=r[0])\
             .filter_by(student_id=student_id).first()
@@ -284,14 +284,88 @@ def import_receipt(fn):
             num_right += 1
         else:
             num_wrong += 1  # 重复数据
-        ####################################################################################
+        # -----------------------------------------------------------------------------------------
 
         value = int((num_wrong+num_right)*100.0/(cnt-1))
         progressbar[str(g.user.id)] = value + 1 if value == 0 else value
-    db.session.commit()
 
     progressbar[str(g.user.id)] = 100
-    msg = u"成功导入 %d 条数据！" % num_right
+    msg = u"[%s]页 成功导入 %d 条数据！" % (sheet_pages[0], num_right)
+    msg += '' if num_wrong == 0 else (u'重复数据 %d 条。' % num_wrong)
+
+    # 导入 [其他费] 页面 -------------------------------------------------------------
+    receipt = DanceReceipt.get_records(sid)
+    dcclass = DanceClass.get_records(sid)
+    feeitem = DcFeeItem.get_records()
+    ret = dc_import_other_fee(workbook.sheet_by_name(sheet_pages[3]), receipt, dcclass, feeitem)
+    msg += ret['msg']
+    if ret['errorCode'] != 0:
+        return ret
+
+    db.session.commit()
+    return {'errorCode': 0, 'msg': msg}
+
+
+def dc_import_other_fee(worksheet, receipt, classes, feeitem):
+    """ [收费单（学费）] 导入项目，导入[其他费]sheet 页 """
+    global progressbar
+    progressbar[str(g.user.id)] = 1
+    columns = ['receipt_id', 'class_id', 'fee_item_id', 'summary', 'real_fee',
+               'remark']
+    cols_cn = [u'收费单号', u'班级或课程编号', u'收费项目', u'摘要', u'收费',
+               u'备注']
+    cols_num = []
+    num_right = 0
+    num_wrong = 0
+
+    cnt = worksheet.nrows
+    for o in cols_cn:
+        p = 0
+        for p in range(len(worksheet.row_values(0))):
+            if o == worksheet.row_values(0)[p]:
+                cols_num.append(p)
+                break
+        if p == len(worksheet.row_values(0)):
+            return {'errorCode': 2000, 'msg': u"文件中未找到列名[%s]！" % o}
+
+    # 逆序遍历。第一行为表头需要过滤掉
+    for row in range(cnt - 1, 0, -1):
+        r = worksheet.row_values(row)
+        if r[0] == u'合计':
+            continue
+
+        para = {}
+        for i in range(len(cols_num)):
+            para[columns[i]] = r[cols_num[i]]
+
+        # 特殊列的处理
+        # 收费单号 --> 收费单ID
+        para['receipt_id'] = receipt[para['receipt_id']].id
+
+        # 班级或课程编号 --> 班级ID
+        if para['class_id'] != '':
+            para['class_id'] = classes[para['class_id']].id
+
+        # 收费项目 --> 收费ID
+        feename = para['fee_item_id']
+        if feename in feeitem:
+            para['fee_item_id'] = feeitem[feename].id
+        else:
+            fee = DcFeeItem(feename)
+            db.session.add(fee)
+            fee = DcFeeItem.query.filter_by(company_id=g.user.company_id).filter_by(fee_item=feename).first()
+            feeitem[feename] = fee
+            para['fee_item_id'] = fee.id
+
+        dcfee = DanceOtherFee(para)
+        db.session.add(dcfee)
+        num_right += 1
+
+        value = int((num_wrong + num_right) * 100.0 / (cnt - 1))
+        progressbar[str(g.user.id)] = value + 1 if value == 0 else value
+
+    progressbar[str(g.user.id)] = 100
+    msg = u"[%s]页 成功导入 %d 条数据！" % (u'其他费', num_right)
     msg += '' if num_wrong == 0 else (u'重复数据 %d 条。' % num_wrong)
     return {'errorCode': 0, 'msg': msg}
 

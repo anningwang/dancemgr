@@ -37,10 +37,7 @@ class DanceUserSchool(db.Model):
 
     @staticmethod
     def get_school_ids_by_uid():
-        """
-        根据登录用户用户的权限，获取用户能管理的分校 ID 列表
-        :return:
-        """
+        """ 根据登录用户用户的权限，获取用户能管理的分校 ID 列表 """
         school_ids = []
         schools = DanceUserSchool.query.filter_by(user_id=g.user.id).all()
         for sc in schools:
@@ -49,10 +46,7 @@ class DanceUserSchool(db.Model):
 
     @staticmethod
     def get_school_map_by_uid():
-        """
-        根据登录用户用户的权限，获取用户能管理的分校 ID、名称 列表
-        :return:
-        """
+        """ 根据登录用户用户的权限，获取用户能管理的分校 ID、名称 列表 """
         school_ids = []
         school_ids_map = {}
         schools = DanceUserSchool.query.filter_by(user_id=g.user.id)\
@@ -471,6 +465,14 @@ class DanceStudent(db.Model):
         stu = DanceStudent.query.filter(DanceStudent.school_id == school_id, DanceStudent.sno == sno).first()
         return -1 if stu is None else stu.id
 
+    @staticmethod
+    def get_records(school_id):
+        records = DanceStudent.query.filter(DanceStudent.school_id.in_(school_id)).all()
+        ret = {}
+        for rec in records:
+            ret[rec.sno] = rec
+        return ret
+
     def __repr__(self):
         return '<DanceStudent %r>' % self.sno
 
@@ -544,6 +546,14 @@ class DanceClass(db.Model):
         ret = {}
         for cls in classes:
             ret[cls.cno.lower()] = cls.id
+        return ret
+
+    @staticmethod
+    def get_records(school_id):
+        records = DanceClass.query.filter(DanceClass.school_id.in_(school_id)).all()
+        ret = {}
+        for rec in records:
+            ret[rec.cno] = rec
         return ret
 
     def __repr__(self):
@@ -884,6 +894,26 @@ class DanceReceipt(db.Model):
         if 'fee_mode' in para:
             self.fee_mode = para['fee_mode']
 
+    @staticmethod
+    def get_ids(school_ids):
+        """ 根据分校 id 查询 收费单。返回 收费单编号 - 收费单id 的 key - value 对 """
+        records = DanceReceipt.query.filter(DanceReceipt.school_id.in_(school_ids)).all()
+        ret = {}
+        for rec in records:
+            ret[rec.receipt_no] = rec.id
+        return ret
+
+    @staticmethod
+    def get_records(school_ids):
+        ret = {}
+        records = DanceReceipt.query.filter(DanceReceipt.school_id.in_(school_ids)).all()
+        for rec in records:
+            ret[rec.receipt_no] = rec
+        return ret
+
+    def __repr__(self):
+        return '<DanceReceipt %r>' % self.receipt_no
+
 
 class DanceClassReceipt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -920,6 +950,20 @@ class DanceOtherFee(db.Model):
     real_fee = db.Column(db.Float, nullable=False)  # 收费
     remark = db.Column(db.String(40))
 
+    def __init__(self, para):
+        if 'receipt_id' in para:
+            self.receipt_id = para['receipt_id']
+        if 'class_id' in para:
+            self.class_id = para['class_id']
+        if 'fee_item_id' in para:
+            self.fee_item_id = para['fee_item_id']
+        if 'summary' in para:
+            self.summary = para['summary']
+        if 'real_fee' in para:
+            self.real_fee = para['real_fee']
+        if 'remark' in para:
+            self.remark = para['remark']
+
 
 class DcFeeItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -927,6 +971,23 @@ class DcFeeItem(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
     recorder = db.Column(db.String(20, collation='NOCASE'))
     create_at = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, name):
+        self.fee_item = name
+        self.company_id = g.user.company_id
+        self.recorder = g.user.name
+        self.create_at = datetime.datetime.today()
+
+    @staticmethod
+    def get_records():
+        records = DcFeeItem.query.filter_by(company_id=g.user.company_id).all()
+        ret = {}
+        for rec in records:
+            ret[rec.fee_item] = rec
+        return ret
+
+    def __repr__(self):
+        return '<DcFeeItem %r>' % self.fee_item
 
 
 class DcTeachingMaterial(db.Model):

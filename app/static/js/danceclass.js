@@ -16,7 +16,7 @@ function danceAddTabClassDatagrid(divId, title, tableId, condition) {
             content: content,
             closable: true
         });
-        danceCreateClassDatagrid(tableId, '/dance_class', condition);
+        danceClassCallFunc = danceCreateClassDatagrid(tableId, '/dance_class', condition);
     }
 }
 
@@ -82,8 +82,7 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
                                     var gridOpts = $(dg).datagrid('getPager').pagination('options');
                                     var _total = gridOpts.total - row.length;
                                     if (_pageNo > 1 && (_pageNo-1)*_pageSize >= _total) { _pageNo--; }
-                                    //doAjaxGetData();
-                                    danceClassCallFunc();
+                                    doAjaxGetData();
                                 } else {
                                     $.messager.alert('提示', data.msg, 'error');
                                 }
@@ -143,20 +142,19 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
         buttons:[{
             text:'导入', iconCls: 'icon-page_excel',
             handler:function(){
-                danceModuleName = 'danceClass';
+                danceModuleName = 'DanceClass';
                 $(document.body).append('<div id="danceCommWin"></div>');
                 $('#danceCommWin').panel({
                     href:'/static/html/_import_win.html',
                     onDestroy: function () {
-                        //doAjaxGetData();
-                        danceClassCallFunc();
+                        doAjaxGetData();
                     }
                 });
             }
         },{
             text:'导出', iconCls:' icon-page_white_excel ',
             handler:function(){
-                danceModuleName = 'danceClass';
+                danceModuleName = 'DanceClass';
                 $(document.body).append('<div id="danceCommWin"></div>');
                 $('#danceCommWin').panel({
                     href:'/static/html/_export_win.html'
@@ -178,13 +176,12 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
 
             _pageSize = pageSize;
             _pageNo = pageNumber;
-            //doAjaxGetData();
-            danceClassCallFunc();
+            doAjaxGetData();
         }
     });
 
     // 先通过ajax获取数据，然后再传给datagrid
-    danceClassCallFunc = function doAjaxGetData (cond) {
+    var doAjaxGetData = function (cond) {
         if (cond) {
             queryCondition = {};
             $.extend(queryCondition, cond);
@@ -222,6 +219,7 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
         });
     };
 
-    danceClassCallFunc();
-    //doAjaxGetData();
+    doAjaxGetData();
+    
+    return doAjaxGetData;
 }

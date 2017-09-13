@@ -267,7 +267,7 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
         buttons:[{
             text:'导入', iconCls: 'icon-page_excel',
             handler:function(){
-                danceModuleName = 'danceStudent';
+                danceModuleName = 'DanceStudent';
                 $(document.body).append('<div id="danceCommWin"></div>');
                 $('#danceCommWin').panel({
                     href:'/static/html/_import_win.html',
@@ -279,7 +279,7 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
         },{
             text:'导出', iconCls:' icon-page_white_excel ',
             handler:function(){
-                danceModuleName = 'danceStudent';
+                danceModuleName = 'DanceStudent';
                 $(document.body).append('<div id="danceCommWin"></div>');
                 $('#danceCommWin').panel({
                     href:'/static/html/_export_win.html'
@@ -812,7 +812,7 @@ function danceAddTabFeeStudyDatagrid(divId, title, tableId, condition) {
             'danceModuleName': 'DanceReceipt',
             'columns': [[
                 {field: 'ck', checkbox:true },
-                {field: 'id', hidden:true },
+                //{field: 'id', hidden:true },
                 {field: 'receipt_no', title: '收费单号', width: 140, align: 'center'},
                 {field: 'school_name', title: '分校名称', width: 110, align: 'center'},
                 {field: 'student_sno', title: '学号', width: 140, align: 'center'},
@@ -961,33 +961,36 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
         var row = $(dg).datagrid('getSelections');
         if (row.length == 0) {
             $.messager.alert('提示', '请选择要删除的数据行！' , 'info');
-            return false;
         } else {
             var text = '数据删除后不能恢复！是否要删除选中的 ' + row.length + '条 数据？';
             $.messager.confirm('确认删除', text , function(r){
                 if (r){
-                    var ids = [];
-                    for (var i = 0; i < row.length; i++) {
-                        ids.push(row[i].id);
-                    }
-                    console.log('del:' + ids);
-                    $.ajax({
-                        method: 'POST',
-                        url: '/dance_del_data',
-                        dataType: 'json',
-                        data: {'ids': ids, 'who': options.who}
-                    }).done(function(data) {
-                        if (data.errorCode == 0) {
-                            $(dg).datagrid('reload');
-                            $.messager.alert('提示', data.msg, 'info');
-                        } else {
-                            $.messager.alert('错误', data.msg, 'error');
-                        }
-                    }).fail(function(jqXHR, textStatus, errorThrown) {
-                        var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
-                        $.messager.alert('提示', msg, 'info');
-                    });
+                    ajaxDelData(row);
                 }
+            });
+        }
+
+        function ajaxDelData(row) {
+            var ids = [];
+            for (var i = 0; i < row.length; i++) {
+                ids.push(row[i].id);
+            }
+            console.log('del:' + ids);
+            $.ajax({
+                method: 'POST',
+                url: '/dance_del_data',
+                dataType: 'json',
+                data: {'ids': ids, 'who': options.who}
+            }).done(function(data) {
+                if (data.errorCode == 0) {
+                    $(dg).datagrid('reload');
+                    $.messager.alert('提示', data.msg, 'info');
+                } else {
+                    $.messager.alert('错误', data.msg, 'error');
+                }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+                $.messager.alert('提示', msg, 'info');
             });
         }
     }
