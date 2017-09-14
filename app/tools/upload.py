@@ -52,7 +52,7 @@ def api_upload():
     if f and allowed_file(f.filename):  # 判断是否是允许上传的文件类型
         fname = secure_filename(f.filename)
         print fname
-        ext = fname.rsplit('.', 1)[1]    # 获取文件后缀
+        ext = fname.rsplit('.', 1)[1] if '.' in fname else fname    # 获取文件后缀
         time_tick = int(time.time())
         new_filename = str(time_tick)+'.'+ext   # 修改了上传的文件名
         new_fn_dir = os.path.join(file_dir, new_filename)

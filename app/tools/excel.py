@@ -8,6 +8,8 @@ from flask import g
 
 progressbar = {}         # 进度条的值  用户id(key) = {value: 60, sheet: u'收费单'}
 
+DANCE_PRECISION = 1e-5
+
 
 def char2int(s):
     """
@@ -213,9 +215,9 @@ def import_class(fn):
         progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
 
     progressbar[str(g.user.id)]['value'] = 100
-    msg = '[' + sh.name + u']页 '
-    msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
-    msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
+    msg = u'[%s]页%s' % (sh.name, '' if num_right+num_wrong != 0 else u' 无数据！')
+    msg += '' if num_right == 0 else (u' 导入 %d 条！' % num_right)
+    msg += '' if num_wrong == 0 else (u' 忽略重复 %d 条。' % num_wrong)
 
     db.session.commit()
     return {'errorCode': 0, 'msg': msg}
@@ -237,6 +239,7 @@ def import_receipt(fn):
     cols_cn = [u'收费单号', u'分校名称', u'学号', u'收费日期', u'应收学费',
                u'教材费', u'其他费', u'费用合计', u'实收费', u'学费欠费',
                u'咨询师', u'备注', u'录入员', u'收费方式']
+    cols_need = [u'收费单号', u'分校名称', u'学号']
     workbook = xlrd.open_workbook(fn)
     worksheets = workbook.sheet_names()
 
@@ -249,7 +252,7 @@ def import_receipt(fn):
     if cnt <= 1:
         return {'errorCode': 2000, 'msg': u"无有效数据！"}
 
-    ck = dc_check_col(sh.row_values(0), cols_cn)
+    ck = dc_check_col(sh.row_values(0), cols_cn, cols_need)
     if ck['errorCode'] != 0:
         return ck
     cols_num = ck['excel_idx']
@@ -272,19 +275,15 @@ def import_receipt(fn):
 
         # 特殊列的处理
         # 分校名称 转为 分校ID
-        if parm['school_id'].lower() not in school_ids:
-            raise Exception(u'分校[%s]不存在！' % parm['school_id'])
-        school_id = school_ids[parm['school_id'].lower()]
-        parm['school_id'] = school_id
+        parm['school_id'] = school_ids[parm['school_id'].lower()]
 
         # 学号 转 学员id
-        student_id = students[parm['student_id']].id
-        parm['student_id'] = student_id
+        parm['student_id'] = students[parm['student_id']].id
 
         # -----------------------------------------------------------------------------------------
         # 保证 收费单号+学生id+学校id 不能重复
-        has = DanceReceipt.query.filter_by(school_id=school_id).filter_by(receipt_no=r[0])\
-            .filter_by(student_id=student_id).first()
+        has = DanceReceipt.query.filter_by(school_id=parm['school_id'], receipt_no=parm['receipt_no'],
+                                           student_id=parm['student_id']).first()
         if has is None:
             tb = DanceReceipt(parm)
             db.session.add(tb)
@@ -297,7 +296,7 @@ def import_receipt(fn):
         progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
 
     progressbar[str(g.user.id)]['value'] = 100
-    msg = '[' + sh.name + u']页 '
+    msg = u'[%s]页%s' % (sh.name, '' if num_right + num_wrong != 0 else u' 无数据！')
     msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
     msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
 
@@ -390,8 +389,7 @@ def dc_import_class_fee(worksheet, receipt, classes):
 
         # -----------------------------------------------------------------------------------------
         # 保证 收费单id+班级id 不能重复
-        has = DanceClassReceipt.query.filter_by(receipt_id=parm['receipt_id'])\
-            .filter_by(class_id=parm['class_id']).first()
+        has = DanceClassReceipt.query.filter_by(receipt_id=parm['receipt_id'], class_id=parm['class_id']).first()
         if has is None:
             dcclassreceipt = DanceClassReceipt(parm)
             db.session.add(dcclassreceipt)
@@ -458,9 +456,20 @@ def dc_import_other_fee(worksheet, receipt, classes, feeitem):
             feeitem[feename] = fee
             parm['fee_item_id'] = fee.id
 
-        dcfee = DanceOtherFee(parm)
-        db.session.add(dcfee)
-        num_right += 1
+        # -----------------------------------------------------------------------------------------
+        # 保证 信息(收费单id+班级id+收费项目id+摘要+收费+备注) 不能重复
+        has = DanceOtherFee.query.filter_by(receipt_id=parm['receipt_id'], class_id=parm['class_id'],
+                                            fee_item_id=parm['fee_item_id'], summary=parm['summary'],
+                                            remark=parm['remark'])\
+            .filter(DanceOtherFee.real_fee <= float(parm['real_fee'])+DANCE_PRECISION,
+                    DanceOtherFee.real_fee >= float(parm['real_fee'])-DANCE_PRECISION).first()
+        if has is None:
+            record = DanceOtherFee(parm)
+            db.session.add(record)
+            num_right += 1
+        else:
+            num_wrong += 1  # 重复数据
+            # -----------------------------------------------------------------------------------------
 
         value = int((num_wrong + num_right) * 100.0 / (cnt - 1))
         progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
