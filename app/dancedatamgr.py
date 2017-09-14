@@ -307,5 +307,6 @@ def dance_receipt_study_get():
 @login_required
 def dance_progressbar():
     key = str(g.user.id)
-    value = tools.excel.progressbar[key] if key in tools.excel.progressbar else 0
-    return jsonify({'value': value})
+    value = tools.excel.progressbar[key]['value'] if key in tools.excel.progressbar else 0
+    sheet = tools.excel.progressbar[key]['sheet'] if key in tools.excel.progressbar else ''
+    return jsonify({'value': value, 'sheet': sheet})
