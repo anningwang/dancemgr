@@ -3,7 +3,7 @@ import xlrd
 import xlwt
 from app import db
 from app.models import DanceStudent, DanceClass, DanceStudentClass, DanceSchool, DanceReceipt, DanceUserSchool,\
-    DcFeeItem, DanceOtherFee, DanceClassReceipt, DcTeachingMaterial
+    DcFeeItem, DanceOtherFee, DanceClassReceipt, DcTeachingMaterial, DanceTeaching
 from flask import g
 
 progressbar = {}         # 进度条的值  用户id(key) = {value: 60, sheet: u'收费单'}
@@ -315,6 +315,13 @@ def import_receipt(fn):
     if ret['errorCode'] != 0:
         return ret
 
+    material = DcTeachingMaterial.get_records()
+    # 导入 [教材费] 页面 -------------------------------------------------------------
+    ret = dc_import_teaching_fee(workbook.sheet_by_name(sheet_pages[2]), receipt, dcclass, material)
+    msg += ret['msg']
+    if ret['errorCode'] != 0:
+        return ret
+
     db.session.commit()
     return {'errorCode': 0, 'msg': msg}
 
@@ -416,7 +423,7 @@ def dc_import_other_fee(worksheet, receipt, classes, feeitem):
                'remark']
     cols_cn = [u'收费单号', u'班级或课程编号', u'收费项目', u'摘要', u'收费',
                u'备注']
-    cols_num = []
+
     num_right = 0
     num_wrong = 0
 
@@ -470,6 +477,120 @@ def dc_import_other_fee(worksheet, receipt, classes, feeitem):
         else:
             num_wrong += 1  # 重复数据
             # -----------------------------------------------------------------------------------------
+
+        value = int((num_wrong + num_right) * 100.0 / (cnt - 1))
+        progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
+
+    progressbar[str(g.user.id)]['value'] = 100
+    msg = '[' + worksheet.name + u']页 '
+    msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
+    msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
+    return {'errorCode': 0, 'msg': msg}
+
+
+def dc_import_teaching_fee(worksheet, receipt, classes, material):
+    """ [收费单（学费）] 导入项，导入[教材费]sheet 页 """
+    global progressbar
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': worksheet.name}
+    columns = ['receipt_id', 'class_id', 'material_id', 'is_got', 'fee',
+               'remark']
+    cols_cn = [u'收费单号', u'班级或课程编号', u'教材编号', u'是否领取', u'教材费',
+               u'备注']
+    cols_need = [u'收费单号', u'教材编号', u'教材费']
+
+    num_right = 0
+    num_wrong = 0
+
+    cnt = worksheet.nrows
+    ck = dc_check_col(worksheet.row_values(0), cols_cn, cols_need)
+    if ck['errorCode'] != 0:
+        return ck
+    cols_num = ck['excel_idx']
+    col_idx = ck['col_idx']
+
+    # 逆序遍历。第一行为表头需要过滤掉
+    for row in range(cnt - 1, 0, -1):
+        r = worksheet.row_values(row)
+        if r[0] == u'合计':
+            continue
+
+        parm = {}
+        for i in range(len(cols_num)):
+            parm[columns[col_idx[i]]] = r[cols_num[i]]
+
+        # 特殊列的处理
+        # 收费单号 --> 收费单ID
+        parm['receipt_id'] = receipt[parm['receipt_id']].id
+
+        # 班级或课程编号 --> 班级ID
+        if parm['class_id'] != '':
+            parm['class_id'] = classes[parm['class_id']].id
+
+        # 教材编号 --> 教材ID
+        parm['material_id'] = material[parm['material_id']].id
+
+        # -----------------------------------------------------------------------------------------
+        # 保证 信息(收费单id+班级id+收费项目id+摘要+收费+备注) 不能重复
+        has = DanceTeaching.query.filter_by(receipt_id=parm['receipt_id'], material_id=parm['material_id'],
+                                            class_id=parm['class_id'], remark=parm['remark']).first()
+        if has is None:
+            record = DanceTeaching(parm)
+            db.session.add(record)
+            num_right += 1
+        else:
+            num_wrong += 1  # 重复数据
+            # -----------------------------------------------------------------------------------------
+
+        value = int((num_wrong + num_right) * 100.0 / (cnt - 1))
+        progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
+
+    progressbar[str(g.user.id)]['value'] = 100
+    msg = '[' + worksheet.name + u']页 '
+    msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
+    msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
+    return {'errorCode': 0, 'msg': msg}
+
+
+def dc_import_student_class(worksheet):
+    """ [报名登记] 导入项，导入[班级——选择班级]sheet 页 """
+    global progressbar
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': worksheet.name}
+
+    columns = ['student_id', 'class_id', 'join_date', 'status', 'remark']
+    cols_cn = [u'学号', u'班级编号', u'报班日期', u'状态', u'报班备注']
+
+    ck = dc_check_col(worksheet.row_values(0), cols_cn, cols_cn)
+    if ck['errorCode'] != 0:
+        return ck
+    cols_num = ck['excel_idx']
+    col_idx = ck['col_idx']
+
+    num_right = 0
+    num_wrong = 0
+    # 逆序遍历。第一行为表头需要过滤掉
+    cnt = worksheet.nrows
+    for row in range(cnt - 1, 0, -1):
+        r = worksheet.row_values(row)
+        if r[0] == u'合计':
+            continue
+
+        parm = {}
+        for i in range(len(cols_num)):
+            parm[columns[col_idx[i]]] = r[cols_num[i]]
+
+        # 特殊列的处理
+
+        # -----------------------------------------------------------------------------------------
+        # （学号+班级ID）不能重复
+        has = DanceStudentClass.query.filter_by(company_id=g.user.company_id).filter_by(
+            student_id=parm['student_id'], class_id=parm['class_id']).first()
+        if has is None:
+            record = DanceStudentClass(parm)
+            db.session.add(record)
+            num_right += 1
+        else:
+            num_wrong += 1  # 重复数据
+        # -----------------------------------------------------------------------------------------
 
         value = int((num_wrong + num_right) * 100.0 / (cnt - 1))
         progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
@@ -550,57 +671,6 @@ def import_teaching_material(fn):
     msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
 
     db.session.commit()
-    return {'errorCode': 0, 'msg': msg}
-
-
-def dc_import_student_class(worksheet):
-    """ [报名登记] 导入项，导入[班级——选择班级]sheet 页 """
-    global progressbar
-    progressbar[str(g.user.id)] = {'value': 1, 'sheet': worksheet.name}
-
-    columns = ['student_id', 'class_id', 'join_date', 'status', 'remark']
-    cols_cn = [u'学号', u'班级编号', u'报班日期', u'状态', u'报班备注']
-
-    ck = dc_check_col(worksheet.row_values(0), cols_cn, cols_cn)
-    if ck['errorCode'] != 0:
-        return ck
-    cols_num = ck['excel_idx']
-    col_idx = ck['col_idx']
-
-    num_right = 0
-    num_wrong = 0
-    # 逆序遍历。第一行为表头需要过滤掉
-    cnt = worksheet.nrows
-    for row in range(cnt - 1, 0, -1):
-        r = worksheet.row_values(row)
-        if r[0] == u'合计':
-            continue
-
-        parm = {}
-        for i in range(len(cols_num)):
-            parm[columns[col_idx[i]]] = r[cols_num[i]]
-
-        # 特殊列的处理
-
-        # -----------------------------------------------------------------------------------------
-        # （学号+班级ID）不能重复
-        has = DanceStudentClass.query.filter_by(company_id=g.user.company_id).filter_by(
-            student_id=parm['student_id'], class_id=parm['class_id']).first()
-        if has is None:
-            record = DanceStudentClass(parm)
-            db.session.add(record)
-            num_right += 1
-        else:
-            num_wrong += 1  # 重复数据
-        # -----------------------------------------------------------------------------------------
-
-        value = int((num_wrong + num_right) * 100.0 / (cnt - 1))
-        progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
-
-    progressbar[str(g.user.id)]['value'] = 100
-    msg = '[' + worksheet.name + u']页 '
-    msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
-    msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
     return {'errorCode': 0, 'msg': msg}
 
 

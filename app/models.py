@@ -970,6 +970,33 @@ class DanceTeaching(db.Model):
     fee = db.Column(db.Integer, nullable=False)     # 教材费
     remark = db.Column(db.String(40))
 
+    def __init__(self, parm):
+        if 'receipt_id' in parm:
+            self.receipt_id = parm['receipt_id']
+        if 'class_id' in parm:
+            self.class_id = parm['class_id']
+        if 'material_id' in parm:
+            self.material_id = parm['material_id']
+        if 'is_got' in parm:
+            self.is_got = parm['is_got']
+        if 'fee' in parm and parm['fee'] != '':
+            self.fee = parm['fee']
+        if 'remark' in parm:
+            self.remark = parm['remark']
+
+    def update(self, parm):
+        """ 更新教材费，其中收费单 id 不可用更改 """
+        if 'class_id' in parm:
+            self.class_id = parm['class_id']
+        if 'material_id' in parm:
+            self.material_id = parm['material_id']
+        if 'is_got' in parm:
+            self.is_got = parm['is_got']
+        if 'fee' in parm and parm['fee'] != '':
+            self.fee = parm['fee']
+        if 'remark' in parm:
+            self.remark = parm['remark']
+
 
 class DanceOtherFee(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -1058,5 +1085,38 @@ class DcTeachingMaterial(db.Model):
         self.recorder = g.user.name if 'recorder' not in parm else parm['recorder']
         if 'tm_type' in parm:
             self.tm_type = parm['tm_type']
+
+    def update(self, parm):
+        """ 更新教材信息， 其中 公司id, 教材编号 不可更改 """
+        if 'material_name' in parm:
+            self.material_name = parm['material_name']
+        if 'rem_code' in parm:
+            self.rem_code = parm['rem_code']
+        if 'unit' in parm:
+            self.unit = parm['unit']
+        if 'price_buy' in parm and parm['price_buy'] != '':
+            self.price_buy = parm['price_buy']
+        if 'price_sell' in parm and parm['price_sell'] != '':
+            self.price_sell = parm['price_sell']
+        if 'summary' in parm:
+            self.summary = parm['summary']
+        if 'is_use' in parm:
+            self.is_use = parm['is_use']
+        if 'remark' in parm:
+            self.remark = parm['remark']
+        self.recorder = g.user.name if 'recorder' not in parm else parm['recorder']
+        if 'tm_type' in parm:
+            self.tm_type = parm['tm_type']
+
+    @staticmethod
+    def get_records():
+        records = DcTeachingMaterial.query.filter_by(company_id=g.user.company_id).all()
+        """
+        val = {}
+        for rec in records:
+            val[rec.material_no] = records
+        return val
+        """
+        return dict((k.material_no, k) for k in records)
 
 whooshalchemy.whoosh_index(app, Post)
