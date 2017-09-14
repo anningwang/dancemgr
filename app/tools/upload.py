@@ -66,36 +66,23 @@ def api_upload():
 
 @app.route('/api/download', methods=['POST', 'GET'])
 def api_download():
-    if request.method == "POST":
-        dance_module_name = request.form['danceModuleName']
-        file_dir = os.path.join(basedir, app.config['UPLOAD_FOLDER'])
+    if request.method != "POST":
+        return jsonify({"errorCode": 1001, "msg": "接口错误，只支持POST！"})
 
-        if dance_module_name == 'danceStudent':
-            sheet_name = u'报名登记'
-            filename = get_filename(sheet_name)
-            path_fn = os.path.join(file_dir, filename)
+    dance_module_name = request.form['danceModuleName']
+    file_dir = os.path.join(basedir, app.config['UPLOAD_FOLDER'])
 
-            err, msg = export_student(path_fn, sheet_name)
+    if dance_module_name == 'danceStudent':
+        sheet_name = u'报名登记'
+        filename = get_filename(sheet_name)
+        path_fn = os.path.join(file_dir, filename)
 
-            if err == 0:
-                return jsonify({"errorCode": 0, "msg": "导出成功！", 'url': photos.url(filename)})
-        else:
-            return jsonify({"errorCode": 1002, "msg": u"Unknown module name[%s]" % dance_module_name})
+        err, msg = export_student(path_fn, sheet_name)
 
-    return jsonify({"errorCode": 1001, "msg": "接口错误，只支持POST！"})
-
-'''
-@app.route('/api/download/<filename>', methods=['GET'])
-def download(filename):
-    if request.method == "GET":
-        file_dir = os.path.join(basedir, app.config['UPLOAD_FOLDER'])
-        if os.path.isfile(os.path.join(file_dir, filename)):
-            # return send_from_directory(file_dir, filename, as_attachment=True)
-            filepath = os.path.join(basedir, 'app/static/img/favicon.ico')
-            filepath = 'img/favicon.icon'
-            return app.send_static_file(filepath)
-    abort(404)
-'''
+        if err == 0:
+            return jsonify({"errorCode": 0, "msg": "导出成功！", 'url': photos.url(filename)})
+    else:
+        return jsonify({"errorCode": 1002, "msg": u"Unknown module name[%s]" % dance_module_name})
 
 
 @app.route('/photo/<name>')
@@ -109,18 +96,9 @@ def show(name):
 
 def dispatch_import_file(fn, dance_module_name):
     if dance_module_name == 'DanceStudent':
-        dict_data, msg, correct_num, wrong_num = import_student(fn)
-        dict_data2, msg2, correct_num2, wrong_num2 = import_student_class(fn, u'报班——选择班级')
-        if msg == 'ok' and msg2 == 'ok':
-            return {'errorCode': 0, 'msg': u'上传成功！', 'correctNum': correct_num, 'wrongNum': wrong_num}
-        else:
-            return {'errorCode': 200, 'msg': msg + msg2, 'correctNum': correct_num, 'wrongNum': wrong_num}
+        return import_student(fn)
     elif dance_module_name == 'DanceClass':
-        dict_data, msg, correct_num, wrong_num = import_class(fn)
-        if msg == 'ok':
-            return {'errorCode': 0, 'msg': u'上传成功！', 'correctNum': correct_num, 'wrongNum': wrong_num}
-        else:
-            return {'errorCode': 200, 'msg': msg, 'correctNum': correct_num, 'wrongNum': wrong_num}
+        return import_class(fn)
     elif dance_module_name == 'DanceReceipt':
         return import_receipt(fn)
     else:

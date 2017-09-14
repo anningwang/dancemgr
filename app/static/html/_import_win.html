@@ -105,11 +105,9 @@
 
     function changeProgressBar() {
         $.post( "/dance_progressbar", function(data){
-            //console.log(data.value);
-            // $('#danceProgress').progressbar('setValue', data.value);
             $('#danceProgress').progressbar({
                 value: data.value,
-                text: data.sheet ? data.sheet + ' {value}%' : '{value}%'
+                text: data.sheet ? '['+data.sheet+']页 {value}%' : '{value}%'
             });
         } );
     }

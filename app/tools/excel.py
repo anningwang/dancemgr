@@ -58,6 +58,10 @@ def import_student(fn):
                   正确存入条数,
                   错误条数
     """
+    sheet_pages = [u'报名登记', u'报班——选择班级']
+    global progressbar
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': sheet_pages[0]}
+
     columns = ['sno', 'school_id', 'consult_no', 'name', 'rem_code',
                'gender', 'degree', 'birthday', 'register_day', 'information_source',
                'counselor', 'reading_school', 'grade', 'phone', 'tel',
@@ -75,62 +79,67 @@ def import_student(fn):
                u'是否在读', u'备注', u'录入员', u'身份证', u'母亲微信标识',
                u'父亲微信标识'
                ]
-    cols_num = []
-    data_ret = {}
-    num_right = 0
-    num_wrong = 0
+    cols_need = [u'学号', u'分校名称', u'姓名', u'登记日期', u'是否在读']
+
     workbook = xlrd.open_workbook(fn)
     worksheets = workbook.sheet_names()
-    for sheet in worksheets:
-        if sheet != u'报名登记':
+    for page in sheet_pages:
+        if page not in worksheets:
+            return {'errorCode': 880, 'msg': u'未找到页面[%s]' % page}
+
+    sh = workbook.sheet_by_name(sheet_pages[0])
+    cnt = sh.nrows
+    if cnt <= 1:
+        return {'errorCode': 2000, 'msg': u'无有效数据！'}
+
+    ck = dc_check_col(sh.row_values(0), cols_cn, cols_need)
+    if ck['errorCode'] != 0:
+        return ck
+    cols_num = ck['excel_idx']
+
+    num_right = 0
+    num_wrong = 0
+    school_ids = DanceSchool.get_school_id_list()
+
+    # 逆序遍历。第一行为表头需要过滤掉
+    for row in range(cnt - 1, 0, -1):
+        r = sh.row_values(row)
+        if r[0] == u'合计':
             continue
-        sh = workbook.sheet_by_name(sheet)
-        row = sh.nrows
-        if row <= 1:
-            return data_ret, u"无有效数据！", num_right, num_wrong
-        row_list = [sh.row_values(0)]
 
-        for o in cols_cn:
-            p = 0
-            for p in range(len(sh.row_values(0))):
-                if o == sh.row_values(0)[p]:
-                    cols_num.append(p)
-                    break
-            if p == len(sh.row_values(0))-1:
-                return data_ret, u"文件中未找到列名[%s]！" % o, num_right, num_wrong
+        parm = {}
+        for i in range(len(cols_num)):
+            parm[columns[i]] = r[cols_num[i]]
 
-        school_ids = DanceSchool.get_school_id_list()
-        # 逆序遍历。第一行为表头需要过滤掉
-        for rows in range(row - 1, 0, -1):
-            row_data = sh.row_values(rows)
-            row_list.append(row_data)
-            rowdict = {}
+        # 特殊列的处理
+        parm['school_id'] = school_ids[parm['school_id'].lower()]
 
-            for i in range(len(cols_num)):
-                rowdict[columns[i]] = row_data[cols_num[i]]
+        # 保证 学员 不能重复 分校id+学号 唯一
+        has = DanceStudent.query.filter_by(school_id=parm['school_id']).filter_by(sno=parm['sno']).first()
+        if has is None:
+            record = DanceStudent(parm)
+            db.session.add(record)
+            num_right += 1
+        else:
+            num_wrong += 1  # 重复数据
+        # -----------------------------------------------------------------
 
-            ####################################################################################
-            # 特殊列的处理
-            # ---分校名称--转换为--分校ID---存入数据库
-            if rowdict['school_id'].lower() not in school_ids:
-                raise Exception(u'分校[%s]不存在！' % rowdict['school_id'])
-            school_id = school_ids[rowdict['school_id'].lower()]
-            rowdict['school_id'] = school_id
+        value = int((num_wrong + num_right) * 100.0 / (cnt - 1))
+        progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
 
-            ####################################################################################
-            # 保证学号不能重复
-            has = DanceStudent.query.filter_by(school_id=school_id).filter_by(sno=row_data[0]).first()
-            if has is None:
-                tb = DanceStudent(rowdict)
-                db.session.add(tb)
-                num_right += 1
-            else:
-                num_wrong += 1  # 重复数据
-            ####################################################################################
-        db.session.commit()
-        data_ret[sheet] = row_list
+    progressbar[str(g.user.id)]['value'] = 100
+    msg = '[' + sh.name + u']页 '
+    msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
+    msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
 
-    return data_ret, "ok", num_right, num_wrong
+    # 导入 [报班——选择班级] 页面 --------------------------------------------------------
+    ret = dc_import_student_class(workbook.sheet_by_name(sheet_pages[1]))
+    msg += ret['msg']
+    if ret['errorCode'] != 0:
+        return ret
+
+    db.session.commit()
+    return {'errorCode': 0, 'msg': msg}
 
 
 def import_class(fn):
@@ -141,6 +150,10 @@ def import_class(fn):
                   3. 正确存入条数,
                   4. 错误条数
     """
+    sheet_pages = [u'班级信息']
+    global progressbar
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': sheet_pages[0]}
+
     columns = ['cno', 'school_id', 'class_name', 'rem_code',
                'begin_year', 'class_type', 'class_style', 'teacher', 'cost_mode',
                'cost', 'plan_students', 'cur_students', 'is_ended', 'remark',
@@ -151,63 +164,61 @@ def import_class(fn):
                u'学费收费标准', u'计划招收人数', u'当前人数', u'是否结束', u'备注',
                u'录入员'
                ]
-    cols_num = []
-    data_ret = {}
-    num_right = 0
-    num_wrong = 0
+    cols_need = [u'班级编号', u'分校名称', u'班级名称', u'是否结束']
     workbook = xlrd.open_workbook(fn)
     worksheets = workbook.sheet_names()
-    for sheet in worksheets:
-        if sheet != u'班级信息':
+    for page in sheet_pages:
+        if page not in worksheets:
+            return {'errorCode': 880, 'msg': u'未找到页面[%s]' % page}
+
+    sh = workbook.sheet_by_name(sheet_pages[0])
+    cnt = sh.nrows
+    if cnt <= 1:
+        return {'errorCode': 2000, 'msg': u'无有效数据！'}
+
+    ck = dc_check_col(sh.row_values(0), cols_cn, cols_need)
+    if ck['errorCode'] != 0:
+        return ck
+    cols_num = ck['excel_idx']
+
+    num_right = 0
+    num_wrong = 0
+    school_ids = DanceSchool.get_school_id_list()
+
+    # 逆序遍历。第一行为表头需要过滤掉
+    for row in range(cnt - 1, 0, -1):
+        r = sh.row_values(row)
+        if r[0] == u'合计':
             continue
-        sh = workbook.sheet_by_name(sheet)
-        row = sh.nrows
-        if row <= 1:
-            return data_ret, u"无有效数据！", num_right, num_wrong
-        row_list = [sh.row_values(0)]
 
-        for o in cols_cn:
-            p = 0
-            for p in range(len(sh.row_values(0))):
-                if o == sh.row_values(0)[p]:
-                    cols_num.append(p)
-                    break
-            if p == len(sh.row_values(0))-1:
-                return data_ret, u"文件中未找到列名[%s]！" % o, num_right, num_wrong
+        parm = {}
+        for i in range(len(cols_num)):
+            parm[columns[i]] = r[cols_num[i]]
 
-        school_ids = DanceSchool.get_school_id_list()
-        # 逆序遍历。最后一行为合计和第一行为表头需要过滤掉
-        for rows in range(row-2, 0, -1):
-            row_data = sh.row_values(rows)
-            row_list.append(row_data)
-            rowdict = {}
+        # 特殊列的处理
+        parm['is_ended'] = 1 if parm['is_ended'] == u'是' else 0
+        parm['school_id'] = school_ids[parm['school_id'].lower()]
 
-            for i in range(len(cols_num)):
-                rowdict[columns[i]] = row_data[cols_num[i]]
+        # 保证班级不能重复
+        has = DanceClass.query.filter_by(school_id=parm['school_id']).filter_by(cno=parm['cno']).first()
+        if has is None:
+            record = DanceClass(parm)
+            db.session.add(record)
+            num_right += 1
+        else:
+            num_wrong += 1  # 重复数据
+        # -----------------------------------------------------------------
 
-            ####################################################################################
-            # 特殊列的处理
-            if 'is_ended' in rowdict:
-                rowdict['is_ended'] = 1 if rowdict['is_ended'] == u'是' else 0
-            if rowdict['school_id'].lower() not in school_ids:
-                raise Exception(u'分校[%s]不存在！' % rowdict['school_id'])
-            school_id = school_ids[rowdict['school_id'].lower()]
-            rowdict['school_id'] = school_id
+        value = int((num_wrong+num_right)*100.0/(cnt-1))
+        progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
 
-            ####################################################################################
-            # 保证班级不能重复
-            has = DanceClass.query.filter_by(school_id=school_id).filter_by(cno=row_data[0]).first()
-            if has is None:
-                record = DanceClass(rowdict)
-                db.session.add(record)
-                num_right += 1
-            else:
-                num_wrong += 1  # 重复数据
-            ####################################################################################
-        db.session.commit()
-        data_ret[sheet] = row_list
+    progressbar[str(g.user.id)]['value'] = 100
+    msg = '[' + sh.name + u']页 '
+    msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
+    msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
 
-    return data_ret, "ok", num_right, num_wrong
+    db.session.commit()
+    return {'errorCode': 0, 'msg': msg}
 
 
 def import_receipt(fn):
@@ -216,8 +227,10 @@ def import_receipt(fn):
     :return:     errorCode     0 成功， 非0 错误
                   msg           信息: 'ok' -- 正确，其他错误,
     """
+    sheet_pages = [u'收费单', u'班级——学费', u'教材费', u'其他费']
     global progressbar
-    progressbar[str(g.user.id)] = {'value': 1, 'sheet': u'收费单'}
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': sheet_pages[0]}
+
     columns = ['receipt_no', 'school_id', 'student_id', 'deal_date', 'receivable_fee',
                'teaching_fee', 'other_fee', 'total', 'real_fee', 'arrearage',
                'counselor', 'remark', 'recorder', 'fee_mode']
@@ -227,7 +240,6 @@ def import_receipt(fn):
     workbook = xlrd.open_workbook(fn)
     worksheets = workbook.sheet_names()
 
-    sheet_pages = [u'收费单', u'班级——学费', u'教材费', u'其他费']
     for page in sheet_pages:
         if page not in worksheets:
             return {'errorCode': 880, 'msg': u'未找到页面[%s]' % page}
@@ -411,14 +423,11 @@ def dc_import_other_fee(worksheet, receipt, classes, feeitem):
     num_wrong = 0
 
     cnt = worksheet.nrows
-    for o in cols_cn:
-        p = 0
-        for p in range(len(worksheet.row_values(0))):
-            if o == worksheet.row_values(0)[p]:
-                cols_num.append(p)
-                break
-#        if p == len(worksheet.row_values(0))-1:
-#            return {'errorCode': 2000, 'msg': u"文件中未找到列名[%s]！" % o}
+    ck = dc_check_col(worksheet.row_values(0), cols_cn)
+    if ck['errorCode'] != 0:
+        return ck
+    cols_num = ck['excel_idx']
+    col_idx = ck['col_idx']
 
     # 逆序遍历。第一行为表头需要过滤掉
     for row in range(cnt - 1, 0, -1):
@@ -428,7 +437,7 @@ def dc_import_other_fee(worksheet, receipt, classes, feeitem):
 
         parm = {}
         for i in range(len(cols_num)):
-            parm[columns[i]] = r[cols_num[i]]
+            parm[columns[col_idx[i]]] = r[cols_num[i]]
 
         # 特殊列的处理
         # 收费单号 --> 收费单ID
@@ -463,60 +472,55 @@ def dc_import_other_fee(worksheet, receipt, classes, feeitem):
     return {'errorCode': 0, 'msg': msg}
 
 
-def import_student_class(fn, sheet_name):
+def dc_import_student_class(worksheet):
+    """ [报名登记] 导入项，导入[班级——选择班级]sheet 页 """
+    global progressbar
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': worksheet.name}
+
     columns = ['student_id', 'class_id', 'join_date', 'status', 'remark']
     cols_cn = [u'学号', u'班级编号', u'报班日期', u'状态', u'报班备注']
-    cols_num = []
-    data_ret = {}
+
+    ck = dc_check_col(worksheet.row_values(0), cols_cn, cols_cn)
+    if ck['errorCode'] != 0:
+        return ck
+    cols_num = ck['excel_idx']
+    col_idx = ck['col_idx']
+
     num_right = 0
     num_wrong = 0
-    workbook = xlrd.open_workbook(fn)
-    worksheets = workbook.sheet_names()
-    for sheet in worksheets:
-        if sheet != sheet_name:
+    # 逆序遍历。第一行为表头需要过滤掉
+    cnt = worksheet.nrows
+    for row in range(cnt - 1, 0, -1):
+        r = worksheet.row_values(row)
+        if r[0] == u'合计':
             continue
-        sh = workbook.sheet_by_name(sheet)
-        row = sh.nrows
-        if row <= 1:
-            return data_ret, u"无有效数据！", num_right, num_wrong
-        row_list = [sh.row_values(0)]
 
-        for o in cols_cn:
-            p = 0
-            for p in range(len(sh.row_values(0))):
-                if o == sh.row_values(0)[p]:
-                    cols_num.append(p)
-                    break
-            if p == len(sh.row_values(0))-1:
-                return data_ret, u"文件中未找到列名[%s]！" % o, num_right, num_wrong
+        parm = {}
+        for i in range(len(cols_num)):
+            parm[columns[col_idx[i]]] = r[cols_num[i]]
 
-        for rows in range(1, row):
-            row_data = sh.row_values(rows)
-            row_list.append(row_data)
-            rowdict = {}
+        # 特殊列的处理
 
-            for i in range(len(cols_num)):
-                rowdict[columns[i]] = row_data[cols_num[i]]
+        # -----------------------------------------------------------------------------------------
+        # （学号+班级ID）不能重复
+        has = DanceStudentClass.query.filter_by(company_id=g.user.company_id).filter_by(
+            student_id=parm['student_id'], class_id=parm['class_id']).first()
+        if has is None:
+            record = DanceStudentClass(parm)
+            db.session.add(record)
+            num_right += 1
+        else:
+            num_wrong += 1  # 重复数据
+        # -----------------------------------------------------------------------------------------
 
-            ####################################################################################
-            # 特殊列的处理
+        value = int((num_wrong + num_right) * 100.0 / (cnt - 1))
+        progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
 
-            ####################################################################################
-            # 保证（学号+班级ID）不能重复
-            has = DanceStudentClass.query.filter_by(company_id=g.user.company_id).filter_by(
-                student_id=row_data[cols_num[0]], class_id=row_data[cols_num[1]]).first()
-            if has is None:
-                record = DanceStudentClass(rowdict)
-                db.session.add(record)
-                num_right += 1
-            else:
-                num_wrong += 1  # 重复数据
-            ####################################################################################
-
-        db.session.commit()
-        data_ret[sheet] = row_list
-
-    return data_ret, "ok", num_right, num_wrong
+    progressbar[str(g.user.id)]['value'] = 100
+    msg = '[' + worksheet.name + u']页 '
+    msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
+    msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
+    return {'errorCode': 0, 'msg': msg}
 
 
 def export_student(fn, sheet_name, cols_wanted=None):
