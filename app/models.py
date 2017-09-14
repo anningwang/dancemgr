@@ -1033,6 +1033,30 @@ class DcTeachingMaterial(db.Model):
     is_use = db.Column(db.String(2), nullable=False)   # 是否启用
     remark = db.Column(db.String(40))
     recorder = db.Column(db.String(20, collation='NOCASE'))
+    tm_type = db.Column(db.String(10, collation='NOCASE'))  # 教材类别
 
+    def __init__(self, parm):
+        self.company_id = g.user.company_id if 'company_id' not in parm else parm['company_id']
+        if 'material_no' in parm:
+            self.material_no = parm['material_no']
+        if 'material_name' in parm:
+            self.material_name = parm['material_name']
+        if 'rem_code' in parm:
+            self.rem_code = parm['rem_code']
+        if 'unit' in parm:
+            self.unit = parm['unit']
+        if 'price_buy' in parm and parm['price_buy'] != '':
+            self.price_buy = parm['price_buy']
+        if 'price_sell' in parm and parm['price_sell'] != '':
+            self.price_sell = parm['price_sell']
+        if 'summary' in parm:
+            self.summary = parm['summary']
+        if 'is_use' in parm:
+            self.is_use = parm['is_use']
+        if 'remark' in parm:
+            self.remark = parm['remark']
+        self.recorder = g.user.name if 'recorder' not in parm else parm['recorder']
+        if 'tm_type' in parm:
+            self.tm_type = parm['tm_type']
 
 whooshalchemy.whoosh_index(app, Post)

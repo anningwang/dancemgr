@@ -5,6 +5,7 @@
 'use strict';
 
 var danceModuleName = 'danceStudent';       // 所在模块
+var danceModuleTitle = '';                  // 导入、导出 窗口标题
 
 (function($){
     $.extend({

@@ -92,12 +92,12 @@ $('.easyui-tree').tree({
             }
         }else if(node.text == '收费项目') {
             danceAddTabFeeItem(node.text, tableId);
+        }else if(node.text == '教材信息') {
+            danceAddTabTeachingMaterial(node.text, tableId);
         }else if(node.text == '分校信息') {
-            danceAddTab('danceTabs', node.text, tableId);
-            danceCreateEditedDatagrid(tableId, '/dance_school', opts_school);
+            danceAddTabSchool(node.text, tableId);
         }else if(node.text == '用户管理') {
-            danceAddTab('danceTabs', node.text, tableId);
-            danceCreateEditedDatagrid(tableId, '/dance_user', opts_user);
+            danceAddTabUsers(node.text, tableId);
         }else {
             $.messager.alert('提示', ' 制作中...', 'info');
         }

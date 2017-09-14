@@ -1,78 +1,7 @@
 
 'use strict';
 
-var opts_school = {
-    'defaultSelField' : 'school_name',
-    'fieldValidate' : {'school_name': checkNotEmpty},
-    'queryText': '分校名称：',
-    'queryPrompt': '校名拼音首字母查找',
-    'who': 'DanceSchool',
-    'columns': [[
-        {field: 'ck', checkbox:true },   // checkbox
-        // {field: 'no', title: '序号',  width: 15, align: 'center' },  // 能自动显示行号，则不再需要自己实现
-        // {field: 'id', title: 'id',  width: 30, align: 'center' },
-        {field: 'school_no', title: '分校编号', width: 100, align: 'center'},
-        {field: 'school_name', title: '分校名称*', width: 140, align: 'center', editor: 'textbox'},
-        {field: 'address', title: '分校地址', width: 400, align: 'center', editor:'textbox'},
-        {field: 'manager', title: '负责人姓名', width: 70, align: 'center', editor:'textbox'},
-        {field: 'manager_phone', title: '负责人手机', width: 120, align: 'center', editor:'textbox'},
-        {field: 'tel', title: '分校联系电话', width: 120, align: 'center', editor:'textbox'},
-        {field: 'zipcode', title: '邮政编码', width: 70, align: 'center', editor:'textbox'},
-        {field: 'remark', title: '备注', width: 200, align: 'center', editor:'textbox'},
-        {field: 'recorder', title: '录入员', width: 90, align: 'center'}
-    ]]
-};
-
-var opts_user = {
-    'defaultSelField' : 'name',
-    'fieldValidate' : {'name': checkNotEmpty},
-    'queryText': '用户名：',
-    'queryPrompt': '用户拼音首字母查找',
-    'who': 'DanceUser',
-    'columns': [[
-        {field: 'ck', checkbox:true },   // checkbox
-        {field: 'user_no', title: '用户编号', width: 100, align: 'center'},
-        {field: 'name', title: '用户名称*', width: 140, align: 'center', editor: 'textbox'},
-        {field: 'pwd', title: '用户密码', width: 100, align: 'center', editor:'textbox'},
-        {field: 'phone', title: '联系电话', width: 140, align: 'center', editor:'textbox'},
-        {field: 'role_id', title: '所属角色', width: 120, align: 'center', editor:'textbox'},
-        {field: 'school_id', title: '允许管理分校', width: 400, align: 'center',
-            formatter:function(value,row){
-                return row.school_name;
-            },
-            editor: {
-                type:'combobox',
-                options:{
-                    url:'/dance_school_list_get',
-                    method:'post',
-                    valueField:'school_id',
-                    textField:'school_name',
-                    multiple:true,
-                    editable:false,
-                    panelHeight:'auto'
-                }
-            }
-        },
-        {field: 'recorder', title: '录入员', width: 90, align: 'center'}
-    ]]
-};
-
-var opts_feeitem = {
-    'defaultSelField' : 'fee_item',
-    'fieldValidate' : {'fee_item': checkNotEmpty},
-    'queryText': '收费项目：',
-    'queryPrompt': '收费项目拼音首字母查找',
-    'who': 'DanceFeeItem',
-    'columns': [[
-        {field: 'ck', checkbox:true },   // checkbox
-        {field: 'id', title: 'id',  width: 30, align: 'center' },
-        {field: 'fee_item', title: '收费项目*', width: 160, align: 'center', editor: 'textbox'},
-        {field: 'create_at', title: '创建日期', width: 140, align: 'center'},
-        {field: 'recorder', title: '录入员', width: 90, align: 'center'}
-    ]]
-};
-
-// 字段校验函数 ////////////////////////////////////////////////////////////////////
+// 字段校验函数
 // return value: true - check pass. false - not pass.
 function checkNotEmpty(text) {
     return text;
@@ -205,7 +134,36 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             _pageSize = pageSize;
             _pageNo = pageNumber;
             doAjaxGetData();
-        }
+        },
+        buttons:[{
+            text:'导入', iconCls: 'icon-page_excel',
+            handler:function(){
+                danceModuleName = options.danceModuleName;
+                danceModuleTitle = options.danceModuleTitle;
+                $(document.body).append('<div id="danceCommWin"></div>');
+                $('#danceCommWin').panel({
+                    href:'/static/html/_import_win.html',
+                    onDestroy: function () {
+                        doAjaxGetData();
+                    }
+                });
+            }
+        },{
+            text:'导出', iconCls:' icon-page_white_excel ',
+            handler:function(){
+                danceModuleName = options.danceModuleName;
+                danceModuleTitle = options.danceModuleTitle;
+                $(document.body).append('<div id="danceCommWin"></div>');
+                $('#danceCommWin').panel({
+                    href:'/static/html/_export_win.html'
+                });
+            }
+        },{
+            text:'打印', iconCls:'icon-printer',
+            handler:function(){
+                alert('print');
+            }
+        }]
     });
 
     doAjaxGetData();        /// 开始打开页面，需要查询数据

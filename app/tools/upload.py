@@ -101,5 +101,7 @@ def dispatch_import_file(fn, dance_module_name):
         return import_class(fn)
     elif dance_module_name == 'DanceReceipt':
         return import_receipt(fn)
+    elif dance_module_name == 'dance_teaching_material':
+        return import_teaching_material(fn)
     else:
         return {'errorCode': 201, 'msg': u'Unknown module name %s' % dance_module_name}

@@ -2,7 +2,7 @@
 from flask import request, jsonify, g
 from flask_login import login_required
 from app import app, db
-from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent
+from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent, DcTeachingMaterial
 from views import dance_student_query
 import json
 import datetime
@@ -301,6 +301,49 @@ def dance_receipt_study_get():
                      })
         i += 1
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_teaching_material_get', methods=['POST'])
+@login_required
+def dance_teaching_material_get():
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    if page_no <= 0:    # 补丁
+        page_no = 1
+
+    dcq = DcTeachingMaterial.query.filter_by(company_id=g.user.company_id)
+
+    if 'condition' in request.form and request.form['condition'] != '':
+        dcq = dcq.filter(DcTeachingMaterial.material_name.like('%'+request.form['condition']+'%'))
+
+    total = dcq.count()
+
+    offset = (page_no - 1) * page_size
+    records = dcq.order_by(DcTeachingMaterial.id).limit(page_size).offset(offset)
+    i = offset + 1
+    rows = []
+    for rec in records:
+        rows.append({'no': i, 'id': rec.id, "material_no": rec.material_no, 'material_name': rec.material_name,
+                     'unit': rec.unit, 'price_buy': rec.price_buy, 'price_sell': rec.price_sell,
+                     'summary': rec.summary, 'is_use': rec.is_use, 'remark': rec.remark,
+                     'recorder': rec.recorder, 'tm_type': rec.tm_type
+                     })
+        i += 1
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_teaching_material_query', methods=['POST'])
+@login_required
+def dance_teaching_material_query():
+    name = request.form['condition']
+
+    ret = []
+    records = DcTeachingMaterial.query.filter_by(company_id=g.user.company_id)\
+        .order_by(DcTeachingMaterial.id.asc()).filter(DcTeachingMaterial.material_name.like('%'+name + '%'))
+    for rec in records:
+        ret.append({'value': rec.material_name, 'text': rec.material_name})
+
+    return jsonify(ret)
 
 
 @app.route('/dance_progressbar', methods=['POST'])

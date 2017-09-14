@@ -60,6 +60,8 @@
             title = $.format('导出数据[{0}]', ['班级信息'])
         } else if (danceModuleName == 'DanceStudent') {
             title = $.format('导出数据[{0}]', ['学员列表'])
+        } else {
+            title = $.format('导出数据[{0}]', [danceModuleTitle])
         }
         $('#danceWinExport').window('setTitle', title);
     }

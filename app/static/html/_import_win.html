@@ -89,7 +89,9 @@
             title = $.format('导入数据[{0}]', ['学员列表'])
         } else if (danceModuleName === 'DanceReceipt') {
             title = $.format('导入数据[{0}]', ['收费单（学费）'])
-		}
+		} else {
+            title = $.format('导入数据[{0}]', [danceModuleTitle])
+        }
         $('#danceWinImport').window('setTitle', title);
     }
 

@@ -3,7 +3,7 @@ import xlrd
 import xlwt
 from app import db
 from app.models import DanceStudent, DanceClass, DanceStudentClass, DanceSchool, DanceReceipt, DanceUserSchool,\
-    DcFeeItem, DanceOtherFee, DanceClassReceipt
+    DcFeeItem, DanceOtherFee, DanceClassReceipt, DcTeachingMaterial
 from flask import g
 
 progressbar = {}         # 进度条的值  用户id(key) = {value: 60, sheet: u'收费单'}
@@ -478,6 +478,78 @@ def dc_import_other_fee(worksheet, receipt, classes, feeitem):
     msg = '[' + worksheet.name + u']页 '
     msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
     msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
+    return {'errorCode': 0, 'msg': msg}
+
+
+def import_teaching_material(fn):
+    """
+    :param fn:   文件名，需要导入数据的Excel文件名
+    :return:     errorCode     0 成功， 非0 错误
+                  msg           信息: 'ok' -- 正确，其他错误,
+    """
+    sheet_pages = [u'教材信息']
+    global progressbar
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': sheet_pages[0]}
+
+    columns = ['material_no', 'material_name', 'rem_code', 'unit', 'price_buy',
+               'price_sell', 'summary', 'is_use', 'remark', 'recorder',
+               'tm_type']
+    cols_cn = [u'教材编号', u'教材名称', u'助记码', u'单位', u'进价',
+               u'售价', u'内容简介', u'是否启用', u'备注', u'录入员',
+               u'类别']
+    cols_need = [u'教材编号', u'教材名称', u'单位', u'类别']
+    workbook = xlrd.open_workbook(fn)
+    worksheets = workbook.sheet_names()
+
+    for page in sheet_pages:
+        if page not in worksheets:
+            return {'errorCode': 880, 'msg': u'未找到页面[%s]' % page}
+
+    sh = workbook.sheet_by_name(sheet_pages[0])
+    cnt = sh.nrows
+    if cnt <= 1:
+        return {'errorCode': 2000, 'msg': u"无有效数据！"}
+
+    ck = dc_check_col(sh.row_values(0), cols_cn, cols_need)
+    if ck['errorCode'] != 0:
+        return ck
+    cols_num = ck['excel_idx']
+
+    num_right = 0
+    num_wrong = 0
+
+    # 逆序遍历。第一行为表头需要过滤掉
+    for row in range(cnt - 1, 0, -1):
+        r = sh.row_values(row)
+        if r[0] == u'合计':
+            continue
+
+        parm = {}
+        for i in range(len(cols_num)):
+            parm[columns[i]] = r[cols_num[i]]
+
+        # 特殊列的处理============
+
+        # -----------------------------------------------------------------------------------------
+        # 保证 教材编号+公司id 不能重复
+        has = DcTeachingMaterial.query.filter_by(material_no=parm['material_no'], company_id=g.user.company_id).first()
+        if has is None:
+            record = DcTeachingMaterial(parm)
+            db.session.add(record)
+            num_right += 1
+        else:
+            num_wrong += 1  # 重复数据
+        # -----------------------------------------------------------------------------------------
+
+        value = int((num_wrong+num_right)*100.0/(cnt-1))
+        progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
+
+    progressbar[str(g.user.id)]['value'] = 100
+    msg = u'[%s]页%s' % (sh.name, '' if num_right + num_wrong != 0 else u' 无数据！')
+    msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
+    msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
+
+    db.session.commit()
     return {'errorCode': 0, 'msg': msg}
 
 
