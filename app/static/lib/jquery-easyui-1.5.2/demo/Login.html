@@ -1,0 +1,49 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>jQuery EasyUI</title>
+    <link rel="stylesheet" type="text/css" href="../themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../themes/icon.css">
+    <script type="text/javascript" src="../jquery.min.js"></script>
+    <script type="text/javascript" src="../jquery.easyui.min.js"></script>
+</head>
+<body>
+
+<form method="POST" id="frmLogin" >
+    <div class="login_title">登陆注册页面FORM</div>
+    <label class="login">用户名</label>
+    <input class="easyui-textbox" name="loginUser" id="loginUser"
+        data-options="iconCls:'icon-man',required:true,validType:'email'" />
+
+    <label class="login">密码</label>
+    <input class="easyui-textbox" name="loginPass" id="loginPass"
+        type="password" data-options="iconCls:'icon-lock',required:true" />
+
+    <a href="javascript:void(0);" onclick="submitForm();" style="width:80px;"
+        class="easyui-linkbutton" data-options="iconCls:'icon-ok'" >登陆</a>
+</form>
+
+<script>
+    function submitForm() {
+        $("#frmLogin").form('submit',{
+            url:"actionLogin.php",
+            onSubmit:function() {
+                return $(this).form('validate');
+            },
+            success:function(result) {
+                var data = eval('(' + result + ')');
+                if (data.success === 1) {
+                    window.location.href = "index.php";
+                } else {
+                    $.messager.alert("提示",data.msg);
+                }
+            }
+         });
+    }
+</script>
+</body>
+</html>
+
+
+
