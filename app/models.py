@@ -854,7 +854,8 @@ class DanceReceipt(db.Model):
     counselor = db.Column(db.String(20, collation='NOCASE'))      # 咨询师
     remark = db.Column(db.String(40))
     recorder = db.Column(db.String(20, collation='NOCASE'))
-    fee_mode = db.Column(db.String(6))
+    fee_mode = db.Column(db.String(6))      # 收费方式
+    # 收据号， 收费单类型（学费、演出、普通）
 
     def __init__(self, parm):
         if 'receipt_no' in parm:

@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>舞蹈培训管理系统</title>
-    <link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/default/easyui.css">
-    <link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/icon.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/IconExtension.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/dancemgr.css">
-    <script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.min.js"></script>
-    <script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="{{ url_for('.static', filename='lib/jquery-easyui-1.5.2/themes/default/easyui.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('.static', filename='lib/jquery-easyui-1.5.2/themes/icon.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('.static', filename='css/IconExtension.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('.static', filename='css/dancemgr.css') }}">
+	<script type="text/javascript" src="{{ url_for('.static', filename='lib/jquery-easyui-1.5.2/jquery.min.js') }}"></script>
+	<script type="text/javascript" src="{{ url_for('.static', filename='lib/jquery-easyui-1.5.2/jquery.easyui.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('.static', filename='lib/jquery-easyui-1.5.2/locale/easyui-lang-zh_CN.js') }}"></script>
 
-    <link rel="shortcut icon" href="/static/img/favicon.ico" />
-    <link rel="bookmark" href="/static/img/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="{{ url_for('.static', filename='img/favicon.ico') }}" />
+    <link rel="bookmark" href="{{ url_for('.static', filename='img/favicon.ico') }}" type="image/x-icon" />
 </head>
 <body>
 

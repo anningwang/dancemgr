@@ -367,8 +367,8 @@ def dc_import_class_fee(worksheet, receipt, classes):
     ck = dc_check_col(worksheet.row_values(0), cols_cn)
     if ck['errorCode'] != 0:
         return ck
-    cols_num = ck['excel_idx']
-    col_idx = ck['col_idx']
+    cols_num = list(ck['excel_idx'])
+    col_idx = list(ck['col_idx'])
 
     num_right = 0
     num_wrong = 0
@@ -431,8 +431,8 @@ def dc_import_other_fee(worksheet, receipt, classes, feeitem):
     ck = dc_check_col(worksheet.row_values(0), cols_cn)
     if ck['errorCode'] != 0:
         return ck
-    cols_num = ck['excel_idx']
-    col_idx = ck['col_idx']
+    cols_num = list(ck['excel_idx'])
+    col_idx = list(ck['col_idx'])
 
     # 逆序遍历。第一行为表头需要过滤掉
     for row in range(cnt - 1, 0, -1):
@@ -505,8 +505,8 @@ def dc_import_teaching_fee(worksheet, receipt, classes, material):
     ck = dc_check_col(worksheet.row_values(0), cols_cn, cols_need)
     if ck['errorCode'] != 0:
         return ck
-    cols_num = ck['excel_idx']
-    col_idx = ck['col_idx']
+    cols_num = list(ck['excel_idx'])
+    col_idx = list(ck['col_idx'])
 
     # 逆序遍历。第一行为表头需要过滤掉
     for row in range(cnt - 1, 0, -1):
@@ -562,8 +562,8 @@ def dc_import_student_class(worksheet):
     ck = dc_check_col(worksheet.row_values(0), cols_cn, cols_cn)
     if ck['errorCode'] != 0:
         return ck
-    cols_num = ck['excel_idx']
-    col_idx = ck['col_idx']
+    cols_num = list(ck['excel_idx'])
+    col_idx = list(ck['col_idx'])
 
     num_right = 0
     num_wrong = 0
