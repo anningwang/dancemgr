@@ -10,22 +10,17 @@
 </head>
 <body>
 
-<div class="easyui-panel" style="width:100%;padding: 2px" data-options="footer:'#footer',
-fit:true, border:false
-">
-
-    <div style="margin:2px 0;"></div>
-
+<div class="easyui-panel" style="width:100%;padding: 2px" id="panelReceipt" data-options="footer:'#footer',fit:true, border:false">
     <!-- 上方区域，收费单基本信息  -->
     <table id="dgReceipt_comm" class="easyui-datagrid" title="收费单（学费）" style="width:100%;min-width:1024px" data-options="singleSelect:true,fitColumns:true">
         <thead>
         <tr>
             <th data-options="field:'c1',width:100,align:'center',fixed:true">1</th>
-            <th data-options="field:'c2',width:140,align:'left',fixed:true,editor:'textbox'">2</th>
+            <th data-options="field:'c2',width:240,align:'left',fixed:true,editor:'textbox'">2</th>
             <th data-options="field:'c3',width:100,align:'center',fixed:true">3</th>
-            <th data-options="field:'c4',width:140,align:'left',fixed:true,editor:'textbox'">4</th>
+            <th data-options="field:'c4',width:240,align:'left',fixed:true,editor:'textbox'">4</th>
             <th data-options="field:'c5',width:100,align:'center',fixed:true">5</th>
-            <th data-options="field:'c6',width:140,align:'left',fixed:true,editor:'textbox'">6</th>
+            <th data-options="field:'c6',width:240,align:'left',fixed:true,editor:'textbox'">6</th>
         </tr>
         </thead>
 
@@ -87,7 +82,7 @@ fit:true, border:false
     <div style="margin:2px 0;"></div>
 
     <!-- 上2区域，班级——学费 -->
-    <table id="dg2" class="easyui-datagrid" title="班级——学费" style="width:100%;min-width:1024px" data-options="checkbox:true, rownumbers:true,singleSelect:true,fitColumns:true">
+    <table id="dgStudyFee" class="easyui-datagrid" title="班级——学费" style="width:100%;min-width:1024px" data-options="checkbox:true, rownumbers:true,singleSelect:true,fitColumns:true">
         <thead>
         <tr>
             <th data-options="field:'class_name',width:140,align:'center'">班级名称</th>
@@ -107,7 +102,7 @@ fit:true, border:false
     <div style="margin:2px 0;"></div>
 
     <!-- 上3区域，教材费 -->
-    <table id="dg3" class="easyui-datagrid" title="教材费" style="width:100%;min-width:1024px" data-options="checkbox:true, rownumbers:true,fitColumns:true,singleSelect:true,collapsible:true">
+    <table id="dgTm" class="easyui-datagrid" title="教材费" style="width:100%;min-width:1024px" data-options="checkbox:true, rownumbers:true,fitColumns:true,singleSelect:true,collapsible:true">
         <thead>
         <tr>
             <th data-options="field:'class_name',width:140,align:'center'">班级名称</th>
@@ -122,7 +117,7 @@ fit:true, border:false
     <div style="margin:2px 0;"></div>
 
     <!-- 上4区域，其他费 -->
-    <table id="dg4" class="easyui-datagrid" title="其他费" style="width:100%;min-width:1024px" data-options="checkbox:true, rownumbers:true,fitColumns:true,singleSelect:true,collapsible:true">
+    <table id="dgOtherFee" class="easyui-datagrid" title="其他费" style="width:100%;min-width:1024px" data-options="checkbox:true, rownumbers:true,fitColumns:true,singleSelect:true,collapsible:true">
         <thead>
         <tr>
             <th data-options="field:'ck',checkbox:true"></th>
@@ -134,18 +129,10 @@ fit:true, border:false
         </tr>
         </thead>
     </table> <!-- 上4区域，其他费 -->
-
 </div>
-<div id="footer" style="padding:1px;">
-    <div id="tt">
-        <a href="javascript:void(0)" class="icon-add" onclick="javascript:alert('add')"></a>
-        <a href="javascript:void(0)" class="icon-edit" onclick="javascript:alert('edit')"></a>
-        <a href="javascript:void(0)" class="icon-cut" onclick="javascript:alert('cut')"></a>
-        <a href="javascript:void(0)" class="icon-help" onclick="javascript:alert('help')"></a>
-    </div>
-    <div id="pp" class="easyui-pagination" style="background:#efefef;border:1px solid #ccc;"
-         data-options="total:2000,pageSize:10">
-    </div>
+
+<div id="footer">
+    <div id="pager" class="easyui-pagination"></div>
 </div>
 
 </body>

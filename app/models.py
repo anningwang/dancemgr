@@ -185,11 +185,11 @@ class DanceStudent(db.Model):
     counselor = db.Column(db.String(20))    # 咨询师
     reading_school = db.Column(db.String(40))  # 所在学校
     grade = db.Column(db.String(20))        # 年级
-    phone = db.Column(db.String(20), unique=True)  # 手机号码  不可重复 唯一///
+    phone = db.Column(db.String(20))  # 手机号码  不可重复 唯一///
     tel = db.Column(db.String(20))          # 固定电话  ***保留
     address = db.Column(db.String(60))      # 联系地址
     zipcode = db.Column(db.String(10))      # 邮政编码  ***保留
-    email = db.Column(db.String(30), unique=True)   # email  不可重复 唯一///
+    email = db.Column(db.String(30))   # email  不可重复 唯一///
     qq = db.Column(db.String(20))           # qq
     wechat = db.Column(db.String(60))       # 微信标识  ***保留
     mother_name = db.Column(db.String(14))  # 母亲姓名

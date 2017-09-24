@@ -2,7 +2,8 @@
 from flask import request, jsonify, g
 from flask_login import login_required
 from app import app, db
-from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent, DcTeachingMaterial
+from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent, DcTeachingMaterial,\
+    DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass
 from views import dance_student_query
 import json
 import datetime
@@ -301,6 +302,88 @@ def dance_receipt_study_get():
                      })
         i += 1
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_receipt_study_details_get', methods=['POST'])
+@login_required
+def dance_receipt_study_details_get():
+    """
+    查询 收费单（学费） 详细信息
+        查询条件：rows          每页显示的条数
+                  page          页码，第几页，从1开始
+                                特殊值 -2，表示根据 receipt_id 查询，并求出该 收费单 的序号
+                  receipt_id    收费单id, optional, 当 page==-2,必填
+                  school_id     分校ID
+                  is_training   是否在读
+                  name          学员姓名过滤条件
+    :return:     收费单的详细信息，包括班级——学费，教材费和其他费
+                  errorCode     错误码
+                  msg           错误信息
+                  row           收费单基本信息
+                  total         收费单记录条数 == 1
+                  class_receipt 收费单 关联的 班级收费列表
+    :return:
+    """
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+
+    dcq = DanceReceipt.query
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(DanceReceipt.school_id.in_(school_id_intersection))
+
+    total = dcq.count()
+
+    if page_no <= -2:
+        # 根据 id 获取 收费单 详细信息，并求出其序号。
+        rid = int(request.form['receipt_id'])
+        r = DanceReceipt.query.get(rid)
+        if r is None:
+            return jsonify({'errorCode': 400, 'msg': u'不存在id为[%s]的收费单！' % rid})
+        rec_no = dcq.filter(DanceReceipt.id >= r.id).count()
+    else:
+        if page_no <= 0:  # 容错处理
+            page_no = 1
+        offset = (page_no - 1) * page_size
+        r = dcq.order_by(DanceReceipt.id.desc()).limit(page_size).offset(offset).first()
+        if r is None:
+            return jsonify({'errorCode': 400, 'msg': u'不存在id为[%s]的收费单！' % request.form['receipt_id']})
+        rec_no = offset + 1
+
+    """ 根据学员id查询学员姓名和编号、所在学员名称和学校编号"""
+    stu = DanceStudent.query.filter(DanceStudent.id == r.student_id)\
+        .join(DanceSchool, DanceStudent.school_id == DanceSchool.id)\
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no).first()
+
+    """ 收费单 基本信息 """
+    row = {'id': r.id, 'receipt_no': r.receipt_no, 'school_id': r.school_id,
+           'student_id': r.student_id, 'deal_date': datetime.datetime.strftime(r.deal_date, '%Y-%m-%d'),
+           'receivable_fee': r.receivable_fee, 'teaching_fee': r.teaching_fee, 'other_fee': r.other_fee,
+           'total': r.total, 'real_fee': r.real_fee, 'arrearage': r.arrearage,
+           'counselor': r.counselor, 'remark': r.remark, 'recorder': r.recorder,
+           'no': rec_no, 'school_no': stu[2], 'school_name': stu[1],
+           'student_no': stu[0].sno, 'student_name': stu[0].name,
+           'fee_mode': r.fee_mode}
+
+    """ 查询班级——学费 """
+    clsfee = DanceClassReceipt.query.filter(DanceClassReceipt.receipt_id == r.id)\
+        .join(DanceClass, DanceClass.id == DanceClassReceipt.class_id)\
+        .add_columns(DanceClass.cno, DanceClass.class_name, DanceClass.cost_mode, DanceClass.cost).all()
+    class_receipt = []
+    for cf in clsfee:
+        c = cf[0]
+        class_receipt.append({'id': c.id, 'class_name': cf[2], 'cost_mode': cf[3],
+                              'cost': cf[4], 'term': c.term, 'sum': c.sum,
+                              'discount': c.discount, 'discount_rate': c.discount_rate, 'total': c.total,
+                              'real_fee': c.real_fee, 'arrearage': c.arrearage, 'remark': c.remark})
+
+    return jsonify({"total": total, "row": row, 'errorCode': 0, 'msg': 'ok', 'class_receipt': class_receipt})
 
 
 @app.route('/dance_teaching_material_get', methods=['POST'])
