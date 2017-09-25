@@ -396,6 +396,8 @@ def dance_del_data():
         dcq = DanceSchool.query
     elif who == 'DanceUser':
         dcq = DanceUser.query
+    elif who == 'DanceReceipt':
+        return dc_del_receipt(ids)
     else:
         return jsonify({'errorCode': 1, "msg": "Table not found!"})     # error
 
@@ -405,9 +407,25 @@ def dance_del_data():
             if who == 'DanceUser' and rec.is_creator == 1:
                 return jsonify({'errorCode': 500, 'msg': u'账号[%s]为初始管理员，不能删除！' % rec.name})
             elif who == 'DanceStudent':
-                del_student_class(rec.sno)
+                del_student_class(rec.sno)      # 删除学员的报班信息
             db.session.delete(rec)
 
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
+
+
+def dc_del_receipt(ids):
+    """
+    删除 收费单， 同时关联删除 班级——学费、教材费和其他费（如果存在）。
+    :param ids:     收费单id list
+    :return:
+    """
+    for i in ids:
+        DanceClassReceipt.query.filter_by(receipt_id=i).delete()
+        DanceTeaching.query.filter_by(receipt_id=i).delete()
+        DanceOtherFee.query.filter_by(receipt_id=i).delete()
+
+    DanceReceipt.query.filter(DanceReceipt.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 

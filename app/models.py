@@ -855,7 +855,8 @@ class DanceReceipt(db.Model):
     remark = db.Column(db.String(40))
     recorder = db.Column(db.String(20, collation='NOCASE'))
     fee_mode = db.Column(db.String(6))      # 收费方式
-    # 收据号， 收费单类型（学费、演出、普通）
+    paper_receipt = db.Column(db.String(15))    # 收据号  例如：1347269
+    type = db.Column(db.Integer)    # 收费单类型（学费 1、演出 2、普通 3）
 
     def __init__(self, parm):
         if 'receipt_no' in parm:
@@ -894,6 +895,9 @@ class DanceReceipt(db.Model):
         self.recorder = parm['recorder'] if 'recorder' in parm else g.user.name
         if 'fee_mode' in parm:
             self.fee_mode = parm['fee_mode']
+        if 'paper_receipt' in parm:
+            self.paper_receipt = parm['paper_receipt']
+        self.type = 1 if 'type' not in parm else parm['type']
 
     @staticmethod
     def get_ids(school_ids):

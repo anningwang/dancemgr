@@ -322,6 +322,7 @@ def dance_receipt_study_details_get():
                   row           收费单基本信息
                   total         收费单记录条数 == 1
                   class_receipt 收费单 关联的 班级收费列表
+                  teach_receipt 教材费
     :return:
     """
     page_size = int(request.form['rows'])
@@ -372,7 +373,7 @@ def dance_receipt_study_details_get():
            'fee_mode': r.fee_mode}
 
     """ 查询班级——学费 """
-    clsfee = DanceClassReceipt.query.filter(DanceClassReceipt.receipt_id == r.id)\
+    clsfee = DanceClassReceipt.query.filter_by(receipt_id=r.id)\
         .join(DanceClass, DanceClass.id == DanceClassReceipt.class_id)\
         .add_columns(DanceClass.cno, DanceClass.class_name, DanceClass.cost_mode, DanceClass.cost).all()
     class_receipt = []
@@ -382,8 +383,42 @@ def dance_receipt_study_details_get():
                               'cost': cf[4], 'term': c.term, 'sum': c.sum,
                               'discount': c.discount, 'discount_rate': c.discount_rate, 'total': c.total,
                               'real_fee': c.real_fee, 'arrearage': c.arrearage, 'remark': c.remark})
+    """ 查询 教材费 """
+    teachfee = DanceTeaching.query.filter_by(receipt_id=r.id)\
+        .join(DcTeachingMaterial, DcTeachingMaterial.id == DanceTeaching.material_id)\
+        .add_columns(DcTeachingMaterial.material_name, DcTeachingMaterial.material_no).all()
+    teach = []
+    for tf in teachfee:
+        t = tf[0]
+        class_name = ''
+        class_no = ''
+        if t.class_id != '':
+            cls = DanceClass.query.get(t.class_id).first()
+            if cls is not None:
+                class_name = cls.class_name
+                class_no = cls.cno
+        teach.append({'id': t.id, 'class_name': class_name, 'class_no': class_no,
+                      'is_got': t.is_got, 'fee': t.fee, 'remark': t.remark,
+                      'tm_id': t.material_id, 'tm_name': tf[1], 'tm_no': tf[2]})
+    """ 查询 其他费 """
+    othfee = DanceOtherFee.query.filter_by(receipt_id=r.id).join(DcFeeItem, DcFeeItem.id == DanceOtherFee.fee_item_id).\
+        add_columns(DcFeeItem.fee_item).all()
+    other_fee = []
+    for of in othfee:
+        o = of[0]
+        class_name = ''
+        class_no = ''
+        if o.class_id != '':
+            cls = DanceClass.query.get(o.class_id).first()
+            if cls is not None:
+                class_name = cls.class_name
+                class_no = cls.cno
+        other_fee.append({'id': o.id, 'class_name': class_name, 'class_no': class_no,
+                          'fee_item': of[1], 'fee_item_id': o.fee_item_id, 'summary': o.summary,
+                          'real_fee': o.real_fee, 'remark': o.remark})
 
-    return jsonify({"total": total, "row": row, 'errorCode': 0, 'msg': 'ok', 'class_receipt': class_receipt})
+    return jsonify({"total": total, "row": row, 'errorCode': 0, 'msg': 'ok', 'class_receipt': class_receipt,
+                    'teach_receipt': teach, 'other_fee': other_fee})
 
 
 @app.route('/dance_teaching_material_get', methods=['POST'])

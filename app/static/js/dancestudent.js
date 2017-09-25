@@ -844,12 +844,12 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
                     }
                 }).attr('id', pagerFee+=uid);        // 更新ID
 
+                $('#'+panelFee).attr('id', panelFee+=uid).find('div.datagrid-view2>div.datagrid-header').first().hide();
                 if (uid > 0) {  // 修改，查看
                     doAjaxReceiptDetail();
                 } else {    // 新增
-                    newStudent()
+                    newReceipt()
                 }
-                $('#'+panelFee).attr('id', panelFee+=uid).find('div.datagrid-view2>div.datagrid-header').first().hide();
                 $('#'+dgReceiptComm).attr('id', dgReceiptComm+=uid).datagrid({
                     //onClickCell: onClickContactCell,
                     onBeginEdit: function (index,row) {
@@ -881,11 +881,13 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
                         {iconCls: 'icon-remove', text: '删除行', handler: danceDelRow}
                     ]
                 });
-                $('#'+dgOtherFee).attr('id', dgOtherFee+=uid).datagrid({    // 其他费
-                    toolbar: [{iconCls: 'icon-add', text: '增加行', handler: danceAddRow},
-                        {iconCls: 'icon-remove', text: '删除行', handler: danceDelRow}
-                    ]
-                });
+                if (uid > 0) {
+                    $('#'+dgOtherFee).attr('id', dgOtherFee+=uid).datagrid({    // 其他费
+                        toolbar: [{iconCls: 'icon-add', text: '增加行', handler: danceAddRow},
+                            {iconCls: 'icon-remove', text: '删除行', handler: danceDelRow}
+                        ]
+                    });
+                }
                 $('#'+footer).attr('id', footer+=uid);
                 ajaxGetReceiptExtras();
             }
@@ -948,26 +950,50 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
             // 更新 班级——学费 表
             $('#'+dgStudyFee).datagrid('loadData', data.class_receipt);
 
-            // 更新报班信息 table
-            /*
-            var len = data['class_info'].length;
-            $('#'+dgStu_class).datagrid('loadData', data['class_info']);
-            for(var i = 0; i < 3 - len; i++ ) {
-                $('#'+dgStu_class).datagrid('appendRow', {});
+            // 更新 教材费 表
+            $('#'+dgTm).datagrid('loadData', data.teach_receipt);
+
+            if (data.other_fee.length == 0) {
+                $('#'+panelFee).find('div.panel.datagrid.panel-htop.easyui-fluid').last().hide();
+            } else {
+                $('#'+panelFee).find('div.panel.datagrid.panel-htop.easyui-fluid').last().show();
             }
-            */
+            // 更新 其他费
+            $('#'+dgOtherFee).datagrid('loadData', data.other_fee);
+            var len = data['other_fee'].length;
+            for(var i = 0; i < 2 - len; i++ ) {
+                $('#'+dgOtherFee).datagrid('appendRow', {});
+            }
+            len = data['class_receipt'].length;
+            for(i = 0; i < 2 - len; i++ ) {
+                $('#'+dgStudyFee).datagrid('appendRow', {});
+            }
+
+            len = data['teach_receipt'].length;
+            for(i = 0; i < 2 - len; i++ ) {
+                $('#'+dgTm).datagrid('appendRow', {});
+            }
         }).fail(function(jqXHR, textStatus, errorThrown) {
             var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
             $.messager.alert('提示', msg, 'info');
         });
     }
 
-    function newStudent() {
-        /*
-        for(var i = 0; i < 3; i++ ) {
-            $('#'+dgStu_class).datagrid('appendRow', {});
+    function newReceipt() {
+        var num = 3;
+        var i;
+        for(i = 0; i <num; i++ ) {
+            $('#'+dgStudyFee).datagrid('appendRow', {});
+        }
+        for(i = 0; i < num; i++ ) {
+            $('#'+dgTm).datagrid('appendRow', {});
         }
 
+        var dgOtherFee = $('#'+panelFee).find('div.panel.datagrid.panel-htop.easyui-fluid').last();
+        // 不显示其他费
+        $('#'+panelFee).find('div.panel.datagrid.panel-htop.easyui-fluid').last().hide();
+
+        /*
         //设置时间
         var curr_time = new Date();
         $("#"+stu_register_day).datebox("setValue",danceFormatter(curr_time));
