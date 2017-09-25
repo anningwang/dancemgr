@@ -63,6 +63,21 @@ function danceAddTab(divId, title, tableId) {
     }
 }
 
+/**
+ * 向 datagrid的 rowIndex行，字段 fieldName 对应的单元格，设置文字
+ * @param dg            datagrid id
+ * @param rowIndex      行索引，从0开始
+ * @param fieldName     字段名称
+ * @param text          要设置的文字
+ */
+function setDgCellText(dg, rowIndex, fieldName, text) {
+    var panel =  $(dg).datagrid('getPanel');
+    var tr = panel.find('div.datagrid-body tr[id$="-2-' + rowIndex + '"]');
+    var td = $(tr).children('td[field=' + fieldName + ']');
+    td.children("div").text(text);
+}
+
+
 //----------------------------------------------
 /**
  * 添加或者打开 班级学员名单 Tab 页
@@ -813,9 +828,6 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
     var dcMayHide = 'dcMayHide';
 
     var edIndexStudyFee = undefined;
-
-
-    var editIndexClass = undefined;
     var edIndexContact = undefined;
     var classlist = [];
     var schoollist = [];
@@ -1037,14 +1049,42 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
             }
             $(dg).datagrid('selectRow', index).datagrid('beginEdit', index);
 
+            var edAll = $(dg).datagrid('getEditors',index);
+            var row = $(dg).datagrid("getSelected");
+
+            // 班级名称 editor
             var classEd =  $(dg).datagrid('getEditor', {index:index,field:'class_name'});
             if (classEd){
                 $(classEd.target).combobox('loadData' , classlist);
                 $(classEd.target).combobox({
-                    onClick: onClickClass
+                    onClick: dgStudyFeeOnClickClass
                 });
-                var row = $(dg).datagrid("getSelected");
                 $(classEd.target).combobox('setValue', row['class_no']);
+            }
+
+
+            // 学期长度 editor
+            var edTerm = $(dg).datagrid('getEditor', {index:index,field:'term'});
+            if (edTerm) {
+                $(edTerm.target).textbox({
+                    onChange: function (newValue, oldValue) {
+                        console.log(newValue, ' ', oldValue);
+                    }
+                });
+                $(edTerm.target).textbox('textbox').bind("input propertychange",function(){
+                    var value=$(this).val();
+                    console.log(value);
+                    if (row.cost) {
+                        row.sum = row.cost * value;     // 优惠前学费
+                        row.total = row.sum - (row.discount ? row.discount : 0);    // 应收学费
+                        row.real_fee = row.total; // 实收学费
+                        row.arrearage = row.total - row.real_fee;   // 学费欠费
+                        edAll[4].target.textbox('setValue', row.real_fee);
+                        setDgCellText(dg, index, 'sum', row.sum);
+                        setDgCellText(dg, index, 'total', row.total);
+                        setDgCellText(dg, index, 'arrearage', row.arrearage);
+                    }
+                });
             }
 
             var ed = $(dg).datagrid('getEditor', {index:index,field:field});
@@ -1102,12 +1142,11 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
         }*/
     }
 
-    function endEditingClass(){
-        /*
-        if (editIndexClass != undefined){
-            $('#'+dgStu_class).datagrid('endEdit', editIndexClass);
-            editIndexClass = undefined;
-        }*/
+    function dgStudyFeeEendEditing(){
+        if (edIndexStudyFee != undefined){
+            $('#'+dgStudyFee).datagrid('endEdit', edIndexStudyFee);
+            edIndexStudyFee = undefined;
+        }
     }
 
     function endEditingContact(){
@@ -1119,17 +1158,16 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
         }*/
     }
 
-    function onClickClass(record) {
-        /*
-        var dg = $('#'+dgStu_class);
+    function dgStudyFeeOnClickClass(record) {
+        var dg = $('#'+dgStudyFee);
         var row = $(dg).datagrid("getSelected");
         if (row) {
-            row['class_id'] =  record['class_id'];
+            row['class_no'] =  record['class_no'];
             row['class_name'] = record['class_name'];
-            //row['status'] = '正常';
-            //row['join_date'] = new Date();
-            //console.info(row);
-            var edStatus =  $(dg).datagrid('getEditor', {index:editIndexClass,field:'status'});
+            row.cost_mode = record.cost_mode;
+            row.cost = record.cost;
+            /*
+            var edStatus =  $(dg).datagrid('getEditor', {index:edIndexStudyFee,field:'status'});
             if (edStatus && !$(edStatus.target).combobox('getValue')){
                 $(edStatus.target).combobox('setValue', '正常');
             }
@@ -1137,18 +1175,17 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
             if (edJoin && !$(edJoin.target).combobox('getValue')){
                 $(edJoin.target).datebox('setValue', danceFormatter(new Date()));
             }
-
-            $(dg).datagrid('updateRow', {index: editIndexClass, row: row});
+            */
+            $(dg).datagrid('updateRow', {index: edIndexStudyFee, row: row});
             setTimeout(function(){
-                endEditingClass();
+                dgStudyFeeEendEditing();
             },0);
         }
-        */
     }
     ////////////////////
     function onSave() {
         endEditingContact();
-        endEditingClass();
+        dgStudyFeeEendEditing();
         if (!validateStudentInfo()) {
             return false;
         }

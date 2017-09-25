@@ -426,9 +426,18 @@ def dance_receipt_study_details_get():
 @login_required
 def dance_receipt_study_details_extras():
     """
-    收费单（学费） 详细信息页面，查询附加信息：1. 包括学员所在分校的可报班级（班级编号、班级名称、班级类别）
-            2. 分校id, 分校名称 列表
-    :return:
+    收费单（学费） 详细信息页面，查询附加信息：
+        1. 包括学员所在分校的可报班级（班级编号、班级名称、班级类别、收费模式、收费标准）
+        2. 分校id, 分校名称 列表
+    :return:  {'classlist' : [{'class_no':  '班级编号',
+                        'class_name':  '班级名称',
+                        'class_type': '班级类别',   舞蹈，跆拳道，美术，...
+                        'cost_mode': '收费模式',    1-按课次  2-按课时
+                        'cost': '收费标准'
+                        }],
+                'schoollist': [{'school_id': '分校id',
+                        'school_name': '分校名称'}]
+                }
     """
     dcq = DanceClass.query.filter(DanceClass.is_ended == 0)
 
@@ -450,7 +459,8 @@ def dance_receipt_study_details_extras():
 
     classes = []
     for cls in records:
-        classes.append({'class_no': cls.cno, 'class_name': cls.class_name, 'class_type': cls.class_type})
+        classes.append({'class_no': cls.cno, 'class_name': cls.class_name, 'class_type': cls.class_type,
+                        'cost_mode': cls.cost_mode, 'cost': cls.cost})
 
     schoollist = []
     school_rec = DanceSchool.query.filter(DanceSchool.id.in_(school_id_intersection)).all()
