@@ -810,6 +810,7 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
     var pagerFee = 'pager';
     var footer = 'footer';
     var panelFee = 'panelReceipt';
+    var dcMayHide = 'dcMayHide';
 
 
     var editIndexClass = undefined;
@@ -843,13 +844,7 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
                         }
                     }
                 }).attr('id', pagerFee+=uid);        // 更新ID
-
-                $('#'+panelFee).attr('id', panelFee+=uid).find('div.datagrid-view2>div.datagrid-header').first().hide();
-                if (uid > 0) {  // 修改，查看
-                    doAjaxReceiptDetail();
-                } else {    // 新增
-                    newReceipt()
-                }
+                $('#'+dcMayHide).attr('id', dcMayHide+=uid);
                 $('#'+dgReceiptComm).attr('id', dgReceiptComm+=uid).datagrid({
                     //onClickCell: onClickContactCell,
                     onBeginEdit: function (index,row) {
@@ -889,7 +884,17 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
                     });
                 }
                 $('#'+footer).attr('id', footer+=uid);
+
+                if (uid > 0) {  // 修改，查看
+                    doAjaxReceiptDetail();
+                } else {    // 新增
+                    newReceipt();       // 该函数调用只能放到后面，否则会引起 新增 收据单 表格的表头和内容不对齐
+                }
                 ajaxGetReceiptExtras();
+
+                // 不显示表头
+                // 若不显示表头，无法自动调整宽度。故保留表头，清空表头文字。
+                // $('#'+panelFee).attr('id', panelFee+=uid).find('div.datagrid-view2>div.datagrid-header').first().hide();
             }
         });
     }
@@ -954,9 +959,9 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
             $('#'+dgTm).datagrid('loadData', data.teach_receipt);
 
             if (data.other_fee.length == 0) {
-                $('#'+panelFee).find('div.panel.datagrid.panel-htop.easyui-fluid').last().hide();
+                $('#'+dcMayHide).hide();    // 隐藏 其他费
             } else {
-                $('#'+panelFee).find('div.panel.datagrid.panel-htop.easyui-fluid').last().show();
+                $('#'+dcMayHide).show();
             }
             // 更新 其他费
             $('#'+dgOtherFee).datagrid('loadData', data.other_fee);
@@ -989,9 +994,8 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
             $('#'+dgTm).datagrid('appendRow', {});
         }
 
-        var dgOtherFee = $('#'+panelFee).find('div.panel.datagrid.panel-htop.easyui-fluid').last();
         // 不显示其他费
-        $('#'+panelFee).find('div.panel.datagrid.panel-htop.easyui-fluid').last().hide();
+        $('#'+dcMayHide).hide();    // 隐藏 其他费
 
         /*
         //设置时间
@@ -1449,7 +1453,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
             for (var i = 0; i < row.length; i++) {
                 ids.push(row[i].id);
             }
-            console.log('del:' + ids);
+            //console.log('del:' + ids);
             $.ajax({
                 method: 'POST',
                 url: '/dance_del_data',
