@@ -492,7 +492,7 @@ class DanceClass(db.Model):
     class_type = db.Column(db.String(20))   # 班级类型， 教授类别： 舞蹈、美术、跆拳道、国际象棋等   08
     class_style = db.Column(db.String(20))  # 班级形式： 集体课, 1对1      09
     teacher = db.Column(db.String(20))      # 授课老师姓名        10
-    cost_mode = db.Column(db.String(20))    # 收费模式            11
+    cost_mode = db.Column(db.String(20))    # 收费模式            11     1-按课次  2-按课时
     cost = db.Column(db.Integer)            # 收费标准            12
     plan_students = db.Column(db.Integer)   # 计划招收人数        13
     cur_students = db.Column(db.Integer)    # 当前人数            14

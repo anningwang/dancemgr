@@ -18,8 +18,10 @@
 </head>
 <body class="easyui-layout">
 	<div data-options="region:'north',border:false" style="height:60px;background:#B3DFDA;padding:10px">
-        <a id="btnLogout" href="/logout" class="easyui-linkbutton" data-options="iconCls:'icon-search'">退出</a>
-        当前登录用户：{{ g.user.name }}
+        <div align="right">
+            {{ g.user.name }}
+            <a id="btnLogout" href="/logout" class="easyui-linkbutton" data-options="iconCls:'icon-search'">退出</a>
+        </div>
     </div>
 
 	<div data-options="region:'west',split:true,hideCollapsedContent:false,title:'功能栏'" style="width:200px;">
@@ -44,7 +46,11 @@
             </div>
         </div>
 	</div>
-	<div data-options="region:'south',border:false" style="height:50px;background:#A9FACD;padding:10px;">south region</div>
+	<div data-options="region:'south',border:false" style="height:40px;background:#a4e9c1;padding:10px;">
+        <div align="center">
+            版权所有：华盛星辉©2015-2017
+        </div>
+    </div>
 
 	<div data-options="region:'center'">
         <div class="easyui-tabs" data-options="fit:true,border:false,plain:true" id="danceTabs">

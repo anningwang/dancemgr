@@ -382,7 +382,8 @@ def dance_receipt_study_details_get():
         class_receipt.append({'id': c.id, 'class_name': cf[2], 'cost_mode': cf[3],
                               'cost': cf[4], 'term': c.term, 'sum': c.sum,
                               'discount': c.discount, 'discount_rate': c.discount_rate, 'total': c.total,
-                              'real_fee': c.real_fee, 'arrearage': c.arrearage, 'remark': c.remark})
+                              'real_fee': c.real_fee, 'arrearage': c.arrearage, 'remark': c.remark,
+                              'class_no': cf[1]})
     """ 查询 教材费 """
     teachfee = DanceTeaching.query.filter_by(receipt_id=r.id)\
         .join(DcTeachingMaterial, DcTeachingMaterial.id == DanceTeaching.material_id)\
@@ -419,6 +420,44 @@ def dance_receipt_study_details_get():
 
     return jsonify({"total": total, "row": row, 'errorCode': 0, 'msg': 'ok', 'class_receipt': class_receipt,
                     'teach_receipt': teach, 'other_fee': other_fee})
+
+
+@app.route('/dance_receipt_study_details_extras', methods=['POST'])
+@login_required
+def dance_receipt_study_details_extras():
+    """
+    收费单（学费） 详细信息页面，查询附加信息：1. 包括学员所在分校的可报班级（班级编号、班级名称、班级类别）
+            2. 分校id, 分校名称 列表
+    :return:
+    """
+    dcq = DanceClass.query.filter(DanceClass.is_ended == 0)
+
+    if 'student_id' in request.form:
+        stu = DanceStudent.query.get(request.form['student_id'])
+        if stu is not None:
+            dcq = dcq.filter(DanceClass.school_id == stu.school_id)
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(DanceClass.school_id.in_(school_id_intersection))
+    records = dcq.order_by(DanceClass.id.desc()).all()
+
+    classes = []
+    for cls in records:
+        classes.append({'class_no': cls.cno, 'class_name': cls.class_name, 'class_type': cls.class_type})
+
+    schoollist = []
+    school_rec = DanceSchool.query.filter(DanceSchool.id.in_(school_id_intersection)).all()
+    for sc in school_rec:
+        schoollist.append({'school_id': sc.id, 'school_name': sc.school_name})
+
+    return jsonify({'classlist': classes, 'schoollist': schoollist, 'errorCode': 0, 'msg': 'ok'})
 
 
 @app.route('/dance_teaching_material_get', methods=['POST'])

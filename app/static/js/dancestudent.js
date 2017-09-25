@@ -812,6 +812,8 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
     var panelFee = 'panelReceipt';
     var dcMayHide = 'dcMayHide';
 
+    var edIndexStudyFee = undefined;
+
 
     var editIndexClass = undefined;
     var edIndexContact = undefined;
@@ -857,33 +859,32 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
                     }
                 });
                 $('#'+dgStudyFee).attr('id', dgStudyFee+=uid).datagrid({    // 班级——学费
-                    onClickCell: onClickCell,
+                    onClickCell: onClickCellStudyFee,
                     onEndEdit : function onEndEdit(index, row){
-                        /*
                         var ed = $(this).datagrid('getEditor', {
                             index: index,
                             field: 'class_name'
                         });
                         row.class_name = $(ed.target).combobox('getText');
-                        */
                     },
-                    toolbar: [{iconCls: 'icon-add', text: '增加行', handler: danceAddRow},
-                        {iconCls: 'icon-remove', text: '删除行', handler: danceDelRow}
+                    toolbar: [{iconCls: 'icon-add', text: '增加行', handler:function(){$('#'+dgStudyFee).datagrid('appendRow', {})}},
+                        {iconCls: 'icon-remove', text: '删除行', handler: function () { danceDelRow($('#'+dgStudyFee)); }}
                     ]
                 });
                 $('#'+dgTm).attr('id', dgTm+=uid).datagrid({       // 教材费
-                    toolbar: [{iconCls: 'icon-add', text: '增加行', handler: danceAddRow},
-                        {iconCls: 'icon-remove', text: '删除行', handler: danceDelRow}
+                    toolbar: [{iconCls: 'icon-add', text: '增加行', handler:function(){$('#'+dgTm).datagrid('appendRow', {})}},
+                        {iconCls: 'icon-remove', text: '删除行', handler: function () { danceDelRow($('#'+dgTm)); }}
                     ]
                 });
                 if (uid > 0) {
                     $('#'+dgOtherFee).attr('id', dgOtherFee+=uid).datagrid({    // 其他费
-                        toolbar: [{iconCls: 'icon-add', text: '增加行', handler: danceAddRow},
-                            {iconCls: 'icon-remove', text: '删除行', handler: danceDelRow}
+                        toolbar: [{iconCls: 'icon-add', text: '增加行', handler:function(){$('#'+dgOtherFee).datagrid('appendRow', {})}},
+                            {iconCls: 'icon-remove', text: '删除行', handler: function () { danceDelRow($('#'+dgOtherFee)); }}
                         ]
                     });
                 }
                 $('#'+footer).attr('id', footer+=uid);
+                $('#'+panelFee).attr('id', panelFee+=uid);
 
                 if (uid > 0) {  // 修改，查看
                     doAjaxReceiptDetail();
@@ -891,10 +892,6 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
                     newReceipt();       // 该函数调用只能放到后面，否则会引起 新增 收据单 表格的表头和内容不对齐
                 }
                 ajaxGetReceiptExtras();
-
-                // 不显示表头
-                // 若不显示表头，无法自动调整宽度。故保留表头，清空表头文字。
-                // $('#'+panelFee).attr('id', panelFee+=uid).find('div.datagrid-view2>div.datagrid-header').first().hide();
             }
         });
     }
@@ -904,10 +901,8 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
      */
     function doAjaxReceiptDetail() {
         $.ajax({
-            method: 'POST',
             url: url + '_details_get',
-            async: true,
-            dataType: 'json',
+            async: true, dataType: 'json', method: 'POST',
             data: {'receipt_id': uid, 'page': no, 'rows': 1}
         }).done(function (data) {
             //console.log(data);
@@ -916,38 +911,32 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
             $('#'+pagerFee).pagination({total: data.total, pageNumber:no==-2?data.row.no:no });
 
             // 更新联系方式 table
-            $('#'+dgReceiptComm).datagrid('updateRow',{
-                index: 0,
+            $('#'+dgReceiptComm).datagrid('updateRow',{ index: 0,
                 row: {c2: data.row['receipt_no'],
                     c4: data.row['school_name'],
                     c6: data.row['deal_date']
                 }
-            }).datagrid('updateRow', {
-                index: 1,
+            }).datagrid('updateRow', { index: 1,
                 row: {c2: data.row['student_no'],
                     c4: data.row['student_name'],
                     c6: data.row['receivable_fee']
                 }
-            }).datagrid('updateRow', {
-                index: 2,
+            }).datagrid('updateRow', { index: 2,
                 row: {c2: data.row['teaching_fee'],
                     c4: data.row['other_fee'],
                     c6: data.row['total']
                 }
-            }).datagrid('updateRow', {
-                index: 3,
+            }).datagrid('updateRow', { index: 3,
                 row: {c2: data.row['real_fee'],
                     c4: data.row['arrearage'],
                     c6: data.row['counselor']
                 }
-            }).datagrid('updateRow', {
-                index: 4,
+            }).datagrid('updateRow', { index: 4,
                 row: {c2: data.row['fee_mode'],
                     c4: 'test',     // 收据号
                     c6: data.row['recorder']
                 }
-            }).datagrid('updateRow', {
-                index: 5,
+            }).datagrid('updateRow', { index: 5,
                 row: {c2: data.row['remark']
                 }
             });
@@ -1035,6 +1024,37 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
         */
     }
 
+    /**
+     * 班级——学费 编辑
+     * @param index
+     * @param field
+     */
+    function onClickCellStudyFee(index, field) {
+        if (edIndexStudyFee != index) {
+            var dg = $('#'+dgStudyFee);
+            if (edIndexStudyFee != undefined) {
+                $(dg).datagrid('endEdit', edIndexStudyFee);
+            }
+            $(dg).datagrid('selectRow', index).datagrid('beginEdit', index);
+
+            var classEd =  $(dg).datagrid('getEditor', {index:index,field:'class_name'});
+            if (classEd){
+                $(classEd.target).combobox('loadData' , classlist);
+                $(classEd.target).combobox({
+                    onClick: onClickClass
+                });
+                var row = $(dg).datagrid("getSelected");
+                $(classEd.target).combobox('setValue', row['class_no']);
+            }
+
+            var ed = $(dg).datagrid('getEditor', {index:index,field:field});
+            if (ed){
+                ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
+            }
+            edIndexStudyFee = index;
+        }
+    }
+
     function onClickContactCell(index, field) {
         if (edIndexContact != index) {
             endEditingContact();
@@ -1054,7 +1074,7 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
     function ajaxGetReceiptExtras() {
         $.ajax({
             method: 'POST',
-            url: '/dance_student_details_extras',
+            url: '/dance_receipt_study_details_extras',
             async: true,
             dataType: 'json',
             data: {'student_id': uid, 'school_id': school_id},
@@ -1231,13 +1251,7 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
         */
     }
 
-    function danceAddRow() {
-        $('#'+dgStu_class).datagrid('appendRow', {});
-    }
-
-    function danceDelRow() {
-        //console.log('del row');
-        var dg = $('#'+dgStu_class);
+    function danceDelRow(dg) {
         var rows = dg.datagrid('getRows');
         if (rows.length == 0) {
             $.messager.alert('提示','无数据可删！','info');
@@ -1246,7 +1260,7 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
         var row = dg.datagrid('getSelected');
         var rowToDel = row ? row : rows[rows.length-1]; // 删除选中行 或 最后一行
         var idx = dg.datagrid('getRowIndex', rowToDel);
-        if (rowToDel.class_id) { // 本行有数据，询问是否要删除
+        if (rowToDel.class_name || rowToDel.tm_name || rowToDel.fee_item) { // 本行有数据，询问是否要删除
             $.messager.confirm('确认删除', '确认删除第 '+(idx+1)+' 行数据吗？', function(r){
                 if (r){
                     dg.datagrid('deleteRow', idx);
@@ -1256,6 +1270,7 @@ function danceAddReceiptStudyDetailInfo( page, url, school_id, uid) {
             dg.datagrid('deleteRow', idx);
         }
     }
+
 }
 
 
