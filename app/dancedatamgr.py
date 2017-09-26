@@ -383,7 +383,7 @@ def dance_receipt_study_details_get():
                               'cost': cf[4], 'term': c.term, 'sum': c.sum,
                               'discount': c.discount, 'discount_rate': c.discount_rate, 'total': c.total,
                               'real_fee': c.real_fee, 'arrearage': c.arrearage, 'remark': c.remark,
-                              'class_no': cf[1]})
+                              'class_no': cf[1], 'discount_rate_id': ''})
     """ 查询 教材费 """
     teachfee = DanceTeaching.query.filter_by(receipt_id=r.id)\
         .join(DcTeachingMaterial, DcTeachingMaterial.id == DanceTeaching.material_id)\
@@ -520,3 +520,23 @@ def dance_progressbar():
     value = tools.excel.progressbar[key]['value'] if key in tools.excel.progressbar else 0
     sheet = tools.excel.progressbar[key]['sheet'] if key in tools.excel.progressbar else ''
     return jsonify({'value': value, 'sheet': sheet})
+
+
+@app.route('/api/dance_tm_get', methods=['POST'])
+@login_required
+def dance_tm_get():
+    """
+    查询教材信息
+    :return:
+        {field:'tm_no',title:'教材编号',width:70},
+        {field:'tm_name',title:'教材名称',width:90},
+        {field:'tm_unit',title:'单位',width:40},
+        {field:'tm_priceSell',title:'售价',width:40}
+    """
+    records = DcTeachingMaterial.query.filter_by(company_id=g.user.company_id).all()
+    tm = []
+    for rec in records:
+        tm.append({'id': rec.id, 'tm_no': rec.material_no, 'tm_name': rec.material_name,
+                   'tm_unit': rec.unit, 'tm_price_sell': rec.price_sell})
+
+    return jsonify({'rows': tm, 'total': len(tm), 'errorCode': 0, 'msg': 'ok'})

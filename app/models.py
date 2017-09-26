@@ -967,6 +967,7 @@ class DanceClassReceipt(db.Model):
 
 
 class DanceTeaching(db.Model):
+    """ 学员教材费表 """
     id = db.Column(db.Integer, primary_key=True)
     receipt_id = db.Column(db.Integer, db.ForeignKey('dance_receipt.id'))
     class_id = db.Column(db.Integer)
@@ -974,6 +975,7 @@ class DanceTeaching(db.Model):
     is_got = db.Column(db.String(2), nullable=False)  # 是否领取
     fee = db.Column(db.Integer, nullable=False)     # 教材费
     remark = db.Column(db.String(40))
+    dt_num = db.Column(db.Integer)      # 教材数量
 
     def __init__(self, parm):
         if 'receipt_id' in parm:
@@ -988,6 +990,7 @@ class DanceTeaching(db.Model):
             self.fee = parm['fee']
         if 'remark' in parm:
             self.remark = parm['remark']
+        self.dt_num = parm['dt_num'] if 'dt_num' in parm else 1
 
     def update(self, parm):
         """ 更新教材费，其中收费单 id 不可用更改 """
@@ -1001,6 +1004,8 @@ class DanceTeaching(db.Model):
             self.fee = parm['fee']
         if 'remark' in parm:
             self.remark = parm['remark']
+        if 'dt_name' in parm:
+            self.dt_num = parm['dt_name']
 
 
 class DanceOtherFee(db.Model):

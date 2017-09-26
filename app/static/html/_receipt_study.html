@@ -94,7 +94,7 @@
 							valueField:'class_no',
 							textField:'class_name',
 							panelWidth: 260,
-							// formatter: formatItem,
+							formatter: formatItem,
 							groupField:'class_type'
 					    }
 				    }
@@ -103,7 +103,6 @@
                 <th data-options="field:'cost',width:70,align:'center'">收费标准</th>
                 <th data-options="field:'term',width:70,align:'center',editor: {
                         type:'numberbox',
-                        formatter:function() {console.log(value); return parseFloat(value);},
                         options: { min:0, max:1000 ,precision:2 }
                     }
                     ">学期长度</th>
@@ -133,9 +132,30 @@
             <tr>
                 <th data-options="field:'class_name',width:140,align:'center'">班级名称</th>
                 <th data-options="field:'tm_no',width:70,align:'center'">教材编号</th>
-                <th data-options="field:'tm_name',width:70,align:'center'">教材名称</th>
-                <th data-options="field:'is_got',width:70,align:'center'">是否领取</th>
-                <th data-options="field:'fee',width:100,align:'center'">教材费</th>
+                <th data-options="field:'tm_name',width:100,align:'center',editor: {
+                        type: 'combogrid',
+                        options:{
+                            editable:false,
+                            panelWidth:360,
+                            //value:'006',
+                            idField:'tm_no',
+                            textField:'tm_name',
+                            url:'/api/dance_tm_get',
+                            method: 'post',
+                            columns:[[
+                                {field:'tm_no',title:'教材编号',width:70},
+                                {field:'tm_name',title:'教材名称',width:180},
+                                {field:'tm_unit',title:'单位',width:40},
+                                {field:'tm_price_sell',title:'售价',width:40}
+                            ]]
+                        }
+                    }
+                ">教材名称</th>
+                <th data-options="field:'tm_unit',width:40,align:'center'">单位</th>
+                <th data-options="field:'tm_num',width:40,align:'center'">数量</th>
+                <th data-options="field:'tm_price_sell',width:40,align:'center'">单价</th>
+                <th data-options="field:'is_got',width:50,align:'center'">是否领取</th>
+                <th data-options="field:'fee',width:70,align:'center'">教材费</th>
                 <th data-options="field:'remark',width:140,align:'center'">备注</th>
             </tr>
             </thead>
@@ -170,18 +190,6 @@
     function formatItem(row){
         return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
                 '<span style="color:#888">' + row['class_no'] + '</span>';
-    }
-
-    function numberboxFormatter(value,row,index) {
-        console.log('numberboxFormatter: row=', row, ' index=', index, ' value=', value);
-        if (value == '') {
-            return '';
-        }
-        var number = Number(value);
-        if (isNaN(number)) {
-            return '';
-        }
-        return number;
     }
 
 </script>
