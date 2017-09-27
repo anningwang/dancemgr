@@ -370,7 +370,7 @@ def dance_receipt_study_details_get():
            'counselor': r.counselor, 'remark': r.remark, 'recorder': r.recorder,
            'no': rec_no, 'school_no': stu[2], 'school_name': stu[1],
            'student_no': stu[0].sno, 'student_name': stu[0].name,
-           'fee_mode': r.fee_mode}
+           'fee_mode': r.fee_mode, 'paper_receipt': r.paper_receipt, 'type': r.type}
 
     """ 查询班级——学费 """
     clsfee = DanceClassReceipt.query.filter_by(receipt_id=r.id)\
@@ -431,22 +431,29 @@ def dance_receipt_study_details_extras():
     收费单（学费） 详细信息页面，查询附加信息：
         1. 包括学员所在分校的可报班级（班级编号、班级名称、班级类别、收费模式、收费标准）
         2. 分校id, 分校名称 列表
+        输入参数：
+            student_id      学员id --- 未使用
+            school_id       分校id， all 或者 具体 id
     :return:  {'classlist' : [{'class_no':  '班级编号',
                         'class_name':  '班级名称',
                         'class_type': '班级类别',   舞蹈，跆拳道，美术，...
                         'cost_mode': '收费模式',    1-按课次  2-按课时
                         'cost': '收费标准'
+                        'class_id': 班级id
                         }],
                 'schoollist': [{'school_id': '分校id',
-                        'school_name': '分校名称'}]
+                        'school_name': '分校名称',
+                        'school_no': '分校编号'}]
                 }
     """
     dcq = DanceClass.query.filter(DanceClass.is_ended == 0)
 
+    """
     if 'student_id' in request.form:
         stu = DanceStudent.query.get(request.form['student_id'])
         if stu is not None:
             dcq = dcq.filter(DanceClass.school_id == stu.school_id)
+    """
 
     school_ids = DanceUserSchool.get_school_ids_by_uid()
     if 'school_id' not in request.form or request.form['school_id'] == 'all':
@@ -467,7 +474,7 @@ def dance_receipt_study_details_extras():
     schoollist = []
     school_rec = DanceSchool.query.filter(DanceSchool.id.in_(school_id_intersection)).all()
     for sc in school_rec:
-        schoollist.append({'school_id': sc.id, 'school_name': sc.school_name})
+        schoollist.append({'school_id': sc.id, 'school_name': sc.school_name, 'school_no': sc.school_no})
 
     return jsonify({'classlist': classes, 'schoollist': schoollist, 'errorCode': 0, 'msg': 'ok'})
 
