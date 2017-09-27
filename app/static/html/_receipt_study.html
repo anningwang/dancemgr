@@ -10,34 +10,34 @@
 </head>
 <body>
 
-<div class="easyui-panel" style="width:100%;padding: 2px" id="panelReceipt" data-options="footer:'#footer',fit:true, border:false">
+<div class="easyui-panel" style="width:100%;padding:10px;background: url(/static/img/cross.gif) fixed;" id="panelReceipt" data-options="footer:'#footer',fit:true, border:false">
     <div style="min-width: 1024px">
         <!-- 上方区域，收费单基本信息  -->
         <table id="dgReceipt_comm" class="easyui-datagrid" title="收费单（学费）" style="width:100%;" data-options="singleSelect:true,fitColumns:true">
             <thead>
             <tr>
                 <th data-options="field:'c1',width:100,align:'center'"></th>
-                <th data-options="field:'c2',width:140,align:'left',editor:'textbox'"></th>
+                <th data-options="field:'c2',width:140,align:'left'"></th>
                 <th data-options="field:'c3',width:100,align:'center'"></th>
-                <th data-options="field:'c4',width:140,align:'left',editor:'textbox'"></th>
+                <th data-options="field:'c4',width:140,align:'left'"></th>
                 <th data-options="field:'c5',width:100,align:'center'"></th>
-                <th data-options="field:'c6',width:140,align:'left',editor:'textbox'"></th>
+                <th data-options="field:'c6',width:140,align:'left'"></th>
             </tr>
             </thead>
 
             <tr>  <!-- 第 1 行  -->
                 <td>收费单号</td>
                 <td></td>
-                <td>分校名称</td>
+                <td>分校名称*</td>
                 <td></td>
-                <td>收费日期</td>
+                <td>收费日期*</td>
                 <td></td>
             </tr>
 
             <tr>  <!-- 第 2 行  -->
                 <td>学号</td>
                 <td></td>
-                <td>姓名</td>
+                <td>姓名*</td>
                 <td></td>
                 <td>应收学费</td>
                 <td></td>
@@ -130,7 +130,21 @@
         <table id="dgTm" class="easyui-datagrid" title="教材费" style="width:100%" data-options="rownumbers:true,fitColumns:true,singleSelect:true,collapsible:true">
             <thead>
             <tr>
-                <th data-options="field:'class_name',width:140,align:'center'">班级名称</th>
+                <th data-options="field:'class_name',width:140,align:'center',editor: {
+                        type: 'combogrid',
+                        options:{
+                            editable:false,
+                            panelWidth:280,
+                            idField:'class_id',
+                            textField:'class_name',
+                            //url:'/api/dance_class_get',
+                            //method: 'post',
+                            columns:[[
+                                {field:'class_no',title:'班级编号',width:100},
+                                {field:'class_name',title:'班级名称',width:160}
+                            ]]
+                        }
+                    }">班级名称</th>
                 <th data-options="field:'tm_no',width:70,align:'center'">教材编号</th>
                 <th data-options="field:'tm_name',width:100,align:'center',editor: {
                         type: 'combogrid',
@@ -138,7 +152,7 @@
                             editable:false,
                             panelWidth:360,
                             //value:'006',
-                            idField:'tm_no',
+                            idField:'id',
                             textField:'tm_name',
                             url:'/api/dance_tm_get',
                             method: 'post',
@@ -146,17 +160,32 @@
                                 {field:'tm_no',title:'教材编号',width:70},
                                 {field:'tm_name',title:'教材名称',width:180},
                                 {field:'tm_unit',title:'单位',width:40},
-                                {field:'tm_price_sell',title:'售价',width:40}
+                                {field:'tm_price_sell',title:'单价',width:40}
                             ]]
                         }
                     }
                 ">教材名称</th>
                 <th data-options="field:'tm_unit',width:40,align:'center'">单位</th>
-                <th data-options="field:'tm_num',width:40,align:'center'">数量</th>
-                <th data-options="field:'tm_price_sell',width:40,align:'center'">单价</th>
-                <th data-options="field:'is_got',width:50,align:'center'">是否领取</th>
+                <th data-options="field:'tm_price_sell',width:40,align:'center',editor:'textbox'">单价</th>
+                <th data-options="field:'tm_num',width:40,align:'center',editor:'textbox'">数量</th>
+                <th data-options="field:'is_got',width:50,align:'center',editor:{
+					    type:'combobox',
+					    options:{
+					        editable:false,
+					        panelHeight:'auto',
+						    valueField:'id',
+						    textField:'text',
+						    data: [{
+						            id: '是',
+						            text: '是'
+						        },{
+						            id: '否',
+						            text: '否'
+						        }]
+					    }
+					}">是否领取</th>
                 <th data-options="field:'fee',width:70,align:'center'">教材费</th>
-                <th data-options="field:'remark',width:140,align:'center'">备注</th>
+                <th data-options="field:'remark',width:140,align:'center',editor:'textbox'">备注</th>
             </tr>
             </thead>
         </table> <!-- 上3区域，教材费 -->
