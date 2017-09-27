@@ -1,6 +1,8 @@
 
 'use strict';
 
+var g_dc_username = '';
+
 (function($){
     $.extend({
         /** 使用方法：

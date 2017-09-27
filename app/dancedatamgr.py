@@ -400,7 +400,9 @@ def dance_receipt_study_details_get():
                 class_no = cls.cno
         teach.append({'id': t.id, 'class_name': class_name, 'class_no': class_no,
                       'is_got': t.is_got, 'fee': t.fee, 'remark': t.remark,
-                      'tm_id': t.material_id, 'tm_name': tf[1], 'tm_no': tf[2]})
+                      'tm_id': t.material_id, 'tm_name': tf[1], 'tm_no': tf[2],
+                      'class_id': t.class_id, 'material_id': t.material_id, 'dt_num': t.dt_num})
+
     """ 查询 其他费 """
     othfee = DanceOtherFee.query.filter_by(receipt_id=r.id).join(DcFeeItem, DcFeeItem.id == DanceOtherFee.fee_item_id).\
         add_columns(DcFeeItem.fee_item).all()
@@ -460,7 +462,7 @@ def dance_receipt_study_details_extras():
     classes = []
     for cls in records:
         classes.append({'class_no': cls.cno, 'class_name': cls.class_name, 'class_type': cls.class_type,
-                        'cost_mode': cls.cost_mode, 'cost': cls.cost})
+                        'cost_mode': cls.cost_mode, 'cost': cls.cost, 'class_id': cls.id})
 
     schoollist = []
     school_rec = DanceSchool.query.filter(DanceSchool.id.in_(school_id_intersection)).all()
@@ -524,7 +526,7 @@ def dance_progressbar():
 
 @app.route('/api/dance_tm_get', methods=['POST'])
 @login_required
-def dance_tm_get():
+def api_dance_tm_get():
     """
     查询教材信息
     :return:
@@ -540,3 +542,9 @@ def dance_tm_get():
                    'tm_unit': rec.unit, 'tm_price_sell': rec.price_sell})
 
     return jsonify({'rows': tm, 'total': len(tm), 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/api/dance_class_get', methods=['POST'])
+@login_required
+def api_dance_class_get():
+    pass
