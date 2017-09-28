@@ -17,7 +17,7 @@
             <thead>
             <tr>
                 <th data-options="field:'c1',width:100,align:'center'"></th>
-                <th data-options="field:'c2',width:140,align:'left'"></th>
+                <th data-options="field:'c2',width:140,align:'left',styler:cellStyler"></th>
                 <th data-options="field:'c3',width:100,align:'center'"></th>
                 <th data-options="field:'c4',width:140,align:'left'"></th>
                 <th data-options="field:'c5',width:100,align:'center'"></th>
@@ -53,7 +53,7 @@
             </tr>
 
             <tr>  <!-- 第 4 行  -->
-                <td>实收费</td>
+                <td>实收费合计</td>
                 <td></td>
                 <td>学费欠费</td>
                 <td></td>
@@ -219,6 +219,12 @@
     function formatItem(row){
         return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
                 '<span style="color:#888">' + row['class_no'] + '</span>';
+    }
+
+    function cellStyler(value,row,index){
+        if (value >=0 && index === 3){
+            return 'background-color:#ffee00;color:red;';
+        }
     }
 
 </script>

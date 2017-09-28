@@ -134,6 +134,22 @@ function setDgCellText(dg, rowIndex, fieldName, text) {
     td.children("div").text(text);
 }
 
+
+/**
+ * 取表格中某个单元个的值。使用官方API
+ * @param dg        表格JQuery选择器
+ * @param index     表格行索引，从0开始
+ * @param field     字段
+ * @returns {*}     返回单元格（行 index， 字段 field）的值 
+ */
+function apiGetDgCellText(dg, index, field) {
+    var rows = $(dg).datagrid('getRows');
+    if (index>=0 && index < rows.length) {
+        return rows[index][field];
+    }
+    return '';
+}
+
 /**
  * 向 datagrid的 rowIndex行，字段 fieldName 对应的单元格，设置文字，并设置datagrid内 row 的相应值。
  * @param dg

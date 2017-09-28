@@ -849,7 +849,7 @@ class DanceReceipt(db.Model):
     teaching_fee = db.Column(db.Float)    # 教材费
     other_fee = db.Column(db.Float)    # 其他费
     total = db.Column(db.Float)  # 费用合计
-    real_fee = db.Column(db.Float)  # 应收费
+    real_fee = db.Column(db.Float)  # 实收费合计
     arrearage = db.Column(db.Float)    # 学费欠费
     counselor = db.Column(db.String(20, collation='NOCASE'))      # 咨询师
     remark = db.Column(db.String(40))
