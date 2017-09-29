@@ -3,7 +3,7 @@ from flask import request, jsonify, g
 from flask_login import login_required
 from app import app, db
 from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent, DcTeachingMaterial,\
-    DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass
+    DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass, DanceStudentClass
 from views import dance_student_query
 import json
 import datetime
@@ -375,7 +375,8 @@ def dance_receipt_study_details_get():
     """ 查询班级——学费 """
     clsfee = DanceClassReceipt.query.filter_by(receipt_id=r.id)\
         .join(DanceClass, DanceClass.id == DanceClassReceipt.class_id)\
-        .add_columns(DanceClass.cno, DanceClass.class_name, DanceClass.cost_mode, DanceClass.cost).all()
+        .add_columns(DanceClass.cno, DanceClass.class_name, DanceClass.cost_mode, DanceClass.cost, DanceClass.id)\
+        .all()
     class_receipt = []
     for cf in clsfee:
         c = cf[0]
@@ -383,7 +384,8 @@ def dance_receipt_study_details_get():
                               'cost': cf[4], 'term': c.term, 'sum': c.sum,
                               'discount': c.discount, 'discount_rate': c.discount_rate, 'total': c.total,
                               'real_fee': c.real_fee, 'arrearage': c.arrearage, 'remark': c.remark,
-                              'class_no': cf[1], 'discount_rate_id': ''})
+                              'class_no': cf[1], 'discount_rate_id': '',
+                              'class_id': cf[5]})
     """ 查询 教材费 """
     teachfee = DanceTeaching.query.filter_by(receipt_id=r.id)\
         .join(DcTeachingMaterial, DcTeachingMaterial.id == DanceTeaching.material_id)\
@@ -394,7 +396,7 @@ def dance_receipt_study_details_get():
         class_name = ''
         class_no = ''
         if t.class_id != '':
-            cls = DanceClass.query.get(t.class_id).first()
+            cls = DanceClass.query.get(t.class_id)
             if cls is not None:
                 class_name = cls.class_name
                 class_no = cls.cno
@@ -412,7 +414,7 @@ def dance_receipt_study_details_get():
         class_name = ''
         class_no = ''
         if o.class_id != '':
-            cls = DanceClass.query.get(o.class_id).first()
+            cls = DanceClass.query.get(o.class_id)
             if cls is not None:
                 class_name = cls.class_name
                 class_no = cls.cno
@@ -551,7 +553,74 @@ def api_dance_tm_get():
     return jsonify({'rows': tm, 'total': len(tm), 'errorCode': 0, 'msg': 'ok'})
 
 
-@app.route('/api/dance_class_get', methods=['POST'])
+@app.route('/api/dance_student_query', methods=['POST'])
 @login_required
-def api_dance_class_get():
-    pass
+def api_dance_student_query():
+    """
+    根据 姓名 模糊查询 所有匹配条件的 姓名列表，供操作员选择。
+        查询条件：
+            school_id       分校id，可选。 默认根据用户可以管理的分校查询
+            is_training     是否在读 是/否 （在本培训中心），可选。 默认所有学员
+            name            学员姓名或者姓名拼音首字母。必填。
+    :return:
+            id          学员id
+            name        学员姓名
+            code        学号
+    """
+    dcq = DanceStudent.query
+    name = request.form['name']
+    if name.encode('UTF-8').isalpha():
+        dcq = dcq.filter(DanceStudent.rem_code.like('%' + name + '%'))
+    else:
+        dcq = dcq.filter(DanceStudent.name.like('%' + name + '%'))
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(DanceStudent.school_id.in_(school_id_intersection))
+
+    if 'is_training' in request.form:
+        dcq = dcq.filter_by(is_training=request.form['is_training'])
+
+    ret = []
+    records = dcq.order_by(DanceStudent.id.desc()).all()
+    for rec in records:
+        ret.append({'id': rec.id, 'name': rec.name, 'code': rec.sno})
+
+    return jsonify(ret)
+
+
+@app.route('/api/dance_class_by_student', methods=['POST'])
+@login_required
+def api_dance_class_by_student():
+    """
+    查询学员的报班信息
+        查询条件：
+            student_no      学员编号
+    :return:
+            errorCode,
+            msg,
+            cls         班级列表
+                class_id    班级id
+                class_no    班级编号
+                class_name  班级名称
+                cost_mode   收费模式
+                cost        收费标准
+    """
+    if 'student_no' not in request.form:
+        return jsonify({'errorCode': 601, 'msg': u'Params error, [student_no] required.'})
+    student_no = request.form['student_no']
+    records = DanceStudentClass.query.filter_by(student_id=student_no).filter_by(company_id=g.user.company_id)\
+        .join(DanceClass, DanceStudentClass.class_id == DanceClass.cno).filter(DanceStudentClass.status == u'正常')\
+        .add_columns(DanceClass.id, DanceClass.cno, DanceClass.class_name, DanceClass.cost_mode, DanceClass.cost).all()
+    cls = []
+    for rec in records:
+        cls.append({'class_id': rec[1], 'class_no': rec[2], 'class_name': rec[3],
+                    'cost_mode': rec[4], 'cost': rec[5]})
+
+    return jsonify({'errorCode': 0, 'msg': 'ok', 'cls': cls})
+

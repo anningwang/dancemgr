@@ -151,6 +151,20 @@ function apiGetDgCellText(dg, index, field) {
 }
 
 /**
+ * 设置表格中某个单元个内部存储单元的值。使用官方API
+ * @param dg
+ * @param index
+ * @param field
+ * @param text
+ */
+function apiSetDgCellText(dg, index, field, text) {
+    var rows = $(dg).datagrid('getRows');
+    if (index>=0 && index < rows.length) {
+        rows[index][field] = text;
+    }
+}
+
+/**
  * 向 datagrid的 rowIndex行，字段 fieldName 对应的单元格，设置文字，并设置datagrid内 row 的相应值。
  * @param dg
  * @param rowIndex
@@ -180,6 +194,34 @@ function setDgCellColor(dg, rowIndex, fieldName, color, background) {
     var tr = panel.find('div.datagrid-body tr[id$="-2-' + rowIndex + '"]');
     var td = $(tr).children('td[field=' + fieldName + ']');
     td.children("div").css({"background": background, "color": color});
+}
+
+/**
+ * 设置表格单元格（TD）的背景和字体颜色。 不稳定。会被修改。
+ * @param dg
+ * @param rowIndex
+ * @param fieldName
+ * @param color
+ * @param background
+ */
+function setDgCellColorEx(dg, rowIndex, fieldName, color, background) {
+    var panel =  $(dg).datagrid('getPanel');
+    var tr = panel.find('div.datagrid-body tr[id$="-2-' + rowIndex + '"]');
+    var td = $(tr).children('td[field=' + fieldName + ']');
+    td.css({"background": background, "color": color});
+}
+
+/**
+ * 清除表格单元格（TD）的背景和字体颜色。
+ * @param dg
+ * @param rowIndex
+ * @param fieldName
+ */
+function clearDgCellColorEx(dg, rowIndex, fieldName) {
+    var panel =  $(dg).datagrid('getPanel');
+    var tr = panel.find('div.datagrid-body tr[id$="-2-' + rowIndex + '"]');
+    var td = $(tr).children('td[field=' + fieldName + ']');
+    td.removeAttr("style");
 }
 
 
