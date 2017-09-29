@@ -108,13 +108,13 @@
                     ">学期长度</th>
                 <th data-options="field:'sum',width:100,align:'center'">优惠前学费</th>
                 <th data-options="field:'discount',width:70,align:'center',editor:'textbox'">优惠金额</th>
-                <th data-options="field:'discount_rate',width:70,align:'center',editor:{
+                <th data-options="field:'discRateText',width:70,align:'center',editor:{
 					    type:'combobox',
 					    options:{
 					        editable:false,
 					        panelHeight:'auto',
-						    valueField:'discount_rate_id',
-						    textField:'discount_rate'
+						    valueField:'value',
+						    textField:'text'
 					    }
 					}">折扣率</th>
                 <th data-options="field:'total',width:90,align:'center'">应收学费</th>
@@ -167,7 +167,7 @@
                 ">教材名称</th>
                 <th data-options="field:'tm_unit',width:40,align:'center'">单位</th>
                 <th data-options="field:'tm_price_sell',width:40,align:'center',editor:'textbox'">单价</th>
-                <th data-options="field:'tm_num',width:40,align:'center',editor:'textbox'">数量</th>
+                <th data-options="field:'dt_num',width:40,align:'center',editor:'textbox'">数量</th>
                 <th data-options="field:'is_got',width:50,align:'center',editor:{
 					    type:'combobox',
 					    options:{
@@ -212,6 +212,11 @@
 
 <div id="footer">
     <div id="pager" class="easyui-pagination"></div>
+</div>
+
+<div id="mm" class="easyui-menu">
+    <div>工程量 </div>
+    <div>人工 </div>
 </div>
 
 <script type="text/javascript">

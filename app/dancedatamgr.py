@@ -384,12 +384,14 @@ def dance_receipt_study_details_get():
                               'cost': cf[4], 'term': c.term, 'sum': c.sum,
                               'discount': c.discount, 'discount_rate': c.discount_rate, 'total': c.total,
                               'real_fee': c.real_fee, 'arrearage': c.arrearage, 'remark': c.remark,
-                              'class_no': cf[1], 'discount_rate_id': '',
-                              'class_id': cf[5]})
+                              'class_no': cf[1], 'class_id': cf[5],
+                              'discRateText': ('' if c.discount_rate is None else str(c.discount_rate*100)+'%'),
+                              })
     """ 查询 教材费 """
     teachfee = DanceTeaching.query.filter_by(receipt_id=r.id)\
         .join(DcTeachingMaterial, DcTeachingMaterial.id == DanceTeaching.material_id)\
-        .add_columns(DcTeachingMaterial.material_name, DcTeachingMaterial.material_no).all()
+        .add_columns(DcTeachingMaterial.material_name, DcTeachingMaterial.material_no, DcTeachingMaterial.unit,
+                     DcTeachingMaterial.price_sell).all()
     teach = []
     for tf in teachfee:
         t = tf[0]
@@ -403,7 +405,8 @@ def dance_receipt_study_details_get():
         teach.append({'id': t.id, 'class_name': class_name, 'class_no': class_no,
                       'is_got': t.is_got, 'fee': t.fee, 'remark': t.remark,
                       'tm_id': t.material_id, 'tm_name': tf[1], 'tm_no': tf[2],
-                      'class_id': t.class_id, 'material_id': t.material_id, 'dt_num': t.dt_num})
+                      'class_id': t.class_id, 'material_id': t.material_id, 'dt_num': t.dt_num,
+                      'tm_unit': tf[3], 'tm_price_sell': tf[4]})
 
     """ 查询 其他费 """
     othfee = DanceOtherFee.query.filter_by(receipt_id=r.id).join(DcFeeItem, DcFeeItem.id == DanceOtherFee.fee_item_id).\
@@ -479,6 +482,58 @@ def dance_receipt_study_details_extras():
         schoollist.append({'school_id': sc.id, 'school_name': sc.school_name, 'school_no': sc.school_no})
 
     return jsonify({'classlist': classes, 'schoollist': schoollist, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_receipt_study_modify', methods=['POST'])
+@login_required
+def dance_receipt_study_modify():
+    """
+    新增/更新 收费单（学费）。
+    输入参数：
+        {row: {},                   收费单基本信息
+        class_receipt: Array,       班级——学费
+        teach_receipt: Array,       教材费
+        other_fee: Array}           其他费
+    :return:
+        {errorCode :  0  or 其他。 0 表示成功
+        msg : 'ok' or 其他错误
+        }
+    """
+    json_str = request.form['data']
+    obj = json.loads(json_str)
+    if 'row' not in obj or 'class_receipt' not in obj or 'teach_receipt' not in obj or 'other_fee' not in obj:
+        return jsonify({'errorCode': 202, 'msg': u'参数错误！'})
+    if 'id' not in obj['row'] or obj['row']['id'] <= 0:
+        return dance_receipt_study_add(obj)
+
+    # 修改记录
+    # return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
+
+    return jsonify({'errorCode': 100, 'msg': u'还未实现修改记录！'})
+
+
+def dance_receipt_study_add(recpt):
+    new_r = DanceReceipt(recpt['row'])
+    db.session.add(new_r)
+
+    r = DanceReceipt.query.filter(DanceReceipt.receipt_no == new_r.receipt_no,
+                                  DanceReceipt.school_id == recpt['row']['school_id']).first()
+    print r.id, r.receipt_no
+    for cr in recpt['class_receipt']:
+        cr['receipt_id'] = r.id
+        new_cr = DanceClassReceipt(cr)
+        db.session.add(new_cr)
+    for tr in recpt['teach_receipt']:
+        tr['receipt_id'] = r.id
+        new_tr = DanceTeaching(tr)
+        db.session.add(new_tr)
+    for other in recpt['other_fee']:
+        other['receipt_id'] = r.id
+        new_other = DanceOtherFee(other)
+        db.session.add(new_other)
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'成功增加记录！', 'id': r.id})
 
 
 @app.route('/dance_teaching_material_get', methods=['POST'])

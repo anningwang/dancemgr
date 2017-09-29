@@ -18,6 +18,21 @@ def get_stu_no(school_no, date=None):
     return sno_str
 
 
+def dc_gen_code(school_no, tag, date=None):
+    """
+    生产单据编号，包括学号，班级编号，收费单号等。
+    :param school_no:       分校编号，例如：0001,0002
+    :param tag:             单据标识，例如学号为 XH， 收费单为 SFD
+    :param date:            日期，单据上附加日期信息
+    :return:        生成的编号
+    """
+    if date is None:
+        date = datetime.datetime.today()
+    data_str = datetime.datetime.strftime(date, '%y%m%d-')
+    code_str = '%04d-%s-%s' % (school_no, tag, data_str)
+    return code_str
+
+
 def utc2local(utc_st):
     """
     UTC时间转本地时间（+8:00）

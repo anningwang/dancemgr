@@ -34,12 +34,12 @@ function danceAddTab(divId, title, tableId) {
 /**
  * 将 value 转换为 保留小数点后4位的字符串 和 百分百字符串。
  * @param value
- * @returns {{discount_rate_id: string, discount_rate: string}}
+ * @returns {{value: string, text: string}}
  */
 function dcCalcDiscountRate(value) {
     var str = Number(value).toFixed(4);
     str = dcTrimStringZero(str);
-    return {'discount_rate_id': str, 'discount_rate': str * 100 + '%' };
+    return {'value': str, 'text': str * 100 + '%' };
 }
 
 
@@ -773,18 +773,17 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
     var panelFee = 'panelReceipt';
     var dcMayHide = 'dcMayHide';
 
-    var dgParam = {};       // { dgReceiptComm: {idx: editIndex, dg: $('#'+dgReceiptComm) } }
+    var dgParam = {};  // { dgReceiptComm: {idx: editIndex, dg: $('#'+dgReceiptComm) } }
     var edIndexStudyFee = undefined;
     var edIndexTm = undefined;
 
     var classlist = [];
     var schoollist = [];
 
-    var dcDiscRateOrig = [ {discount_rate_id: '1', discount_rate:'100%' },    // 折扣率
-        {discount_rate_id: '0.95', discount_rate:'95%' }];
+    var dcDiscRateOrig = [ {value: '1', text:'100%' },    // 折扣率
+        {value: '0.95', text:'95%' }];
     var dcDiscRate = dcDiscRateOrig.slice();
     var oldDetails = {}; // {"total": 100, "row": {}, 'errorCode': 0, 'msg': 'ok', 'class_receipt': [],'teach_receipt': [], 'other_fee': []}
-    var dcSchoolId = null;
 
     var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
@@ -817,7 +816,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                         if (index === 0) {
                             var ed = $(this).datagrid('getEditor', { index: index, field: 'c4' });
                             row.c4 = $(ed.target).combobox('getText');
-                            dcSchoolId = parseInt($(ed.target).combobox('getValue'));
+                            row.school_id = parseInt($(ed.target).combobox('getValue'));
                         }
                     },
                     onAfterEdit: function (index,row,changes) {
@@ -835,30 +834,44 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                             onClick: function (record) {    // 折扣率 combobox 点击事件
                                 var dg = $('#'+dgStudyFee);
                                 var row = $(dg).datagrid("getSelected");
-                                row.discount_rate_id =  record.discount_rate_id;
-                                row.discount_rate = record.discount_rate;
+                                row.discRateText =  record.text;
+                                row.discount_rate = record.value;
                                 var term = $(editors[1].target).textbox('getValue');
                                 dgStudyFeeUpdateCellByTerm(edIndexStudyFee, term);
                             }
-                        }).combobox('loadData', dcDiscRate).combobox('setValue', row['discount_rate_id']);
+                        }).combobox('loadData', dcDiscRate).combobox('setValue', row['discount_rate']);
                     },
                     onEndEdit: function onEndEdit(index, row){
                         //console.log('onEndEdit', row);
                         var ed = $(this).datagrid('getEditor', { index: index, field: 'class_name' });
                         row.class_name = $(ed.target).combobox('getText');
 
-                        var edDiscRate = $(this).datagrid('getEditor', { index: index, field: 'discount_rate' });
-                        row.discount_rate = $(edDiscRate.target).combobox('getText');
+                        var edDiscRate = $(this).datagrid('getEditor', { index: index, field: 'discRateText' });
+                        row.discRateText = $(edDiscRate.target).combobox('getText');
 
                         row.term = dcTrimZero(row.term);
                     },
                     toolbar: [{iconCls: 'icon-add', text: '增加行', handler:function(){
-                        $('#'+dgStudyFee).datagrid('appendRow', {})
-                    }},
+                        $('#'+dgStudyFee).datagrid('appendRow', {})}},
                         {iconCls: 'icon-remove', text: '删除行', handler: function () {
                             dgStudyFeeEndEditing();
                             danceDelRow($('#'+dgStudyFee));
-                        }}]
+                        }},'-',{id : 'sb'+uid
+                        }
+                    ]
+                });
+
+                var mm = 'mm';
+                $('#'+mm).attr('id', mm+=uid).menu('appendItem', {
+                    text: uid>0 ? 'New Item' : '哈哈',
+                    iconCls: 'icon-ok',
+                    onclick: function(){alert('New Item')}
+                });
+
+                $('#sb'+uid).menubutton({
+                    text: '添加已报班级',
+                    iconCls: 'icon-ok',
+                    menu: '#'+mm
                 });
 
                 $('#'+dgTm).attr('id', dgTm+=uid).datagrid({       // 教材费   -----------------------------------------
@@ -881,7 +894,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                         var editors = dg.datagrid('getEditors', index);
                         var edClass = editors[0].target;   // 注意序号 ***  班级名称
                         $(edClass).combogrid({
-                            data: filterClassBySchool(classlist, dcSchoolId)
+                            data: filterClassBySchool(classlist)
                         }).combogrid('setValue', row.class_id);
 
                         var edTmName = editors[1].target;   // 注意序号 *** 教材名称
@@ -894,9 +907,9 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                                 row.tm_no = record.tm_no;
                                 row.tm_unit = record.tm_unit;
                                 row.tm_price_sell = record.tm_price_sell;
-                                if (!row.tm_num) {
-                                    row.tm_num = 1;
-                                    setDgCellTextEx(dg, edIndexTm, 'tm_num', row.tm_num);
+                                if (!row.dt_num) {
+                                    row.dt_num = 1;
+                                    setDgCellTextEx(dg, edIndexTm, 'dt_num', row.dt_num);
                                 }
                                 if (!row.is_got) {
                                     row.is_got = '是';
@@ -969,6 +982,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
         });
     }
 
+
     /**
      * 查询 收费单 详细信息
      */
@@ -981,55 +995,58 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
             async: true, dataType: 'json', method: 'POST',
             data: cond
         }).done(function (data) {
-            //console.log(data);
-            // 更新翻页控件 页码
-            $('#'+pagerFee).pagination({total: data.total, pageNumber:no===-2?data.row.no:no });
+            console.log('recpt:', data);
+            if(data.errorCode != 0 ){
+                $.messager.alert('提示', data.msg, 'info');
+            }else{
+                // 更新翻页控件 页码
+                $('#'+pagerFee).pagination({total: data.total, pageNumber:no===-2?data.row.no:no });
 
-            $.extend(true, oldDetails, data);
-            dcSchoolId = data.row.school_id;
+                $.extend(true, oldDetails, data);
 
-            // 更新 收费单（学费）基本信息
-            $('#'+dgReceiptComm).datagrid('updateRow',{ index: 0,
-                row: {c2: data.row['receipt_no'],
-                    c4: data.row['school_name'],
-                    c6: data.row['deal_date']
-                }
-            }).datagrid('updateRow', { index: 1,
-                row: {c2: data.row['student_no'],
-                    c4: data.row['student_name'],
-                    c6: data.row['receivable_fee'],
-                    student_id: data.row.student_id
-                }
-            }).datagrid('updateRow', { index: 2,
-                row: {c2: data.row['teaching_fee'],
-                    c4: data.row['other_fee'],
-                    c6: data.row['total']
-                }
-            }).datagrid('updateRow', { index: 3,
-                row: {c2: data.row['real_fee'],
-                    c4: data.row['arrearage'],
-                    c6: data.row['counselor']
-                }
-            }).datagrid('updateRow', { index: 4,
-                row: {c2: data.row['fee_mode'],
-                    c4: data.row['paper_receipt'],     // 收据号
-                    c6: data.row['recorder']
-                }
-            }).datagrid('updateRow', { index: 5,
-                row: {c2: data.row['remark']
-                }
-            });
-            dcSetArrearageStyle();
-            //apiSetDgCellText('#'+dgReceiptComm, 1, 'student_id', data.row.student_id);
+                // 更新 收费单（学费）基本信息
+                $('#'+dgReceiptComm).datagrid('updateRow',{ index: 0,
+                    row: {c2: data.row['receipt_no'],
+                        c4: data.row['school_name'],
+                        c6: data.row['deal_date'],
+                        school_id: data.row.school_id
+                    }
+                }).datagrid('updateRow', { index: 1,
+                    row: {c2: data.row['student_no'],
+                        c4: data.row['student_name'],
+                        c6: data.row['receivable_fee'],
+                        student_id: data.row.student_id
+                    }
+                }).datagrid('updateRow', { index: 2,
+                    row: {c2: data.row['teaching_fee'],
+                        c4: data.row['other_fee'],
+                        c6: data.row['total']
+                    }
+                }).datagrid('updateRow', { index: 3,
+                    row: {c2: data.row['real_fee'],
+                        c4: data.row['arrearage'],
+                        c6: data.row['counselor']
+                    }
+                }).datagrid('updateRow', { index: 4,
+                    row: {c2: data.row['fee_mode'],
+                        c4: data.row['paper_receipt'],     // 收据号
+                        c6: data.row['recorder']
+                    }
+                }).datagrid('updateRow', { index: 5,
+                    row: {c2: data.row['remark']
+                    }
+                });
+                dcSetArrearageStyle();
 
-            dgLoadData('#'+dgStudyFee, data['class_receipt']);  // 更新 班级——学费 表
-            dgLoadData('#'+dgTm, data['teach_receipt']);        // 更新 教材费 表
+                dgLoadData('#'+dgStudyFee, data['class_receipt']);  // 更新 班级——学费 表
+                dgLoadData('#'+dgTm, data['teach_receipt']);        // 更新 教材费 表
 
-            if (data['other_fee'].length === 0) {
-                $('#'+dcMayHide).hide();    // 隐藏 其他费
-            } else {
-                $('#'+dcMayHide).show();
-                dgLoadData('#'+dgOtherFee, data['other_fee']);       // 更新 其他费
+                if (data['other_fee'].length === 0) {
+                    $('#'+dcMayHide).hide();    // 隐藏 其他费
+                } else {
+                    $('#'+dcMayHide).show();
+                    dgLoadData('#'+dgOtherFee, data['other_fee']);       // 更新 其他费
+                }
             }
         }).fail(function(jqXHR, textStatus, errorThrown) {
             var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
@@ -1083,8 +1100,8 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                 $(eds.target).combobox({
                     editable:false,panelHeight:'auto',
                     valueField: 'school_id',textField: 'school_name',
-                    data:filterSchool(schoollist, dcSchoolId)
-                }).combobox('setValue', dcSchoolId);
+                    data:filterSchool(schoollist)
+                }).combobox('setValue', row.school_id);
             }else if (index === 1) {
                 var edname = $(this).datagrid('getEditor', {index:index,field:'c4'});
                 $(edname.target).combobox({
@@ -1183,7 +1200,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
             var classEd =  $(dg).datagrid('getEditor', {index:index,field:'class_name'});
             if (classEd){
                 $(classEd.target).combobox({
-                    data: filterClassBySchool(classlist, dcSchoolId),
+                    data: filterClassBySchool(classlist),
                     onClick: dgStudyFeeOnClickClass
                 }).combobox('setValue', row['class_no']);
             }
@@ -1202,7 +1219,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                 });
             }
 
-            // 优惠金额，修改优化金额后，更新 折扣率、应收金额、实收金额和学费欠费。
+            // 优惠金额，修改优惠金额后，更新 折扣率、应收金额、实收金额和学费欠费。
             $(editors[2].target).textbox('textbox').bind("input propertychange",function(){
                 dgStudyFeeUpdateCellByDiscount(index, $(this).val());
 
@@ -1212,7 +1229,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                 dcDiscRate = dcDiscRateOrig.slice();
                 var found = false;
                 for (var i = 0; i < dcDiscRate.length; i++) {
-                    if (dr.discount_rate_id === dcDiscRate[i].discount_rate_id) {
+                    if (dr.text === dcDiscRate[i].text) {
                         found = true;
                         break;
                     }
@@ -1220,10 +1237,9 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                 if (!found) {
                     dcDiscRate.push(dr);
                 }
-                $(editors[3].target).combobox('loadData', dcDiscRate);
-                row.discount_rate_id = dr.discount_rate_id;
-                row.discount_rate = dr.discount_rat;
-                $(editors[3].target).combobox('setValue', dr.discount_rate_id);
+                $(editors[3].target).combobox('loadData', dcDiscRate).combobox('setValue', dr.value);
+                row.discRateText = dr.text;
+                row.discount_rate = dr.value;
             });
 
             // 实收学费
@@ -1295,16 +1311,16 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
         }
 
         if (parms && (parms.num || parms.num === '')) {
-            row.tm_num = parms.num;
+            row.dt_num = parms.num;
         } else {
-            var edNum = $(dg).datagrid('getEditor', {index: index, field: 'tm_num'});       // 教材 数量
+            var edNum = $(dg).datagrid('getEditor', {index: index, field: 'dt_num'});       // 教材 数量
             if (edNum) {
-                row.tm_num = parseInt($(edNum.target).textbox('getValue'));
+                row.dt_num = parseInt($(edNum.target).textbox('getValue'));
             }
         }
 
-        if (row.tm_price_sell && row.tm_num){
-            row.fee = dcTrimZero(row.tm_price_sell * row.tm_num);
+        if (row.tm_price_sell && row.dt_num){
+            row.fee = dcTrimZero(row.tm_price_sell * row.dt_num);
             setDgCellTextEx(dg, index, 'fee', row.fee);
         } else {
             row.fee = '';
@@ -1352,7 +1368,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
             var oldArrearage = row.arrearage;
 
             row.sum = dcTrimZero(row.cost * value);     // 优惠前学费
-            row.discount = row.discount_rate_id ? Math.round(row.sum *(1-row.discount_rate_id)) : '';
+            row.discount = row.discount_rate ? Math.round(row.sum *(1-row.discount_rate)) : '';
             if (row.discount === 0) {
                 row.discount = '';
             }
@@ -1481,25 +1497,22 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
     function setSchoolName(schoollist) {
         if (uid <=0 && schoollist.length) {
             setDgCellTextWithRowData($('#'+dgReceiptComm), 0, 'c4', schoollist[0].school_name);
-            dcSchoolId = schoollist[0].school_id;
+            apiSetDgCellText('#'+dgReceiptComm, 0, 'school_id', schoollist[0].school_id);
         }
     }
 
     /**
      * 根据分校id（内部使用分校编号）过滤班级。 新增记录时，选择分校后，只能选择选定分校的班级。
      * @param classList     班级列表。可能属于多个分校。
-     * @param school_id     分校id
      * @returns {*}
      */
-    function filterClassBySchool(classList, school_id) {
-        if (condition.school_id !== 'all') { // 已经锁定分校及班级，故不需要过滤班级
-            return classList;
-        }
+    function filterClassBySchool(classList) {
+        var school_id = apiGetDgCellText('#'+dgReceiptComm, 0, 'school_id');
 
         var class_no_filter = null;
         for(var m = 0; m < schoollist.length; m++){
             if(school_id === schoollist[m].school_id){
-                class_no_filter = schoollist[m].school_no + '-BJ-';
+                class_no_filter = schoollist[m]['school_no'] + '-BJ-';
                 break;
             }
         }
@@ -1516,15 +1529,14 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
     /**
      * 根据分校id过滤分校信息。用于修改记录时，只保留学员所在的分校。即，学员报名后，不能修改学员的分校。
      * @param schoolList
-     * @param school_id
      */
-    function filterSchool(schoolList, school_id) {
+    function filterSchool(schoolList) {
         if (uid <= 0) {
             return schoolList;
         }
-
+        var school_id = apiGetDgCellText('#'+dgReceiptComm, 0, 'school_id');
         for(var m = 0; m < schoollist.length; m++){
-            if(school_id === schoollist[m].school_id){
+            if(school_id == schoollist[m].school_id){
                 return [schoollist[m]];
             }
         }
@@ -1592,26 +1604,24 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                 stuInfo.class.push(delClass[n]);
             }
         }
-
+        */
         $.ajax({
             method: "POST",
-            url: url,
-            data: { data: JSON.stringify(stuInfo) }
+            url: '/dance_receipt_study_modify',
+            data: { data: JSON.stringify(newRecpt) }
         }).done(function(data) {
             if (data.errorCode == 0) {
-                if (uid > 0) {
-                    doAjaxReceiptDetail();  // 更新 收费单 信息
+                if(uid <=0) {
+                    uid = data.id;
                 }
-                $.messager.alert('提示', data.msg, 'info');
+                doAjaxReceiptDetail();  // 更新 收费单 信息
             } else {
                 $.messager.alert('提示', data.msg, 'info');
             }
         }).fail(function(jqXHR, textStatus, errorThrown) {
-            console.log(jqXHR);
-            var msg = $.format("请求失败。错误码：{1}({2}) ", [jqXHR.status, errorThrown]);
+            var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
             $.messager.alert('提示', msg, 'info');
         });
-        */
     }
 
     /**
@@ -1650,10 +1660,11 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
         var dgRecpt = $('#'+dgReceiptComm);
         var rows = dgRecpt.datagrid('getRows');
         var recpt = {row: {}, class_receipt: [], teach_receipt: [], other_fee: []};
-        recpt.row.school_id = dcSchoolId;
+        recpt.row.id = oldDetails.row ? oldDetails.row.id : 0;
+        recpt.row.school_id = rows[0].school_id;
         recpt.row.school_name = rows[0].c4;
         recpt.row.deal_date = rows[0].c6;
-        recpt.row.student_id = apiGetDgCellText(dgRecpt, 1, 'student_id');
+        recpt.row.student_id = rows[1].student_id;
         recpt.row.student_name = rows[1].c4;
         recpt.row.receivable_fee = rows[1].c6;
         recpt.row.teaching_fee = rows[2].c2;
@@ -1869,6 +1880,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
     var _pageSize = 30;
     // var _pageNo = 1;
     var ccId = 'cc' + datagridId;       // Combo box,姓名查找框ID
+    var sbId = 'sb' + datagridId;
     var dg = $('#' + datagridId);       // datagrid ID
 
     var dance_condition = '';               // 主datagrid表查询条件
@@ -1880,7 +1892,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
         url: url + '_get',
         //fitColumns: true,
         pagination: true,   // True to show a pagination toolbar on datagrid bottom.
-        // singleSelect: true, // True to allow selecting only one row.
+        singleSelect: true, // True to allow selecting only one row.
         loadMsg: '正在加载数据...',
         border: false,
         striped: true,
@@ -1895,9 +1907,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
             handler:function(){
                 var cond = $(dg).datagrid('options').queryParams;
                 options.addEditFunc(options.page, url, cond);
-            }
-        }, {
-            iconCls:'icon-edit', text:"编辑/查看",  ///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            }}, {iconCls:'icon-edit', text:"编辑/查看",  ///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             handler:function(){
                 var row = $(dg).datagrid('getSelections');
                 if (row.length === 0) {
@@ -1907,8 +1917,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
                     var cond = $(dg).datagrid('options').queryParams;
                     options.addEditFunc(options.page, url, cond, row[0].id);
                 }
-            }
-        },
+            }},
             {iconCls:'icon-remove', text:"删除",  handler:doDel}, '-',
             {text: options.queryText + '<input id=' + ccId + '>'},
             {iconCls: 'icon-search', text:"查询", handler: function () {
@@ -1916,7 +1925,8 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
                 $.extend(cond, $(dg).datagrid('options').queryParams);
                 cond['name'] = dance_condition;
                 $(dg).datagrid('load', cond);
-            }}
+            }}, '-',
+            {text: '<input id=' + sbId + '>'}
         ],
         columns: options.columns
     });
@@ -1941,6 +1951,14 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
             $('#'+ccId).combobox('loadData', data);
         },'json');
     }
+
+    $('#'+sbId).switchbutton({
+        onText: '单选', offText: '多选', checked: true,
+        onChange: function (checked) {
+            var gridOpts = $(dg).datagrid('options');
+            gridOpts.singleSelect = checked;
+        }
+    });
 
     var pager = dg.datagrid('getPager');
     $(pager).pagination({
