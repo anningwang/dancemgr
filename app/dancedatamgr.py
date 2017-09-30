@@ -323,6 +323,12 @@ def dance_receipt_study_details_get():
                   total         收费单记录条数 == 1
                   class_receipt 收费单 关联的 班级收费列表
                   teach_receipt 教材费
+                  cls           学员已报班信息
+                    {'class_id':
+                    'class_no':
+                    'class_name':
+                    'cost_mode':
+                     'cost': }
     :return:
     """
     page_size = int(request.form['rows'])
@@ -425,8 +431,18 @@ def dance_receipt_study_details_get():
                           'fee_item': of[1], 'fee_item_id': o.fee_item_id, 'summary': o.summary,
                           'real_fee': o.real_fee, 'remark': o.remark})
 
+    """ 查询学员已报班信息 """
+    student_no = stu[0].sno
+    records = DanceStudentClass.query.filter_by(student_id=student_no).filter_by(company_id=g.user.company_id)\
+        .join(DanceClass, DanceStudentClass.class_id == DanceClass.cno).filter(DanceStudentClass.status == u'正常')\
+        .add_columns(DanceClass.id, DanceClass.cno, DanceClass.class_name, DanceClass.cost_mode, DanceClass.cost).all()
+    cls = []
+    for rec in records:
+        cls.append({'class_id': rec[1], 'class_no': rec[2], 'class_name': rec[3],
+                    'cost_mode': rec[4], 'cost': rec[5]})
+
     return jsonify({"total": total, "row": row, 'errorCode': 0, 'msg': 'ok', 'class_receipt': class_receipt,
-                    'teach_receipt': teach, 'other_fee': other_fee})
+                    'teach_receipt': teach, 'other_fee': other_fee, 'cls': cls})
 
 
 @app.route('/dance_receipt_study_details_extras', methods=['POST'])
