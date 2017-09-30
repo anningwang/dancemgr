@@ -624,6 +624,39 @@ def api_dance_tm_get():
     return jsonify({'rows': tm, 'total': len(tm), 'errorCode': 0, 'msg': 'ok'})
 
 
+@app.route('/api/dance_fee_item_get', methods=['POST'])
+@login_required
+def api_dance_fee_item_get():
+    """
+    查询收费项目
+        输入        无
+    :return:
+        rows:       记录      -- for combogrid  返回值必须带 total 和 rows
+            combobox 则不需要 total 和 rows
+        {'rows': fee_item, 'total': len(fee_item), 'errorCode': 0, 'msg': 'ok'}
+            fee_id      收费项目id
+            fee_item    收费项目
+        total:      记录条数    -- for combogrid
+        errorCode:  错误码，0 成功， 其他失败
+        msg:        错误信息，'ok' 成功
+    """
+
+    if 'ctrl' not in request.form or request.form['ctrl'] == 'combobox':
+        ctrl = 'combobox'
+    else:
+        ctrl = 'combogrid'
+
+    records = DcFeeItem.query.filter_by(company_id=g.user.company_id).all()
+    fee_item = []
+    for rec in records:
+        fee_item.append({'fee_id': rec.id, 'fee_item': rec.fee_item})
+
+    if ctrl == 'combogrid':
+        return jsonify({'rows': fee_item, 'total': len(fee_item), 'errorCode': 0, 'msg': 'ok'})
+    else:
+        return jsonify(fee_item)
+
+
 @app.route('/api/dance_student_query', methods=['POST'])
 @login_required
 def api_dance_student_query():

@@ -198,11 +198,31 @@
                 <thead>
                 <tr>
                     <th data-options="field:'ck',checkbox:true"></th>
-                    <th data-options="field:'class_name',width:140,align:'center'">班级名称</th>
-                    <th data-options="field:'fee_item',width:70,align:'center'">收费项目</th>
-                    <th data-options="field:'summary',width:70,align:'center'">摘要</th>
-                    <th data-options="field:'real_fee',width:70,align:'center'">收费金额</th>
-                    <th data-options="field:'remark',width:140,align:'center'">备注</th>
+                    <th data-options="field:'class_name',width:140,align:'center',editor: {
+                        type: 'combogrid',
+                        options:{
+                            editable:false,
+                            panelWidth:280,
+                            idField:'class_id',
+                            textField:'class_name',
+                            columns:[[
+                                {field:'class_no',title:'班级编号',width:100},
+                                {field:'class_name',title:'班级名称',width:160}
+                            ]]
+                        }
+                    }">班级名称</th>
+                    <th data-options="field:'fee_item',width:70,align:'center',editor:{
+					    type:'combobox',
+					    options:{
+					        editable:false,
+					        panelHeight:'auto',
+						    valueField:'fee_id',
+						    textField:'fee_item',
+					    }
+					}">收费项目</th>
+                    <th data-options="field:'summary',width:70,align:'center',editor:'textbox'">摘要</th>
+                    <th data-options="field:'real_fee',width:70,align:'center',editor:'textbox'">收费金额</th>
+                    <th data-options="field:'remark',width:140,align:'center',editor:'textbox'">备注</th>
                 </tr>
                 </thead>
             </table> <!-- 上4区域，其他费 -->

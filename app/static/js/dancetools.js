@@ -236,6 +236,11 @@ function dcTrimZero(value) {
     return dcTrimStringZero(str);
 }
 
+function dcPrecision(value) {
+    var str = Number(value).toFixed(2);
+    return parseFloat(str);
+}
+
 /**
  * 删除浮点数字符串小数点最后多余的0.若为整数，同时删除小数点。
  * @param str
