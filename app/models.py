@@ -854,7 +854,7 @@ class DanceReceipt(db.Model):
     counselor = db.Column(db.String(20, collation='NOCASE'))      # 咨询师
     remark = db.Column(db.String(40))
     recorder = db.Column(db.String(20, collation='NOCASE'))
-    fee_mode = db.Column(db.String(6))      # 收费方式
+    fee_mode = db.Column(db.String(6))      # 收费方式 支付宝/微信/刷卡/现金
     paper_receipt = db.Column(db.String(15))    # 收据号  例如：1347269
     type = db.Column(db.Integer)    # 收费单类型（学费 1、演出 2、普通 3）
 
@@ -879,8 +879,7 @@ class DanceReceipt(db.Model):
             self.deal_date = datetime.datetime.today()
         self.receivable_fee\
             = param['receivable_fee'] if 'receivable_fee' in param and param['receivable_fee'] != '' else None
-        self.teaching_fee \
-            = param['teaching_fee'] if 'teaching_fee' in param and param['teaching_fee'] != '' else None
+        self.teaching_fee = param['teaching_fee'] if 'teaching_fee' in param and param['teaching_fee'] != '' else None
         self.other_fee = param['other_fee'] if 'other_fee' in param and param['other_fee'] != '' else None
         self.total = param['total'] if 'total' in param and param['total'] != '' else None
         self.real_fee = param['real_fee'] if 'real_fee' in param and param['real_fee'] != '' else None
@@ -907,8 +906,7 @@ class DanceReceipt(db.Model):
             self.deal_date = datetime.datetime.today()
         self.receivable_fee\
             = param['receivable_fee'] if 'receivable_fee' in param and param['receivable_fee'] != '' else None
-        self.teaching_fee \
-            = param['teaching_fee'] if 'teaching_fee' in param and param['teaching_fee'] != '' else None
+        self.teaching_fee = param['teaching_fee'] if 'teaching_fee' in param and param['teaching_fee'] != '' else None
         self.other_fee = param['other_fee'] if 'other_fee' in param and param['other_fee'] != '' else None
         self.total = param['total'] if 'total' in param and param['total'] != '' else None
         self.real_fee = param['real_fee'] if 'real_fee' in param and param['real_fee'] != '' else None
@@ -974,8 +972,12 @@ class DanceClassReceipt(db.Model):
     def __init__(self, param):
         if 'receipt_id' in param:
             self.receipt_id = param['receipt_id']
+        else:
+            raise Exception('[receipt_id] required!')
         if 'class_id' in param:
             self.class_id = param['class_id']
+        else:
+            raise Exception('[class_id] required!')
         if 'term' in param:
             self.term = param['term']
         if 'sum' in param:
@@ -1055,6 +1057,8 @@ class DanceTeaching(db.Model):
     def __init__(self, param):
         if 'receipt_id' in param:
             self.receipt_id = param['receipt_id']
+        else:
+            raise Exception('[receipt_id] required!')
         if 'class_id' in param:
             self.class_id = param['class_id']
         if 'material_id' in param:
@@ -1098,6 +1102,8 @@ class DanceOtherFee(db.Model):
     def __init__(self, param):
         if 'receipt_id' in param:
             self.receipt_id = param['receipt_id']
+        else:
+            raise Exception('[receipt_id] required!')
         if 'class_id' in param:
             self.class_id = param['class_id']
         if 'fee_item_id' in param:

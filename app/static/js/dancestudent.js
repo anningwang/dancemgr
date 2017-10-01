@@ -1344,6 +1344,9 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
         var i;
         var fa = [];
         for(i=0; i< data.length; i++){
+            if (!data[i].class_name){   // 过滤名称为空的
+                continue;
+            }
             fa.push(data[i].class_no);
         }
         var change = dcFindChange(_oldMenuIds[mmId], fa);
@@ -1375,41 +1378,6 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
         }else {
             $(mbId).menubutton('disable');
         }
-        /*
-
-        if (_oldMenuIds.hasOwnProperty(mmId)){
-            for(var k=0; k<_oldMenuIds[mmId].length; k++){
-                var itemEl = $('#' + _oldMenuIds[mmId][k])[0];  // the menu item element
-                //var item = $(mmId).menu('getItem', itemEl);
-                $(mmId).menu('removeItem',itemEl);
-            }
-        }
-        _oldMenuIds[mmId] = [];
-        var hasItem = false;
-        for(var i = 0; i < data.length; i++){
-            if (!data[i].class_name){
-                continue;
-            }
-            $(mmId).menu('appendItem', {
-                text: data[i].class_name,
-                class_name:data[i].class_name,
-                iconCls: 'icon-ok',
-                id: data[i].class_no,
-                class_id: data[i].class_id,
-                class_no: data[i].class_no,
-                cost_mode: data[i].cost_mode,
-                cost: data[i].cost
-            });
-            _oldMenuIds[mmId].push(data[i].class_no);
-            hasItem = true;
-        }
-
-        if (hasItem) {
-            $(mbId).menubutton('enable');
-        }else {
-            $(mbId).menubutton('disable');
-        }
-        */
     }
 
     function updateMenu(data) {
@@ -1864,34 +1832,6 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
         var newRecpt = packageReceipt();
         console.log(newRecpt);
 
-/*
-        var newDetails = {row: {}, class_receipt: [], teach_receipt: [], other_fee: []};    // 修改记录，发送给服务器
-
-        stuInfo = {'student': {}, 'class': []};
-        packageStudentInfo();
-        //console.log(stuInfo);
-
-        var url =  uid > 0 ? '/dance_student_modify' : '/dance_student_add';
-        if (uid > 0) {
-            stuInfo.student.id = oldStu.rows.id;
-            // find student's class for delete
-            var delClass = [];
-            var m,n;
-            for (m=0; m<oldStu.class_info.length; m++) {
-                for (n=0; n<stuInfo.class.length; n++) {
-                    if ('id' in stuInfo.class[n] && stuInfo.class[n].id == oldStu.class_info[m].id){
-                        break;
-                    }
-                }
-                if (n>=stuInfo.class.length) {  // not find
-                    delClass.push({'id': oldStu.class_info[m].id, 'oper': 2})
-                }
-            }
-            for (n=0; n<delClass.length; n++){
-                stuInfo.class.push(delClass[n]);
-            }
-        }
-        */
         $.ajax({
             method: "POST",
             url: '/dance_receipt_study_modify',
@@ -1902,6 +1842,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                     $('#'+btnAdd).linkbutton('enable');
                     uid = data.id;
                 }
+                $.messager.alert('提示', data.msg, 'info');
                 doAjaxReceiptDetail();  // 更新 收费单 信息
             } else {
                 $.messager.alert('提示', data.msg, 'info');

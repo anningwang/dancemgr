@@ -513,6 +513,7 @@ def dance_receipt_study_modify():
         other_fee: Array}           其他费
     :return:
         {errorCode :  0  or 其他。 0 表示成功
+            301     收费单记录id不存在！
         msg : 'ok' or 其他错误
         }
     """
@@ -521,11 +522,18 @@ def dance_receipt_study_modify():
     if 'row' not in obj or 'class_receipt' not in obj or 'teach_receipt' not in obj or 'other_fee' not in obj:
         return jsonify({'errorCode': 202, 'msg': u'参数错误！'})
     if 'id' not in obj['row'] or obj['row']['id'] <= 0:
-        return dance_receipt_study_add(obj)
+        return dance_receipt_study_add(obj)     # 新增记录
 
     # 修改记录
-    """ 修改 班级——学费 """
+    """ 修改收费单 基本情况 """
     recpt_id = obj['row']['id']
+    re = DanceReceipt.query.get(recpt_id)
+    if re is None:
+        return jsonify({'errorCode': 301, 'msg': u'收费单记录id[%d]不存在！' % recpt_id})
+    re.update(obj['row'])
+    db.session.add(re)
+
+    """ 修改 班级——学费 """
     cls = obj['class_receipt']
     records = DanceClassReceipt.query.filter_by(receipt_id=recpt_id).all()
     old_ids = []
@@ -533,6 +541,7 @@ def dance_receipt_study_modify():
         old_ids.append({'id': rec.id})
     change = dc_records_changed(old_ids, cls, 'id')
     for i in change['add']:
+        cls[i]['receipt_id'] = recpt_id
         nr = DanceClassReceipt(cls[i])
         db.session.add(nr)
     for i in change['upd']:
@@ -540,8 +549,7 @@ def dance_receipt_study_modify():
         nr.update(cls[i])
         db.session.add(nr)
     for i in change['del']:
-        nr = DanceClassReceipt.query.get(old_ids[i]['id'])
-        db.session.delete(nr)
+        DanceClassReceipt.query.filter_by(id=old_ids[i]['id']).delete()
 
     """ 修改 教材费 """
     dt = obj['teach_receipt']
@@ -551,6 +559,7 @@ def dance_receipt_study_modify():
         old_ids.append({'id': rec.id})
     change = dc_records_changed(old_ids, dt, 'id')
     for i in change['add']:
+        dt[i]['receipt_id'] = recpt_id
         nr = DanceTeaching(dt[i])
         db.session.add(nr)
     for i in change['upd']:
@@ -558,8 +567,7 @@ def dance_receipt_study_modify():
         nr.update(dt[i])
         db.session.add(nr)
     for i in change['del']:
-        nr = DanceTeaching.query.get(old_ids[i]['id'])
-        db.session.delete(nr)
+        DanceTeaching.query.filter_by(id=old_ids[i]['id']).delete()
 
     """ 修改 其他费 """
     oth = obj['other_fee']
@@ -569,6 +577,7 @@ def dance_receipt_study_modify():
         old_ids.append({'id': rec.id})
     change = dc_records_changed(old_ids, oth, 'id')
     for i in change['add']:
+        oth[i]['receipt_id'] = recpt_id
         nr = DanceOtherFee(oth[i])
         db.session.add(nr)
     for i in change['upd']:
@@ -576,8 +585,7 @@ def dance_receipt_study_modify():
         nr.update(oth[i])
         db.session.add(nr)
     for i in change['del']:
-        nr = DanceOtherFee.query.get(old_ids[i]['id'])
-        db.session.delete(nr)
+        DanceOtherFee.query.filter_by(id=old_ids[i]['id']).delete()
 
     db.session.commit()
     return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
