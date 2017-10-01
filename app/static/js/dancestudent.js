@@ -782,7 +782,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
 
     var dcDiscRateOrig = [ {value: '1', text:'100%' },    // 折扣率
         {value: '0.95', text:'95%' }];
-    var dcDiscRate = dcDiscRateOrig.slice();
+    var dcDiscRate = dcDiscRateOrig.slice(0);
     var oldDetails = {}; // {"total": 100, "row": {}, 'errorCode': 0, 'msg': 'ok', 'class_receipt': [],'teach_receipt': [], 'other_fee': []}
 
     var mmClass = 'mmClass';    // 菜单id
@@ -887,7 +887,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                         if (idx === null && !rows[i].class_name){
                             idx = i;
                         }
-                        if (item.id == rows[i].class_id){
+                        if (item.class_name === rows[i].class_name){
                             $.messager.alert('提示', '班级已经存在', 'info');
                             return;
                         }
@@ -1138,7 +1138,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                 dgLoadData('#'+dgTm, data['teach_receipt']);        // 更新 教材费 表
 
                 if (data['other_fee'].length === 0) {
-                    //$('#'+dcMayHide).hide();    // 隐藏 其他费
+                    $('#'+dcMayHide).hide();    // 隐藏 其他费
                 } else {
                     $('#'+dcMayHide).show();
                     dgLoadData('#'+dgOtherFee, data['other_fee']);       // 更新 其他费
@@ -1157,24 +1157,18 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
     function newReceipt() {
         var num = 3;
         var i;
-        //var emptyData = [];
 
-        // deleteRow 	index 	Delete a row.
         $('#'+dgStudyFee).datagrid('loadData', []);
         for(i = 0; i <num; i++ ) {
-            //emptyData.push({});
             $('#'+dgStudyFee).datagrid('appendRow', {});
         }
-        //$('#'+dgStudyFee).datagrid('loadData', emptyData);
-        //$('#'+dgTm).datagrid('loadData', emptyData);
+
         $('#'+dgTm).datagrid('loadData', []);
         for(i = 0; i < num; i++ ) {
             $('#'+dgTm).datagrid('appendRow', {});
         }
 
-        $('#'+dcMayHide).show();
-        //$('#'+dcMayHide).hide();    // 隐藏 其他费
-        //var dg = $('#'+dgReceiptComm);
+        $('#'+dcMayHide).hide();    // 隐藏 其他费
 
         // 更新 收费单（学费）基本信息
         $('#'+dgReceiptComm).datagrid('updateRow',{ index: 0,
@@ -1206,12 +1200,6 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
             row: {c2: ''
             }
         });
-
-        //setDgCellTextWithRowData(dg, 0, 'c2', '[自动生成]');
-        //setDgCellTextWithRowData(dg, 0, 'c6', danceFormatter(new Date()));
-        //setDgCellTextWithRowData(dg, 1, 'c2', '[关联学员姓名]');  // 学号
-        //setDgCellTextWithRowData(dg, 1, 'c4', '');  // 姓名
-        //setDgCellTextWithRowData(dg, 4, 'c6', '[关联当前用户]');
 
         $('#'+btnAdd).linkbutton('disable');
         oldDetails = {};
@@ -1349,7 +1337,46 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
 
     // 以下对菜单的代码。当原菜单和要修改后的菜单相同时，会造成 mmTm为空，mmOth多一个（多了mmTm的菜单内容）
     var _oldMenuIds = {};
-    function mmAddItems(mmId, data, mbId) {       // 菜单 菜单 菜单 菜单 菜单 菜单 菜单 菜单 菜单 菜单 菜单
+    function mmAddItems(mmId, data, mbId) {       // 菜单<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        if(!_oldMenuIds.hasOwnProperty(mmId)){
+            _oldMenuIds[mmId] = [];
+        }
+        var i;
+        var fa = [];
+        for(i=0; i< data.length; i++){
+            fa.push(data[i].class_no);
+        }
+        var change = dcFindChange(_oldMenuIds[mmId], fa);
+        for(var m = 0; m < change[0].length; m++){ // 删除
+            var itemEl = $('#'+change[0][m])[0];  // the menu item element
+            $(mmId).menu('removeItem',itemEl);
+        }
+        for(i = 0; i < change[1].length; i++){ // 增加
+            for(var j = 0; j < data.length; j++){
+                if(change[1][i] === data[j].class_no){
+                    $(mmId).menu('appendItem', {
+                        text: data[j].class_name,
+                        class_name:data[j].class_name,
+                        iconCls: 'icon-ok',
+                        id: data[j].class_no,
+                        class_id: data[j].class_id,
+                        class_no: data[j].class_no,
+                        cost_mode: data[j].cost_mode,
+                        cost: data[j].cost
+                    });
+                    break;
+                }
+            }
+        }
+        _oldMenuIds[mmId] = fa.slice(0);
+
+        if (change[1].length || change[2].length) {
+            $(mbId).menubutton('enable');
+        }else {
+            $(mbId).menubutton('disable');
+        }
+        /*
+
         if (_oldMenuIds.hasOwnProperty(mmId)){
             for(var k=0; k<_oldMenuIds[mmId].length; k++){
                 var itemEl = $('#' + _oldMenuIds[mmId][k])[0];  // the menu item element
@@ -1382,6 +1409,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
         }else {
             $(mbId).menubutton('disable');
         }
+        */
     }
 
     function updateMenu(data) {

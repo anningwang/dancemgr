@@ -56,3 +56,46 @@ def local2utc(local_st):
     time_struct = time.mktime(local_st.timetuple())
     utc_st = datetime.datetime.utcfromtimestamp(time_struct)
     return utc_st
+
+
+def dc_records_changed(old, new, field):
+    """
+    用于增量修改记录。判断在原纪录基础上的删、改、增情况。
+       var aa = [{id: 1, name:'Tom'},{id:2, name:'Peter'}]; 原始记录
+       var bb = [{name:'Alice'}, {id:2, name: 'PP'}];       最终记录。
+       var chg = dcRecordsChanged(aa, bb, 'id')
+       则需要增加bb中的第一条，修改为bb中第二条，删除aa中第一个条。
+       返回值为 {add:[0], del:[0], upd:[1]}
+    :param old:     原始记录 [{}, {}]
+    :param new:     修改后的记录  [ {}, {}]
+    :param field:   比较字段，用于判断增、改、删
+    :return:    {'add': list, 'del': list, 'upd': list}
+    """
+    add_idx = []
+    del_idx = []
+    upd_idx = []
+    ori = []
+    cur = []
+
+    for i in old:
+        if field in i:
+            ori.append(i[field])
+    for i in range(len(new)):
+        if field in new[i]:
+            cur.append(new[i][field])
+        else:
+            add_idx.append(i)
+    del_key = list(set(ori).difference(set(cur)))
+    upd_key = list(set(ori).intersection(set(cur)))
+    for j in range(len(del_key)):
+        for i in range(len(old)):
+            if field in old[i] and old[i][field] == del_key[j]:
+                del_idx.append(i)
+                break
+    for j in range(len(upd_key)):
+        for i in range(len(new)):
+            if field in new[i] and new[i][field] == upd_key[j]:
+                upd_idx.append(i)
+                break
+
+    return {'add': add_idx, 'del': del_idx, 'upd': upd_idx}

@@ -8,6 +8,7 @@ from views import dance_student_query
 import json
 import datetime
 import tools.excel
+from tools.tools import dc_records_changed
 
 
 ERROR_CODE_USER_IS_EXIST = 100
@@ -523,12 +524,74 @@ def dance_receipt_study_modify():
         return dance_receipt_study_add(obj)
 
     # 修改记录
-    # return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
+    """ 修改 班级——学费 """
+    recpt_id = obj['row']['id']
+    cls = obj['class_receipt']
+    records = DanceClassReceipt.query.filter_by(receipt_id=recpt_id).all()
+    old_ids = []
+    for rec in records:
+        old_ids.append({'id': rec.id})
+    change = dc_records_changed(old_ids, cls, 'id')
+    for i in change['add']:
+        nr = DanceClassReceipt(cls[i])
+        db.session.add(nr)
+    for i in change['upd']:
+        nr = DanceClassReceipt.query.get(cls[i]['id'])
+        nr.update(cls[i])
+        db.session.add(nr)
+    for i in change['del']:
+        nr = DanceClassReceipt.query.get(old_ids[i]['id'])
+        db.session.delete(nr)
 
-    return jsonify({'errorCode': 100, 'msg': u'还未实现修改记录！'})
+    """ 修改 教材费 """
+    dt = obj['teach_receipt']
+    records = DanceTeaching.query.filter_by(receipt_id=recpt_id).all()
+    old_ids = []
+    for rec in records:
+        old_ids.append({'id': rec.id})
+    change = dc_records_changed(old_ids, dt, 'id')
+    for i in change['add']:
+        nr = DanceTeaching(dt[i])
+        db.session.add(nr)
+    for i in change['upd']:
+        nr = DanceTeaching.query.get(dt[i]['id'])
+        nr.update(dt[i])
+        db.session.add(nr)
+    for i in change['del']:
+        nr = DanceTeaching.query.get(old_ids[i]['id'])
+        db.session.delete(nr)
+
+    """ 修改 其他费 """
+    oth = obj['other_fee']
+    records = DanceOtherFee.query.filter_by(receipt_id=recpt_id).all()
+    old_ids = []
+    for rec in records:
+        old_ids.append({'id': rec.id})
+    change = dc_records_changed(old_ids, oth, 'id')
+    for i in change['add']:
+        nr = DanceOtherFee(oth[i])
+        db.session.add(nr)
+    for i in change['upd']:
+        nr = DanceOtherFee.query.get(oth[i]['id'])
+        nr.update(oth[i])
+        db.session.add(nr)
+    for i in change['del']:
+        nr = DanceOtherFee.query.get(old_ids[i]['id'])
+        db.session.delete(nr)
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
 
 
 def dance_receipt_study_add(recpt):
+    """
+    新增 收费单（学费）
+    :param recpt:   收费单信息，记录参数同 dance_receipt_study_modify
+    :return:
+        {errorCode :  0  表示成功
+        msg : '成功增加记录！'
+        }
+    """
     new_r = DanceReceipt(recpt['row'])
     db.session.add(new_r)
 

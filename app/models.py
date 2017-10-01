@@ -210,84 +210,84 @@ class DanceStudent(db.Model):
     father_wechat = db.Column(db.String(60))    # 微信标识  ***保留
     school_id = db.Column(db.Integer, db.ForeignKey('dance_school.id'))
 
-    def __init__(self, params):
-        if 'school_id' in params:
-            self.school_id = int(params['school_id'])
-        self.sno = self.create_sno() if u'sno' not in params else params[u'sno']
-        if u'school_no' in params:
-            self.school_no = params[u'school_no']
-        if u'school_name' in params:
-            self.school_name = params[u'school_name']
-        if u'consult_no' in params:
-            self.consult_no = params[u'consult_no']
-        if u'name' in params:
-            self.name = params[u'name']
-        if u'rem_code' in params:
-            self.rem_code = params[u'rem_code']
-        if u'gender' in params:
-            self.gender = params[u'gender']
-        if u'degree' in params:
-            self.degree = params[u'degree']
-        if u'birthday' in params:
-            self.birthday = params[u'birthday']
-        if u'register_day' in params:
-            self.register_day = datetime.datetime.strptime(params[u'register_day'], '%Y-%m-%d')
+    def __init__(self, param):
+        if 'school_id' in param:
+            self.school_id = int(param['school_id'])
+        self.sno = self.create_sno() if u'sno' not in param else param[u'sno']
+        if u'school_no' in param:
+            self.school_no = param[u'school_no']
+        if u'school_name' in param:
+            self.school_name = param[u'school_name']
+        if u'consult_no' in param:
+            self.consult_no = param[u'consult_no']
+        if u'name' in param:
+            self.name = param[u'name']
+        if u'rem_code' in param:
+            self.rem_code = param[u'rem_code']
+        if u'gender' in param:
+            self.gender = param[u'gender']
+        if u'degree' in param:
+            self.degree = param[u'degree']
+        if u'birthday' in param:
+            self.birthday = param[u'birthday']
+        if u'register_day' in param:
+            self.register_day = datetime.datetime.strptime(param[u'register_day'], '%Y-%m-%d')
             if self.register_day.date() == datetime.date.today():
                 self.register_day = datetime.datetime.today()
         else:
             self.register_day = datetime.datetime.today()
-        if u'information_source' in params:
-            self.information_source = params[u'information_source']
-        if u'counselor' in params:
-            self.counselor = params[u'counselor']
-        if u'reading_school' in params:
-            self.reading_school = params[u'reading_school']
-        if u'grade' in params:
-            self.grade = params[u'grade']
-        if u'phone' in params:
-            self.phone = params[u'phone']
-        if u'tel' in params:
-            self.tel = params[u'tel']
-        if u'address' in params:
-            self.address = params[u'address']
-        if u'zipcode' in params:
-            self.zipcode = params[u'zipcode']
-        if 'email' in params:
-            self.email = params[u'email']
-        if u'qq' in params:
-            self.qq = params[u'qq']
-        if u'wechat' in params:
-            self.wechat = params[u'wechat']
-        if 'mother_name' in params:
-            self.mother_name = params[u'mother_name']
-        if u'father_name' in params:
-            self.father_name = params[u'father_name']
-        if u'mother_phone' in params:
-            self.mother_phone = params[u'mother_phone']
-        if u'father_phone' in params:
-            self.father_phone = params[u'father_phone']
-        if u'mother_tel' in params:
-            self.mother_tel = params[u'mother_tel']
-        if u'father_tel' in params:
-            self.father_tel = params[u'father_tel']
-        if u'mother_company' in params:
-            self.mother_company = params[u'mother_company']
-        if u'father_company' in params:
-            self.father_company = params[u'father_company']
-        if u'card' in params:
-            self.card = params[u'card']
-        self.is_training = u'是' if u'is_training' not in params else params[u'is_training']
-        if u'points' in params:
-            self.points = int(params[u'points'])
-        if u'remark' in params:
-            self.remark = params[u'remark']
-        self.recorder = params[u'recorder'] if u'recorder' in params else g.user.name
-        if 'idcard' in params:
-            self.idcard = params['idcard']
-        if 'mother_wechat' in params:
-            self.mother_wechat = params['mother_wechat']
-        if 'father_wechat' in params:
-            self.father_wechat = params['father_wechat']
+        if u'information_source' in param:
+            self.information_source = param[u'information_source']
+        if u'counselor' in param:
+            self.counselor = param[u'counselor']
+        if u'reading_school' in param:
+            self.reading_school = param[u'reading_school']
+        if u'grade' in param:
+            self.grade = param[u'grade']
+        if u'phone' in param:
+            self.phone = param[u'phone']
+        if u'tel' in param:
+            self.tel = param[u'tel']
+        if u'address' in param:
+            self.address = param[u'address']
+        if u'zipcode' in param:
+            self.zipcode = param[u'zipcode']
+        if 'email' in param:
+            self.email = param[u'email']
+        if u'qq' in param:
+            self.qq = param[u'qq']
+        if u'wechat' in param:
+            self.wechat = param[u'wechat']
+        if 'mother_name' in param:
+            self.mother_name = param[u'mother_name']
+        if u'father_name' in param:
+            self.father_name = param[u'father_name']
+        if u'mother_phone' in param:
+            self.mother_phone = param[u'mother_phone']
+        if u'father_phone' in param:
+            self.father_phone = param[u'father_phone']
+        if u'mother_tel' in param:
+            self.mother_tel = param[u'mother_tel']
+        if u'father_tel' in param:
+            self.father_tel = param[u'father_tel']
+        if u'mother_company' in param:
+            self.mother_company = param[u'mother_company']
+        if u'father_company' in param:
+            self.father_company = param[u'father_company']
+        if u'card' in param:
+            self.card = param[u'card']
+        self.is_training = u'是' if u'is_training' not in param else param[u'is_training']
+        if u'points' in param:
+            self.points = int(param[u'points'])
+        if u'remark' in param:
+            self.remark = param[u'remark']
+        self.recorder = param[u'recorder'] if u'recorder' in param else g.user.name
+        if 'idcard' in param:
+            self.idcard = param['idcard']
+        if 'mother_wechat' in param:
+            self.mother_wechat = param['mother_wechat']
+        if 'father_wechat' in param:
+            self.father_wechat = param['father_wechat']
 
     def getval(self, col_name):
         """
@@ -376,79 +376,79 @@ class DanceStudent(db.Model):
         else:
             return '<Unknown field name>'
 
-    def update(self, params):
+    def update(self, param):
         """
         更新学员信息
-        :param params:        要更新的字段。其中不可以更新的字段有 school_id, sno, consult_no, school_no, school_name,
+        :param param:        要更新的字段。其中不可以更新的字段有 school_id, sno, consult_no, school_no, school_name,
             is_training, recorder。若传入这些字段，会被忽略。
         :return:
         """
-        if u'name' in params:
-            self.name = params[u'name']
-        if u'rem_code' in params:
-            self.rem_code = params[u'rem_code']
-        if u'gender' in params:
-            self.gender = params[u'gender']
-        if u'degree' in params:
-            self.degree = params[u'degree']
-        if u'birthday' in params:
-            self.birthday = params[u'birthday']
-        if u'register_day' in params:
-            self.register_day = datetime.datetime.strptime(params[u'register_day'], '%Y-%m-%d')
+        if u'name' in param:
+            self.name = param[u'name']
+        if u'rem_code' in param:
+            self.rem_code = param[u'rem_code']
+        if u'gender' in param:
+            self.gender = param[u'gender']
+        if u'degree' in param:
+            self.degree = param[u'degree']
+        if u'birthday' in param:
+            self.birthday = param[u'birthday']
+        if u'register_day' in param:
+            self.register_day = datetime.datetime.strptime(param[u'register_day'], '%Y-%m-%d')
             if self.register_day.date() == datetime.date.today():
                 self.register_day = datetime.datetime.today()
         else:
             self.register_day = datetime.datetime.today()
-        if u'information_source' in params:
-            self.information_source = params[u'information_source']
-        if u'counselor' in params:
-            self.counselor = params[u'counselor']
-        if u'reading_school' in params:
-            self.reading_school = params[u'reading_school']
-        if u'grade' in params:
-            self.grade = params[u'grade']
-        if u'phone' in params:
-            self.phone = params[u'phone']
-        if u'tel' in params:
-            self.tel = params[u'tel']
-        if u'address' in params:
-            self.address = params[u'address']
-        if u'zipcode' in params:
-            self.zipcode = params[u'zipcode']
-        if u'email' in params:
-            self.email = params[u'email']
-        if u'qq' in params:
-            self.qq = params[u'qq']
-        if u'wechat' in params:
-            self.wechat = params[u'wechat']
-        if u'mother_name' in params:
-            self.mother_name = params[u'mother_name']
-        if u'father_name' in params:
-            self.father_name = params[u'father_name']
-        if u'mother_phone' in params:
-            self.mother_phone = params[u'mother_phone']
-        if u'father_phone' in params:
-            self.father_phone = params[u'father_phone']
-        if u'mother_tel' in params:
-            self.mother_tel = params[u'mother_tel']
-        if u'father_tel' in params:
-            self.father_tel = params[u'father_tel']
-        if u'mother_company' in params:
-            self.mother_company = params[u'mother_company']
-        if u'father_company' in params:
-            self.father_company = params[u'father_company']
-        if u'card' in params:
-            self.card = params[u'card']
-        if u'points' in params:
-            self.points = int(params[u'points'])
-        if u'remark' in params:
-            self.remark = params[u'remark']
-        if 'idcard' in params:
-            self.idcard = params['idcard']
-        if 'mother_wechat' in params:
-            self.mother_wechat = params['mother_wechat']
-        if 'father_wechat' in params:
-            self.father_wechat = params['father_wechat']
+        if u'information_source' in param:
+            self.information_source = param[u'information_source']
+        if u'counselor' in param:
+            self.counselor = param[u'counselor']
+        if u'reading_school' in param:
+            self.reading_school = param[u'reading_school']
+        if u'grade' in param:
+            self.grade = param[u'grade']
+        if u'phone' in param:
+            self.phone = param[u'phone']
+        if u'tel' in param:
+            self.tel = param[u'tel']
+        if u'address' in param:
+            self.address = param[u'address']
+        if u'zipcode' in param:
+            self.zipcode = param[u'zipcode']
+        if u'email' in param:
+            self.email = param[u'email']
+        if u'qq' in param:
+            self.qq = param[u'qq']
+        if u'wechat' in param:
+            self.wechat = param[u'wechat']
+        if u'mother_name' in param:
+            self.mother_name = param[u'mother_name']
+        if u'father_name' in param:
+            self.father_name = param[u'father_name']
+        if u'mother_phone' in param:
+            self.mother_phone = param[u'mother_phone']
+        if u'father_phone' in param:
+            self.father_phone = param[u'father_phone']
+        if u'mother_tel' in param:
+            self.mother_tel = param[u'mother_tel']
+        if u'father_tel' in param:
+            self.father_tel = param[u'father_tel']
+        if u'mother_company' in param:
+            self.mother_company = param[u'mother_company']
+        if u'father_company' in param:
+            self.father_company = param[u'father_company']
+        if u'card' in param:
+            self.card = param[u'card']
+        if u'points' in param:
+            self.points = int(param[u'points'])
+        if u'remark' in param:
+            self.remark = param[u'remark']
+        if 'idcard' in param:
+            self.idcard = param['idcard']
+        if 'mother_wechat' in param:
+            self.mother_wechat = param['mother_wechat']
+        if 'father_wechat' in param:
+            self.father_wechat = param['father_wechat']
 
     def create_sno(self):
         if self.school_id is None:
@@ -501,41 +501,41 @@ class DanceClass(db.Model):
     recorder = db.Column(db.String(20))     # 录入员       17
     school_id = db.Column(db.Integer, db.ForeignKey('dance_school.id'))
 
-    def __init__(self, params):
-        if 'cno' in params:
-            self.cno = params['cno']              # 02
-        if 'school_no' in params:
-            self.school_no = params['school_no']         # 03
-        if 'school_name' in params:
-            self.school_name = params['school_name']      # 04
-        if 'class_name' in params:
-            self.class_name = params['class_name']        # 班级名称          05
-        if 'rem_code' in params:
-            self.rem_code = params['rem_code']        # 助记码            06
-        if 'begin_year' in params:
-            self.begin_year = params['begin_year']        # 开班年份      07
-        if 'class_type' in params:
-            self.class_type = params['class_type']        # 班级类型， 教授类别： 舞蹈、美术、跆拳道、国际象棋等   08
-        if 'class_style' in params:
-            self.class_style = params['class_style']      # 班级形式： 集体课, 1对1      09
-        if 'teacher' in params:
-            self.teacher = params['teacher']              # 授课老师姓名        10
-        if 'cost_mode' in params:
-            self.cost_mode = params['cost_mode']          # 收费模式            11
-        if 'cost' in params:
-            self.cost = params['cost']                    # 收费标准            12
-        if 'plan_students' in params:
-            self.plan_students = params['plan_students']      # 计划招收人数        13
-        if 'cur_students' in params:
-            self.cur_students = params['cur_students']        # 当前人数            14
-        if 'is_ended' in params:
-            self.is_ended = params['is_ended']            # 是否结束      1 -- 结束； 0 -- 未结束       15
-        if 'remark' in params:
-            self.remark = params['remark']            # 备注         16
-        if 'recorder' in params:
-            self.recorder = params['recorder']        # 录入员       17
-        if 'school_id' in params:
-            self.school_id = int(params['school_id'])
+    def __init__(self, param):
+        if 'cno' in param:
+            self.cno = param['cno']              # 02
+        if 'school_no' in param:
+            self.school_no = param['school_no']         # 03
+        if 'school_name' in param:
+            self.school_name = param['school_name']      # 04
+        if 'class_name' in param:
+            self.class_name = param['class_name']        # 班级名称          05
+        if 'rem_code' in param:
+            self.rem_code = param['rem_code']        # 助记码            06
+        if 'begin_year' in param:
+            self.begin_year = param['begin_year']        # 开班年份      07
+        if 'class_type' in param:
+            self.class_type = param['class_type']        # 班级类型， 教授类别： 舞蹈、美术、跆拳道、国际象棋等   08
+        if 'class_style' in param:
+            self.class_style = param['class_style']      # 班级形式： 集体课, 1对1      09
+        if 'teacher' in param:
+            self.teacher = param['teacher']              # 授课老师姓名        10
+        if 'cost_mode' in param:
+            self.cost_mode = param['cost_mode']          # 收费模式            11
+        if 'cost' in param:
+            self.cost = param['cost']                    # 收费标准            12
+        if 'plan_students' in param:
+            self.plan_students = param['plan_students']      # 计划招收人数        13
+        if 'cur_students' in param:
+            self.cur_students = param['cur_students']        # 当前人数            14
+        if 'is_ended' in param:
+            self.is_ended = param['is_ended']            # 是否结束      1 -- 结束； 0 -- 未结束       15
+        if 'remark' in param:
+            self.remark = param['remark']            # 备注         16
+        if 'recorder' in param:
+            self.recorder = param['recorder']        # 录入员       17
+        if 'school_id' in param:
+            self.school_id = int(param['school_id'])
 
     @staticmethod
     def get_class_id_map():
@@ -578,51 +578,51 @@ class DanceSchool(db.Model):
     recorder = db.Column(db.String(20))             # 录入员            11
     company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
 
-    def __init__(self, params):
-        if 'school_no' in params:
-            self.school_no = params['school_no']   # 分校编号          02
-        if 'school_name' in params:
-            self.school_name = params['school_name']      # 分校名称          03
-        if 'address' in params:
-            self.address = params['address']        # 分校地址          04
-        if 'rem_code' in params:
-            self.rem_code = params['rem_code']        # 助记码            05
-        if 'zipcode' in params:
-            self.zipcode = params['zipcode']  # 邮政编码          06
-        if 'manager' in params:
-            self.manager = params['manager']  # 负责人姓名        07
-        if 'tel' in params:
-            self.class_style = params['tel']  # 分校联系电话      08
-        if 'manager_phone' in params:
-            self.manager_phone = params['manager_phone']  # 负责人手机        09
-        if 'remark' in params:
-            self.remark = params['remark']  # 备注         10
-        self.recorder = g.user.name if 'recorder' not in params else params['recorder']
-        self.company_id = int(params['company_id']) if 'company_id' in params else g.user.company_id
+    def __init__(self, param):
+        if 'school_no' in param:
+            self.school_no = param['school_no']   # 分校编号          02
+        if 'school_name' in param:
+            self.school_name = param['school_name']      # 分校名称          03
+        if 'address' in param:
+            self.address = param['address']        # 分校地址          04
+        if 'rem_code' in param:
+            self.rem_code = param['rem_code']        # 助记码            05
+        if 'zipcode' in param:
+            self.zipcode = param['zipcode']  # 邮政编码          06
+        if 'manager' in param:
+            self.manager = param['manager']  # 负责人姓名        07
+        if 'tel' in param:
+            self.class_style = param['tel']  # 分校联系电话      08
+        if 'manager_phone' in param:
+            self.manager_phone = param['manager_phone']  # 负责人手机        09
+        if 'remark' in param:
+            self.remark = param['remark']  # 备注         10
+        self.recorder = g.user.name if 'recorder' not in param else param['recorder']
+        self.company_id = int(param['company_id']) if 'company_id' in param else g.user.company_id
 
-    def update_data(self, params):
-        if 'school_no' in params:
-            self.school_no = params['school_no']         # 分校编号
-        if 'school_name' in params:
-            self.school_name = params['school_name']      # 分校名称
-        if 'address' in params:
-            self.address = params['address']        # 分校地址
-        if 'rem_code' in params:
-            self.rem_code = params['rem_code']        # 助记码
-        if 'zipcode' in params:
-            self.zipcode = params['zipcode']  # 邮政编码
-        if 'manager' in params:
-            self.manager = params['manager']  # 负责人姓名
-        if 'tel' in params:
-            self.class_style = params['tel']  # 分校联系电话
-        if 'manager_phone' in params:
-            self.manager_phone = params['manager_phone']  # 负责人手机
-        if 'remark' in params:
-            self.remark = params['remark']  # 备注
-        if 'recorder' in params:
-            self.recorder = params['recorder']  # 录入员
-        if 'company_id' in params:
-            self.company_id = int(params['company_id'])
+    def update_data(self, param):
+        if 'school_no' in param:
+            self.school_no = param['school_no']         # 分校编号
+        if 'school_name' in param:
+            self.school_name = param['school_name']      # 分校名称
+        if 'address' in param:
+            self.address = param['address']        # 分校地址
+        if 'rem_code' in param:
+            self.rem_code = param['rem_code']        # 助记码
+        if 'zipcode' in param:
+            self.zipcode = param['zipcode']  # 邮政编码
+        if 'manager' in param:
+            self.manager = param['manager']  # 负责人姓名
+        if 'tel' in param:
+            self.class_style = param['tel']  # 分校联系电话
+        if 'manager_phone' in param:
+            self.manager_phone = param['manager_phone']  # 负责人手机
+        if 'remark' in param:
+            self.remark = param['remark']  # 备注
+        if 'recorder' in param:
+            self.recorder = param['recorder']  # 录入员
+        if 'company_id' in param:
+            self.company_id = int(param['company_id'])
 
     @staticmethod
     def get_school_id(school_name):
@@ -667,34 +667,34 @@ class DanceUser(db.Model, UserMixin):
     is_creator = db.Column(db.Integer, index=True)  # 是否创始人 1 - 是创始人， 0 - 不是创始人
     create_at = db.Column(db.DateTime)
 
-    def __init__(self, params):
-        if 'user_no' in params:
-            self.user_no = params['user_no']   # 用户编号 02
+    def __init__(self, param):
+        if 'user_no' in param:
+            self.user_no = param['user_no']   # 用户编号 02
         else:
             self.create_user_no()
 
-        if 'name' in params:
-            self.name = params['name']        # 用户名称 03
+        if 'name' in param:
+            self.name = param['name']        # 用户名称 03
         else:
             raise Exception(u'[name] field not found!')
-        if 'pwd' in params:
-            self.pwd = generate_password_hash(params['pwd'])          # 用户密码 04
+        if 'pwd' in param:
+            self.pwd = generate_password_hash(param['pwd'])          # 用户密码 04
         else:
             raise Exception(u'[pwd] field not found!')
-        if 'phone' in params:
-            self.phone = params['phone']      # 联系电话 05
-        self.role_id = ROLE_USER if 'role_id' not in params or params['role_id'] != ROLE_ADMIN else ROLE_ADMIN      # #################### role_id not ROLE_USER， ROLE_ADMIN
+        if 'phone' in param:
+            self.phone = param['phone']      # 联系电话 05
+        self.role_id = ROLE_USER if 'role_id' not in param or param['role_id'] != ROLE_ADMIN else ROLE_ADMIN      # #################### role_id not ROLE_USER， ROLE_ADMIN
         self.recorder = g.user.name if g.user.is_authenticated else u'[系统]'
-        if 'email' in params:
-            self.email = params['email']
-        if 'company_id' in params:
-            self.company_id = params['company_id']
+        if 'email' in param:
+            self.email = param['email']
+        if 'company_id' in param:
+            self.company_id = param['company_id']
         elif g.user.is_authenticated:
             self.company_id = g.user.company_id
         else:
             raise Exception(u'[company_id] field not found!')
         self.is_logged = 0
-        self.is_creator = 0 if 'is_creator' not in params or params['is_creator'] != 1 else 1
+        self.is_creator = 0 if 'is_creator' not in param or param['is_creator'] != 1 else 1
         self.create_at = datetime.datetime.today()
 
     def create_user_no(self):
@@ -706,20 +706,20 @@ class DanceUser(db.Model, UserMixin):
             self.user_no = 1
         return self.user_no
 
-    def update_data(self, params):
-        if 'user_no' in params:
-            self.user_no = params['user_no']  # 用户编号 02
-        if 'name' in params:
-            self.name = params['name']        # 用户名称 03
-        if 'pwd' in params:
-            self.pwd = params['pwd']          # 用户密码 04
-        if 'phone' in params:
-            self.phone = params['phone']      # 联系电话 05
-        if 'role' in params:
-            self.role_id = params['role_id']        # 所属角色 06
-        if 'recorder' in params:
-            self.recorder = params['recorder']    # 录入员 08
-        self.is_logged = 0 if 'is_logged' not in params else params['is_logged']
+    def update_data(self, param):
+        if 'user_no' in param:
+            self.user_no = param['user_no']  # 用户编号 02
+        if 'name' in param:
+            self.name = param['name']        # 用户名称 03
+        if 'pwd' in param:
+            self.pwd = param['pwd']          # 用户密码 04
+        if 'phone' in param:
+            self.phone = param['phone']      # 联系电话 05
+        if 'role' in param:
+            self.role_id = param['role_id']        # 所属角色 06
+        if 'recorder' in param:
+            self.recorder = param['recorder']    # 录入员 08
+        self.is_logged = 0 if 'is_logged' not in param else param['is_logged']
 
     def check_logged(self):
         return True if self.is_logged == 1 else False
@@ -787,37 +787,37 @@ class DanceStudentClass(db.Model):
     status = db.Column(db.String(10))        # 报班状态 正常、退班、结束、续班
     remark = db.Column(db.String(140))
 
-    def __init__(self, params):
-        if 'student_id' in params:
-            self.student_id = params['student_id']
-        if 'class_id' in params:
-            self.class_id = params['class_id']
-        if 'join_date' in params:
-            my_date = params['join_date']
+    def __init__(self, param):
+        if 'student_id' in param:
+            self.student_id = param['student_id']
+        if 'class_id' in param:
+            self.class_id = param['class_id']
+        if 'join_date' in param:
+            my_date = param['join_date']
             datefmt = '%Y/%m/%d' if '/' in my_date else '%Y-%m-%d'
             self.join_date = datetime.datetime.strptime(my_date, datefmt)
-        if 'status' in params:
-            self.status = params['status']
-        if 'remark' in params:
-            self.remark = params['remark']
-        self.company_id = params['company_id'] if 'company_id' in params else g.user.company_id
+        if 'status' in param:
+            self.status = param['status']
+        if 'remark' in param:
+            self.remark = param['remark']
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
 
-    def update(self, params):
+    def update(self, param):
         """
         更新 学员报班信息。 不可改变的字段：student_id, company_id
-        :param params:
+        :param param:
         :return:
         """
-        if 'join_date' in params:
-            my_date = params['join_date']
+        if 'join_date' in param:
+            my_date = param['join_date']
             datefmt = '%Y/%m/%d' if '/' in my_date else '%Y-%m-%d'
             self.join_date = datetime.datetime.strptime(my_date, datefmt)
-        if 'class_id' in params:
-            self.class_id = params['class_id']
-        if 'status' in params:
-            self.status = params['status']
-        if 'remark' in params:
-            self.remark = params['remark']
+        if 'class_id' in param:
+            self.class_id = param['class_id']
+        if 'status' in param:
+            self.status = param['status']
+        if 'remark' in param:
+            self.remark = param['remark']
 
     def __repr__(self):
         return '<DanceStudentClass %r,%r>' % (self.student_id, self.class_id)
@@ -858,71 +858,71 @@ class DanceReceipt(db.Model):
     paper_receipt = db.Column(db.String(15))    # 收据号  例如：1347269
     type = db.Column(db.Integer)    # 收费单类型（学费 1、演出 2、普通 3）
 
-    def __init__(self, params):
-        if 'school_id' in params:
-            self.school_id = params['school_id']
+    def __init__(self, param):
+        if 'school_id' in param:
+            self.school_id = param['school_id']
         else:
             raise Exception('need school_id field!')
-        if 'receipt_no' in params:
-            self.receipt_no = params['receipt_no']
+        if 'receipt_no' in param:
+            self.receipt_no = param['receipt_no']
         else:
             self.receipt_no = self.create_code()
-        if 'student_id' in params:
-            self.student_id = params['student_id']
+        if 'student_id' in param:
+            self.student_id = param['student_id']
         else:
             raise Exception('need student_id field!')
-        if u'deal_date' in params:
-            self.deal_date = datetime.datetime.strptime(params[u'deal_date'], '%Y-%m-%d')
+        if u'deal_date' in param:
+            self.deal_date = datetime.datetime.strptime(param[u'deal_date'], '%Y-%m-%d')
             if self.deal_date.date() == datetime.date.today():
                 self.deal_date = datetime.datetime.today()
         else:
             self.deal_date = datetime.datetime.today()
         self.receivable_fee\
-            = params['receivable_fee'] if 'receivable_fee' in params and params['receivable_fee'] != '' else None
+            = param['receivable_fee'] if 'receivable_fee' in param and param['receivable_fee'] != '' else None
         self.teaching_fee \
-            = params['teaching_fee'] if 'teaching_fee' in params and params['teaching_fee'] != '' else None
-        self.other_fee = params['other_fee'] if 'other_fee' in params and params['other_fee'] != '' else None
-        self.total = params['total'] if 'total' in params and params['total'] != '' else None
-        self.real_fee = params['real_fee'] if 'real_fee' in params and params['real_fee'] != '' else None
-        self.arrearage = params['arrearage'] if 'arrearage' in params and params['arrearage'] != '' else None
-        if 'counselor' in params:
-            self.counselor = params['counselor']
-        if 'remark' in params:
-            self.remark = params['remark']
-        self.recorder = params['recorder'] if 'recorder' in params else g.user.name
-        if 'fee_mode' in params:
-            self.fee_mode = params['fee_mode']
-        if 'paper_receipt' in params:
-            self.paper_receipt = params['paper_receipt']
-        self.type = 1 if 'type' not in params else params['type']
+            = param['teaching_fee'] if 'teaching_fee' in param and param['teaching_fee'] != '' else None
+        self.other_fee = param['other_fee'] if 'other_fee' in param and param['other_fee'] != '' else None
+        self.total = param['total'] if 'total' in param and param['total'] != '' else None
+        self.real_fee = param['real_fee'] if 'real_fee' in param and param['real_fee'] != '' else None
+        self.arrearage = param['arrearage'] if 'arrearage' in param and param['arrearage'] != '' else None
+        if 'counselor' in param:
+            self.counselor = param['counselor']
+        if 'remark' in param:
+            self.remark = param['remark']
+        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
+        if 'fee_mode' in param:
+            self.fee_mode = param['fee_mode']
+        if 'paper_receipt' in param:
+            self.paper_receipt = param['paper_receipt']
+        self.type = 1 if 'type' not in param else param['type']
         
-    def update(self, params):
-        if 'student_id' in params:
-            self.student_id = params['student_id']
-        if u'deal_date' in params:
-            self.deal_date = datetime.datetime.strptime(params[u'deal_date'], '%Y-%m-%d')
+    def update(self, param):
+        if 'student_id' in param:
+            self.student_id = param['student_id']
+        if u'deal_date' in param:
+            self.deal_date = datetime.datetime.strptime(param[u'deal_date'], '%Y-%m-%d')
             if self.deal_date.date() == datetime.date.today():
                 self.deal_date = datetime.datetime.today()
         else:
             self.deal_date = datetime.datetime.today()
         self.receivable_fee\
-            = params['receivable_fee'] if 'receivable_fee' in params and params['receivable_fee'] != '' else None
+            = param['receivable_fee'] if 'receivable_fee' in param and param['receivable_fee'] != '' else None
         self.teaching_fee \
-            = params['teaching_fee'] if 'teaching_fee' in params and params['teaching_fee'] != '' else None
-        self.other_fee = params['other_fee'] if 'other_fee' in params and params['other_fee'] != '' else None
-        self.total = params['total'] if 'total' in params and params['total'] != '' else None
-        self.real_fee = params['real_fee'] if 'real_fee' in params and params['real_fee'] != '' else None
-        self.arrearage = params['arrearage'] if 'arrearage' in params and params['arrearage'] != '' else None
-        if 'counselor' in params:
-            self.counselor = params['counselor']
-        if 'remark' in params:
-            self.remark = params['remark']
-        self.recorder = params['recorder'] if 'recorder' in params else g.user.name
-        if 'fee_mode' in params:
-            self.fee_mode = params['fee_mode']
-        if 'paper_receipt' in params:
-            self.paper_receipt = params['paper_receipt']
-        self.type = 1 if 'type' not in params else params['type']
+            = param['teaching_fee'] if 'teaching_fee' in param and param['teaching_fee'] != '' else None
+        self.other_fee = param['other_fee'] if 'other_fee' in param and param['other_fee'] != '' else None
+        self.total = param['total'] if 'total' in param and param['total'] != '' else None
+        self.real_fee = param['real_fee'] if 'real_fee' in param and param['real_fee'] != '' else None
+        self.arrearage = param['arrearage'] if 'arrearage' in param and param['arrearage'] != '' else None
+        if 'counselor' in param:
+            self.counselor = param['counselor']
+        if 'remark' in param:
+            self.remark = param['remark']
+        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
+        if 'fee_mode' in param:
+            self.fee_mode = param['fee_mode']
+        if 'paper_receipt' in param:
+            self.paper_receipt = param['paper_receipt']
+        self.type = 1 if 'type' not in param else param['type']
 
     @staticmethod
     def get_ids(school_ids):
@@ -971,35 +971,74 @@ class DanceClassReceipt(db.Model):
     end_date = db.Column(db.Date)  # 到期日期
     remark = db.Column(db.String(40))
 
-    def __init__(self, params):
-        if 'receipt_id' in params:
-            self.receipt_id = params['receipt_id']
-        if 'class_id' in params:
-            self.class_id = params['class_id']
-        if 'term' in params:
-            self.term = params['term']
-        if 'sum' in params:
-            self.sum = params['sum']
-        if 'discount' in params and params['discount'] != '':
-            self.discount = params['discount']
-        if 'discount_rate' in params and params['discount_rate'] != '':
-            self.discount_rate = params['discount_rate']
-        if 'total' in params:
-            self.total = params['total']
-        if 'real_fee' in params:
-            self.real_fee = params['real_fee']
-        if 'arrearage' in params and params['arrearage'] != '':
-            self.arrearage = params['arrearage']
-        if 'begin_date' in params and params['begin_date'] != '':
-            my_date = params['begin_date']
+    def __init__(self, param):
+        if 'receipt_id' in param:
+            self.receipt_id = param['receipt_id']
+        if 'class_id' in param:
+            self.class_id = param['class_id']
+        if 'term' in param:
+            self.term = param['term']
+        if 'sum' in param:
+            self.sum = param['sum']
+        if 'discount' in param and param['discount'] != '':
+            self.discount = param['discount']
+        if 'discount_rate' in param and param['discount_rate'] != '':
+            self.discount_rate = param['discount_rate']
+        if 'total' in param:
+            self.total = param['total']
+        if 'real_fee' in param:
+            self.real_fee = param['real_fee']
+        if 'arrearage' in param and param['arrearage'] != '':
+            self.arrearage = param['arrearage']
+        if 'begin_date' in param and param['begin_date'] != '':
+            my_date = param['begin_date']
             datefmt = '%Y/%m/%d' if '/' in my_date else '%Y-%m-%d'
             self.begin_date = datetime.datetime.strptime(my_date, datefmt).date()
-        if 'end_date' in params and params['end_date'] != '':
-            my_date = params['begin_date']
+        if 'end_date' in param and param['end_date'] != '':
+            my_date = param['begin_date']
             datefmt = '%Y/%m/%d' if '/' in my_date else '%Y-%m-%d'
             self.end_date = datetime.datetime.strptime(my_date, datefmt).date()
-        if 'remark' in params:
-            self.remark = params['remark']
+        if 'remark' in param:
+            self.remark = param['remark']
+            
+    def update(self, param):
+        if 'receipt_id' in param:
+            self.receipt_id = param['receipt_id']
+        if 'class_id' in param:
+            self.class_id = param['class_id']
+        if 'term' in param:
+            self.term = param['term']
+        if 'sum' in param:
+            self.sum = param['sum']
+        if 'discount' in param:
+            self.discount = None if param['discount'] == '' else param['discount']
+        if 'discount_rate' in param:
+            self.discount_rate = None if param['discount_rate'] == '' else param['discount_rate']
+        if 'total' in param:
+            self.total = param['total']
+        if 'real_fee' in param:
+            self.real_fee = param['real_fee']
+        if 'arrearage' in param:
+            self.arrearage = None if param['arrearage'] == '' else param['arrearage']
+        if 'begin_date' in param:
+            if param['begin_date'] != '':
+                my_date = param['begin_date']
+                datefmt = '%Y/%m/%d' if '/' in my_date else '%Y-%m-%d'
+                self.begin_date = datetime.datetime.strptime(my_date, datefmt).date()
+            else:
+                self.begin_date = None
+        if 'end_date' in param:
+            if param['end_date'] != '':
+                my_date = param['begin_date']
+                datefmt = '%Y/%m/%d' if '/' in my_date else '%Y-%m-%d'
+                self.end_date = datetime.datetime.strptime(my_date, datefmt).date()
+            else:
+                self.end_date = None
+        if 'remark' in param:
+            self.remark = param['remark']
+
+    def __repr__(self):
+        return '<DanceClassReceipt %r>' % self.id
 
 
 class DanceTeaching(db.Model):
@@ -1013,35 +1052,38 @@ class DanceTeaching(db.Model):
     remark = db.Column(db.String(40))
     dt_num = db.Column(db.Integer)      # 教材数量
 
-    def __init__(self, params):
-        if 'receipt_id' in params:
-            self.receipt_id = params['receipt_id']
-        if 'class_id' in params:
-            self.class_id = params['class_id']
-        if 'material_id' in params:
-            self.material_id = params['material_id']
-        if 'is_got' in params:
-            self.is_got = params['is_got']
-        if 'fee' in params and params['fee'] != '':
-            self.fee = params['fee']
-        if 'remark' in params:
-            self.remark = params['remark']
-        self.dt_num = params['dt_num'] if 'dt_num' in params else 1
+    def __init__(self, param):
+        if 'receipt_id' in param:
+            self.receipt_id = param['receipt_id']
+        if 'class_id' in param:
+            self.class_id = param['class_id']
+        if 'material_id' in param:
+            self.material_id = param['material_id']
+        if 'is_got' in param:
+            self.is_got = param['is_got']
+        if 'fee' in param and param['fee'] != '':
+            self.fee = param['fee']
+        if 'remark' in param:
+            self.remark = param['remark']
+        self.dt_num = param['dt_num'] if 'dt_num' in param else 1
 
-    def update(self, params):
+    def update(self, param):
         """ 更新教材费，其中收费单 id 不可用更改 """
-        if 'class_id' in params:
-            self.class_id = params['class_id']
-        if 'material_id' in params:
-            self.material_id = params['material_id']
-        if 'is_got' in params:
-            self.is_got = params['is_got']
-        if 'fee' in params and params['fee'] != '':
-            self.fee = params['fee']
-        if 'remark' in params:
-            self.remark = params['remark']
-        if 'dt_num' in params:
-            self.dt_num = params['dt_num']
+        if 'class_id' in param:
+            self.class_id = param['class_id']
+        if 'material_id' in param:
+            self.material_id = param['material_id']
+        if 'is_got' in param:
+            self.is_got = param['is_got']
+        if 'fee' in param and param['fee'] != '':
+            self.fee = param['fee']
+        if 'remark' in param:
+            self.remark = param['remark']
+        if 'dt_num' in param:
+            self.dt_num = param['dt_num']
+
+    def __repr__(self):
+        return '<DanceTeaching %r>' % self.id
 
 
 class DanceOtherFee(db.Model):
@@ -1053,19 +1095,22 @@ class DanceOtherFee(db.Model):
     real_fee = db.Column(db.Float, nullable=False)  # 收费
     remark = db.Column(db.String(40))
 
-    def __init__(self, params):
-        if 'receipt_id' in params:
-            self.receipt_id = params['receipt_id']
-        if 'class_id' in params:
-            self.class_id = params['class_id']
-        if 'fee_item_id' in params:
-            self.fee_item_id = params['fee_item_id']
-        if 'summary' in params:
-            self.summary = params['summary']
-        if 'real_fee' in params:
-            self.real_fee = params['real_fee']
-        if 'remark' in params:
-            self.remark = params['remark']
+    def __init__(self, param):
+        if 'receipt_id' in param:
+            self.receipt_id = param['receipt_id']
+        if 'class_id' in param:
+            self.class_id = param['class_id']
+        if 'fee_item_id' in param:
+            self.fee_item_id = param['fee_item_id']
+        if 'summary' in param:
+            self.summary = param['summary']
+        if 'real_fee' in param:
+            self.real_fee = param['real_fee']
+        if 'remark' in param:
+            self.remark = param['remark']
+
+    def __repr__(self):
+        return '<DanceOtherFee %r>' % self.id
 
 
 class DcFeeItem(db.Model):
@@ -1108,51 +1153,51 @@ class DcTeachingMaterial(db.Model):
     recorder = db.Column(db.String(20, collation='NOCASE'))
     tm_type = db.Column(db.String(10, collation='NOCASE'))  # 教材类别
 
-    def __init__(self, params):
-        self.company_id = g.user.company_id if 'company_id' not in params else params['company_id']
-        if 'material_no' in params:
-            self.material_no = params['material_no']
-        if 'material_name' in params:
-            self.material_name = params['material_name']
-        if 'rem_code' in params:
-            self.rem_code = params['rem_code']
-        if 'unit' in params:
-            self.unit = params['unit']
-        if 'price_buy' in params and params['price_buy'] != '':
-            self.price_buy = params['price_buy']
-        if 'price_sell' in params and params['price_sell'] != '':
-            self.price_sell = params['price_sell']
-        if 'summary' in params:
-            self.summary = params['summary']
-        if 'is_use' in params:
-            self.is_use = params['is_use']
-        if 'remark' in params:
-            self.remark = params['remark']
-        self.recorder = g.user.name if 'recorder' not in params else params['recorder']
-        if 'tm_type' in params:
-            self.tm_type = params['tm_type']
+    def __init__(self, param):
+        self.company_id = g.user.company_id if 'company_id' not in param else param['company_id']
+        if 'material_no' in param:
+            self.material_no = param['material_no']
+        if 'material_name' in param:
+            self.material_name = param['material_name']
+        if 'rem_code' in param:
+            self.rem_code = param['rem_code']
+        if 'unit' in param:
+            self.unit = param['unit']
+        if 'price_buy' in param and param['price_buy'] != '':
+            self.price_buy = param['price_buy']
+        if 'price_sell' in param and param['price_sell'] != '':
+            self.price_sell = param['price_sell']
+        if 'summary' in param:
+            self.summary = param['summary']
+        if 'is_use' in param:
+            self.is_use = param['is_use']
+        if 'remark' in param:
+            self.remark = param['remark']
+        self.recorder = g.user.name if 'recorder' not in param else param['recorder']
+        if 'tm_type' in param:
+            self.tm_type = param['tm_type']
 
-    def update(self, params):
+    def update(self, param):
         """ 更新教材信息， 其中 公司id, 教材编号 不可更改 """
-        if 'material_name' in params:
-            self.material_name = params['material_name']
-        if 'rem_code' in params:
-            self.rem_code = params['rem_code']
-        if 'unit' in params:
-            self.unit = params['unit']
-        if 'price_buy' in params and params['price_buy'] != '':
-            self.price_buy = params['price_buy']
-        if 'price_sell' in params and params['price_sell'] != '':
-            self.price_sell = params['price_sell']
-        if 'summary' in params:
-            self.summary = params['summary']
-        if 'is_use' in params:
-            self.is_use = params['is_use']
-        if 'remark' in params:
-            self.remark = params['remark']
-        self.recorder = g.user.name if 'recorder' not in params else params['recorder']
-        if 'tm_type' in params:
-            self.tm_type = params['tm_type']
+        if 'material_name' in param:
+            self.material_name = param['material_name']
+        if 'rem_code' in param:
+            self.rem_code = param['rem_code']
+        if 'unit' in param:
+            self.unit = param['unit']
+        if 'price_buy' in param and param['price_buy'] != '':
+            self.price_buy = param['price_buy']
+        if 'price_sell' in param and param['price_sell'] != '':
+            self.price_sell = param['price_sell']
+        if 'summary' in param:
+            self.summary = param['summary']
+        if 'is_use' in param:
+            self.is_use = param['is_use']
+        if 'remark' in param:
+            self.remark = param['remark']
+        self.recorder = g.user.name if 'recorder' not in param else param['recorder']
+        if 'tm_type' in param:
+            self.tm_type = param['tm_type']
 
     @staticmethod
     def get_records():

@@ -289,3 +289,105 @@ function danceParser(s){
     }
 }
 
+
+// 集合操作 /////////////////////////////////////////////////////////////////////////////
+
+/**
+ * 差集
+ * @param a     集合a， Array 类型
+ * @param b     集合b， Array 类型
+ * @returns {*} a - b的结果，Array 类型
+ */
+function setDifference(a, b) {  // 差集 a - b
+    var diff = a.slice(0);
+    for(var i = 0; i < a.length; i++){
+        for(var j = 0; j < b.length; j++){
+            if(a[i] === b[j]){
+                diff.splice(i, 1);
+            }
+        }
+    }
+    return diff;
+}
+
+/**
+ * 交集
+ * @param a     Array类型
+ * @param b
+ * @returns {Array}
+ */
+function setIntersection(a, b) { // 交集 a & b
+    var result = [];
+    for(var i = 0; i < a.length; i++) {
+        for(var j = 0; j < b.length; j++) {
+            if(a[i] === b[j]) {
+                result.push(a[i]);
+                break;
+            }
+        }
+    }
+    return result;
+}
+
+/**
+ * 用于记录的增量修改。原纪录为a，变为记录b。 求出 增加，删除及不变的记录。
+ * @param a     原纪录， Array类型
+ * @param b     变更后的记录， Array类型
+ * @returns {*[]}   0, 需要删除的记录； 1，需要增加的记录；2，为改变的记录。
+ */
+function dcFindChange(a, b) {
+    return [setDifference(a,b), setDifference(b,a), setIntersection(a,b)]
+}
+
+/**
+ * 用于增量修改记录。判断在原纪录基础上的删、改、增情况。
+ *      var aa = [{id: 1, name:'Tom'},{id:2, name:'Peter'}]; 原始记录
+ *      var bb = [{name:'Alice'}, {id:2, name: 'PP'}];       最终记录。
+ *      var chg = dcRecordsChanged(aa, bb, 'id')
+ *      则需要增加bb中的第一条，修改为bb中第二条，删除aa中第一个条。
+ *      返回值为 {add:[0], del:[0], upd:[1]}
+ * @param oldR      原始记录 Array  [ {}, {}]
+ * @param newR      修改后的记录 Array  [ {}, {}]
+ * @param field     比较字段，用于判断增、改、删
+ * @returns {{add: Array, del: Array, upd: Array}}
+ */
+function dcRecordsChanged(oldR, newR, field) {  // 求 增、改、删 记录的索引
+    var addIdx = [];    // 要增加记录的下标数组
+    var delIdx = [];
+    var updIdx = [];
+    var ori = [];   // 原始记录比较字段(field)数组
+    var cur = [];   // 当前记录比较字段(field)数组
+    var i, j;
+    for(i=0; i< oldR.length; i++){
+        if(oldR[i].hasOwnProperty(field)){
+            ori.push(oldR[i][field]);
+        }
+    }
+    for(i=0; i< newR.length; i++){
+        if(newR[i].hasOwnProperty(field)){
+            cur.push(newR[i][field]);
+        } else {
+            addIdx.push(i);
+        }
+    }
+    var delK = setDifference(ori, cur);
+    var updK = setIntersection(cur, ori);
+    for(j=0; j< delK.length; j++){
+        for(i=0; i< oldR.length; i++){
+            if(oldR[i].hasOwnProperty(field) && oldR[i][field] === delK[j]){
+                delIdx.push(i);
+                break;
+            }
+        }
+    }
+    for(j=0; j< updK.length; j++){
+        for(i=0; i<newR.length; i++){
+            if(newR[i].hasOwnProperty(field) && newR[i][field] === updK[j]){
+                updIdx.push(i);
+                break;
+            }
+        }
+    }
+
+    return {add:addIdx, del:delIdx, upd:updIdx}
+}
