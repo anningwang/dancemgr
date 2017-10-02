@@ -9,222 +9,184 @@
     <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
 </head>
 <body>
+<style>
+    .dc-headImage{border:1px solid #58a3ef;}
+    div.dc-headImage img{width: 200px;height: 200px;}
+</style>
 
-<div class="easyui-layout" data-options="fit:true">
-    <div data-options="region:'south',split:false, border:false" style="height:32px;">
-        <div id="pagerStudent" style="background:#ef3fc2;border:1px solid #601ccc;"></div>
-        <!--
-        <div class="easyui-pagination" data-options="total: 0, pageSize: 1,
-                        beforePageText: '第', afterPageText: '条，总 {pages} 条',
-                        showRefresh: true, showPageList: false, showPageInfo: false
-                    " id="pagerStudent">
-        </div>
-        -->
-    </div>
+<div class="easyui-panel" id="panelStudent" style="width:100%;height:100%;padding:2px;" title="学员详细信息" data-options="footer:'#footerStudent',fit:true, border:false">
+    <div style="min-width: 1024px">
+        <!-- 开始区域，学号，姓名，... -->
+        <table width="100%">
+            <tr>
+                <td width="28%">
+                    <input class="easyui-textbox" id="sno" style="min-width:300px;width:100%"
+                           data-options="labelPosition:'left', label:'学号：',editable:false,
+                           prompt:'无需输入，自动生成学号', labelPosition:'left'" >
 
-    <div data-options="region:'center', border:false" style="padding:2px">
-        <div id="panelStudent" class="easyui-panel" title="学员详细信息" style="width:100%;height:100%;padding:2px;">
-            <!-- 开始区域，学号，姓名，... -->
-            <table width="75%" border="0px">
-                <tr>
-                    <td width="25%">
-                        <input class="easyui-textbox" id="sno" style="width:98%;height:24px"
-                               data-options="label:'width: 50%', labelPosition:'left', label:'学号：',editable:false,
-                           prompt:'无需输入，自动生成学号', labelPosition:'left'
-                           " >
+                </td>
 
-                    </td>
+                <td width="28%">
+                    <input class="easyui-textbox" id="name" style="min-width:300px;width:100%" data-options="labelPosition:'left',label:'姓名*：'">
+                </td>
 
-                    <td width="25%">
-                        <input class="easyui-textbox" id="name" style="width:98%;height:24px"
-                               data-options="labelPosition:'left',label:'姓名*：'
-                           ">
-                    </td>
+                <td width="28%">
+                    <select class="easyui-combobox" id="gender" name="gender" style="min-width:300px;width:100%" data-options="labelPosition:'left',panelHeight:'auto', label:'性别：',editable:false">
+                        <option value="女">女</option>
+                        <option value="男">男</option>
+                    </select>
+                </td>
+                <td rowspan="5" align="center"><div class="dc-headImage"><img src="/static/img/head09_400x400_big.jpg"></div></td>
+            </tr>
 
-                    <td width="25%">
-                        <select class="easyui-combobox" id="gender" name="gender" style="width:98%;"
-                                data-options="labelPosition:'left',panelHeight:'auto', label:'性别：',editable:false
-                            ">
-                            <option value="女">女</option>
-                            <option value="男">男</option>
-                        </select>
-                    </td>
-                </tr>
+            <tr>
+                <td>
+                    <input class="easyui-datebox" id="register_day" style="min-width:300px;width:100%" data-options="labelPosition:'left',editable:false,label:'登记日期：'">
+                </td>
 
-                <tr name="second">
-                    <td>
-                        <input class="easyui-datebox" id="register_day" style="width:98%;"
-                               data-options="labelPosition:'left',editable:false,
-                               label:'登记日期：'
-                           ">
-                    </td>
+                <td>
+                    <select class="easyui-combobox" id="school_name" style="min-width:300px;width:100%"
+                            data-options="labelPosition:'left',panelHeight:'auto', label:'所属分校：',editable:false,
+                                valueField: 'school_id',textField: 'school_name'">
+                        <option>总部</option>
+                    </select>
+                </td>
 
-                    <td>
-                        <select class="easyui-combobox" id="school_name" style="width:98%;"
-                                data-options="labelPosition:'left',panelHeight:'auto', label:'所属分校：',editable:false,
-                                valueField: 'school_id',textField: 'school_name',
-                            ">
-                            <option>总部</option>
-                        </select>
-                    </td>
+                <td>
+                    <select class="easyui-combobox" id="information_source" style="min-width:300px;width:100%" data-options="labelPosition:'left',panelHeight:'auto', label:'信息来源：',editable:false">
+                        <option>　</option>
+                        <option>朋友推荐</option>
+                        <option>上门咨询</option>
+                    </select>
+                </td>
+            </tr>
 
-                    <td>
-                        <select class="easyui-combobox" id="information_source" style="width:98%;"
-                                data-options="labelPosition:'left',panelHeight:'auto', label:'信息来源：',editable:false
-                            ">
-                            <option>　</option>
-                            <option>朋友推荐</option>
-                            <option>上门咨询</option>
-                        </select>
-                    </td>
-                </tr>
+            <tr>
+                <td>
+                    <input class="easyui-textbox" id="idcard" style="min-width:300px;width:100%" data-options="labelPosition:'left',label:'身份证号：'">
+                </td>
 
-                <tr name="third">
-                    <td>
-                        <input class="easyui-textbox" id="idcard" style="width:98%;height:24px"
-                               data-options="labelPosition:'left',label:'身份证号：'
-                           ">
-                    </td>
+                <td>
+                    <select class="easyui-combobox" id="counselor" style="min-width:300px;width:100%" data-options="labelPosition:'left',panelHeight:60,label:'咨询师：',editable:false">
+                        <option>　</option>
+                        <option>李老师</option>
+                    </select>
+                </td>
 
-                    <td>
-                        <select class="easyui-combobox" id="counselor" style="width:98%;"
-                                data-options="labelPosition:'left',panelHeight:60,label:'咨询师：',editable:false
-                            ">
-                            <option>　</option>
-                            <option>李老师</option>
-                        </select>
-                    </td>
+                <td>
+                    <select class="easyui-combobox" id="degree" style="min-width:300px;width:100%"data-options="labelPosition:'left',panelHeight:'auto',label:'文化程度：',editable:false">
+                        <option>　</option>
+                        <option>小学</option>
+                        <option>初中</option>
+                        <option>高中</option>
+                        <option>大学</option>
+                        <option>硕士</option>
+                    </select>
+                </td>
+            </tr>
 
-                    <td>
-                        <select class="easyui-combobox" id="degree" style="width:98%;"
-                                data-options="labelPosition:'left',panelHeight:'auto',label:'文化程度：',editable:false
-                            ">
-                            <option>　</option>
-                            <option>小学</option>
-                            <option>初中</option>
-                            <option>高中</option>
-                            <option>大学</option>
-                            <option>硕士</option>
-                        </select>
-                    </td>
-                </tr>
+            <tr>
+                <td>
+                    <input class="easyui-textbox" id="former_name"  style="min-width:300px;width:100%" data-options="labelPosition:'left',label:'曾用名：'">
+                </td>
 
-                <tr name="fourth">
-                    <td>
-                        <input class="easyui-textbox" id="former_name"  style="width:98%;height:24px"
-                               data-options="labelPosition:'left',label:'曾用名：'
-                           ">
-                    </td>
-
-                    <td>
-                        <input class="easyui-datebox" id="birthday" style="width:98%;"
-                               data-options="labelPosition:'left',formatter:danceFormatter,parser:danceParser,
+                <td>
+                    <input class="easyui-datebox" id="birthday" style="min-width:300px;width:100%"
+                           data-options="labelPosition:'left',formatter:danceFormatter,parser:danceParser,
                            label:'出生日期：', prompt: '年-月-日（yyyy-mm-dd）'
                            ">
-                    </td>
+                </td>
 
-                    <td>
-                        <input class="easyui-textbox" id="recorder" style="width:98%;height:24px"
-                               data-options="labelPosition:'left', label:'录入员：',editable:false,
-                           prompt: '根据当前登录用户生成，不需要填写。'
-                           ">
-                    </td>
-                </tr>
+                <td>
+                    <input class="easyui-textbox" id="recorder" style="min-width:300px;width:100%" data-options="labelPosition:'left', label:'录入员：',editable:false,prompt: '根据当前登录用户生成，不需要填写。'">
+                </td>
+            </tr>
 
-                <tr name="fifth">
-                    <td colspan="6">
-                        <input class="easyui-textbox" id="remark" style="width:100%;height:80px"
-                               data-options="labelPosition:'top', multiline:true, label:'备注：'
-                           " >
-                    </td>
-                </tr>
-            </table>
+            <tr>
+                <td colspan="3">
+                    <input class="easyui-textbox" id="remark" style="width:100%;height:80px" data-options="labelPosition:'top', multiline:true, label:'备注：'" >
+                </td>
+            </tr>
+        </table>
 
+        <!-- 中间区域，联系方式  -->
+        <table id="dgStudent_contact" class="easyui-datagrid" title="联系方式" style="width:100%;" data-options="singleSelect:true,fitColumns:true,collapsible:true">
+            <thead>
+            <tr>
+                <th data-options="field:'c1',width:101,align:'center'"></th>
+                <th data-options="field:'c2',width:160,align:'left',editor:'textbox'"></th>
+                <th data-options="field:'c3',width:101,align:'center'"></th>
+                <th data-options="field:'c4',width:160,align:'left',editor:'textbox'"></th>
+                <th data-options="field:'c5',width:101,align:'center'"></th>
+                <th data-options="field:'c6',width:160,align:'left',editor:'textbox'"></th>
+                <th data-options="field:'c7',width:101,align:'center'"></th>
+                <th data-options="field:'c8',width:160,align:'left',editor:'textbox'"></th>
+            </tr>
+            </thead>
 
-            <!-- 中间区域，联系方式  -->
-            <table id="dgStudent_contact" class="easyui-datagrid" title="联系方式" style="width:100%;"
-                   data-options="singleSelect:true,fitColumns:true,
-               collapsible:true
-               ">
-                <thead>
-                <tr>
-                    <th data-options="field:'c1',width:100,align:'center',fixed:true">1</th>
-                    <th data-options="field:'c2',width:140,align:'left',fixed:true,editor:'textbox'">2</th>
-                    <th data-options="field:'c3',width:100,align:'center',fixed:true">3</th>
-                    <th data-options="field:'c4',width:140,align:'left',fixed:true,editor:'textbox'">4</th>
-                    <th data-options="field:'c5',width:100,align:'center',fixed:true">5</th>
-                    <th data-options="field:'c6',width:140,align:'left',fixed:true,editor:'textbox'">6</th>
-                    <th data-options="field:'c7',width:100,align:'center',fixed:true">7</th>
-                    <th data-options="field:'c8',width:140,align:'left',fixed:true,editor:'textbox'">8</th>
-                </tr>
-                </thead>
+            <tr>  <!-- 第 1 行  -->
+                <td>所在学校</td>
+                <td></td>
+                <td>年级</td>
+                <td></td>
+                <td>本人手机</td>
+                <td></td>
+                <td>固定电话</td>
+                <td></td>
+            </tr>
 
-                <tr>  <!-- 第 1 行  -->
-                    <td>所在学校</td>
-                    <td></td>
-                    <td>年级</td>
-                    <td></td>
-                    <td>本人手机</td>
-                    <td></td>
-                    <td>固定电话</td>
-                    <td></td>
-                </tr>
+            <tr>  <!-- 第 2 行  -->
+                <td>联系地址</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>Email</td>
+                <td></td>
+                <td>QQ</td>
+                <td></td>
+            </tr>
 
-                <tr>  <!-- 第 2 行  -->
-                    <td>联系地址</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td>Email</td>
-                    <td></td>
-                    <td>QQ</td>
-                    <td></td>
-                </tr>
+            <tr>  <!-- 第 3 行  -->
+                <td>妈妈姓名</td>
+                <td></td>
+                <td>妈妈手机</td>
+                <td></td>
+                <td>妈妈工作单位</td>
+                <td></td>
+                <td>妈妈微信号</td>
+                <td></td>
+            </tr>
 
-                <tr>  <!-- 第 3 行  -->
-                    <td>妈妈姓名</td>
-                    <td></td>
-                    <td>妈妈手机</td>
-                    <td></td>
-                    <td>妈妈工作单位</td>
-                    <td></td>
-                    <td>妈妈微信号</td>
-                    <td></td>
-                </tr>
+            <tr>  <!-- 第 4 行  -->
+                <td>爸爸姓名</td>
+                <td></td>
+                <td>爸爸手机</td>
+                <td></td>
+                <td>爸爸工作单位</td>
+                <td></td>
+                <td>爸爸微信号</td>
+                <td></td>
+            </tr>
 
-                <tr>  <!-- 第 4 行  -->
-                    <td>爸爸姓名</td>
-                    <td></td>
-                    <td>爸爸手机</td>
-                    <td></td>
-                    <td>爸爸工作单位</td>
-                    <td></td>
-                    <td>爸爸微信号</td>
-                    <td></td>
-                </tr>
+        </table>
 
-            </table>
+        <!-- 分割符================== -->
+        <div style="height: 2px"></div>
 
-            <!-- 分割符================== -->
-            <div style="height: 2px"></div>
+        <!-- 下方区域，报班信息 -->
+        <table id="dgStudent_class" class="easyui-datagrid" title="报班信息" style="width:100%;" data-options="checkbox:true, rownumbers:true,fitColumns:true,singleSelect:true,collapsible:true">
 
-            <!-- 下方区域，报班信息 -->
-            <table id="dgStudent_class" class="easyui-datagrid" title="报班信息" style="width:100%;"
-                   data-options="checkbox:true, rownumbers:true,fitColumns:true,singleSelect:true,
-                   collapsible:true
-               ">
-
-                <thead>
-                <tr>
-                    <th data-options="field:'ck',checkbox:true"></th>
-                    <th data-options="field:'join_date',width:100,align:'center',fixed:true, editor: {
+            <thead>
+            <tr>
+                <th data-options="field:'ck',checkbox:true"></th>
+                <th data-options="field:'join_date',width:100,align:'center', editor: {
                             type:'datebox',
                             options: {
                                 editable:false
                             }
                         }">报班日期</th>
-                    <th data-options="field:'class_id',width:140,align:'center',fixed:true">班级编号</th>
-                    <th data-options="field:'class_name',width:200,align:'center',fixed:true,editor:{
+                <th data-options="field:'class_id',width:140,align:'center'">班级编号</th>
+                <th data-options="field:'class_name',width:200,align:'center',editor:{
 							type:'combobox',
 							options:{
 								valueField:'class_id',
@@ -234,7 +196,7 @@
 								groupField:'class_type'
 							}
 						}">班级名称</th>
-                    <th data-options="field:'status',width:140,align:'center',fixed:true,editor:{
+                <th data-options="field:'status',width:140,align:'center',editor:{
                         type:'combobox',
                         options:{
                             valueField:'status',
@@ -256,18 +218,20 @@
 		                    }]
                         }
                     }">状态</th>
-                    <th data-options="field:'remark',width:200,align:'center',fixed:true,editor:'textbox'">备注</th>
-                    <th data-options="field:'id',hidden:true">6</th>
+                <th data-options="field:'remark',width:400,align:'center',editor:'textbox'">备注</th>
+                <th data-options="field:'id',hidden:true">6</th>
 
-                </tr>
-                </thead>
-            </table>
+            </tr>
+            </thead>
+        </table>
 
-        </div>
     </div>
 </div>
 
-<input type="hidden" name="student_rec_id" id="student_rec_id" hidden />
+
+<div id="footerStudent">
+    <div id="pagerStudent" class="easyui-pagination"></div>
+</div>
 
 <script type="text/javascript">
 

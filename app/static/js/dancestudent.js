@@ -113,6 +113,7 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
     // var _pageNo = 1;
     var ccId = 'cc' + datagridId;       // Combo box,姓名查找框ID
     var dg = $('#' + datagridId);       // datagrid ID
+    var sbId = 'sb' + datagridId;
 
     var dance_condition = '';               // 主datagrid表查询条件
 
@@ -123,7 +124,7 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
         url: url + '_get',
         fitColumns: true,
         pagination: true,   // True to show a pagination toolbar on datagrid bottom.
-        // singleSelect: true, // True to allow selecting only one row.
+        singleSelect: true, // True to allow selecting only one row.
         loadMsg: '正在加载数据...',
         border: false,
         striped: true,
@@ -192,7 +193,7 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
                 }
             }
         }, '-', {
-            text: '姓名：<input id=' + ccId + ' name="nameQuery" value="">'
+            text: '姓名：<input id=' + ccId + '>'
         },{
             iconCls: 'icon-search', text:"查询",  /// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
             handler: function () {
@@ -201,7 +202,8 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
                 // $(dg).datagrid('reload');
                 $(dg).datagrid('load', cond);
             }
-        }],
+        }, '-', {id: sbId}
+        ],
         columns: [[
             {field: 'id', title: 'id',  width: 30, align: 'center'},   // id, hidden   hidden:true
             {field: 'ck', checkbox:true },   // checkbox
@@ -224,6 +226,14 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
         width: 140,
         //panelHeight: "auto",
         onChange:autoComplete
+    });
+
+    $('#'+sbId).switchbutton({
+        onText: '单选', offText: '多选', checked: true,
+        onChange: function (checked) {
+            var gridOpts = $(dg).datagrid('options');
+            gridOpts.singleSelect = checked;
+        }
     });
 
     autoComplete(dance_condition,'');
@@ -310,6 +320,7 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
     var stu_remark = 'remark';
     var dgReceiptComm = 'dgStudent_contact';
     var dgStu_class = 'dgStudent_class';
+    var footerStu = 'footerStudent';
 
     var editIndexClass = undefined;
     var edIndexContact = undefined;
@@ -343,12 +354,6 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
                     }
                 }).attr('id', pagerStu+=uid);        // 更新ID
 
-                if (uid > 0) {  // 修改，查看
-                    doAjaxStuDetail();
-                } else {    // 新增
-                    newStudent()
-                }
-                $('#'+panelStu).attr('id', panelStu+=uid).find('div.datagrid-view2>div.datagrid-header').first().hide();
                 $('#'+stu_recorder).attr('id', stu_recorder+=uid).textbox('textbox').css('background','#e4e4e4');
                 // #ccc #fff #ffee00 #6293BB e4e4e4 #99ff99
                 $('#'+stu_sno).attr('id', stu_sno+=uid).textbox('textbox').css('background','#e4e4e4');
@@ -363,6 +368,7 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
                 $('#'+stu_former_name).attr('id', stu_former_name+=uid);
                 $('#'+stu_birthday).attr('id', stu_birthday+=uid);
                 $('#'+stu_remark).attr('id', stu_remark+=uid);
+                $('#'+footerStu).attr('id', footerStu+=uid);
                 $('#'+dgReceiptComm).attr('id', dgReceiptComm+=uid).datagrid({
                     onClickCell: onClickContactCell,
                     onLoadSuccess: function () {
@@ -392,6 +398,19 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
                         {iconCls: 'icon-remove', text: '删除行', handler: danceDelRow}
                     ]
                 });
+
+                $('#'+panelStu).attr('id', panelStu+=uid).mousedown(function (event) {      // panel 鼠标按下事件
+                    if (event.target.id === panelStu) {
+                        endEditingClass();
+                        endEditingContact();
+                    }
+                });     // .find('div.datagrid-view2>div.datagrid-header').first().hide();
+
+                if (uid > 0) {  // 修改，查看
+                    doAjaxStuDetail();
+                } else {    // 新增
+                    newStudent()
+                }
                 ajaxGetStudentExtras();
             }
         });
@@ -429,8 +448,6 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
 
                 // 更新翻页控件 页码
                 $('#'+pagerStu).pagination({total: data.total, pageNumber:no===-2?data.rows.no:no });
-
-                $('#student_rec_id').val(data.rows['id']);      // ID
 
                 // 更新联系方式 table
                 $('#'+dgReceiptComm).datagrid('updateRow',{

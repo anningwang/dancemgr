@@ -25,6 +25,7 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
     var _pageSize = 30;
     var _pageNo = 1;
     var ccId = 'cc' + datagridId;       // Combo box,班级名称查找框ID
+    var sbId = 'sb' + datagridId;
     var dg = $('#' + datagridId);
     var queryCondition = {};
 
@@ -35,7 +36,7 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
         fit: true,
         //fitColumns: true,
         pagination: true,   // True to show a pagination toolbar on datagrid bottom.
-        // singleSelect: true, // True to allow selecting only one row.
+        singleSelect: true, // True to allow selecting only one row.
         loadMsg: '正在加载数据...',
         border: false,
         striped: true,
@@ -97,13 +98,14 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
                 }
             }
         }, '-',{
-            text: '班级名称：<input id=' + ccId + ' name="dept" value="">'
+            text: '班级名称：<input id=' + ccId + '>'
         },{
             iconCls: 'icon-search', text:"查询",  /// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
             handler: function () {
                 alert('查询');
             }
-        }],
+        }, '-', {id: sbId}
+        ],
         columns: [[
             {field: 'ck', checkbox:true },   // checkbox
             // {field: 'no', title: '序号',  width: 15, align: 'center' },  //能自动显示行号，则不再需要自己实现
@@ -130,6 +132,14 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
         textField: 'text',
         width: 140,
         panelHeight: "auto"
+    });
+
+    $('#'+sbId).switchbutton({
+        onText: '单选', offText: '多选', checked: true,
+        onChange: function (checked) {
+            var gridOpts = $(dg).datagrid('options');
+            gridOpts.singleSelect = checked;
+        }
     });
 
     var pager = $(dg).datagrid('getPager');
