@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>收费单</title>
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/icon.css">
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+</head>
+<body>
+
+<div class="easyui-panel" style="width:100%;padding:2px;" id="panelReceipt" data-options="footer:'#footer',fit:true, border:false">
+    <div style="min-width: 1024px">
+        <!-- 上方区域，收费单基本信息  -->
+        <table id="dgReceipt_comm" class="easyui-datagrid" title="收费单（学费）" style="width:100%;" data-options="singleSelect:true,fitColumns:true">
+            <thead>
+            <tr>
+                <th data-options="field:'c1',width:100,align:'center'"></th>
+                <th data-options="field:'c2',width:140,align:'left',styler:cellStyler"></th>
+                <th data-options="field:'c3',width:100,align:'center'"></th>
+                <th data-options="field:'c4',width:140,align:'left'"></th>
+                <th data-options="field:'c5',width:100,align:'center'"></th>
+                <th data-options="field:'c6',width:140,align:'left'"></th>
+            </tr>
+            </thead>
+
+            <tr>  <!-- 第 1 行  -->
+                <td>收费单号</td>
+                <td></td>
+                <td>分校名称*</td>
+                <td></td>
+                <td>收费日期*</td>
+                <td></td>
+            </tr>
+
+            <tr>  <!-- 第 2 行  -->
+                <td>学号</td>
+                <td></td>
+                <td>姓名*</td>
+                <td></td>
+                <td>应收学费</td>
+                <td></td>
+            </tr>
+
+            <tr>  <!-- 第 3 行  -->
+                <td>教材费</td>
+                <td></td>
+                <td>其他费</td>
+                <td></td>
+                <td>费用合计</td>
+                <td></td>
+            </tr>
+
+            <tr>  <!-- 第 4 行  -->
+                <td>实收费合计</td>
+                <td></td>
+                <td>学费欠费</td>
+                <td></td>
+                <td>咨询师</td>
+                <td></td>
+            </tr>
+
+            <tr>  <!-- 第 5 行  -->
+                <td>收费方式</td>
+                <td></td>
+                <td>收据号</td>
+                <td></td>
+                <td>录入员</td>
+                <td></td>
+            </tr>
+
+            <tr>  <!-- 第 6 行  -->
+                <td>备注</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+
+        </table>  <!-- 上方区域，收费单基本信息  -->
+
+        <div style="margin:2px 0;"></div>
+        <!-- 上2区域，班级——学费 -->
+        <table id="dgStudyFee" class="easyui-datagrid" title="班级——学费" style="width:100%;" data-options="rownumbers:true,singleSelect:true,fitColumns:true">
+            <thead>
+            <tr>
+                <th data-options="field:'class_name',width:140,align:'center',editor:{
+				        type:'combobox',
+						options:{
+						    editable:false,
+						    // panelHeight:'auto',
+							valueField:'class_no',
+							textField:'class_name',
+							panelWidth: 260,
+							formatter: formatItem,
+							groupField:'class_type'
+					    }
+				    }
+			        ">班级名称</th>
+                <th data-options="field:'cost_mode',width:70,align:'center'">收费模式</th>
+                <th data-options="field:'cost',width:70,align:'center'">收费标准</th>
+                <th data-options="field:'term',width:70,align:'center',editor: {
+                        type:'numberbox',
+                        options: { min:0, max:1000 ,precision:2 }
+                    }
+                    ">学期长度</th>
+                <th data-options="field:'sum',width:100,align:'center'">优惠前学费</th>
+                <th data-options="field:'discount',width:70,align:'center',editor:'textbox'">优惠金额</th>
+                <th data-options="field:'discRateText',width:70,align:'center',editor:{
+					    type:'combobox',
+					    options:{
+					        editable:false,
+					        panelHeight:'auto',
+						    valueField:'value',
+						    textField:'text'
+					    }
+					}">折扣率</th>
+                <th data-options="field:'total',width:90,align:'center'">应收学费</th>
+                <th data-options="field:'real_fee',width:90,align:'center',editor:'textbox'">实收学费</th>
+                <th data-options="field:'arrearage',width:90,align:'center'">学费欠费</th>
+                <th data-options="field:'remark',width:140,align:'center',editor:'textbox'">备注</th>
+            </tr>
+            </thead>
+        </table> <!-- 上2区域，班级——学费 -->
+
+        <div style="margin:2px 0;"> </div>
+        <!-- 上3区域，教材费 -->
+        <table id="dgTm" class="easyui-datagrid" title="教材费" style="width:100%" data-options="rownumbers:true,fitColumns:true,singleSelect:true,collapsible:true">
+            <thead>
+            <tr>
+                <th data-options="field:'class_name',width:140,align:'center',editor: {
+                        type: 'combogrid',
+                        options:{
+                            editable:false,
+                            panelWidth:280,
+                            idField:'class_id',
+                            textField:'class_name',
+                            //url:'/api/dance_class_get',
+                            //method: 'post',
+                            columns:[[
+                                {field:'class_no',title:'班级编号',width:100},
+                                {field:'class_name',title:'班级名称',width:160}
+                            ]]
+                        }
+                    }">班级名称</th>
+                <th data-options="field:'tm_no',width:70,align:'center'">教材编号</th>
+                <th data-options="field:'tm_name',width:100,align:'center',editor: {
+                        type: 'combogrid',
+                        options:{
+                            editable:false,
+                            panelWidth:360,
+                            //value:'006',
+                            idField:'id',
+                            textField:'tm_name',
+                            //url:'/api/dance_tm_get',
+                            method: 'post',
+                            columns:[[
+                                {field:'tm_no',title:'教材编号',width:70},
+                                {field:'tm_name',title:'教材名称',width:180},
+                                {field:'tm_unit',title:'单位',width:40},
+                                {field:'tm_price_sell',title:'单价',width:40}
+                            ]]
+                        }
+                    }
+                ">教材名称</th>
+                <th data-options="field:'tm_unit',width:40,align:'center'">单位</th>
+                <th data-options="field:'tm_price_sell',width:40,align:'center',editor:'textbox'">单价</th>
+                <th data-options="field:'dt_num',width:40,align:'center',editor:'textbox'">数量</th>
+                <th data-options="field:'is_got',width:50,align:'center',editor:{
+					    type:'combobox',
+					    options:{
+					        editable:false,
+					        panelHeight:'auto',
+						    valueField:'id',
+						    textField:'text',
+						    data: [{
+						            id: '是',
+						            text: '是'
+						        },{
+						            id: '否',
+						            text: '否'
+						        }]
+					    }
+					}">是否领取</th>
+                <th data-options="field:'fee',width:70,align:'center'">教材费</th>
+                <th data-options="field:'remark',width:140,align:'center',editor:'textbox'">备注</th>
+            </tr>
+            </thead>
+        </table> <!-- 上3区域，教材费 -->
+
+
+        <div style="margin:2px 0;"></div>
+        <div id="dcMayHide">
+            <!-- 上4区域，其他费 -->
+            <table id="dgOtherFee" class="easyui-datagrid" title="其他费" style="width:100%;" data-options="rownumbers:true,fitColumns:true,singleSelect:true,collapsible:true">
+                <thead>
+                <tr>
+                    <th data-options="field:'ck',checkbox:true"></th>
+                    <th data-options="field:'class_name',width:140,align:'center',editor: {
+                        type: 'combogrid',
+                        options:{
+                            editable:false,
+                            panelWidth:280,
+                            idField:'class_id',
+                            textField:'class_name',
+                            columns:[[
+                                {field:'class_no',title:'班级编号',width:100},
+                                {field:'class_name',title:'班级名称',width:160}
+                            ]]
+                        }
+                    }">班级名称</th>
+                    <th data-options="field:'fee_item',width:70,align:'center',editor:{
+					    type:'combobox',
+					    options:{
+					        editable:false,
+					        panelHeight:'auto',
+						    valueField:'fee_id',
+						    textField:'fee_item',
+					    }
+					}">收费项目</th>
+                    <th data-options="field:'summary',width:70,align:'center',editor:'textbox'">摘要</th>
+                    <th data-options="field:'real_fee',width:70,align:'center',editor:'textbox'">收费金额</th>
+                    <th data-options="field:'remark',width:140,align:'center',editor:'textbox'">备注</th>
+                </tr>
+                </thead>
+            </table> <!-- 上4区域，其他费 -->
+        </div>
+    </div>
+</div>
+
+<div id="footer">
+    <div id="pager" class="easyui-pagination"></div>
+</div>
+
+<div id="mmClass" class="easyui-menu"></div>
+<div id="mmTm" class="easyui-menu"></div>
+<div id="mmOth" class="easyui-menu"></div>
+
+<script type="text/javascript">
+
+    function formatItem(row){
+        return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
+                '<span style="color:#888">' + row['class_no'] + '</span>';
+    }
+
+    function cellStyler(value,row,index){
+        if (value >= 0 && index === 3){
+            return 'background-color:#ffee00;';
+        }
+    }
+
+</script>
+
+</body>
+</html>

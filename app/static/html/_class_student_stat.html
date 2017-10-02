@@ -10,8 +10,10 @@
 </head>
 <body>
 
+<div class="easyui-panel" style="width:100%;padding:2px;"  data-options="fit:true, border:false">
+
 <div class="easyui-layout" data-options="fit:true">
-    <div data-options="region:'west',split:true,hideCollapsedContent:false" title="班级信息" style="width:40%;">
+    <div data-options="region:'west',split:true,hideCollapsedContent:false, border:true" title="班级信息" style="width:40%;">
         <table id="danceClassStudentStat" class="easyui-datagrid"
                data-options="border:false,singleSelect:true,fit:true,
                fitColumns:true,rownumbers:true,striped:true,emptyMsg:'无数据',
@@ -31,9 +33,9 @@
             </thead>
         </table>
     </div>
-    <div data-options="region:'center'">
+    <div data-options="region:'center',border:true">
         <table id="danceStudentStat" class="easyui-datagrid"
-               data-options="border:false,singleSelect:true,fit:true,border:false,title:'学员信息',iconCls:'icon-ok',
+               data-options="border:false,singleSelect:true,fit:true,title:'学员信息',iconCls:'icon-ok',
                fitColumns:true,rownumbers:true,striped:true,emptyMsg:'无数据',
                pagination:true,pageSize:100,pageNumber:1,pageList: [50,100]
                ">
@@ -52,13 +54,15 @@
     </div>
 </div>
 
+</div>
+
 <script type="text/javascript">
     function onSelect(index,row) {
         var dg = $('#danceStudentStat');
         $(dg).datagrid({
             title: '学员信息 [' + row['class_name']  + ']',
             url: '/dance_class_student_get',
-            queryParams: {'class_no': row.cno}
+            queryParams: {'class_no': row['cno']}
         });
     }
 

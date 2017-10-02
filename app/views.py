@@ -562,7 +562,10 @@ def dance_student_query():
         return jsonify({'errorCode': 0, 'msg': 'no data'})
 
     name = request.form['name']
-    dcq = DanceStudent.query.filter(DanceStudent.name.like('%' + name + '%'))
+    if name.encode('UTF-8').isalpha():
+        dcq = DanceStudent.query.filter(DanceStudent.rem_code.like('%' + name + '%'))
+    else:
+        dcq = DanceStudent.query.filter(DanceStudent.name.like('%' + name + '%'))
 
     if 'school_id' not in request.form or request.form['school_id'] == 'all':
         dcq = dcq.filter(DanceStudent.school_id.in_(school_ids))

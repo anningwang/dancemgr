@@ -3,7 +3,8 @@ from flask import request, jsonify, g
 from flask_login import login_required
 from app import app, db
 from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent, DcTeachingMaterial,\
-    DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass, DanceStudentClass
+    DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass, DanceStudentClass, DcShowRecpt, DcCommFeeMode,\
+    DcShow, DcShowFeeCfg
 from views import dance_student_query
 import json
 import datetime
@@ -277,7 +278,11 @@ def dance_receipt_study_get():
 
     dcq = dcq.join(DanceStudent, DanceStudent.id == DanceReceipt.student_id)
     if 'name' in request.form and request.form['name'] != '':
-        dcq = dcq.filter(DanceStudent.name.like('%' + request.form['name'] + '%'))
+        name = request.form['name']
+        if name.encode('UTF-8').isalpha():
+            dcq = dcq.filter(DanceStudent.rem_code.like('%' + name + '%'))
+        else:
+            dcq = dcq.filter(DanceStudent.name.like('%' + name + '%'))
 
     total = dcq.count()
     offset = (page_no - 1) * page_size
@@ -666,6 +671,90 @@ def dance_teaching_material_query():
     return jsonify(ret)
 
 
+@app.route('/dance_receipt_show_query', methods=['POST'])
+@login_required
+def dance_receipt_show_query():
+    """ 根据姓名或者 姓名拼音 查询 符合条件的学员 """
+    return dance_student_query()
+
+
+@app.route('/dance_receipt_show_get', methods=['POST'])
+@login_required
+def dance_receipt_show_get():
+    """
+    查询收费单（演出）基本信息。界面：收费单（演出）   列表
+        输入参数：
+            rows:       需要返回的每页记录条数
+            page:       页码
+            school_id:  分校id
+            name:       查询条件，学员姓名或者姓名拼音首字母
+    :return:
+        total       符合条件的总记录条数
+        rows        记录。list。
+            {field: 'show_recpt_no', title: '演出收费单编号', width: 140, align: 'center'},
+            {field: 'show_name', title: '演出名称', width: 110, align: 'center'},
+            {field: 'school_name', title: '分校名称', width: 110, align: 'center'},
+            {field: 'student_no', title: '学号', width: 140, align: 'center'},
+            {field: 'student_name', title: '学员姓名', width: 80, align: 'center'},
+            {field: 'deal_date', title: '收费日期', width: 90, align: 'center'},
+            {field: 'join_fee', title: '报名费', width: 80, align: 'center'},
+            {field: 'other_fee', title: '其他费', width: 80, align: 'center'},
+            {field: 'total', title: '费用合计', width: 80, align: 'center'},
+            {field: 'fee_mode', title: '收费方式', width: 70, align: 'center'},
+            {field: 'remark', title: '备注', width: 90, align: 'center'},
+            {field: 'recorder', title: '录入员', width: 90, align: 'center'}
+        errorCode   错误码，0，正确，其他错误
+        msg         错误信息。 'ok' -- 正确
+    """
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    if page_no <= 0:    # 补丁
+        page_no = 1
+
+    dcq = DcShowRecpt.query
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(DcShowRecpt.school_id.in_(school_id_intersection))
+
+    dcq = dcq.join(DanceStudent, DanceStudent.id == DcShowRecpt.student_id)
+    if 'name' in request.form and request.form['name'] != '':
+        name = request.form['name']
+        if name.encode('UTF-8').isalpha():
+            dcq = dcq.filter(DanceStudent.rem_code.like('%' + name + '%'))
+        else:
+            dcq = dcq.filter(DanceStudent.name.like('%' + name + '%'))
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.join(DanceSchool, DanceSchool.id == DcShowRecpt.school_id)\
+        .join(DcCommFeeMode, DcCommFeeMode.id == DcShowRecpt.fee_mode_id)\
+        .add_columns(DanceSchool.school_name,
+                     DanceStudent.sno,
+                     DanceStudent.name,
+                     DcCommFeeMode.fee_mode)\
+        .order_by(DcShowRecpt.id.desc()).limit(page_size).offset(offset).all()
+    i = offset + 1
+    rows = []
+    for dcr in records:
+        rec = dcr[0]
+        rows.append({'no': i, 'id': rec.id, "show_recpt_no": rec.show_recpt_no, 'recorder': rec.recorder,
+                     'deal_date': datetime.datetime.strftime(rec.deal_date, '%Y-%m-%d'),
+                     'join_fee': rec.join_fee, 'other_fee': rec.other_fee, 'total': rec.total,
+                     'remark': rec.remark, 'last_upd_at': rec.last_upd_at,
+                     'fee_mode_id': rec.fee_mode_id, 'fee_mode': dcr[4],
+                     'school_name': dcr[1], 'student_sno': dcr[2], 'student_name': dcr[3],
+                     'paper_receipt': rec.paper_receipt
+                     })
+        i += 1
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
 @app.route('/dance_progressbar', methods=['POST'])
 @login_required
 def dance_progressbar():
@@ -799,3 +888,25 @@ def api_dance_class_by_student():
 
     return jsonify({'errorCode': 0, 'msg': 'ok', 'cls': cls})
 
+
+@app.route('/api/dance_show_name_get', methods=['POST'])
+@login_required
+def api_dance_show_name_get():
+    """
+    查询演出名称
+    :return: [{
+        'show_name' : str   演出名称
+        'show_id'   : int   演出 id
+        }]
+    """
+    """ 
+    records = DcShow.query.filter_by(company_id=g.user.company_id)\
+        .join(DcShowFeeCfg, DcShowFeeCfg.show_id == DcShow.id)\
+        .join(DcFeeItem, DcFeeItem.id == DcShowFeeCfg.fee_item_id)\
+        .add_columns(DcFeeItem.fee_item, DcShowFeeCfg.cost).order_by(DcShow.id.desc()).all()
+    """
+    records = DcShow.query.filter_by(company_id=g.user.company_id).order_by(DcShow.id.desc()).all()
+    show = []
+    for rec in records:
+        show.append({'show_name': rec.show_name, 'show_id': rec.id})
+    return jsonify(show)

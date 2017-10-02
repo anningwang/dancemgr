@@ -41,8 +41,8 @@ def dance_tree_student():
     tree = [{"id": 10, "text": "学员列表", 'attributes': {'school_id': 'all', 'is_training': u'是'}},
             {"id": 20, "text": "准学员列表"},
             {"id": 30, "text": "收费单（学费）", 'attributes': {'school_id': 'all'}},
-            {"id": 40, "text": "收费单（演出）"},
-            {"id": 50, "text": "收费单（普通）"},
+            {"id": 40, "text": "收费单（演出）", 'attributes': {'school_id': 'all'}},
+            {"id": 50, "text": "收费单（普通）", 'attributes': {'school_id': 'all'}},
             {"id": 60, "text": "班级学员统计", 'attributes': {'school_id': 'all', 'is_ended': 0}}
             ]
 
@@ -53,7 +53,7 @@ def dance_tree_student():
         tree[0]['children'] = t1
     elif len(school_ids) > 1:
         t1 = []
-        t3 = []
+        t3, t4, t5 = [], [], []
         t6 = []
         for i in range(len(school_ids)):
             name = school_map[school_ids[i]]
@@ -69,6 +69,13 @@ def dance_tree_student():
 
         tree[0]['children'] = t1
         tree[2]['children'] = t3
+        tree[3]['children'] = t3
+        tree[4]['children'] = t3
         tree[5]['children'] = t6
+
+        tree[2]['state'] = 'closed'
+        tree[3]['state'] = 'closed'
+        tree[4]['state'] = 'closed'
+        tree[5]['state'] = 'closed'
 
     return jsonify(tree)

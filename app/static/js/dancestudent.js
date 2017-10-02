@@ -779,7 +779,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
         title +='[新增]'
     }
 
-    var no = -2;    // 学员所在数据库中的序号，方便翻页。传递 -2 则根据 uid 查询该学员的序号
+    var no = -2;    // 收费单序号，方便翻页。传递 -2 则根据 uid 查询其序号
 
     var dgReceiptComm = 'dgReceipt_comm';   // 收费单（学费）基本信息
     var dgStudyFee = 'dgStudyFee';      // 班级——学费

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>收费单</title>
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/icon.css">
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+</head>
+<body>
+
+<div class="easyui-panel" style="width:100%;padding:2px;" id="panelRecptShow" data-options="footer:'#footerShow',fit:true, border:false">
+    <div style="min-width: 1024px">
+        <!-- 上方区域，收费单基本信息  -->
+        <table id="dgRecptShowComm" class="easyui-datagrid" title="收费单（演出）基本信息" style="width:100%;" data-options="singleSelect:true,fitColumns:true">
+            <thead>
+            <tr>
+                <th data-options="field:'c1',width:100,align:'center'"></th>
+                <th data-options="field:'c2',width:140,align:'left'"></th>
+                <th data-options="field:'c3',width:100,align:'center'"></th>
+                <th data-options="field:'c4',width:140,align:'left'"></th>
+                <th data-options="field:'c5',width:100,align:'center'"></th>
+                <th data-options="field:'c6',width:140,align:'left',styler:cellStyler"></th>
+            </tr>
+            </thead>
+
+            <tr>  <!-- 第 1 行  -->
+                <td>演出收费单号</td>
+                <td></td>
+                <td>分校名称*</td>
+                <td></td>
+                <td>收费日期*</td>
+                <td></td>
+            </tr>
+
+            <tr>  <!-- 第 2 行  -->
+                <td>学号</td>
+                <td></td>
+                <td>姓名*</td>
+                <td></td>
+                <td>收费方式</td>
+                <td></td>
+            </tr>
+
+            <tr>  <!-- 第 3 行  -->
+                <td>报名费</td>
+                <td></td>
+                <td>其他费</td>
+                <td></td>
+                <td>费用合计</td>
+                <td></td>
+            </tr>
+
+            <tr>  <!-- 第 4 行  -->
+                <td>备注</td>
+                <td></td>
+                <td>收据号</td>
+                <td></td>
+                <td>录入员</td>
+                <td></td>
+            </tr>
+
+            <tr>  <!-- 第 5 行  -->
+                <td>已报班</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+
+        </table>  <!-- 上方区域，收费单基本信息  -->
+
+        <div style="margin:2px 0;"></div>
+        <!-- 上2区域，演出费 -->
+        <table id="dgShowFee" class="easyui-datagrid" title="演出收费" style="width:100%;" data-options="rownumbers:true,singleSelect:true,fitColumns:true">
+            <thead>
+            <tr>
+                <th data-options="field:'show_name',width:140,align:'center',editor:{
+				        type:'combobox',
+						options:{
+						    editable:false,
+						    // panelHeight:'auto',
+							valueField:'show_id',
+							textField:'show_name',
+							// panelWidth: 260,
+							formatter: formatItem,
+							groupField:'class_type'
+					    }
+				    }
+			        ">演出名称</th>
+                <th data-options="field:'fee_item',width:70,align:'center',editor:{
+					    type:'combobox',
+					    options:{
+					        editable:false,
+					        panelHeight:'auto',
+						    valueField:'fee_item_id',
+						    textField:'fee_item'
+					    }
+					}">收费项目</th>
+                <th data-options="field:'fee',width:90,align:'center',editor:'textbox'">费用</th>
+                <th data-options="field:'is_rcv',width:90,align:'center',editor:{
+					    type:'combobox',
+					    options:{
+					        editable:false,
+					        panelHeight:'auto',
+						    valueField:'value',
+						    textField:'text',
+						    data: [{
+						            value: '1',
+						            text: '是'
+						        },{
+						            value: '0',
+						            text: '否'
+						        }]
+					    }
+					}">是否收取费用</th>
+                <th data-options="field:'remark',width:140,align:'center',editor:'textbox'">备注</th>
+            </tr>
+            </thead>
+        </table> <!-- 上2区域，班级——学费 -->
+    </div>
+</div>
+
+<div id="footerShow">
+    <div id="pagerShow" class="easyui-pagination"></div>
+</div>
+
+
+<script type="text/javascript">
+
+    function formatItem(row){
+        return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
+                '<span style="color:#888">' + row['class_no'] + '</span>';
+    }
+
+    function cellStyler(value,row,index){
+        if (value >= 0 && index === 2){
+            return 'background-color:#ffee00;';
+        }
+    }
+
+</script>
+
+</body>
+</html>

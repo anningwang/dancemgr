@@ -70,7 +70,7 @@ $('.easyui-tree').tree({
         console.log('this.id=' + this.id + ', node.id=' + node.id + ', node.text=' + node.text);
         if($(this).tree('isLeaf',node.target)){  // 判断是否是叶子节点
         } else {
-            $(this).tree('expand',node.target);
+            //$(this).tree('expand',node.target);
         }
 
         var root = node;
@@ -94,6 +94,10 @@ $('.easyui-tree').tree({
                 danceAddTabClassStudentStat(root.text, node.attributes);
             } else if (root.id == 30) {    // '收费单（学费）'
                 danceAddTabFeeStudyDatagrid('danceTabs',root.text,this.id+root.id,node.attributes);
+            } else if (root.id == 40) {    // 收费单（演出）
+                danceAddTabFeeShowDatagrid('danceTabs',root.text,this.id+root.id,node.attributes);
+            } else if (root.id == 50) {    // 收费单（普通）
+                danceAddTabFeeOtherDatagrid('danceTabs',root.text,this.id+root.id,node.attributes);
             } else {
                 $.messager.alert('提示', ' 制作中...', 'info');
             }
@@ -222,5 +226,6 @@ $('.easyui-tree').tree({
 <script src="/static/js/danceclass.js"  type="text/javascript"></script>
 <script src="/static/js/dancedatamgr.js"  type="text/javascript"></script>
 <script src="/static/js/dancetempeditedtable.js"  type="text/javascript"></script>
+<script src="/static/js/dancerept.js"></script>
 
 </html>

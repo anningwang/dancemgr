@@ -7,7 +7,7 @@ import flask_whooshalchemy as whooshalchemy
 import re
 import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from tools.tools import get_stu_no, dc_gen_code
+from tools.tools import get_stu_no, dc_gen_code, gen_code
 from flask import g
 
 ROLE_USER = 0
@@ -1125,12 +1125,14 @@ class DcFeeItem(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
     recorder = db.Column(db.String(20, collation='NOCASE'))
     create_at = db.Column(db.DateTime, nullable=False)
+    type = db.Column(db.Integer)        # 类别 type: 1 学费， 2 演出， 3，普通
 
-    def __init__(self, name):
+    def __init__(self, name, fee_type=1):
         self.fee_item = name
         self.company_id = g.user.company_id
         self.recorder = g.user.name
         self.create_at = datetime.datetime.today()
+        self.type = fee_type
 
     @staticmethod
     def get_records():
@@ -1215,5 +1217,251 @@ class DcTeachingMaterial(db.Model):
         return val
         """
         return dict((k.material_no, k) for k in records)
+
+
+class DcCommFeeMode(db.Model):
+    """  收费模式表：支付宝、微信、刷卡、现金等 """
+    id = db.Column(db.Integer, primary_key=True)
+    fee_mode = db.Column(db.String(6, collation='NOCASE'))  # 收费模式
+    disc_rate = db.Column(db.Float)     # 点数损失，比如刷信用卡 0.6%
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    create_at = db.Column(db.DateTime, nullable=False)
+    last_upd_at = db.Column(db.DateTime, nullable=False)
+    last_user = db.Column(db.String(20, collation='NOCASE'))    # 最后操作者
+    company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
+
+    def __init__(self, name, rate=1):
+        self.fee_mode = name
+        self.company_id = g.user.company_id
+        self.last_user = self.recorder = g.user.name
+        self.last_upd_at = self.create_at = datetime.datetime.today()
+        self.disc_rate = rate
+
+    def __repr__(self):
+        return '<DcCommFeeMode %r>' % self.id
+
+
+class DcShowFeeCfg(db.Model):
+    """  演出包含的收费项目配置表 """
+    id = db.Column(db.Integer, primary_key=True)
+    show_id = db.Column(db.Integer, nullable=False)
+    fee_item_id = db.Column(db.Integer, nullable=False)
+    cost = db.Column(db.Float)     # 收费金额
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    create_at = db.Column(db.DateTime, nullable=False)
+    last_upd_at = db.Column(db.DateTime, nullable=False)
+    last_user = db.Column(db.String(20, collation='NOCASE'))    # 最后操作者
+    company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
+
+    def __init__(self, show_id, fee_item_id, cost):
+        self.show_id = show_id
+        self.fee_item_id = fee_item_id
+        self.cost = cost
+        self.last_user = self.recorder = g.user.name
+        self.last_upd_at = self.create_at = datetime.datetime.today()
+        self.company_id = g.user.company_id
+
+    def __repr__(self):
+        return '<DcShowFeeCfg %r>' % self.id
+
+
+class DcShow(db.Model):
+    """  演出详细信息表 """
+    id = db.Column(db.Integer, primary_key=True)
+    show_no = db.Column(db.String(20), nullable=False)
+    show_name = db.Column(db.String(40, collation='NOCASE'))
+    begin_date = db.Column(db.DateTime)
+    end_date = db.Column(db.DateTime)
+    address = db.Column(db.String(60, collation='NOCASE'))
+    summary = db.Column(db.String(140, collation='NOCASE'))
+    is_end = db.Column(db.Integer)      # 是否结束 1 是， 0 否
+    join_fee = db.Column(db.Integer)     # 报名费
+    other_fee = db.Column(db.Integer)  # 其他费
+    total = db.Column(db.Integer)  # 费用合计
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    create_at = db.Column(db.DateTime, nullable=False)
+    last_upd_at = db.Column(db.DateTime, nullable=False)
+    last_user = db.Column(db.String(20, collation='NOCASE'))    # 最后操作者
+    company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
+
+    def __init__(self, param):
+        self .show_no = param['show_no'] if 'show_no' in param else self.create_code()
+        if 'show_name' in param:
+            self.show_name = param['show_name']
+        if 'begin_date' in param:
+            self.begin_date = datetime.datetime.strptime(param['begin_date'], '%Y-%m-%d')
+        if 'end_date' in param:
+            self.end_date = datetime.datetime.strptime(param['end_date'], '%Y-%m-%d')
+        if 'address' in param:
+            self.address = param['address']
+        if 'summary' in param:
+            self.summary = param['summary']
+        self.is_end = 0 if 'is_end' not in param or param['is_end'] != u'是' else 1
+        self.join_fee = param['join_fee'] if 'join_fee' in param and param['join_fee'] != '' else 0
+        self.other_fee = param['other_fee'] if 'other_fee' in param and param['other_fee'] != '' else 0
+        self.total = self.join_fee + self.other_fee
+
+        self.last_user = self.recorder = g.user.name
+        self.last_upd_at = self.create_at = datetime.datetime.today()
+        self.company_id = g.user.company_id
+
+    def update(self, param):
+        if 'show_name' in param:
+            self.show_name = param['show_name']
+        if 'begin_date' in param:
+            self.begin_date = datetime.datetime.strptime(param['begin_date'], '%Y-%m-%d')
+        if 'end_date' in param:
+            self.end_date = datetime.datetime.strptime(param['end_date'], '%Y-%m-%d')
+        if 'address' in param:
+            self.address = param['address']
+        if 'summary' in param:
+            self.summary = param['summary']
+        if 'is_end' in param:
+            self.is_end = param['is_end']
+        if 'join_fee' in param:
+            self.join_fee = param['join_fee'] if param['join_fee'] != '' else 0
+        if 'other_fee' in param:
+            self.other_fee = param['other_fee'] if param['other_fee'] != '' else 0
+        self.total = self.join_fee + self.other_fee
+
+        self.last_upd_at = datetime.datetime.today()
+        self.last_user = g.user.name
+
+    def create_code(self):
+        search_no = gen_code(self.school_id, 'SHW')
+        rec = DcShow.query.filter(DcShow.show_no.like('%' + search_no + '%'))\
+            .order_by(DcShow.id.desc()).first()
+        number = 1 if rec is None else int(rec.show_no.rsplit('-', 1)[1]) + 1
+        self.show_no = search_no + ('%03d' % number)
+        return self.show_no
+
+    def __repr__(self):
+        return '<DcShow %r>' % self.id
+
+
+class DcShowRecpt(db.Model):
+    """  收费单（演出）基本信息表 """
+    id = db.Column(db.Integer, primary_key=True)
+    show_recpt_no = db.Column(db.String(20), nullable=False)
+    show_id = db.Column(db.Integer, nullable=False)
+    school_id = db.Column(db.Integer, nullable=False)
+    student_id = db.Column(db.Integer, nullable=False)
+    deal_date = db.Column(db.DateTime, nullable=False)
+    join_fee = db.Column(db.Float, nullable=False)     # 报名费
+    other_fee = db.Column(db.Float)  # 其他费
+    total = db.Column(db.Float)  # 费用合计
+    fee_mode_id = db.Column(db.Integer)
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    create_at = db.Column(db.DateTime, nullable=False)
+    last_upd_at = db.Column(db.DateTime, nullable=False)
+    last_user = db.Column(db.String(20, collation='NOCASE'))    # 最后操作者
+    remark = db.Column(db.String(40))
+    paper_receipt = db.Column(db.String(15))  # 收据号  例如：1347269
+
+    def __init__(self, param):
+        if 'show_id' in param:
+            self.recpt_id = param['recpt_id']
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        self.show_recpt_no = param['show_recpt_no'] if 'show_recpt_no' in param else self.create_code()
+        if 'student_id' in param:
+            self.student_id = param['student_id']
+        if 'deal_date' in param:
+            self.deal_date = datetime.datetime.strptime(param[u'deal_date'], '%Y-%m-%d')
+            if self.deal_date.date() == datetime.date.today():
+                self.deal_date = datetime.datetime.today()
+        else:
+            self.deal_date = datetime.datetime.today()
+        self.join_fee = param['join_fee'] if 'join_fee' in param and param['join_fee'] != '' else 0
+        self.other_fee = param['other_fee'] if 'other_fee' in param and param['other_fee'] != '' else None
+        self.total = self.join_fee + (0 if self.other_fee is None else self.other_fee)
+        if 'fee_mode_id' in param:
+            self.fee_mode_id = param['fee_mode_id']
+        self.last_user = self.recorder = g.user.name
+        self.last_upd_at = self.create_at = datetime.datetime.today()
+        if 'remark' in param:
+            self.remark = param['remark']
+        if 'paper_receipt' in param:
+            self.paper_receipt = param['paper_receipt']
+
+    def update(self, param):
+        if 'show_id' in param:
+            self.recpt_id = param['recpt_id']
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        if 'student_id' in param:
+            self.student_id = param['student_id']
+        if 'deal_date' in param:
+            self.deal_date = datetime.datetime.strptime(param[u'deal_date'], '%Y-%m-%d')
+            if self.deal_date.date() == datetime.date.today():
+                self.deal_date = datetime.datetime.today()
+        else:
+            self.deal_date = datetime.datetime.today()
+        self.join_fee = param['join_fee'] if 'join_fee' in param and param['join_fee'] != '' else 0
+        self.other_fee = param['other_fee'] if 'other_fee' in param and param['other_fee'] != '' else None
+        self.total = self.join_fee + (0 if self.other_fee is None else self.other_fee)
+        if 'fee_mode_id' in param:
+            self.fee_mode_id = param['fee_mode_id']
+        self.last_upd_at = datetime.datetime.today()
+        self.last_user = g.user.name
+        if 'remark' in param:
+            self.remark = param['remark']
+        if 'paper_receipt' in param:
+            self.paper_receipt = param['paper_receipt']
+
+    def create_code(self):
+        if self.school_id is None:
+            raise Exception('Please input school_id first!')
+        search_no = dc_gen_code(self.school_id, 'SHW')
+        rec = DcShowRecpt.query.filter(DcShowRecpt.show_recpt_no.like('%' + search_no + '%'))\
+            .order_by(DcShowRecpt.id.desc()).first()
+        number = 1 if rec is None else int(rec.receipt_no.rsplit('-', 1)[1]) + 1
+        self.show_recpt_no = search_no + ('%03d' % number)
+        return self.show_recpt_no
+
+    def __repr__(self):
+        return '<DcShowRecpt %r>' % self.id
+
+
+class DcShowDetailFee(db.Model):
+    """  收费单（演出）明细表 """
+    id = db.Column(db.Integer, primary_key=True)
+    recpt_id = db.Column(db.Integer, nullable=False)
+    show_id = db.Column(db.Integer, nullable=False)
+    fee_item_id = db.Column(db.Integer, nullable=False)
+    fee = db.Column(db.Float, nullable=False)     # 收费金额
+    is_rcv = db.Column(db.Integer, nullable=False)  # 是否收取  1 是， 0 否
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    create_at = db.Column(db.DateTime, nullable=False)
+    last_upd_at = db.Column(db.DateTime, nullable=False)
+    last_user = db.Column(db.String(20, collation='NOCASE'))    # 最后操作者
+    company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
+
+    def __init__(self, param):
+        if 'recpt_id' in param:
+            self.recpt_id = param['recpt_id']
+        if 'show_id' in param:
+            self.show_id = param['show_id']
+        if 'fee_item_id' in param:
+            self.fee_item_id = param['fee_item_id']
+        if 'fee' in param:
+            self.fee = param['fee']
+        self.is_rcv = 0 if 'is_rcv' not in param or param['is_rcv'] == u'否' else 1
+        self.last_user = self.recorder = g.user.name
+        self.last_upd_at = self.create_at = datetime.datetime.today()
+        self.company_id = g.user.company_id
+
+    def update(self, param):
+        if 'fee_item_id' in param:
+            self.fee_item_id = param['fee_item_id']
+        if 'fee' in param:
+            self.fee = param['fee']
+        if 'is_rcv' in param:
+            self.is_rcv = 0 if param['is_rcv'] == u'否' else 1
+        self.last_upd_at = datetime.datetime.today()
+        self.last_user = g.user.name
+
+    def __repr__(self):
+        return '<DcShowDetailFee %r>' % self.id
 
 whooshalchemy.whoosh_index(app, Post)
