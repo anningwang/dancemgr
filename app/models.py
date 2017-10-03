@@ -1288,9 +1288,9 @@ class DcShow(db.Model):
         self .show_no = param['show_no'] if 'show_no' in param else self.create_code()
         if 'show_name' in param:
             self.show_name = param['show_name']
-        if 'begin_date' in param:
+        if 'begin_date' in param and param['begin_date'] != '':
             self.begin_date = datetime.datetime.strptime(param['begin_date'], '%Y-%m-%d')
-        if 'end_date' in param:
+        if 'end_date' in param and param['end_date'] != '':
             self.end_date = datetime.datetime.strptime(param['end_date'], '%Y-%m-%d')
         if 'address' in param:
             self.address = param['address']
@@ -1328,7 +1328,7 @@ class DcShow(db.Model):
         self.last_user = g.user.name
 
     def create_code(self):
-        search_no = gen_code(self.school_id, 'SHW')
+        search_no = gen_code('SHW')
         rec = DcShow.query.filter(DcShow.show_no.like('%' + search_no + '%'))\
             .order_by(DcShow.id.desc()).first()
         number = 1 if rec is None else int(rec.show_no.rsplit('-', 1)[1]) + 1

@@ -90,15 +90,7 @@
 					    }
 				    }
 			        ">演出名称</th>
-                <th data-options="field:'fee_item',width:70,align:'center',editor:{
-					    type:'combobox',
-					    options:{
-					        editable:false,
-					        panelHeight:'auto',
-						    valueField:'fee_item_id',
-						    textField:'fee_item'
-					    }
-					}">收费项目</th>
+                <th data-options="field:'fee_item',width:70,align:'center'">收费项目</th>
                 <th data-options="field:'fee',width:90,align:'center',editor:'textbox'">费用</th>
                 <th data-options="field:'is_rcv',width:90,align:'center',editor:{
 					    type:'combobox',
@@ -131,8 +123,8 @@
 <script type="text/javascript">
 
     function formatItem(row){
-        return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
-                '<span style="color:#888">' + row['class_no'] + '</span>';
+        return '<span style="font-weight:bold">' + row['show_name'] + '</span>&nbsp;&nbsp;' +
+                '<span style="color:#888">' + row['show_no'] + '</span>';
     }
 
     function cellStyler(value,row,index){

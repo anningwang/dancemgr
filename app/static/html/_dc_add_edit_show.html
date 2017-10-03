@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>舞管家</title>
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/icon.css">
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+</head>
+<body>
+
+
+<div class="easyui-window" title="新增演出" data-options="iconCls:'icon-save',minimizable:false,collapsible:false,
+        maximizable:false,closable:false,
+        onBeforeClose: onBeforeCloseShow
+        " id="dcShowWinNew" style="width:700px; height:620px;padding:5px;">
+
+    <div class="easyui-layout" data-options="fit:true">
+        <div data-options="region:'center', border:true" style="padding:10px;">
+            <div style="margin-bottom:3px">
+                <input class="easyui-textbox" id="showNo" data-options="label:'演出编号：',labelPosition:'before',prompt:'自动生成',disabled:true, labelAlign:'right'" style="width:100%;">
+            </div>
+            <div style="margin-bottom:3px">
+                <input class="easyui-textbox" id="showName" data-options="label:'*演出名称：',labelAlign:'right'" style="width:100%;">
+            </div>
+            <div style="margin-bottom:3px">
+                <input class="easyui-datebox" id="beginDate" data-options="label:'开始日期：',labelAlign:'right'"
+                       style="width:50%;"><input class="easyui-datebox" id="endDate"
+                                                 data-options="label:'结束日期：',labelAlign:'right'" style="width:50%;">
+            </div>
+            <div style="margin-bottom:3px">
+                <input class="easyui-textbox" id="address" data-options="label:'演出地址：',labelAlign:'right'" style="width:100%;">
+            </div>
+            <div style="margin-bottom:3px">
+                <input class="easyui-textbox" id="summary"
+                       data-options="label:'演出简介：',labelAlign:'right'" style="width:100%;">
+            </div>
+            <div style="margin-bottom:3px">
+                <input class="easyui-textbox"
+                       id="otherFee" data-options="label:'其他费：',disabled:true,labelAlign:'right'"
+                       style="width:33%;"><input class="easyui-textbox"
+                                                 id="joinFee"
+                                                 data-options="label:'报名费：',disabled:true,labelAlign:'right'"
+                                                 style="width:33%;"><input class="easyui-textbox"
+                                                                           id="total" data-options="label:'费用合计：',
+                                                                    disabled:true,labelAlign:'right'" style="width:34%;">
+            </div>
+            <div style="margin-bottom:3px">
+                <input class="easyui-textbox" id="remark" data-options="label:'备注：',labelAlign:'right'" style="width:100%;">
+            </div>
+
+            <input class="easyui-textbox" id="recorder"  data-options="label:'录入员：',prompt:'自动生成',disabled:true,labelAlign:'right'" style="width:100%;">
+
+
+            <div style="height: 8px"></div>
+            <div class="easyui-panel" style="width:100%;padding:5px;">
+                <table width="100%">
+                    <tr>
+                        <td width="35%">
+                            <input class="easyui-combobox" id="fee_item" name="fee_item" style="width:100%;" data-options="
+                                    url:'/api/dance_fee_item_get',
+                                    queryParam: {ctrl: 'combobox'},
+                                    // method:'get',
+                                    editable:false,
+                                    valueField:'fee_id',
+                                    textField:'fee_item',
+                                    panelHeight:'auto',
+                                    iconWidth:22,
+                                    icons:[{
+                                        iconCls:'icon-add'
+                                    },{
+                                        iconCls:'icon-cut'
+                                    }],
+                                    label: '收费项目:',
+                                    labelPosition: 'top'
+                                    ">
+                        </td>
+
+                        <td width="35%">
+                            <input class="easyui-textbox" id="cost" data-options="labelPosition: 'top', label:'费用：',labelAlign:'left'" style="width:100%;">
+                        </td>
+
+                        <td>
+                            <br><a href="javascript:void(0)" onclick="addShowFeeItem()" class="easyui-linkbutton" iconCls="icon-ok" style="width:80px;height:30px">添加</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 分割符================== -->
+            <div style="height: 8px"></div>
+
+            <table class="easyui-datagrid" id="dgShowFeeItem" style="height:190px;width:100%" data-options="rownumbers:true,fitColumns:true,singleSelect:true,
+                    toolbar: [{
+                        'text': '删除',
+                        iconCls: 'icon-remove',
+                        handler: function(){alert('edit')}
+                        },'-',{
+                        iconCls: 'icon-help',
+                        handler: function(){alert('help')}
+                        }], title:'演出收费项'
+                     ">
+                <thead>
+                <tr>
+                    <th data-options="field:'fee_item',width:100">收费项目</th>
+                    <th data-options="field:'cost',width:50">费用</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
+
+
+        <div data-options="region:'south',border:false" style="text-align:right;padding:2px 0;">
+            <a href="javascript:void(0)" onclick="saveShow()" class="easyui-linkbutton" iconCls="icon-ok" style="width:80px;height:30px">保存</a> <a
+                href="javascript:void(0)" onclick="closeWinShow()"  class="easyui-linkbutton" iconCls="icon-cancel" style="width:80px;height:30px">关闭</a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // 'use strict';
+    function onBeforeCloseShow() {
+        //console.log('onBeforeClose');
+        $('#dcShowWinNew').window('destroy');
+        $('#danceShowWindow').panel('destroy');
+    }
+
+    function closeWinShow() {
+        $('#dcShowWinNew').window('close');
+    }
+
+    function addShowFeeItem() {
+        var feeCtrl = $('#fee_item');
+        var feeItem = $(feeCtrl).combobox('getText');
+        if (!feeItem) {
+            $.messager.alert({title:'提示', msg:'请选取收费项目！', icon: 'info', fn:function () {
+                $(feeCtrl).textbox('textbox').focus()
+            }});
+            return;
+        }
+        var costCtrl = $('#cost');
+        var cost = $(costCtrl).textbox('getValue');
+        var n = Number(cost);
+        if (cost === '' || isNaN(n)){
+            $.messager.alert({ title: '提示', msg: '请输入费用！', icon: 'info', fn: function(){
+                $(costCtrl).textbox('textbox').focus();
+            }});
+            return;
+        }
+
+        // $.messager.alert('提示', 'feeItem=' + feeItem + ' cost= ' + cost + ' n=' + n, 'info');
+        var dg = $('#dgShowFeeItem');
+        var rows = $(dg).datagrid('getRows');
+        console.log(rows);
+        for(var i=0; i< rows.length; i++){
+            if (feeItem === rows[i].fee_item) {
+                $.messager.alert({title:'提示', msg:'收费项目['+feeItem+']已经存在！', icon: 'info', fn:function () {
+                    setTimeout(function(){
+                        $(feeCtrl).textbox('textbox').focus()
+                    },0);
+                }});
+                return;
+            }
+        }
+        $(dg).datagrid('appendRow', {'fee_id': $(feeCtrl).combobox('getValue'),'fee_item': feeItem, 'cost': n});
+    }
+
+    function saveShow() {
+        if (!validateShow()) {
+            return;
+        }
+
+        var show = packetShow();
+        console.log('send:', show);
+        $.ajax({
+            method: 'POST',
+            url: '/dance_show_add',
+            async: true,
+            dataType: 'json',
+            data: {data: JSON.stringify(show)}
+        }).done(function(data) {
+            $.messager.alert('提示', data.msg, 'info');
+            if (data.errorCode == 0) {
+                //dgLoadData('#'+dgStudyFee, data.cls, true);
+                //updateMenu(data.cls);
+            }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+            $.messager.alert('提示', msg, 'info');
+        });
+    }
+
+    function validateShow() {
+        var showNameCtrl = $('#showName');
+        var showName = $(showNameCtrl).textbox('getValue');
+        console.log(showName);
+        if(!showName || showName.length > 40) {
+            $.messager.alert({title:'提示', msg:'演出名称不能为空，且不能大于40字符！', icon: 'info', fn:function () {
+                $(showNameCtrl).textbox('textbox').focus();
+            }});
+            return false;
+        }
+
+
+        return true;
+    }
+    
+    function packetShow() {
+        var show = {show: {}, showCfg: []};
+        show.show.show_name = $('#showName').textbox('getValue');
+        show.show.begin_date = $('#beginDate').datebox('getValue');
+        show.show.end_date = $('#endDate').datebox('getValue');
+        show.show.address = $('#address').textbox('getValue');
+        show.show.summary = $('#summary').textbox('getValue');
+        show.show.join_fee = $('#joinFee').textbox('getValue');
+        show.show.other_fee = $('#otherFee').textbox('getValue');
+        show.show.total = $('#total').textbox('getValue');
+        show.show.remark = $('#remark').textbox('getValue');
+
+        var dg = $('#dgShowFeeItem');
+        var rows = $(dg).datagrid('getRows');
+        for(var i=0; i< rows.length; i++) {
+            if (rows[i].fee_item) {
+                show.showCfg.push({fee_item_id: rows[i].fee_id, cost: rows[i].cost});
+            }
+        }
+        return show;
+    }
+
+</script>
+
+</body>
+</html>

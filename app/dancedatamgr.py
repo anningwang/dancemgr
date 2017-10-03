@@ -230,7 +230,7 @@ def dance_fee_item_get():
     i = offset + 1
     rows = []
     for rec in records:
-        rows.append({'no': i, 'id': rec.id, "fee_item":rec.fee_item, 'recorder': rec.recorder,
+        rows.append({'no': i, 'id': rec.id, "fee_item": rec.fee_item, 'recorder': rec.recorder,
                      'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d %H:%M:%S')
                      })
         i += 1
@@ -755,6 +755,50 @@ def dance_receipt_show_get():
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
 
 
+@app.route('/dance_show_add', methods=['POST'])
+@login_required
+def dance_show_add():
+    """
+    新增 演出 信息
+    输入参数：
+        data    输入参数
+            show        演出基本信息
+            showCfg     演出包含的收费信息
+    :return:
+        errorCode   错误码
+            0       成功
+            600     参数错误，缺少 show 输入参数, msg 为 Parameter error. [data] required.
+            601     参数错误，缺少 show 输入参数, msg 为 Parameter error. [show] required.
+            602     参数错误，缺少 showCfg 输入参数, msg 为 Parameter error. [showCfg] required.
+        msg         错误信息
+            成功增加演出信息！      成功
+    """
+    if 'data' not in request.form:
+        return jsonify({'errorCode': 600, 'msg': 'Parameter error. [data] required.'})
+    json_str = request.form['data']
+    obj = json.loads(json_str)
+    if 'show' not in obj:
+        return jsonify({'errorCode': 601, 'msg': 'Parameter error. [show] required.'})
+    if 'showCfg' not in obj:
+        return jsonify({'errorCode': 602, 'msg': 'Parameter error. [showCfg] required.'})
+
+    show = obj['show']
+    rec = DcShow(show)
+    show_no = rec.show_no
+    db.session.add(rec)
+
+    r = DcShow.query.filter_by(company_id=g.user.company_id).filter_by(show_no=show_no).first()
+    show_id = r.id
+
+    """ 新增 演出收费项目 """
+    for cfg in obj['showCfg']:
+        fc = DcShowFeeCfg(show_id, cfg['fee_item_id'], cfg['cost'])
+        db.session.add(fc)
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': '成功增加演出信息！'})
+
+
 @app.route('/dance_progressbar', methods=['POST'])
 @login_required
 def dance_progressbar():
@@ -770,10 +814,16 @@ def api_dance_tm_get():
     """
     查询教材信息
     :return:
-        {field:'tm_no',title:'教材编号',width:70},
-        {field:'tm_name',title:'教材名称',width:90},
-        {field:'tm_unit',title:'单位',width:40},
-        {field:'tm_priceSell',title:'售价',width:40}
+        rows        查询到的记录
+            tm_no       教材编号
+            tm_name     教材名称
+            tm_unit     单位
+            tm_price_sell  售价
+        total       记录条数
+        errorCode   错误码
+            0       成功
+        msg         错误新
+            'ok'    成功
     """
     records = DcTeachingMaterial.query.filter_by(company_id=g.user.company_id).all()
     tm = []
@@ -895,8 +945,9 @@ def api_dance_show_name_get():
     """
     查询演出名称
     :return: [{
-        'show_name' : str   演出名称
-        'show_id'   : int   演出 id
+        show_name: str  演出名称
+        show_id: int    演出 id
+        show_no: str    演出编号
         }]
     """
     """ 
@@ -908,5 +959,5 @@ def api_dance_show_name_get():
     records = DcShow.query.filter_by(company_id=g.user.company_id).order_by(DcShow.id.desc()).all()
     show = []
     for rec in records:
-        show.append({'show_name': rec.show_name, 'show_id': rec.id})
+        show.append({'show_name': rec.show_name, 'show_id': rec.id, 'show_no': rec.show_no})
     return jsonify(show)

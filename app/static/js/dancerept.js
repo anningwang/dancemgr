@@ -134,7 +134,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                     }}
                 ]
             });
-
+            
             $('#'+footer).attr('id', footer+=uid);
             $('#'+panelFee).attr('id', panelFee+=uid).mousedown(function (event) {      // panel 鼠标按下事件
                 //console.log(event);
@@ -398,15 +398,32 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
             var edx =  $(dg).datagrid('getEditor', {index:index,field:'show_name'});
             $(edx.target).combobox({
                 url: '/api/dance_show_name_get',
+                // iconAlign: 'left',
+                iconWidth: 25,
+                icons: [{
+                    iconCls:'icon-add',
+                    handler: function(e){
+                        $(document.body).append('<div id="danceShowWindow"></div>');
+                        $('#danceShowWindow').panel({
+                            //width:900, height:700,
+                            href:'/static/html/_dc_add_edit_show.html',
+                            onDestroy: function () {
+                                var dg = $('#'+dgShow);
+                                $(dg).datagrid('reload');
+                            }
+                        });
+                        $(e.data.target).textbox('setValue', 'Something added!');
+                    }
+                },{
+                    iconCls:'icon-edit',
+                    handler: function(e){
+                        $(e.data.target).textbox('clear');
+                    }
+                }],
                 onClick: dgShowOnClickShowName
             }).combobox('setValue', row['show_id']);
 
-            // 收费项目
-            edx = $(dg).datagrid('getEditor', {index:index,field:'fee_item'});
-            $(edx.target).combobox({
-                url: '/api/dance_fee_item_get',
-                onClick: dgShowOnClickFeeItem
-            }).combobox('setValue', row['fee_item_id']);
+            
 
             /*
             // 实收学费
