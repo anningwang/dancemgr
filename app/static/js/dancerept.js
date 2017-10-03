@@ -458,6 +458,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                 });
             }
         }
+        dgParam[dgShow].idx = undefined;
     }
 
     /**
@@ -738,11 +739,12 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
             }
         }
         if (j >= dcShowCfg['shows'].length){
-            $.messager.alert('错误', '未找到演出信息[id=' + show_id + ']！', 'error');
+            $.messager.alert('错误', '未找到演出信息[id=' + row.show_id + ']！', 'error');
+            return;
         }
 
         var idx = dgParam[dgShow].idx;
-        var oldIdx = idx;
+        var k = idx;
         for(var i=0; i< dcShowCfg['shows'][j].cfg.length; i++){
             var addRow = {cost: dcShowCfg['shows'][j].cfg[i].cost,
                 fee_item: dcShowCfg['shows'][j].cfg[i].fee_item,
@@ -751,18 +753,22 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                 is_rcv_text: '是',
                 show_id: row.show_id,
                 show_name: row.show_name};
-            if(idx === oldIdx){
+            if(idx === k){
                 var tmpRow = {};
                 $.extend(tmpRow, addRow);
                 setTimeout(function () {
-                    $(dg).datagrid('updateRow', { index: oldIdx, row: tmpRow});
+                    $(dg).datagrid('updateRow', { index: k, row: tmpRow});
+                    dgParam[dgShow].idx = undefined;
+                    $(dg).datagrid('beginEdit', k).datagrid('endEdit', k);
+                    /*
                     $(dg).datagrid('mergeCells', {
-                        index: oldIdx,
+                        index: k,
                         field: 'show_name',
                         rowspan: dcShowCfg['shows'][j].cfg.length,
                         type: 'body'
                     });
                     dgParam[dgShow].idx = undefined;
+                    */
                 }, 30);
 
                 // $(dg).datagrid('updateRow', { index: idx, row: addRow});
@@ -775,11 +781,66 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
             idx++;
         }
 
-        var rowIdx = 'r' + oldIdx;
         if(dgParam[dgShow].mergeCell === undefined){
             dgParam[dgShow].mergeCell = {};
         }
-        dgParam[dgShow].mergeCell[rowIdx] = {index: oldIdx, span: dcShowCfg['shows'][j].cfg.length};
+        //console.log('old:', dgParam[dgShow].mergeCell);
+        var curNum = dcShowCfg['shows'][j].cfg.length;
+        var oldNum = dgParam[dgShow].mergeCell[k] ? dgParam[dgShow].mergeCell[k].span : 1;
+        dgParam[dgShow].mergeCell[k] = {index: k, span: curNum};
+
+        // 更新 合并单元格下方所有 合并单元格的 起始索引
+        //var tmpMc = {}; // 遍历临时变量，删除原始对象的key-value对
+        //$.extend(true, tmpMc, dgParam[dgShow].mergeCell);
+        var newMc = {};
+        var diff = curNum - oldNum;
+        for(j=0; oldNum> 1 && j < oldNum-1; j++){     // 删除 合并单元 变化后产生的多余行
+            $(dg).datagrid('deleteRow', k+curNum);
+        }
+        for(var mc in dgParam[dgShow].mergeCell) {
+            if (mc > k){
+                var new_idx = parseInt(mc)+diff;
+                newMc[new_idx] = {index: new_idx, span: dgParam[dgShow].mergeCell[mc].span};
+            } else {
+                newMc[mc] = {index: parseInt(mc), span: dgParam[dgShow].mergeCell[mc].span};
+            }
+        }
+
+        dgParam[dgShow].mergeCell = newMc;
+        console.log('new:', dgParam[dgShow].mergeCell);
+
+/*
+        if(curNum >= oldNum){
+            var diff = curNum - oldNum;
+            for(j=0; oldNum> 1 && j < oldNum-1; j++){     // 删除 合并单元 变化后产生的多余行
+                $(dg).datagrid('deleteRow', k+curNum);
+            }
+            for(var mc in dgParam[dgShow].mergeCell) {
+                if (mc > k){
+                    newMc[mc] = {index: mc+diff, span: dgParam[dgShow].mergeCell[mc].span};
+                    //delete dgParam[dgShow].mergeCell[k];
+                } else {
+                    newMc[mc] = dgParam[dgShow].mergeCell[mc];
+                }
+            }
+            */
+            /*
+        } else if (oldNum > curNum) {
+            var diff = oldNum - curNum;
+            for(j=0; oldNum> 1 && j < oldNum-1; j++){     // 删除 合并单元 变化后产生的多余行
+                $(dg).datagrid('deleteRow', k+curNum);
+            }
+            for(var mc in dgParam[dgShow].mergeCell) {
+                if (mc > k){
+                    newMc[mc] = {index: mc-diff, span: dgParam[dgShow].mergeCell[mc].span};
+                    //delete dgParam[dgShow].mergeCell[k];
+                } else {
+                    newMc[mc] = dgParam[dgShow].mergeCell[mc];
+                }
+            }
+        }
+*/
+
 /*
         $(dg).datagrid('mergeCells', {
             index: oldIdx,

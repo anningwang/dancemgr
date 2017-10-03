@@ -683,7 +683,8 @@ class DanceUser(db.Model, UserMixin):
             raise Exception(u'[pwd] field not found!')
         if 'phone' in param:
             self.phone = param['phone']      # 联系电话 05
-        self.role_id = ROLE_USER if 'role_id' not in param or param['role_id'] != ROLE_ADMIN else ROLE_ADMIN      # #################### role_id not ROLE_USER， ROLE_ADMIN
+        # ---------------------- role_id not ROLE_USER， ROLE_ADMIN  ---------------------------------------------------
+        self.role_id = ROLE_USER if 'role_id' not in param or param['role_id'] != ROLE_ADMIN else ROLE_ADMIN
         self.recorder = g.user.name if g.user.is_authenticated else u'[系统]'
         if 'email' in param:
             self.email = param['email']

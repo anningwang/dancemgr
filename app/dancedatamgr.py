@@ -961,3 +961,84 @@ def api_dance_show_name_get():
     for rec in records:
         show.append({'show_name': rec.show_name, 'show_id': rec.id, 'show_no': rec.show_no})
     return jsonify(show)
+
+
+@app.route('/api/dance_show_with_cfg_get', methods=['POST'])
+@login_required
+def api_dance_show_with_cfg_get():
+    """
+    查询演出名称
+    :return: {
+        errorCode   错误码
+            0       正确
+            701     参数错误，缺少 id 字段
+            702     记录[id=%d]不存在！
+        msg     错误信息
+        show_name: str  演出名称
+        show_id: int    演出 id
+        show_no: str    演出编号
+        cfg[{       演出收费配置列表
+            fee_item    收费项目
+            cost        费用
+            }]
+        }
+    """
+    dcq = DcShow.query.filter_by(company_id=g.user.company_id)
+
+    if 'id' in request.form:
+        show_id = request.form['id']
+        dcq = dcq.filter_by(id=show_id)
+    else:
+        return jsonify({'errorCode': 701, 'msg': 'Parameter error, [id] required!'})
+    r = dcq.join(DcShowFeeCfg, DcShowFeeCfg.show_id == DcShow.id).order_by(DcShow.id.desc()).first()
+    if r is None:
+        return jsonify({'errorCode': 702, 'msg': u'记录[id=%d]不存在！' % show_id})
+
+    cfg = DcShowFeeCfg.query.filter_by(show_id=show_id)\
+        .join(DcFeeItem, DcFeeItem.id == DcShowFeeCfg.fee_item_id)\
+        .add_column(DcFeeItem.fee_item)\
+        .order_by(DcShowFeeCfg.id.desc()).all()
+    cfg_list = []
+    for rec in cfg:
+        cfg_list.append({'cost': rec[0].cost, 'fee_item': rec[1]})
+
+    return jsonify({'show_name': r.show_name, 'show_id': r.id, 'show_no': r.show_no, 'cfg': cfg_list,
+                    'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/api/dance_shows_cfg_get', methods=['POST'])
+@login_required
+def api_dance_shows_cfg_get():
+    """
+    查询演出名称
+    :return: {
+        errorCode   错误码
+            0       正确
+            701     参数错误，缺少 id 字段
+            702     记录[id=%d]不存在！
+        msg     错误信息
+        shows[{
+            show_name: str  演出名称
+            show_id: int    演出 id
+            show_no: str    演出编号
+            cfg[{       演出收费配置列表
+                fee_item    收费项目
+                cost        费用
+                }]
+            }]
+        }
+    """
+    dcq = DcShow.query.filter_by(company_id=g.user.company_id)
+    records = dcq.join(DcShowFeeCfg, DcShowFeeCfg.show_id == DcShow.id).order_by(DcShow.id.desc()).all()
+    shows = []
+    for r in records:
+        cfg = DcShowFeeCfg.query.filter_by(show_id=r.id)\
+            .join(DcFeeItem, DcFeeItem.id == DcShowFeeCfg.fee_item_id)\
+            .add_column(DcFeeItem.fee_item)\
+            .order_by(DcShowFeeCfg.id.desc()).all()
+        cfg_list = []
+        for rec in cfg:
+            cfg_list.append({'cost': rec[0].cost, 'fee_item': rec[1]})
+        shows.append({'show_name': r.show_name, 'show_id': r.id, 'show_no': r.show_no, 'cfg': cfg_list})
+
+    return jsonify({'shows': shows, 'errorCode': 0, 'msg': 'ok'})
