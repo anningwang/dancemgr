@@ -124,8 +124,8 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
 
             $('#'+dgShow).attr('id', dgShow+=uid).datagrid({    // 演出费 ==========================
                 onClickCell: dgShowClickCell,
-                onBeginEdit: dgShowBeginEdit,
                 onEndEdit: dgShowEndEdit,
+                onAfterEdit: dgShowAfterEdit,
                 toolbar: [{iconCls: 'icon-add', text: '增加行', handler:function(){
                     $('#'+dgShow).datagrid('appendRow', {})}},
                     {iconCls: 'icon-remove', text: '删除行', handler: function () {
@@ -385,9 +385,11 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
      * @param field
      */
     function dgShowClickCell(index, field) {
+        console.log('dgShowClickCell, index:', index, ' field:', field);
         dgEndEditing(dgRecptComm);
 
         if (dgParam[dgShow].idx !== index) {
+            getShowConfig();
             var dg = $('#'+dgShow);
             dgEndEditing(dgShow);
             $(dg).datagrid('selectRow', index).datagrid('beginEdit', index);
@@ -423,35 +425,6 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                 onClick: dgShowOnClickShowName
             }).combobox('setValue', row['show_id']);
 
-            
-
-            /*
-            // 实收学费
-            $(editors[4].target).textbox('textbox').bind("input propertychange",function(){
-                var oldReal = row.real_fee ? parseFloat(row.real_fee) : 0;
-                var oldArrearage = row.arrearage ? parseFloat(row.arrearage) : 0;
-
-                row.real_fee = $(this).val();
-                row.arrearage = row.total-row.real_fee;
-                setDgCellText(dg, index, 'arrearage', row.arrearage);
-
-                // 实收学费变化后，更新 收费单（学费） 的实收费合计 和 学费欠费。
-                var newReal = row.real_fee ? parseFloat(row.real_fee) : 0;
-                var diffReal =  newReal - oldReal;
-                var newArrearage = row.arrearage ? parseFloat(row.arrearage) : 0;
-                var diffArrearage = newArrearage - oldArrearage;
-
-                var dgRc = $('#'+dgRecptComm);
-                var val;
-                val = (val = apiGetDgCellText(dgRc, 3, 'c2')) ? parseFloat(val)+diffReal : diffReal;
-                setDgCellTextWithRowData(dgRc, 3, 'c2', dcTrimZero(val));   // 实收费合计
-                val = (val = apiGetDgCellText(dgRc, 3, 'c4')) ? parseFloat(val)+diffArrearage : diffArrearage;
-                setDgCellTextWithRowData(dgRc, 3, 'c4', dcTrimZero(val));   // 学费欠费
-
-                dcSetArrearageStyle(val);
-            });
-            */
-
             var ed = $(dg).datagrid('getEditor', {index:index,field:field});
             if (ed){
                 ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
@@ -460,34 +433,31 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
         }
     }
 
-    function dgShowBeginEdit(index,row) {
-        var dg = $('#'+dgShow);
-        var editors = $(dg).datagrid('getEditors', index);
-        //$(editors[1].target).numberbox('setText', row.term);    // 学期长度
-
-        /*
-        $(editors[3].target).combobox({     // 折扣率
-            onClick: function (record) {    // 折扣率 combobox 点击事件
-                var dg = $('#'+dgShow);
-                var row = $(dg).datagrid("getSelected");
-                row.discRateText =  record.text;
-                row.discount_rate = record.value;
-                var term = $(editors[1].target).textbox('getValue');
-                //dgShowUpdateCellByTerm(edIndexShowFee, term);
-            }
-        }).combobox('loadData', dcDiscRate).combobox('setValue', row['discount_rate']);
-        */
-    }
-
     function dgShowEndEdit(index, row){
         //console.log('onEndEdit', row);
-        var ed = $(this).datagrid('getEditor', { index: index, field: 'show_name' });
+        var dg = $('#'+dgShow);
+        var ed = $(dg).datagrid('getEditor', { index: index, field: 'show_name' });
         row.show_name = $(ed.target).combobox('getText');
 
-        var edDiscRate = $(this).datagrid('getEditor', { index: index, field: 'fee_item' });
-        row.fee_item = $(edDiscRate.target).combobox('getText');
+        ed = $(dg).datagrid('getEditor', { index: index, field: 'is_rcv_text' });
+        row.is_rcv_text = $(ed.target).combobox('getText');
+    }
 
-        //row.term = dcTrimZero(row.term);
+    function dgShowAfterEdit(index,row,changes) {
+        var dg = $('#'+dgShow);
+        if(dgParam[dgShow].mergeCell)
+        {
+            for(var key in dgParam[dgShow].mergeCell){
+                if(!dgParam[dgShow].mergeCell.hasOwnProperty(key))
+                    continue;
+                $(dg).datagrid('mergeCells', {
+                    index: dgParam[dgShow].mergeCell[key].index,
+                    field: 'show_name',
+                    rowspan: dgParam[dgShow].mergeCell[key].span,
+                    type: 'body'
+                });
+            }
+        }
     }
 
     /**
@@ -730,6 +700,27 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
         }
     }
 
+    var dcShowCfg = {};
+    function getShowConfig() {
+        $.ajax({
+            method: 'POST',
+            url: '/api/dance_shows_cfg_get',
+            dataType: 'json',
+            data: {}
+        }).done(function(data) {
+            if (data.errorCode === 0) {
+                // $.messager.alert('提示', data.msg, 'info');
+                $.extend(true, dcShowCfg, data);
+            } else {
+                $.messager.alert('错误', data.msg, 'error');
+            }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+            $.messager.alert('提示', msg, 'info');
+        });
+        
+    }
+
     /**
      * 班级——学费 表选中某个班级事件
      * @param record
@@ -737,23 +728,65 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
     function dgShowOnClickShowName(record) {
         var dg = $('#'+dgShow);
         var row = $(dg).datagrid("getSelected");
-        row['class_no'] =  record['class_no'];
-        row['class_name'] = record['class_name'];
-        row.class_id = record.class_id;
-        row.cost_mode = record.cost_mode;
-        row.cost = record.cost;
+        row.show_name =  record.show_name;
+        row.show_id = record.show_id;
 
-        //setDgCellText(dg, edIndexShowFee, 'cost_mode', row.cost_mode);
-        //setDgCellText(dg, edIndexShowFee, 'cost', row.cost);
+        var j = 0;
+        for(; j< dcShowCfg['shows'].length; j++){
+            if (row.show_id === dcShowCfg['shows'][j]['show_id']){
+                break;
+            }
+        }
+        if (j >= dcShowCfg['shows'].length){
+            $.messager.alert('错误', '未找到演出信息[id=' + show_id + ']！', 'error');
+        }
 
-        //var ed = dg.datagrid('getEditor', {index:edIndexShowFee,field:'term'});
-        //var term = $(ed.target).textbox('getValue');
-        //dgShowUpdateCellByTerm(edIndexShowFee, term);
-    }
+        var idx = dgParam[dgShow].idx;
+        var oldIdx = idx;
+        for(var i=0; i< dcShowCfg['shows'][j].cfg.length; i++){
+            var addRow = {cost: dcShowCfg['shows'][j].cfg[i].cost,
+                fee_item: dcShowCfg['shows'][j].cfg[i].fee_item,
+                fee_item_id: dcShowCfg['shows'][j].cfg[i].fee_item_id,
+                is_rcv: 1,
+                is_rcv_text: '是',
+                show_id: row.show_id,
+                show_name: row.show_name};
+            if(idx === oldIdx){
+                var tmpRow = {};
+                $.extend(tmpRow, addRow);
+                setTimeout(function () {
+                    $(dg).datagrid('updateRow', { index: oldIdx, row: tmpRow});
+                    $(dg).datagrid('mergeCells', {
+                        index: oldIdx,
+                        field: 'show_name',
+                        rowspan: dcShowCfg['shows'][j].cfg.length,
+                        type: 'body'
+                    });
+                    dgParam[dgShow].idx = undefined;
+                }, 30);
 
-    function dgShowOnClickFeeItem(record) {
-        var dg = $('#'+dgShow);
-        var row = $(dg).datagrid("getSelected");
+                // $(dg).datagrid('updateRow', { index: idx, row: addRow});
+
+            } else if (idx >= ($(dg).datagrid('getRows').length)) {
+                $(dg).datagrid('appendRow', addRow);
+            } else {
+                $(dg).datagrid('insertRow',{index: idx, row: addRow});
+            }
+            idx++;
+        }
+
+        var rowIdx = 'r' + oldIdx;
+        if(dgParam[dgShow].mergeCell === undefined){
+            dgParam[dgShow].mergeCell = {};
+        }
+        dgParam[dgShow].mergeCell[rowIdx] = {index: oldIdx, span: dcShowCfg['shows'][j].cfg.length};
+/*
+        $(dg).datagrid('mergeCells', {
+            index: oldIdx,
+            field: 'show_name',
+            rowspan: dcShowCfg[j].cfg.length,
+            type: 'body'
+        });*/
     }
 
     /**
