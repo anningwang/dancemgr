@@ -67,6 +67,13 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         onLoadSuccess: function () {
             $(dg).datagrid("fixRownumber");
             $(dg).datagrid('loaded');
+            var panel =  $(dg).datagrid('getPanel');
+            panel.mousedown(function (event) {      // panel 鼠标按下事件
+                //console.log(event);
+                if (event.target.className === 'datagrid-body') { // datagrid-toolbar, datagrid-header-inner
+                    endEditing(); // datagrid-cell datagrid-cell-c2-recorder, datagrid-cell-rownumber
+                }
+            });
         },
         onClickCell: onClickCell,
         onAfterEdit: getChangedData,
@@ -77,6 +84,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             }
         },
         onEndEdit : function onEndEdit(index, row){
+            /*
             var ed = $(this).datagrid('getEditor', {
                 index: index,
                 field: 'school_id'
@@ -86,6 +94,16 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
                 console.log($(ed.target).combobox('getText'));
                 console.log(ed.type);
                 row.school_name = $(ed.target).combobox('getText');
+            }*/
+
+            var eds = $(dg).datagrid('getEditors', index);
+            for(var i=0; i< eds.length; i++){
+                if (eds[i].type === 'combobox'){
+                    var valField = getValueField(eds[i].field);
+                    row[valField] = $(eds[i].target).combobox('getValue');
+
+                    row[eds[i].field] = $(eds[i].target).combobox('getText');
+                }
             }
         }
     });
@@ -236,11 +254,14 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         if (!isEditStatus) { return; }
         if (editIndex != index){
             endEditing();
-            $(dg).datagrid('selectRow', index)
-                .datagrid('beginEdit', index);
+            $(dg).datagrid('selectRow', index).datagrid('beginEdit', index);
             var ed = $(dg).datagrid('getEditor', {index:index,field:field});
             if (ed){
                 ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
+                if(ed.type === 'combobox'){
+                    var row = $(dg).datagrid('getSelected');
+                    $(ed.target).combobox('setValue', row[getValueField(ed.field)]);
+                }
             }
             editIndex = index;
         }
@@ -257,10 +278,12 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             // 按照 index 排序
             var p = 0;
             while (p < i && index > dataChanged[p].rowIndex) {p++;}
-            dataChanged.splice(p, 0, {'rowIndex': index, 'row': changes, 'id':row.id});
+            //dataChanged.splice(p, 0, {'rowIndex': index, 'row': changes, 'id':row.id});
+            dataChanged.splice(p, 0, {'rowIndex': index, 'row': row, 'id':row.id});
             i = p;
         }else {
-            $.extend( dataChanged[i].row, changes );
+            //$.extend( dataChanged[i].row, changes );
+            $.extend( dataChanged[i].row, row );
         }
 
         var cmpChanges = {};
@@ -432,11 +455,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
                         success: function (data,status) {
                             console.log('success in ajax. data.msg=' + data.msg + " status=" + status);
                             if (data.errorCode != 0) {
-                                $.messager.alert({
-                                    title: '错误',
-                                    msg: data.msg,
-                                    icon:'error'
-                                });
+                                $.messager.alert({title: '错误', msg: data.msg, icon:'error'});
                                 return false;
                             }
                             $(dg).datagrid('loading');

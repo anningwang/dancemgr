@@ -136,6 +136,21 @@ function danceAddTabFeeItem(title, tableId) {
                 {field: 'ck', checkbox:true },   // checkbox
                 {field: 'id', title: 'id',  width: 30, align: 'center' },
                 {field: 'fee_item', title: '收费项目*', width: 160, align: 'center', editor: 'textbox'},
+                {field: 'type_text', title: '类别*', width: 90, align: 'center', editor: {
+                    type: 'combobox', options:{
+                        valueField: 'type', textField:'type_text', editable:false,panelHeight:'auto',
+                        data: [{
+                            type: 1,
+                            type_text: '学费'
+                        },{
+                            type: 2,
+                            type_text: '演出费'
+                        },{
+                            type: 3,
+                            type_text: '普通收费'
+                        }]
+                    }
+                }},
                 {field: 'create_at', title: '创建日期', width: 140, align: 'center'},
                 {field: 'recorder', title: '录入员', width: 90, align: 'center'}
             ]]
@@ -219,7 +234,7 @@ function danceAddTabFeeMode(title, tableId) {
             'columns': [[
                 {field: 'ck', checkbox:true },   // checkbox
                 {field: 'fee_mode', title: '收费模式名称', width: 140, align: 'center', editor: 'textbox'},
-                {field: 'disc_rate', title: '点数损失', width: 80, halign: 'center', align: 'left', editor: 'textbox'},
+                {field: 'disc_rate', title: '费率', width: 80, halign: 'center', align: 'left',editor: 'textbox'},
                 {field: 'create_at', title: '创建时间', width: 100, align: 'center'},
                 {field: 'lastUpdAt', title: '最后更新日期', width: 100, align: 'center'},
                 {field: 'lastUser', title: '最后更新人', width: 100, align: 'center'},

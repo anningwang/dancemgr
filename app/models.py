@@ -1135,6 +1135,12 @@ class DcFeeItem(db.Model):
         self.create_at = datetime.datetime.today()
         self.type = fee_type
 
+    def update(self, param):
+        if 'fee_item' in param:
+            self.fee_item = param['fee_item']
+        if 'type' in param:
+            self.type = param['type']
+
     @staticmethod
     def get_records():
         records = DcFeeItem.query.filter_by(company_id=g.user.company_id).all()

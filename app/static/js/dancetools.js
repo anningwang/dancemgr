@@ -140,6 +140,24 @@ String.prototype.format = function(args) {
 
 
 /**
+ * 更加text域返回value域。 用于 combobox。
+ * 对value域赋值，值域为 someName_text, 则 value域为 someName。若值域不存在 _text，则值域固定为 value
+ * @param textField
+ * @returns {*}
+ */
+function getValueField(textField) {
+    var valField = textField;
+    var idx = valField.lastIndexOf('_text');
+    if(idx !== -1){
+        valField = valField.slice(0, idx);
+    } else {
+        valField = 'value'
+    }
+    return valField
+}
+
+
+/**
  * 向 datagrid的 rowIndex行，字段 fieldName 对应的单元格，设置文字。通用。不论该单元格是否处于编辑状态，都可以使用。
  * @param dg            datagrid 对象
  * @param rowIndex      行索引，从0开始

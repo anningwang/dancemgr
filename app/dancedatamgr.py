@@ -231,10 +231,54 @@ def dance_fee_item_get():
     rows = []
     for rec in records:
         rows.append({'no': i, 'id': rec.id, "fee_item": rec.fee_item, 'recorder': rec.recorder,
-                     'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d %H:%M:%S')
+                     'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d %H:%M:%S'),
+                     'type': rec.type,
+                     'type_text': u'演出费' if rec.type == 2 else u'普通收费' if rec.type == 3 else u'学费'
                      })
+        """ type: 1 学费， 2  演出 ， 3，普通 """
         i += 1
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_fee_item_update', methods=['POST'])
+@login_required
+def dance_fee_item_update():
+    """
+    更新 收费项目。 包括新增 和 修改
+    输入参数
+        data:[{         输入参数
+                id:             收费项目id, 大于0 - 修改， 0 - 新增
+                row:{           收费项目记录
+                    fee_item:   收费项目名称
+                    }
+            }]
+    :return:
+        errorCode:      错误码
+            0       成功
+        msg:            错误信息
+    """
+    if 'data' not in request.form:
+        return jsonify({'errorCode': 600, 'msg': 'Parameter error. [data] required.'})
+    json_str = request.form['data']
+    obj = json.loads(json_str)
+    for fee in obj:
+        if fee['id'] <= 0:
+            fee_item = fee['row']['fee_item']
+            fee_type = 1 if 'type' not in fee['row'] else fee['row']['type']
+            # 收费名称不能重复，查询是否有重复记录
+            dup = DcFeeItem.query.filter_by(company_id=g.user.company_id).filter_by(fee_item=fee_item).first()
+            if dup is not None:
+                return jsonify({'errorCode': 801, 'msg': u'名称为[%s]的收费项目已经存在！' % fee_item})
+            nr = DcFeeItem(fee_item, fee_type)
+            db.session.add(nr)
+        else:
+            nr = DcFeeItem.query.get(fee['id'])
+            if nr is not None:
+                nr.update(fee['row'])
+                db.session.add(nr)
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
 
 
 @app.route('/dance_fee_item_query', methods=['POST'])
