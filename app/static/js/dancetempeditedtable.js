@@ -186,7 +186,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             }
         }).fail(function(jqXHR, textStatus, errorThrown) {
             dg.datagrid('loaded');
-            var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+            var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
             $.messager.alert('提示', msg, 'info');
         });
     }
@@ -300,6 +300,8 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         }
 
         for (var check in fieldValidate) {
+            if(!fieldValidate.hasOwnProperty(check))
+                continue;
             if (bSet) {
                 td = $(tr).children('td[field=' + check + ']');  // 取出行中这一列。
                 var isChged = false;
@@ -337,6 +339,8 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         endEditing();
         for (var i = 0; i < dataChanged.length; i++) {
             for (var field in fieldValidate) {
+                if(!fieldValidate.hasOwnProperty(field))
+                    continue;
                 if (dataChanged[i].id === undefined ) {  // 新增
                     if (!(field in dataChanged[i].row) || !(fieldValidate[field](dataChanged[i].row[field]))) {
                         whichRowInvalid = dataChanged[i].rowIndex;
@@ -390,7 +394,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
                 }
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 //console.log(jqXHR);
-                var msg = $.format("请求失败。错误码：{1}({2}) ", [jqXHR.status, errorThrown]);
+                var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
                 $.messager.alert('提示', msg, 'info');
             });
         } else {

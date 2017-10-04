@@ -322,6 +322,20 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                         });
                     }
                 }).combobox('setValue', row.c4);
+
+                var edFee = $(dg).datagrid('getEditor', {index:index,field:'c6'});
+                $(edFee.target).combobox({    // 收费方式
+                    editable:false,panelHeight:'auto',
+                    valueField: 'fee_mode_id',textField: 'fee_mode',
+                    iconWidth:22,
+                    icons: [{
+                        iconCls:'icon-add',
+                        handler: function(e){
+                            $(e.data.target).textbox('setValue', 'Something added!');
+                        }
+                    }],
+                    url: '/api/dance_fee_mode_get'
+                }).combobox('setValue', row.fee_mode_id);
             }
 
             var ed = $(dg).datagrid('getEditor', {index:index,field:field});
@@ -334,10 +348,15 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
 
     function dgRecptCommEndEdit(index, row){
         var dg = $('#'+dgRecptComm);
+        var ed = null;
         if (index === 0) {
-            var ed = $(dg).datagrid('getEditor', { index: index, field: 'c4' });
+            ed = $(dg).datagrid('getEditor', { index: index, field: 'c4' });
             row.c4 = $(ed.target).combobox('getText');
             row.school_id = parseInt($(ed.target).combobox('getValue'));
+        } else if (index === 1){
+            ed = $(dg).datagrid('getEditor', { index: index, field: 'c6' });
+            row.c6 = $(ed.target).combobox('getText');
+            row.fee_mode_id = $(ed.target).combobox('getValue');
         }
     }
 
@@ -683,6 +702,12 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
             return false;
         }
 
+        var fee_mode = apiGetDgCellText(dg, 1, 'c6');    // 收费模式
+        if (!fee_mode) {
+            $.messager.alert({ title: '提示',icon:'info', msg: '请选择收费模式'});
+            return false;
+        }
+
         var total = apiGetDgCellText(dg, 2, 'c6');    // 费用合计
         if (total == 0) {
             $.messager.alert({ title: '提示',icon:'info', msg: '实收费合计为 0，请录入演出收费！'});
@@ -794,7 +819,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
 
     // 收费单（学费）基本信息中的 编辑器
     var editors = [ {'c4': 'combobox', 'c6': 'datebox' },   // 分校名称，收费日期
-        {'c4': 'combobox'}, // 姓名， 收费方式
+        {'c4': 'combobox', 'c6': 'combobox'}, // 姓名， 收费方式
         {},
         {'c2': 'textbox', 'c4': 'textbox'}      // 备注，收据号
     ];

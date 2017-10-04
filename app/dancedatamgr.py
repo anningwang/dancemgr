@@ -246,7 +246,7 @@ def dance_fee_item_query():
     records = DcFeeItem.query.filter_by(company_id=g.user.company_id)\
         .order_by(DcFeeItem.id.asc()).filter(DcFeeItem.fee_item.like('%'+name + '%'))
     for rec in records:
-        ret.append({'value': rec.DcFeeItem, 'text': rec.DcFeeItem})
+        ret.append({'value': rec.fee_item, 'text': rec.fee_item})
 
     return jsonify(ret)
 
@@ -992,6 +992,37 @@ def dance_show_add():
     return jsonify({'errorCode': 0, 'msg': '成功增加演出信息！'})
 
 
+@app.route('/dc_comm_fee_mode_get', methods=['POST'])
+@login_required
+def dc_comm_fee_mode_get():
+    """
+    查询收费模式
+    :return:
+        rows:       符合条件的记录
+        total:      符合条件的记录总条数
+        errorCode   错误码
+            0       成功
+        msg         错误信息
+            'ok'    成功
+    """
+
+    dcq = DcCommFeeMode.query.filter_by(company_id=g.user.company_id)
+
+    if 'condition' in request.form:
+        cond = '%' + request.form['condition'] + '%'
+        dcq = dcq.filter(DcCommFeeMode.fee_mode.like(cond))
+    records = dcq.order_by(DcCommFeeMode.id.desc()).all()
+
+    total = dcq.count()
+    rows = []
+    for rec in records:
+        rows.append({'id': rec.id, 'fee_mode': rec.fee_mode, 'disc_rate': rec.disc_rate,
+                     'recorder': rec.recorder, 'last_user': rec.last_user,
+                     'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d'),
+                     'last_upd_at': datetime.datetime.strftime(rec.last_upd_at, '%Y-%m-%d')})
+    return jsonify({'rows': rows, 'total': total, 'errorCode': 0, 'msg': 'ok'})
+
+
 @app.route('/dance_progressbar', methods=['POST'])
 @login_required
 def dance_progressbar():
@@ -1236,3 +1267,20 @@ def api_dance_shows_cfg_get():
         shows.append({'show_name': r.show_name, 'show_id': r.id, 'show_no': r.show_no, 'cfg': cfg_list})
 
     return jsonify({'shows': shows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/api/dance_fee_mode_get', methods=['POST'])
+@login_required
+def api_dance_fee_mode_get():
+    """
+    查询收费模式
+    :return:
+        fee_mode_id     收费模式id
+        fee_mode        收费模式名称
+        disc_rate       损失点数
+    """
+    records = DcCommFeeMode.query.filter_by(company_id=g.user.company_id).all()
+    fee_mode = []
+    for rec in records:
+        fee_mode.append({'fee_mode_id': rec.id, 'fee_mode': rec.fee_mode, 'disc_rate': rec.disc_rate})
+    return jsonify(fee_mode)

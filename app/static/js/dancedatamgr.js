@@ -189,3 +189,45 @@ function danceAddTabTeachingMaterial(title, tableId) {
         danceCreateEditedDatagrid(tableId, '/'+module, optsTeachingMaterial);
     }
 }
+
+
+/**
+ * 打开 [收费模式] tab标签
+ * @param title     Tab的标题
+ * @param tableId   Datagrid id,创建在 table 上
+ */
+function danceAddTabFeeMode(title, tableId) {
+    var parentDiv = $('#danceTabs');
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+    } else {
+        var content = '<table id=' + tableId + '></table>';
+        $(parentDiv).tabs('add', {
+            title: title,
+            content: content,
+            closable: true
+        });
+        var module = 'dc_comm_fee_mode';
+        var optsTeachingMaterial = {
+            'defaultSelField' : 'material_name',
+            'fieldValidate' : {'material_name': checkNotEmpty},
+            'queryText': '收费模式：',
+            'queryPrompt': '拼音首字母查找',
+            'who': module,     // 删除数据时，表明身份
+            'danceModuleName': module,   // 传递给 导入、导出 模块的身份标识
+            'danceModuleTitle': title,          // 导入、导出 窗口 title
+            'columns': [[
+                {field: 'ck', checkbox:true },   // checkbox
+                {field: 'fee_mode', title: '收费模式名称', width: 140, align: 'center', editor: 'textbox'},
+                {field: 'disc_rate', title: '点数损失', width: 80, halign: 'center', align: 'left', editor: 'textbox'},
+                {field: 'create_at', title: '创建时间', width: 100, align: 'center'},
+                {field: 'lastUpdAt', title: '最后更新日期', width: 100, align: 'center'},
+                {field: 'lastUser', title: '最后更新人', width: 100, align: 'center'},
+                {field: 'remark', title: '备注', width: 300, align: 'center', editor:'textbox'},
+                {field: 'recorder', title: '录入员', width: 100, align: 'center'}
+            ]]
+        };
+
+        danceCreateEditedDatagrid(tableId, '/'+module, optsTeachingMaterial);
+    }
+}
