@@ -2285,7 +2285,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
                     $.messager.alert('错误', data.msg, 'error');
                 }
             }).fail(function(jqXHR, textStatus, errorThrown) {
-                var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+                var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
                 $.messager.alert('提示', msg, 'info');
             });
         }

@@ -4,7 +4,6 @@
  */
 'use strict';
 
-
 (function($){
     $.extend({
         /** 使用方法：
@@ -15,19 +14,19 @@
          * @returns {*}
          */
         format : function(source,args){
-            var result = source;
+            var result = source, reg = null;
             if(typeof(args) === "object"){
                 if(args.length===undefined){
                     for (var key in args) {
-                        if(args[key]!==undefined){
-                            var reg = new RegExp("({" + key + "})", "g");
+                        if(args.hasOwnProperty(key) && args[key]!==undefined){
+                            reg = new RegExp("({" + key + "})", "g");
                             result = result.replace(reg, args[key]);
                         }
                     }
                 }else{
                     for (var i = 0; i < args.length; i++) {
                         if (args[i] !== undefined) {
-                            var reg = new RegExp("({[" + i + "]})", "g");
+                            reg = new RegExp("({[" + i + "]})", "g");
                             result = result.replace(reg, args[i]);
                         }
                     }
@@ -36,7 +35,7 @@
             return result;
         }
     });
-
+    
     $.extend($.fn.datagrid.methods, {
         fixRownumber : function (jq) {
             return jq.each(function () {
@@ -129,6 +128,15 @@
 
 })(jQuery);
 
+
+String.prototype.format = function(args) {
+    var _dic = typeof args === "object" ? args : arguments;
+    // 如果 args 不是对象，那就是数组了，虽然arguments是伪数组，但不需要用到数组方法。
+
+    return this.replace(/\{([^}]+)\}/g, function(str, key) { // 替换 {任何字符} 这样的字符串
+        return _dic[key] || str;    // 如果在 _dic 找不到对应的值，就返回原字符
+    });
+};
 
 
 /**

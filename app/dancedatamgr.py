@@ -4,7 +4,7 @@ from flask_login import login_required
 from app import app, db
 from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent, DcTeachingMaterial,\
     DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass, DanceStudentClass, DcShowRecpt, DcCommFeeMode,\
-    DcShow, DcShowFeeCfg
+    DcShow, DcShowFeeCfg, DcShowDetailFee
 from views import dance_student_query
 import json
 import datetime
@@ -691,18 +691,18 @@ def dance_receipt_show_get():
     :return:
         total       符合条件的总记录条数
         rows        记录。list。
-            {field: 'show_recpt_no', title: '演出收费单编号', width: 140, align: 'center'},
-            {field: 'show_name', title: '演出名称', width: 110, align: 'center'},
-            {field: 'school_name', title: '分校名称', width: 110, align: 'center'},
-            {field: 'student_no', title: '学号', width: 140, align: 'center'},
-            {field: 'student_name', title: '学员姓名', width: 80, align: 'center'},
-            {field: 'deal_date', title: '收费日期', width: 90, align: 'center'},
-            {field: 'join_fee', title: '报名费', width: 80, align: 'center'},
-            {field: 'other_fee', title: '其他费', width: 80, align: 'center'},
-            {field: 'total', title: '费用合计', width: 80, align: 'center'},
-            {field: 'fee_mode', title: '收费方式', width: 70, align: 'center'},
-            {field: 'remark', title: '备注', width: 90, align: 'center'},
-            {field: 'recorder', title: '录入员', width: 90, align: 'center'}
+            show_recpt_no   演出收费单编号
+            show_name       演出名称
+            school_name     分校名称
+            student_no      学号
+            student_name    学员姓名
+            deal_date       收费日期
+            join_fee        报名费
+            other_fee       其他费
+            total           费用合计
+            fee_mode        收费方式
+            remark          备注
+            recorder        录入员
         errorCode   错误码，0，正确，其他错误
         msg         错误信息。 'ok' -- 正确
     """
@@ -740,6 +740,18 @@ def dance_receipt_show_get():
                      DcCommFeeMode.fee_mode)\
         .order_by(DcShowRecpt.id.desc()).limit(page_size).offset(offset).all()
     i = offset + 1
+
+    show_rec = DcShowDetailFee.query.join(DcShow, DcShow.id == DcShowDetailFee.show_id)\
+        .filter(DcShow.company_id == g.user.company_id)\
+        .group_by(DcShowDetailFee.recpt_id, DcShowDetailFee.show_id)\
+        .add_columns(DcShow.show_name).all()
+    shows = {}
+    for sr in show_rec:
+        if sr[0].recpt_id in shows:
+            shows[sr[0].recpt_id].append(sr[1])
+        else:
+            shows[sr[0].recpt_id] = [sr[1]]
+
     rows = []
     for dcr in records:
         rec = dcr[0]
@@ -748,11 +760,192 @@ def dance_receipt_show_get():
                      'join_fee': rec.join_fee, 'other_fee': rec.other_fee, 'total': rec.total,
                      'remark': rec.remark, 'last_upd_at': rec.last_upd_at,
                      'fee_mode_id': rec.fee_mode_id, 'fee_mode': dcr[4],
-                     'school_name': dcr[1], 'student_sno': dcr[2], 'student_name': dcr[3],
-                     'paper_receipt': rec.paper_receipt
+                     'school_name': dcr[1], 'student_no': dcr[2], 'student_name': dcr[3],
+                     'paper_receipt': rec.paper_receipt,
+                     'show_name': '' if rec.id not in shows else ','.join(shows[rec.id])
                      })
         i += 1
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_receipt_show_details_get', methods=['POST'])
+@login_required
+def dance_receipt_show_details_get():
+    """
+    查询 收费单（演出） 详细信息
+        查询条件：rows          每页显示的条数
+                  page          页码，第几页，从1开始
+                                特殊值 -2，表示根据 receipt_id 查询，并求出该 收费单 的序号
+                  recpt_id      收费单id, optional, 当 page==-2,必填
+                  school_id     分校ID
+                  is_training   是否在读
+                  name          学员姓名过滤条件
+    :return:     收费单的详细信息，包括班级——学费，教材费和其他费
+                  errorCode     错误码
+                    600         您没有管理分校的权限！
+                    400         不存在id为[%s]的收费单！
+                  msg           错误信息
+                  row           收费单基本信息
+                  total         收费单记录条数 == 1
+                  showDetail    收费单 关联的 演出收费列表
+                  cls           学员已报班信息
+                    {'class_id':
+                    'class_no':
+                    'class_name':
+                    }
+    :return:
+    """
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+
+    dcq = DcShowRecpt.query
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(DcShowRecpt.school_id.in_(school_id_intersection))
+
+    total = dcq.count()
+
+    if page_no <= -2:
+        # 根据 id 获取 收费单 详细信息，并求出其序号。
+        rid = int(request.form['recpt_id'])
+        r = DcShowRecpt.query.get(rid)
+        if r is None:
+            return jsonify({'errorCode': 400, 'msg': u'不存在id为[%s]的收费单！' % rid})
+        rec_no = dcq.filter(DcShowRecpt.id >= r.id).count()
+    else:
+        if page_no <= 0:  # 容错处理
+            page_no = 1
+        offset = (page_no - 1) * page_size
+        r = dcq.order_by(DcShowRecpt.id.desc()).limit(page_size).offset(offset).first()
+        if r is None:
+            return jsonify({'errorCode': 400, 'msg': u'不存在id为[%s]的收费单！' % request.form['receipt_id']})
+        rec_no = offset + 1
+
+    """ 根据学员id查询学员姓名和编号、所在学员名称和学校编号"""
+    stu = DanceStudent.query.filter(DanceStudent.id == r.student_id)\
+        .join(DanceSchool, DanceStudent.school_id == DanceSchool.id)\
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no).first()
+
+    """ 根据 收费方式id 查询 收费方式"""
+    fm = DcCommFeeMode.query.filter_by(id=r.fee_mode_id).first()
+    fee_mode = '' if fm is None else fm.fee_mode
+
+    """ 收费单 基本信息 """
+    row = {'id': r.id, 'show_recpt_no': r.show_recpt_no, 'school_id': r.school_id,
+           'student_id': r.student_id, 'deal_date': datetime.datetime.strftime(r.deal_date, '%Y-%m-%d'),
+           'join_fee': r.join_fee, 'other_fee': r.other_fee, 'total': r.total,
+           'remark': r.remark, 'recorder': r.recorder, 'no': rec_no,
+           'school_no': stu[2], 'school_name': stu[1], 'paper_receipt': r.paper_receipt,
+           'student_no': stu[0].sno, 'student_name': stu[0].name,
+           'fee_mode': fee_mode, 'fee_mode_id': r.fee_mode_id}
+
+    """ 查询 演出收费明细 """
+    clsfee = DcShowDetailFee.query.filter_by(recpt_id=r.id)\
+        .join(DcFeeItem, DcFeeItem.id == DcShowDetailFee.fee_item_id)\
+        .join(DcShow, DcShow.id == DcShowDetailFee.show_id)\
+        .add_columns(DcFeeItem.fee_item, DcShow.show_name, DcShow.begin_date)\
+        .all()
+    show_detail = []
+    for cf in clsfee:
+        c = cf[0]
+        show_detail.append({'id': c.id, 'recpt_id': c.recpt_id, 'show_id': c.show_id, 'fee_item_id': c.fee_item_id,
+                            'is_rcv': c.is_rcv, 'remark': c.remark, 'fee': c.fee,
+                            'is_rcv_text': u'是' if c.is_rcv == 1 else u'否',
+                            'show_name': cf[2], 'begin_date': cf[3], 'fee_item': cf[1]
+                            })
+
+    """ 查询学员已报班信息 """
+    student_no = stu[0].sno
+    records = DanceStudentClass.query.filter_by(student_id=student_no).filter_by(company_id=g.user.company_id)\
+        .join(DanceClass, DanceStudentClass.class_id == DanceClass.cno).filter(DanceStudentClass.status == u'正常')\
+        .add_columns(DanceClass.id, DanceClass.cno, DanceClass.class_name).all()
+    cls = []
+    for rec in records:
+        cls.append({'class_id': rec[1], 'class_no': rec[2], 'class_name': rec[3]})
+
+    return jsonify({"total": total, "row": row, 'errorCode': 0, 'msg': 'ok', 'showDetail': show_detail, 'cls': cls})
+
+
+@app.route('/dance_receipt_show_modify', methods=['POST'])
+@login_required
+def dance_receipt_show_modify():
+    """
+     新增/更新 收费单（演出）。
+     输入参数：
+         {row: {},                  收费单基本信息
+         showDetail: Array,         演出收费项目
+     :return:
+         {errorCode :  0  or 其他。 0 表示成功
+             301     收费单记录id不存在！
+         msg : 'ok' or 其他错误
+         }
+     """
+    json_str = request.form['data']
+    obj = json.loads(json_str)
+    if 'row' not in obj or 'showDetail' not in obj:
+        return jsonify({'errorCode': 202, 'msg': u'参数错误！'})
+    if 'id' not in obj['row'] or obj['row']['id'] <= 0:
+        return dance_receipt_show_add(obj)  # 新增记录
+
+    # 修改记录
+    """ 修改收费单 基本情况 """
+    recpt_id = obj['row']['id']
+    re = DcShowRecpt.query.get(recpt_id)
+    if re is None:
+        return jsonify({'errorCode': 301, 'msg': u'收费单记录id[%d]不存在！' % recpt_id})
+    re.update(obj['row'])
+    db.session.add(re)
+
+    """ 修改 演出收费项目 """
+    d = obj['showDetail']
+    records = DcShowDetailFee.query.filter_by(recpt_id=recpt_id).all()
+    old_ids = []
+    for rec in records:
+        old_ids.append({'id': rec.id})
+    change = dc_records_changed(old_ids, d, 'id')
+    for i in change['add']:
+        d[i]['recpt_id'] = recpt_id
+        nr = DcShowDetailFee(d[i])
+        db.session.add(nr)
+    for i in change['upd']:
+        nr = DcShowDetailFee.query.get(d[i]['id'])
+        nr.update(d[i])
+        db.session.add(nr)
+    for i in change['del']:
+        DcShowDetailFee.query.filter_by(id=old_ids[i]['id']).delete()
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
+
+
+def dance_receipt_show_add(recpt):
+    """
+    新增 收费单（演出）
+    :param recpt:   收费单信息，记录参数同 dance_receipt_show_modify
+    :return:
+        {errorCode :  0  表示成功
+        msg : '成功增加记录！'
+        }
+    """
+    new_r = DcShowRecpt(recpt['row'])
+    db.session.add(new_r)
+
+    r = DcShowRecpt.query.filter(DcShowRecpt.show_recpt_no == new_r.show_recpt_no,
+                                 DcShowRecpt.school_id == recpt['row']['school_id']).first()
+    print r.id, r.show_recpt_no
+    for cr in recpt['showDetail']:
+        cr['recpt_id'] = r.id
+        new_cr = DcShowDetailFee(cr)
+        db.session.add(new_cr)
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'成功增加记录！', 'id': r.id})
 
 
 @app.route('/dance_show_add', methods=['POST'])
@@ -1023,6 +1216,7 @@ def api_dance_shows_cfg_get():
             show_no: str    演出编号
             cfg[{       演出收费配置列表
                 fee_item    收费项目
+                fee_item_id 收费项目id
                 cost        费用
                 }]
             }]
@@ -1038,7 +1232,7 @@ def api_dance_shows_cfg_get():
             .order_by(DcShowFeeCfg.id.desc()).all()
         cfg_list = []
         for rec in cfg:
-            cfg_list.append({'cost': rec[0].cost, 'fee_item': rec[1]})
+            cfg_list.append({'cost': rec[0].cost, 'fee_item': rec[1], 'fee_item_id': rec[0].fee_item_id})
         shows.append({'show_name': r.show_name, 'show_id': r.id, 'show_no': r.show_no, 'cfg': cfg_list})
 
     return jsonify({'shows': shows, 'errorCode': 0, 'msg': 'ok'})

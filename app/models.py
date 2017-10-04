@@ -1252,7 +1252,6 @@ class DcShowFeeCfg(db.Model):
     create_at = db.Column(db.DateTime, nullable=False)
     last_upd_at = db.Column(db.DateTime, nullable=False)
     last_user = db.Column(db.String(20, collation='NOCASE'))    # 最后操作者
-    company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
 
     def __init__(self, show_id, fee_item_id, cost):
         self.show_id = show_id
@@ -1260,7 +1259,6 @@ class DcShowFeeCfg(db.Model):
         self.cost = cost
         self.last_user = self.recorder = g.user.name
         self.last_upd_at = self.create_at = datetime.datetime.today()
-        self.company_id = g.user.company_id
 
     def __repr__(self):
         return '<DcShowFeeCfg %r>' % self.id
@@ -1344,7 +1342,6 @@ class DcShowRecpt(db.Model):
     """  收费单（演出）基本信息表 """
     id = db.Column(db.Integer, primary_key=True)
     show_recpt_no = db.Column(db.String(20), nullable=False)
-    show_id = db.Column(db.Integer, nullable=False)
     school_id = db.Column(db.Integer, nullable=False)
     student_id = db.Column(db.Integer, nullable=False)
     deal_date = db.Column(db.DateTime, nullable=False)
@@ -1360,8 +1357,6 @@ class DcShowRecpt(db.Model):
     paper_receipt = db.Column(db.String(15))  # 收据号  例如：1347269
 
     def __init__(self, param):
-        if 'show_id' in param:
-            self.recpt_id = param['recpt_id']
         if 'school_id' in param:
             self.school_id = param['school_id']
         self.show_recpt_no = param['show_recpt_no'] if 'show_recpt_no' in param else self.create_code()
@@ -1386,8 +1381,6 @@ class DcShowRecpt(db.Model):
             self.paper_receipt = param['paper_receipt']
 
     def update(self, param):
-        if 'show_id' in param:
-            self.recpt_id = param['recpt_id']
         if 'school_id' in param:
             self.school_id = param['school_id']
         if 'student_id' in param:
@@ -1416,7 +1409,7 @@ class DcShowRecpt(db.Model):
         search_no = dc_gen_code(self.school_id, 'SHW')
         rec = DcShowRecpt.query.filter(DcShowRecpt.show_recpt_no.like('%' + search_no + '%'))\
             .order_by(DcShowRecpt.id.desc()).first()
-        number = 1 if rec is None else int(rec.receipt_no.rsplit('-', 1)[1]) + 1
+        number = 1 if rec is None else int(rec.show_recpt_no.rsplit('-', 1)[1]) + 1
         self.show_recpt_no = search_no + ('%03d' % number)
         return self.show_recpt_no
 
@@ -1436,7 +1429,7 @@ class DcShowDetailFee(db.Model):
     create_at = db.Column(db.DateTime, nullable=False)
     last_upd_at = db.Column(db.DateTime, nullable=False)
     last_user = db.Column(db.String(20, collation='NOCASE'))    # 最后操作者
-    company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
+    remark = db.Column(db.String(40))
 
     def __init__(self, param):
         if 'recpt_id' in param:
@@ -1450,7 +1443,8 @@ class DcShowDetailFee(db.Model):
         self.is_rcv = 0 if 'is_rcv' not in param or param['is_rcv'] == u'否' else 1
         self.last_user = self.recorder = g.user.name
         self.last_upd_at = self.create_at = datetime.datetime.today()
-        self.company_id = g.user.company_id
+        if 'remark' in param:
+            self.remark = param['remark']
 
     def update(self, param):
         if 'fee_item_id' in param:
@@ -1461,6 +1455,8 @@ class DcShowDetailFee(db.Model):
             self.is_rcv = 0 if param['is_rcv'] == u'否' else 1
         self.last_upd_at = datetime.datetime.today()
         self.last_user = g.user.name
+        if 'remark' in param:
+            self.remark = param['remark']
 
     def __repr__(self):
         return '<DcShowDetailFee %r>' % self.id
