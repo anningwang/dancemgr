@@ -355,8 +355,59 @@ function danceParser(s){
     }
 }
 
+/**
+ * 打开url所指示的窗口。
+ * @param dgId      父窗口datagrid id， 用于判断父窗口是否关闭，及操作 datagrid中的combobox重新加载数据
+ * @param panelId   窗口所在的 panel id
+ * @param winId     窗口 id
+ * @param url       窗口 所在 html 文件
+ * @param idx       dgId中要重新加载数据的combobox所在 行
+ * @param field     dgId中要重新加载数据的combobox所在 字段
+ * @param title     窗口标题，用于提示重复打开窗口
+ */
+function dcNewWindow(dgId, panelId, winId, url, idx, field, title) {
+    if(!document.getElementById(panelId)){
+        $(document.body).append('<div id=' + panelId +  '></div>');
+    }
+    if (document.getElementById(winId)) {
+        $.messager.alert('提示', '[' + title + ']窗口已打开！', 'info');
+        return;
+    }
+    $('#'+panelId).panel({
+        href: url,
+        onDestroy: function () {
+            if(document.getElementById(dgId)) {    // 窗口未被关闭
+                var dg = $('#'+dgId);
+                var ed = $(dg).datagrid('getEditor', {index:idx,field:field});
+                if(ed) {
+                    $(ed.target).combobox('reload');
+                }
+            }
+        }
+    });
+}
 
-// 集合操作 /////////////////////////////////////////////////////////////////////////////
+// 父窗口要刷新的为combobox(id: ccId)。 panel id 在 winId的基础上加上 '-Panel'
+function dcNewWindowEx(winId, url, title, ccId) {
+    var panelId = winId + '-Panel';
+    if(!document.getElementById(panelId)){
+        $(document.body).append('<div id=' + panelId +  '></div>');
+    }
+    if (document.getElementById(winId)) {
+        $.messager.alert('提示', '[' + title + ']窗口已打开！', 'info');
+        return;
+    }
+    $('#'+panelId).panel({
+        href: url,
+        onDestroy: function () {
+            if(document.getElementById(ccId)) {    // 父窗口未被关闭
+                $('#'+ccId).combobox('reload');
+            }
+        }
+    });
+}
+
+// 集合操作 begin /////////////////////////////////////////////////////////////////////////////
 
 /**
  * 差集
@@ -394,6 +445,8 @@ function setIntersection(a, b) { // 交集 a & b
     }
     return result;
 }
+
+// 集合操作 end /////////////////////////////////////////////////////////////////////////////
 
 /**
  * 用于记录的增量修改。原纪录为a，变为记录b。 求出 增加，删除及不变的记录。

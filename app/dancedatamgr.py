@@ -10,6 +10,7 @@ import json
 import datetime
 import tools.excel
 from tools.tools import dc_records_changed, is_float
+from dcglobal import *
 
 
 ERROR_CODE_USER_IS_EXIST = 100
@@ -233,7 +234,7 @@ def dance_fee_item_get():
         rows.append({'no': i, 'id': rec.id, "fee_item": rec.fee_item, 'recorder': rec.recorder,
                      'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d %H:%M:%S'),
                      'type': rec.type,
-                     'type_text': u'演出费' if rec.type == 2 else u'普通收费' if rec.type == 3 else u'学费'
+                     'type_text': get_feename(rec.type)
                      })
         """ type: 1 学费， 2  演出 ， 3，普通 """
         i += 1
@@ -262,13 +263,24 @@ def dance_fee_item_update():
     json_str = request.form['data']
     obj = json.loads(json_str)
     for fee in obj:
-        if fee['id'] <= 0:
+        if 'type' in fee['row']:
+            fee_type = fee['row']['type']
+            try:
+                fee_type = int(fee_type)
+            except ValueError:
+                return jsonify({'errorCode': 802,
+                                'msg': u'输入类型错误!合法值[1~3]，输入值[%s]' % fee['row']['type']})
+        else:
+            fee_type = 1
+        if 'id' not in fee or fee['id'] <= 0:
             fee_item = fee['row']['fee_item']
-            fee_type = 1 if 'type' not in fee['row'] else fee['row']['type']
             # 收费名称不能重复，查询是否有重复记录
-            dup = DcFeeItem.query.filter_by(company_id=g.user.company_id).filter_by(fee_item=fee_item).first()
+            dup = DcFeeItem.query.filter_by(company_id=g.user.company_id)\
+                .filter_by(fee_item=fee_item, type=fee_type).first()
             if dup is not None:
-                return jsonify({'errorCode': 801, 'msg': u'名称为[%s]的收费项目已经存在！' % fee_item})
+                return jsonify({'errorCode': 801,
+                                'msg': u'名称为 [%s], 类型为 [%s] 的收费项目已经存在！' %
+                                       (fee_item, get_feename(fee_type))})
             nr = DcFeeItem(fee_item, fee_type)
             db.session.add(nr)
         else:
@@ -1197,7 +1209,13 @@ def api_dance_fee_item_get():
     else:
         ctrl = 'combogrid'
 
-    records = DcFeeItem.query.filter_by(company_id=g.user.company_id).all()
+    dcq = DcFeeItem.query.filter_by(company_id=g.user.company_id)
+    ty = 1
+    if 'type' in request.form:
+        ty = request.form['type']
+    dcq = dcq.filter_by(type=ty)
+
+    records = dcq.all()
     fee_item = []
     for rec in records:
         fee_item.append({'fee_id': rec.id, 'fee_item': rec.fee_item})

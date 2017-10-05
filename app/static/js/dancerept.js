@@ -330,7 +330,10 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                     valueField: 'fee_mode_id',textField: 'fee_mode',
                     iconWidth:22,
                     icons: [{
-                        iconCls:'icon-add', handler: newFeeMode
+                        iconCls:'icon-add', handler: function () {
+                            dcNewWindow(dgRecptComm, 'dcFeeModeNewPanel', 'dcFeeModeNewWin',
+                                       '/static/html/_add_fee_mode.html', 1, 'c6', '新增收费方式');
+                        }
                     }],
                     url: '/api/dance_fee_mode_get'
                 }).combobox('setValue', row.fee_mode_id);
@@ -342,29 +345,6 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
             }
             dgParam[dgRecptComm].idx = index;
         }
-    }
-
-    function newFeeMode() {
-        var id = 'dcFeeModeNewPanel';
-        if(!document.getElementById(id)){
-            $(document.body).append('<div id=' + id +  '></div>');
-        }
-        if (document.getElementById('dcFeeModeNewWin')) {
-            $.messager.alert('提示', '[新增收费方式]窗口已打开！', 'info');
-            return;
-        }
-        $('#'+id).panel({
-            href:'/static/html/_add_fee_mode.html',
-            onDestroy: function () {
-                if(document.getElementById(dgRecptComm)) {    // 窗口未被关闭
-                    var dg = $('#'+dgRecptComm);
-                    var edFee = $(dg).datagrid('getEditor', {index:1,field:'c6'});
-                    if(edFee) {
-                        $(edFee.target).combobox('reload');
-                    }
-                }
-            }
-        });
     }
 
     function dgRecptCommEndEdit(index, row){
@@ -406,17 +386,9 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                 iconWidth: 25,
                 icons: [{
                     iconCls:'icon-add',
-                    handler: function(e){
-                        $(document.body).append('<div id="danceShowWindow"></div>');
-                        $('#danceShowWindow').panel({
-                            //width:900, height:700,
-                            href:'/static/html/_dc_add_edit_show.html',
-                            onDestroy: function () {
-                                var dg = $('#'+dgShow);
-                                $(dg).datagrid('reload');
-                            }
-                        });
-                        $(e.data.target).textbox('setValue', 'Something added!');
+                    handler: function(){
+                        dcNewWindow(dgShow, 'danceShowWindow', 'dcShowWinNew',
+                            '/static/html/_dc_add_edit_show.html', index, field, '新增演出')
                     }
                 },{
                     iconCls:'icon-edit',

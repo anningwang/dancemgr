@@ -60,7 +60,7 @@
                         <td width="35%">
                             <input class="easyui-combobox" id="fee_item" name="fee_item" style="width:100%;" data-options="
                                     url:'/api/dance_fee_item_get',
-                                    queryParam: {ctrl: 'combobox'},
+                                    queryParams: {ctrl: 'combobox', type: 2},
                                     // method:'get',
                                     editable:false,
                                     valueField:'fee_id',
@@ -68,9 +68,10 @@
                                     panelHeight:'auto',
                                     iconWidth:22,
                                     icons:[{
-                                        iconCls:'icon-add'
-                                    },{
-                                        iconCls:'icon-cut'
+                                        iconCls:'icon-add',
+                                        handler: function () {
+                                            dcNewWindowEx('dcFeeItemNewWin', '/static/html/_add_fee_item.html','新增收费项目', 'fee_item');
+                                        }
                                     }],
                                     label: '收费项目:',
                                     labelPosition: 'top'
@@ -95,11 +96,8 @@
                     toolbar: [{
                         'text': '删除',
                         iconCls: 'icon-remove',
-                        handler: function(){alert('edit')}
-                        },'-',{
-                        iconCls: 'icon-help',
-                        handler: function(){alert('help')}
-                        }], title:'演出收费项'
+                        handler: delFeeItem
+                        }], title:'演出收费项',striped:true
                      ">
                 <thead>
                 <tr>
@@ -187,7 +185,7 @@
                 //updateMenu(data.cls);
             }
         }).fail(function(jqXHR, textStatus, errorThrown) {
-            var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+            var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
             $.messager.alert('提示', msg, 'info');
         });
     }
@@ -227,6 +225,20 @@
             }
         }
         return show;
+    }
+
+    function delFeeItem() {
+        var dg = $('#dgShowFeeItem');
+        var row = $(dg).datagrid('getSelected');
+        if(row){
+            idx = $(dg).datagrid('getRowIndex', row);
+            var msg = '确认删除第 {0} 行数据吗？'.format(idx+1);
+            $.messager.confirm('确认删除', msg, function(r){
+                if (r){
+                    $(dg).datagrid('deleteRow', idx);
+                }
+            });
+        }
     }
 
 </script>

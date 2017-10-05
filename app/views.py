@@ -460,15 +460,16 @@ def dc_del_fee_item(ids):
         fee = DcFeeItem.query.get(i)
         if fee is None:
             continue
-        if fee.type == FeeItemType.Study.value:
+        t = FeeItemType(int(fee.type))
+        if t == FeeItemType.Study:
             is_use = DanceOtherFee.query.filter_by(fee_item_id=i).first()
             if is_use is not None:
                 return jsonify({'errorCode': 811, 'msg': u'收费项目[%s]已经被使用，不能删除！' % fee.fee_item})
-        elif fee.type == FeeItemType.Show.value:
+        elif t == FeeItemType.Show:
             is_use = DcShowDetailFee.query.filter_by(fee_item_id=i).first()
             if is_use is not None:
                 return jsonify({'errorCode': 811, 'msg': u'收费项目[%s]已经被使用，不能删除！' % fee.fee_item})
-        elif fee.type == FeeItemType.Common.value:
+        elif t == FeeItemType.Common:
             return jsonify({'errorCode': 813, 'msg': u'待实现！'})
         else:
             return jsonify({'errorCode': 812, 'msg': u'未知类型[%d]！' % fee.type})

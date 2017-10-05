@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>舞管家</title>
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/icon.css">
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+</head>
+<body>
+
+
+<div class="easyui-window" title="新增收费项目" data-options="iconCls:'icon-save',minimizable:false,collapsible:false,
+        maximizable:false,closable:false,
+        onBeforeClose: onBeforeCloseFeeItem
+        " id="dcFeeItemNewWin" style="width:320px; height:205px;padding:5px;">
+
+    <div class="easyui-layout" data-options="fit:true">
+        <div data-options="region:'center', border:true" style="padding:10px;">
+            <input class="easyui-textbox" id="feeItem" data-options="label:'*收费项目：',labelAlign:'right',labelWidth:100" style="width:100%;">
+            <div style="height: 3px"></div> <!-- 分隔符 -->
+            <input class="easyui-combobox" id="feeType" data-options="label:'类别：',labelAlign:'right',labelWidth:100,
+                valueField:'type', textField:'type_text',editable:false,panelHeight:'auto',
+                 data:[{
+                            type: 1,
+                            type_text: '学费'
+                        },{
+                            type: 2,
+                            type_text: '演出费'
+                        },{
+                            type: 3,
+                            type_text: '普通收费'
+                        }]
+                " style="width:100%;">
+            <div style="height: 3px"></div><!-- 分隔符 -->
+            <input class="easyui-textbox" data-options="label:'录入员：',prompt:'自动生成',disabled:true,labelAlign:'right',labelWidth:100" style="width:100%;">
+        </div>
+
+        <div data-options="region:'south',border:false" style="text-align:right;padding:2px 0;">
+            <a href="javascript:void(0)" onclick="saveFeeItem()" class="easyui-linkbutton" iconCls="icon-ok" style="width:80px;height:30px">保存</a>
+            <a href="javascript:void(0)" onclick="closeWinFeeItem()" class="easyui-linkbutton" iconCls="icon-cancel" style="width:80px;height:30px">关闭</a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // 'use strict';
+    function onBeforeCloseFeeItem() {
+        $('#dcFeeItemNewWin').window('destroy');
+        $('#dcFeeItemNewWin-Panel').panel('destroy');
+    }
+
+    function closeWinFeeItem() {
+        $('#dcFeeItemNewWin').window('close');
+    }
+
+    function saveFeeItem() {
+        if (!validateFeeItem()) {
+            return;
+        }
+
+        var fee = packetFeeItem();
+        console.log('send:', fee);
+        $.ajax({
+            method: 'POST',
+            url: '/dance_fee_item_update',
+            async: true,
+            dataType: 'json',
+            data: {data: JSON.stringify([{row: fee}])}
+        }).done(function(data) {
+            $.messager.alert('提示', data.msg, 'info');
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
+        });
+    }
+
+    function validateFeeItem() {
+        var nameCtrl = $('#feeItem');
+        var name = $(nameCtrl).textbox('getValue');
+        //console.log(name);
+        if(!name || name.length > 6) {
+            $.messager.alert({title:'提示', msg:'收费项目名称不能为空，且不能大于20字符！', icon: 'info', fn:function () {
+                $(nameCtrl).textbox('textbox').focus();
+            }});
+            return false;
+        }
+        var typeCtrl = $('#feeType');
+        var feeType = $(typeCtrl).textbox('getValue');
+        if(!feeType) {
+            $.messager.alert({title:'提示', msg:'请选择类别！', icon: 'info', fn:function () {
+                $(typeCtrl).textbox('textbox').focus();
+            }});
+            return false;
+        }
+
+        return true;
+    }
+
+    function packetFeeItem() {
+        var data = {};
+        data.fee_item = $('#feeItem').textbox('getValue');
+        data.type = $('#feeType').textbox('getValue');
+        return data;
+    }
+
+</script>
+
+</body>
+</html>
