@@ -1287,7 +1287,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                                 $.messager.alert('提示', data.msg, 'info');
                             }
                         }).fail(function(jqXHR, textStatus, errorThrown) {
-                            var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+                            var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
                             $.messager.alert('提示', msg, 'info');
                         });
                     }
@@ -1865,7 +1865,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                 $.messager.alert('提示', data.msg, 'info');
             }
         }).fail(function(jqXHR, textStatus, errorThrown) {
-            var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+            var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
             $.messager.alert('提示', msg, 'info');
         });
     }

@@ -236,7 +236,8 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
             row: {c2:  '[关联学员姓名]',
                 c4: '',
                 c6: '',
-                student_id: undefined
+                student_id: undefined,
+                fee_mode_id:undefined
             }
         }).datagrid('updateRow', { index: 2,
             row: {c2: '',
@@ -329,10 +330,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                     valueField: 'fee_mode_id',textField: 'fee_mode',
                     iconWidth:22,
                     icons: [{
-                        iconCls:'icon-add',
-                        handler: function(e){
-                            $(e.data.target).textbox('setValue', 'Something added!');
-                        }
+                        iconCls:'icon-add', handler: newFeeMode
                     }],
                     url: '/api/dance_fee_mode_get'
                 }).combobox('setValue', row.fee_mode_id);
@@ -344,6 +342,29 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
             }
             dgParam[dgRecptComm].idx = index;
         }
+    }
+
+    function newFeeMode() {
+        var id = 'dcFeeModeNewPanel';
+        if(!document.getElementById(id)){
+            $(document.body).append('<div id=' + id +  '></div>');
+        }
+        if (document.getElementById('dcFeeModeNewWin')) {
+            $.messager.alert('提示', '[新增收费方式]窗口已打开！', 'info');
+            return;
+        }
+        $('#'+id).panel({
+            href:'/static/html/_add_fee_mode.html',
+            onDestroy: function () {
+                if(document.getElementById(dgRecptComm)) {    // 窗口未被关闭
+                    var dg = $('#'+dgRecptComm);
+                    var edFee = $(dg).datagrid('getEditor', {index:1,field:'c6'});
+                    if(edFee) {
+                        $(edFee.target).combobox('reload');
+                    }
+                }
+            }
+        });
     }
 
     function dgRecptCommEndEdit(index, row){
@@ -735,6 +756,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
         recpt.row.student_id = rows[1].student_id;
         recpt.row.student_name = rows[1].c4;
         recpt.row.fee_mode = rows[1].c6;
+        recpt.row.fee_mode_id = rows[1].fee_mode_id;
         recpt.row.join_fee = rows[2].c2;
         recpt.row.other_fee = rows[2].c4;
         recpt.row.total = rows[2].c6;

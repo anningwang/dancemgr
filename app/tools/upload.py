@@ -7,7 +7,7 @@ from config import basedir
 from werkzeug.utils import secure_filename
 import base64
 import time
-from excel import *
+from excel import import_student, import_class, import_receipt, import_teaching_material, export_student
 from tools import get_filename
 
 

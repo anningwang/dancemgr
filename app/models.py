@@ -1244,6 +1244,14 @@ class DcCommFeeMode(db.Model):
         self.last_upd_at = self.create_at = datetime.datetime.today()
         self.disc_rate = rate
 
+    def update(self, param):
+        if 'fee_mode' in param:
+            self.fee_mode = param['fee_mode']
+        if 'disc_rate' in param:
+            self.disc_rate = param['disc_rate']
+        self.last_user = g.user.name
+        self.last_upd_at = datetime.datetime.today()
+
     def __repr__(self):
         return '<DcCommFeeMode %r>' % self.id
 

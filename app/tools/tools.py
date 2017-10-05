@@ -113,3 +113,11 @@ def dc_records_changed(old, new, field):
                 break
 
     return {'add': add_idx, 'del': del_idx, 'upd': upd_idx}
+
+
+def is_float(val):
+    try:
+        float(val)
+        return True
+    except ValueError:
+        return False

@@ -129,12 +129,12 @@ function danceAddTabFeeItem(title, tableId) {
             'fieldValidate' : {'fee_item': checkNotEmpty},
             'queryText': '收费项目：',
             'queryPrompt': '收费项目拼音首字母查找',
-            'who': 'DanceFeeItem',
-            'danceModuleName': 'DanceTeachingMaterial',   // 传递给 导入、导出 模块的身份标识
+            'who': module,
+            'danceModuleName': module,   // 传递给 导入、导出 模块的身份标识
             'danceModuleTitle': title,          // 导入、导出 窗口 title
             'columns': [[
                 {field: 'ck', checkbox:true },   // checkbox
-                {field: 'id', title: 'id',  width: 30, align: 'center' },
+                //{field: 'id', title: 'id',  width: 30, align: 'center' },
                 {field: 'fee_item', title: '收费项目*', width: 160, align: 'center', editor: 'textbox'},
                 {field: 'type_text', title: '类别*', width: 90, align: 'center', editor: {
                     type: 'combobox', options:{
@@ -156,7 +156,7 @@ function danceAddTabFeeItem(title, tableId) {
             ]]
         };
         
-        danceCreateEditedDatagrid(tableId, '/dance_fee_item', opts_feeitem);
+        danceCreateEditedDatagrid(tableId, '/'+module, opts_feeitem);
     }
 }
 
@@ -224,20 +224,20 @@ function danceAddTabFeeMode(title, tableId) {
         });
         var module = 'dc_comm_fee_mode';
         var optsTeachingMaterial = {
-            'defaultSelField' : 'material_name',
-            'fieldValidate' : {'material_name': checkNotEmpty},
-            'queryText': '收费模式：',
+            'defaultSelField' : 'fee_mode',
+            'fieldValidate' : {'fee_mode': checkNotEmpty},
+            'queryText': '收费方式：',
             'queryPrompt': '拼音首字母查找',
             'who': module,     // 删除数据时，表明身份
             'danceModuleName': module,   // 传递给 导入、导出 模块的身份标识
             'danceModuleTitle': title,          // 导入、导出 窗口 title
             'columns': [[
                 {field: 'ck', checkbox:true },   // checkbox
-                {field: 'fee_mode', title: '收费模式名称', width: 140, align: 'center', editor: 'textbox'},
-                {field: 'disc_rate', title: '费率', width: 80, halign: 'center', align: 'left',editor: 'textbox'},
+                {field: 'fee_mode', title: '收费方式名称', width: 140, align: 'center', editor: 'textbox'},
+                {field: 'disc_rate', title: '费率（%）', width: 80, halign: 'center', align: 'left',editor: 'textbox'},
                 {field: 'create_at', title: '创建时间', width: 100, align: 'center'},
-                {field: 'lastUpdAt', title: '最后更新日期', width: 100, align: 'center'},
-                {field: 'lastUser', title: '最后更新人', width: 100, align: 'center'},
+                {field: 'last_upd_at', title: '最后更新日期', width: 140, align: 'center'},
+                {field: 'last_user', title: '最后更新人', width: 100, align: 'center'},
                 {field: 'remark', title: '备注', width: 300, align: 'center', editor:'textbox'},
                 {field: 'recorder', title: '录入员', width: 100, align: 'center'}
             ]]

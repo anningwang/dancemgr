@@ -6,7 +6,8 @@ from flask_babel import gettext
 from app import app, db, lm, oid, babel
 from forms import LoginForm, EditForm, PostForm, SearchForm, DanceLoginForm, DanceRegistrationForm
 from models import User, ROLE_USER, ROLE_ADMIN, Post, HzLocation, DanceStudent, DanceClass, DanceSchool, DanceUser,\
-    DanceStudentClass, DanceCompany, DanceUserSchool
+    DanceStudentClass, DanceCompany, DanceUserSchool, DcShowDetailFee, DcCommFeeMode, DcShowRecpt, DcFeeItem,\
+    DanceOtherFee, DanceReceipt, DanceClassReceipt, DanceTeaching
 from datetime import datetime
 from emails import follower_notification
 from guess_language import guessLanguage
@@ -15,6 +16,7 @@ from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY
 import random
 from dijkstra import min_dist2, get_nearest_vertex, hz_vertex
 from app.tools.upload import *
+from dcglobal import *
 
 
 @lm.user_loader
@@ -49,11 +51,13 @@ def after_request(response):
 
 @app.errorhandler(404)
 def internal_error(error):
+    print error
     return render_template('404.html'), 404
 
 
 @app.errorhandler(500)
 def internal_error(error):
+    print error
     db.session.rollback()
     return render_template('500.html'), 500
 
@@ -324,7 +328,6 @@ def show_all_users():
 
 @app.route('/get_location', methods=['POST'])
 def get_pos():
-    user_id = request.form['userId']
     ret_loc = []
     hz_location = HzLocation.query.group_by(HzLocation.user_id)
     for loc in hz_location:  # 如果存在，则获取最新的一个坐标
@@ -386,7 +389,7 @@ def dance_location_get():
 def dance_del_data():
     who = request.form['who']
     ids = request.form.getlist('ids[]')
-    print 'who=', who, ' ids=', ids
+    print 'who=', who, 'ids=', ids
 
     if who == 'DanceClass':
         dcq = DanceClass.query
@@ -398,6 +401,10 @@ def dance_del_data():
         dcq = DanceUser.query
     elif who == 'DanceReceipt':
         return dc_del_receipt(ids)
+    elif who == 'dance_fee_item':
+        return dc_del_fee_item(ids)
+    elif who == 'dc_comm_fee_mode':
+        return dc_del_fee_mode(ids)
     else:
         return jsonify({'errorCode': 1, "msg": "Table not found!"})     # error
 
@@ -439,6 +446,60 @@ def del_student_class(sno):
     records = DanceStudentClass.query.filter_by(company_id=g.user.company_id).filter_by(student_id=sno).all()
     for rec in records:
         db.session.delete(rec)
+
+
+def dc_del_fee_item(ids):
+    """
+    删除 收费项目， 若收费项目已经被引用，则不能删除。
+    :param ids:     记录 id list
+    :return:
+        errorCode       错误码
+            811         收费项目[%s]已经被使用，不能删除！
+    """
+    for i in ids:
+        fee = DcFeeItem.query.get(i)
+        if fee is None:
+            continue
+        if fee.type == FeeItemType.Study.value:
+            is_use = DanceOtherFee.query.filter_by(fee_item_id=i).first()
+            if is_use is not None:
+                return jsonify({'errorCode': 811, 'msg': u'收费项目[%s]已经被使用，不能删除！' % fee.fee_item})
+        elif fee.type == FeeItemType.Show.value:
+            is_use = DcShowDetailFee.query.filter_by(fee_item_id=i).first()
+            if is_use is not None:
+                return jsonify({'errorCode': 811, 'msg': u'收费项目[%s]已经被使用，不能删除！' % fee.fee_item})
+        elif fee.type == FeeItemType.Common.value:
+            return jsonify({'errorCode': 813, 'msg': u'待实现！'})
+        else:
+            return jsonify({'errorCode': 812, 'msg': u'未知类型[%d]！' % fee.type})
+
+    DcFeeItem.query.filter(DcFeeItem.id.in_(ids)).delete(synchronize_session=False)
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
+
+
+def dc_del_fee_mode(ids):
+    """
+    删除 收费模式（支付宝、微信、刷卡、现金）， 若收费模式已经被引用，则不能删除。
+    :param ids:     记录 id list
+    :return:
+        errorCode       错误码
+            831         收费模式[%s]已被使用，不能删除！
+    """
+    for i in ids:
+        fee = DcCommFeeMode.query.get(i)
+        if fee is None:
+            continue
+        """  收费单演出 判断是否使用了收费模式 """
+        is_use = DcShowRecpt.query.filter_by(fee_mode_id=i).first()
+        if is_use is not None:
+            return jsonify({'errorCode': 831, 'msg': u'收费模式[%s]已被使用，不能删除！' % fee.fee_mode})
+        """  收费单班级 判断是否使用了收费模式 """
+        """  收费单普通 判断是否使用了收费模式 """
+
+    DcCommFeeMode.query.filter(DcCommFeeMode.id.in_(ids)).delete(synchronize_session=False)
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 
 
 @app.route('/dance_student_get', methods=['POST', 'GET'])

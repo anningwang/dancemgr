@@ -9,7 +9,7 @@ from views import dance_student_query
 import json
 import datetime
 import tools.excel
-from tools.tools import dc_records_changed
+from tools.tools import dc_records_changed, is_float
 
 
 ERROR_CODE_USER_IS_EXIST = 100
@@ -226,7 +226,7 @@ def dance_fee_item_get():
     total = dcq.count()
 
     offset = (page_no - 1) * page_size
-    records = dcq.order_by(DcFeeItem.id).limit(page_size).offset(offset)
+    records = dcq.order_by(DcFeeItem.type, DcFeeItem.id).limit(page_size).offset(offset)
     i = offset + 1
     rows = []
     for rec in records:
@@ -441,7 +441,7 @@ def dance_receipt_study_details_get():
                               'discount': c.discount, 'discount_rate': c.discount_rate, 'total': c.total,
                               'real_fee': c.real_fee, 'arrearage': c.arrearage, 'remark': c.remark,
                               'class_no': cf[1], 'class_id': cf[5],
-                              'discRateText': ('' if c.discount_rate is None else str(c.discount_rate*100)+'%'),
+                              'discRateText': str(c.discount_rate*100)+'%' if c.discount_rate is not None else '',
                               })
     """ 查询 教材费 """
     teachfee = DanceTeaching.query.filter_by(receipt_id=r.id)\
@@ -1036,11 +1036,78 @@ def dance_show_add():
     return jsonify({'errorCode': 0, 'msg': '成功增加演出信息！'})
 
 
+@app.route('/dc_comm_fee_mode_update', methods=['POST'])
+@login_required
+def dc_comm_fee_mode_update():
+    """
+    更新 收费方式。 包括新增 和 修改
+    输入参数
+        data:[{         输入参数
+                id:             收费方式id, 大于0 - 修改， 0 - 新增
+                row:{           收费方式记录
+                    fee_mode:   收费方式名称
+                    disc_rate   费率
+                    }
+            }]
+    :return:
+        errorCode:      错误码
+            0       成功
+            600     Parameter error. [data] required.
+            801     名称为[%s]的收费方式已经存在！
+            802     费率应在0~100之间!
+            803     请输入费率!
+        msg:            错误信息
+    """
+    if 'data' not in request.form:
+        return jsonify({'errorCode': 600, 'msg': 'Parameter error. [data] required.'})
+    json_str = request.form['data']
+    obj = json.loads(json_str)
+    for fee in obj:
+        row = fee['row']
+        if 'disc_rate' in row:
+            rate = row['disc_rate']
+            if not is_float(rate):
+                return jsonify({'errorCode': 802, 'msg': u'费率应在0~100之间!'})
+            rate = -1 if rate == '' else float(rate)
+            if rate < 0 or rate > 100:
+                return jsonify({'errorCode': 802, 'msg': u'费率应在0~100之间!'})
+        if 'id' not in fee or fee['id'] <= 0:
+            if 'disc_rate' not in row:
+                return jsonify({'errorCode': 803, 'msg': u'请输入费率!'})
+            fee_mode = row['fee_mode']
+            # 收费名称不能重复，查询是否有重复记录
+            dup = DcCommFeeMode.query.filter_by(company_id=g.user.company_id).filter_by(fee_mode=fee_mode).first()
+            if dup is not None:
+                return jsonify({'errorCode': 801, 'msg': u'名称为[%s]的收费方式已经存在！' % fee_mode})
+            nr = DcCommFeeMode(fee_mode, row['disc_rate'])
+            db.session.add(nr)
+        else:
+            nr = DcCommFeeMode.query.get(fee['id'])
+            if nr is not None:
+                nr.update(row)
+                db.session.add(nr)
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
+
+
+@app.route('/dc_comm_fee_mode_query', methods=['POST'])
+@login_required
+def dc_comm_fee_mode_query():
+    name = request.form['condition']
+    ret = []
+    records = DcCommFeeMode.query.filter_by(company_id=g.user.company_id)\
+        .order_by(DcCommFeeMode.id.asc()).filter(DcCommFeeMode.fee_mode.like('%'+name + '%'))
+    for rec in records:
+        ret.append({'value': rec.fee_mode, 'text': rec.fee_mode})
+    return jsonify(ret)
+
+
 @app.route('/dc_comm_fee_mode_get', methods=['POST'])
 @login_required
 def dc_comm_fee_mode_get():
     """
-    查询收费模式
+    查询收费方式
     :return:
         rows:       符合条件的记录
         total:      符合条件的记录总条数
@@ -1049,21 +1116,27 @@ def dc_comm_fee_mode_get():
         msg         错误信息
             'ok'    成功
     """
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    if page_no <= 0:  # 补丁
+        page_no = 1
 
     dcq = DcCommFeeMode.query.filter_by(company_id=g.user.company_id)
 
     if 'condition' in request.form:
         cond = '%' + request.form['condition'] + '%'
         dcq = dcq.filter(DcCommFeeMode.fee_mode.like(cond))
-    records = dcq.order_by(DcCommFeeMode.id.desc()).all()
 
     total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.order_by(DcCommFeeMode.id.desc()).limit(page_size).offset(offset).all()
+
     rows = []
     for rec in records:
         rows.append({'id': rec.id, 'fee_mode': rec.fee_mode, 'disc_rate': rec.disc_rate,
                      'recorder': rec.recorder, 'last_user': rec.last_user,
                      'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d'),
-                     'last_upd_at': datetime.datetime.strftime(rec.last_upd_at, '%Y-%m-%d')})
+                     'last_upd_at': datetime.datetime.strftime(rec.last_upd_at, '%Y-%m-%d %H:%M')})
     return jsonify({'rows': rows, 'total': total, 'errorCode': 0, 'msg': 'ok'})
 
 
