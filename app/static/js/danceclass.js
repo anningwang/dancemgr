@@ -10,7 +10,7 @@ function danceAddTabClassDatagrid(divId, title, tableId, condition) {
         $(parentDiv).tabs('select', title);
         danceClassCallFunc(condition);
     } else {
-        var content = '<table id=' + tableId + '></table>';
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
         $(parentDiv).tabs('add', {
             title: title,
             content: content,
@@ -34,7 +34,7 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
         // title: '班级信息',
         iconCls: 'icon-a_detail',
         fit: true,
-        //fitColumns: true,
+        fitColumns: true,
         pagination: true,   // True to show a pagination toolbar on datagrid bottom.
         singleSelect: true, // True to allow selecting only one row.
         loadMsg: '正在加载数据...',
@@ -89,7 +89,7 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
                                 }
                             }).fail(function(jqXHR, textStatus, errorThrown) {
                                 dg.datagrid('loaded');
-                                var msg = $.format("请求失败}。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+                                var msg = "请求失败}。错误码：{0}({1})".format(jqXHR.status, errorThrown);
                                 $.messager.alert('提示', msg, 'info');
                             });
                             // end of 删除数据 //////////////////////////////////////
@@ -109,7 +109,7 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
         columns: [[
             {field: 'ck', checkbox:true },   // checkbox
             // {field: 'no', title: '序号',  width: 15, align: 'center' },  //能自动显示行号，则不再需要自己实现
-            {field: 'id', title: 'id',  width: 30, align: 'center' },
+            // {field: 'id', title: 'id',  width: 30, align: 'center' },
             {field: 'cno', title: '班级编号', width: 100, align: 'center'},
             {field: 'school_name', title: '分校名称', width: 140, align: 'center'},
             {field: 'class_name', title: '班级名称', width: 160, align: 'center'},
@@ -224,7 +224,7 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
             dg.datagrid('loadData', data);
         }).fail(function(jqXHR, textStatus, errorThrown) {
             //console.log(jqXHR);
-            var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+            var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
             $.messager.alert('提示', msg, 'info');
         });
     };

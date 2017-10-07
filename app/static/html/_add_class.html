@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>舞管家</title>
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/icon.css">
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+</head>
+<body>
+
+<div class="easyui-window" title="新增班级" data-options="iconCls:'icon-save',minimizable:false,collapsible:false,
+        maximizable:false,closable:false,
+        onBeforeClose: onBeforeCloseClass
+        " id="dcNewClassWin" style="width:600px; height:360px;padding:5px;">
+
+    <div class="easyui-layout" data-options="fit:true">
+        <div data-options="region:'center', border:true" style="padding:10px;">
+            <input class="easyui-textbox" id="classNo" data-options="label:'班级编号：',labelAlign:'right',labelWidth:100,prompt:'自动生成',disabled:true" style="width:48%;">
+            <input class="easyui-textbox" id="schoolNo" data-options="label:'分校编号：',labelAlign:'right',labelWidth:100,prompt:'关联分校名称',disabled:true" style="width:48%;">
+
+            <div style="height: 3px"></div> <!-- 分隔符 -->
+            <input class="easyui-textbox" id="className" data-options="label:'班级名称：',labelAlign:'right',labelWidth:100" style="width:48%;">
+            <input class="easyui-combobox" id="schoolName" data-options="label:'分校名称：',labelAlign:'right',labelWidth:100,
+                valueField:'type', textField:'type_text',editable:false,panelHeight:'auto',
+                data:[{
+                            type: 1,
+                            type_text: '学费'
+                        },{
+                            type: 2,
+                            type_text: '演出费'
+                        },{
+                            type: 3,
+                            type_text: '普通收费'
+                        }]
+                " style="width:48%;">
+
+            <div style="height: 3px"></div> <!-- 分隔符 -->
+            <input class="easyui-combobox" id="classType" data-options="label:'班级类型：',labelAlign:'right',labelWidth:100,
+                valueField:'type', textField:'type_text',editable:false,panelHeight:'auto',
+                data:[{
+                            type: 1,
+                            type_text: '学费'
+                        },{
+                            type: 2,
+                            type_text: '演出费'
+                        },{
+                            type: 3,
+                            type_text: '普通收费'
+                        }]
+                " style="width:48%;">
+            <input class="easyui-combobox" id="classStyle" data-options="label:'授课形式：',labelAlign:'right',labelWidth:100,
+                valueField:'type', textField:'type_text',editable:false,panelHeight:'auto',
+                data:[{
+                            type: 1,
+                            type_text: '学费'
+                        },{
+                            type: 2,
+                            type_text: '演出费'
+                        },{
+                            type: 3,
+                            type_text: '普通收费'
+                        }]
+                " style="width:48%;">
+
+            <div style="height: 3px"></div><!-- 分隔符 -->
+            <input class="easyui-combobox" id="teacher" data-options="label:'授课老师：',labelAlign:'right',labelWidth:100,
+                valueField:'type', textField:'type_text',editable:false,panelHeight:'auto',
+                data:[{
+                            type: 1,
+                            type_text: '学费'
+                        },{
+                            type: 2,
+                            type_text: '演出费'
+                        },{
+                            type: 3,
+                            type_text: '普通收费'
+                        }]
+                " style="width:48%;">
+            <input class="easyui-textbox" id="beginYear" data-options="label:'开班年份：',labelAlign:'right',labelWidth:100" style="width:48%;">
+
+            <div style="height: 3px"></div><!-- 分隔符 -->
+            <input class="easyui-combobox" id="costMode" data-options="label:'学费收费模式：',labelAlign:'right',labelWidth:100,
+                valueField:'type', textField:'type_text',editable:false,panelHeight:'auto',
+                data:[{
+                            type: 1,
+                            type_text: '学费'
+                        },{
+                            type: 2,
+                            type_text: '演出费'
+                        },{
+                            type: 3,
+                            type_text: '普通收费'
+                        }]
+                " style="width:48%;">
+            <input class="easyui-textbox" id="classCost" data-options="label:'学费收费标准：',labelAlign:'right',labelWidth:100" style="width:48%;">
+
+            <div style="height: 3px"></div> <!-- 分隔符 -->
+            <input class="easyui-textbox" id="planStudents" data-options="label:'计划招生人数：',labelAlign:'right',labelWidth:100" style="width:48%;">
+            <input class="easyui-textbox" id="curStudents" data-options="label:'当前人数：',labelAlign:'right',labelWidth:100,prompt:'根据报班学员计算',disabled:true" style="width:48%;">
+
+            <div style="height: 3px"></div><!-- 分隔符 -->
+            <input class="easyui-combobox" id="isEnd" data-options="label:'是否结束：',labelAlign:'right',labelWidth:100,
+                valueField:'type', textField:'type_text',editable:false,panelHeight:'auto',
+                data:[{
+                            type: 1,
+                            type_text: '学费'
+                        },{
+                            type: 2,
+                            type_text: '演出费'
+                        },{
+                            type: 3,
+                            type_text: '普通收费'
+                        }]
+                " style="width:48%;">
+            <input class="easyui-textbox" id="classRecorder" data-options="label:'录入员：',prompt:'自动生成',disabled:true,labelAlign:'right',labelWidth:100" style="width:48%;">
+
+            <div style="height: 3px"></div> <!-- 分隔符 -->
+            <input class="easyui-textbox" id="classRemark" data-options="label:'备注：',labelAlign:'right',multiline:true,labelWidth:100" style="width:96%;">
+        </div>
+
+        <div data-options="region:'south',border:false" style="text-align:right;padding:2px 0;">
+            <a href="javascript:void(0)" onclick="saveClass()" class="easyui-linkbutton" iconCls="icon-ok" style="width:80px;height:30px">保存</a>
+            <a href="javascript:void(0)" onclick="closeWinClass()" class="easyui-linkbutton" iconCls="icon-cancel" style="width:80px;height:30px">关闭</a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // 'use strict';
+    function onBeforeCloseClass() {
+        var winId = 'dcNewClassWin';
+        $('#'+winId).window('destroy');
+        var panel = dcGetPanelId(winId);
+        $('#'+panel).panel('destroy');
+    }
+
+    function closeWinClass() {
+        $('#dcNewClassWin').window('close');
+    }
+
+    function saveClass() {
+        if (!validateClass()) {
+            return;
+        }
+
+        var fee = packetClass();
+        console.log('send:', fee);
+        $.ajax({
+            method: 'POST',
+            url: '/dance_fee_item_update',
+            async: true,
+            dataType: 'json',
+            data: {data: JSON.stringify([{row: fee}])}
+        }).done(function(data) {
+            $.messager.alert('提示', data.msg, 'info');
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
+        });
+    }
+
+    function validateClass() {
+        var nameCtrl = $('#feeItem');
+        var name = $(nameCtrl).textbox('getValue');
+        //console.log(name);
+        if(!name || name.length > 6) {
+            $.messager.alert({title:'提示', msg:'收费项目名称不能为空，且不能大于20字符！', icon: 'info', fn:function () {
+                $(nameCtrl).textbox('textbox').focus();
+            }});
+            return false;
+        }
+        var typeCtrl = $('#feeType');
+        var feeType = $(typeCtrl).textbox('getValue');
+        if(!feeType) {
+            $.messager.alert({title:'提示', msg:'请选择类别！', icon: 'info', fn:function () {
+                $(typeCtrl).textbox('textbox').focus();
+            }});
+            return false;
+        }
+
+        return true;
+    }
+
+    function packetClass() {
+        var data = {};
+        data.fee_item = $('#feeItem').textbox('getValue');
+        data.type = $('#feeType').textbox('getValue');
+        return data;
+    }
+
+</script>
+
+</body>
+</html>

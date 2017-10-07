@@ -12,13 +12,13 @@
     <script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
 	<script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/locale/easyui-lang-zh_CN.js"></script>
     <script type="text/javascript" src="/static/js/dancetools.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.fullcalendar.js"></script>
 
     <link rel="shortcut icon" href="/static/img/favicon.ico" />
     <link rel="bookmark" href="/static/img/favicon.ico" type="image/x-icon" />
-
 </head>
 <body class="easyui-layout">
-	<div data-options="region:'north',border:false" style="height:60px;background:#B3DFDA;padding:10px">
+	<div data-options="region:'north',border:false" style="height:60px;background:url(static/img/top.jpg); padding:10px;">
         <div align="right">
             {{ g.user.name }}
             <a id="btnLogout" href="/logout" class="easyui-linkbutton" data-options="iconCls:'icon-search'">退出</a>
@@ -47,7 +47,7 @@
             </div>
         </div>
 	</div>
-	<div data-options="region:'south',border:false" style="height:40px;background:#a4e9c1;padding:10px;">
+	<div data-options="region:'south',border:false" style="height:40px;background:url(/static/img/bottom.gif);padding:10px;">
         <div align="center">
             版权所有：华盛星辉©2015-2017
         </div>
@@ -109,8 +109,10 @@ $('.easyui-tree').tree({
             danceAddTabSchool(node.text, tableId);
         }else if(node.text == '用户管理') {
             danceAddTabUsers(node.text, tableId);
-        } else if (node.text == '收费方式'){
+        }else if (node.text == '收费方式'){
             danceAddTabFeeMode(node.text, tableId);
+        }else if (node.text == '数据库备份') {
+            danceOpenTab(node.text, '/static/html/_db_backup.html')
         }else {
             $.messager.alert('提示', ' 制作中...', 'info');
         }

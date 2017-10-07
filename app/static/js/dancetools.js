@@ -128,6 +128,29 @@
 
 })(jQuery);
 
+// 页面加载等待特效 ----------------------------------------------------------------------------------------------------
+var maskWidth = $(window).width();
+var maskHeight = $(window).height();
+var maskHtml = "<div id='maskLoading' class='panel-body' style='z-index:1000;position:absolute;left:0;width:100%;";
+maskHtml += "height:" + maskHeight + "px;top:0'>";
+maskHtml += "<div class='panel-header panel=loading' style='position:absolute;cursor:wait;left:" + ((maskWidth / 2) - 100) + "px;top:" + (maskHeight / 2 - 50) + "px;width:150px;height:16px;";
+maskHtml += "padding:10px 5px 10px 30px;font-size:12px;border:1px solid #ccc;background-color:white;'>";
+maskHtml += "页面加载中，请等待...";
+maskHtml += "</div>";
+maskHtml += "</div>";
+document.write(maskHtml);
+function CloseMask() {
+    $('#maskLoading').fadeOut('fast', function () {
+        $(this).remove();
+    });
+}
+var loadComplete;
+$.parser.onComplete = function () {
+    if (loadComplete)
+        clearTimeout(loadComplete);
+    loadComplete = setTimeout(CloseMask, 500);
+};
+// 页面加载等待特效 end ------------------------------------------------------------------------------------------------
 
 String.prototype.format = function(args) {
     var _dic = typeof args === "object" ? args : arguments;
@@ -355,6 +378,8 @@ function danceParser(s){
     }
 }
 
+// 窗口操作 begin //////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * 打开url所指示的窗口。
  * @param dgId      父窗口datagrid id， 用于判断父窗口是否关闭，及操作 datagrid中的combobox重新加载数据
@@ -367,6 +392,7 @@ function danceParser(s){
  */
 function dcNewWindow(dgId, panelId, winId, url, idx, field, title) {
     if(!document.getElementById(panelId)){
+        console.log('dcNewWindow append:', panelId);
         $(document.body).append('<div id=' + panelId +  '></div>');
     }
     if (document.getElementById(winId)) {
@@ -407,7 +433,69 @@ function dcNewWindowEx(winId, url, title, ccId) {
     });
 }
 
-// 集合操作 begin /////////////////////////////////////////////////////////////////////////////
+
+function dcGetPanelId(winId) {
+    return winId + '-Panel';
+}
+
+/**
+ * 创建一个模态 Dialog
+ *
+ * @param id divId
+ * @param _url Div链接
+ * @param _title 标题
+ * @param _width 宽度
+ * @param _height 高度
+ * @param _icon ICON图标
+ */
+function createModalDialog(id, _url, _title, _width, _height, _icon){
+    $('body').append('<div id=' + id + ' style="padding:10px"></div>');
+    if (_width == null)
+        _width = 800;
+    if (_height == null)
+        _height = 500;
+
+    $("#"+id).dialog({
+        title: _title,
+        width: _width,
+        height: _height,
+        cache: false,
+        iconCls: _icon,
+        href: _url,
+        collapsible: false,
+        minimizable:false,
+        maximizable: true,
+        resizable: false,
+        modal: false,
+        closed: true,
+        buttons: [{
+            text:'Ok',
+            iconCls:'icon-ok',
+            handler:function(){
+                alert('ok');
+            }
+        },{
+            text:'Cancel',
+            handler:function(){
+                alert('cancel');
+            }
+        }],
+        //buttons: '#dlg-buttons',
+        onBeforeClose: function () {
+            $("#"+id).dialog('destroy');
+        }
+    }).dialog('open');
+}
+
+// 创建窗口
+//createModalDialog("editForm","/static/html/_test.html","测试界面", 800, 600, 'icon-save');
+//$("#editForm").dialog('open');
+
+// 窗口操作 end ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+// 集合操作 begin //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * 差集

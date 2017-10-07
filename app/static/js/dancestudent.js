@@ -30,6 +30,20 @@ function danceAddTab(divId, title, tableId) {
     }
 }
 
+function danceOpenTab(title, url) {
+    var parentDiv = $('#danceTabs');
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+    } else {
+        $(parentDiv).tabs('add', {
+            title: title,
+            //content: content,
+            href: url,
+            closable: true
+        });
+    }
+}
+
 
 /**
  * 将 value 转换为 保留小数点后4位的字符串 和 百分百字符串。
@@ -92,7 +106,7 @@ function danceAddTabStudentDatagrid(divId, title, tableId, condition) {
         $(parentDiv).tabs('select', title);
         $('#'+tableId).datagrid('load', condition);
     } else {
-        var content = '<table id=' + tableId + '></table>';
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
         $(parentDiv).tabs('add', {
             title: title,
             content: content,
@@ -184,7 +198,7 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
                                     $.messager.alert('错误', data.msg, 'error');
                                 }
                             }).fail(function(jqXHR, textStatus, errorThrown) {
-                                var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+                                var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
                                 $.messager.alert('提示', msg, 'info');
                             });
                             // end of 删除数据 //////////////////////////////////////
@@ -205,7 +219,7 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
         }, '-', {id: sbId}
         ],
         columns: [[
-            {field: 'id', title: 'id',  width: 30, align: 'center'},   // id, hidden   hidden:true
+            // {field: 'id', title: 'id',  width: 30, align: 'center'},   // id, hidden   hidden:true
             {field: 'ck', checkbox:true },   // checkbox
             // {field: 'no', title: '序号',  width: 26, align: 'center' }, // 能自动显示行号，则不再需要自己实现
             {field: 'school_name', title: '所属分校',  width: 46, align: 'center' },
@@ -216,7 +230,12 @@ function danceCreateStudentDatagrid(datagridId, url, condition) {
             {field: 'father_phone', title: '爸爸手机', width: 50, align: 'center'},
             {field: 'phone', title: '本人手机', width: 60, align: 'center'},
             {field: 'register_day', title: '登记日期', width: 60, align: 'center'}
-        ]]
+        ]], onDblClickCell: function (index) {
+            var rows = $(dg).datagrid('getRows');
+            var row = rows[index];
+            var cond = $(dg).datagrid('options').queryParams;
+            danceAddStudentDetailInfo('/static/html/_student.html', url, cond, row.id);
+        }
     });
 
     $('#'+ccId).combobox({     // 姓名 搜索框 combo box
@@ -2185,7 +2204,13 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
             }}, '-',
             {text: '<input id=' + sbId + '>'}
         ],
-        columns: options.columns
+        columns: options.columns,
+        onDblClickCell: function (index) {
+            var rows = $(dg).datagrid('getRows');
+            var row = rows[index];
+            var cond = $(dg).datagrid('options').queryParams;
+            options.addEditFunc(options.page, url, cond, row.id);
+        }
     });
 
     $('#'+ccId).combobox({     // 搜索框 combo box

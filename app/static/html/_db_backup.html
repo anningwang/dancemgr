@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>舞管家</title>
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/icon.css">
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+</head>
+<body>
+
+
+<div class="easyui-panel" data-options="border:false" style="width:100%;padding:20px 10px;">
+    <a href="javascript:void(0)" onclick="openWindow()" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">打开窗口</a>
+    <a href="javascript:void(0)" onclick="idIsExist()" class="easyui-linkbutton">ID是否存在</a>
+    <a href="javascript:void(0)" onclick="openCalendar()" class="easyui-linkbutton">打开日历</a>
+</div>
+
+<script>
+    function openWindow() {
+        createModalDialog('dcWindowTest', '/static/html/_test.html', '舞管家', 800, 700, 'icon-save');
+    }
+
+    function idIsExist() {
+        if(!document.getElementById('dcWindowTest')){  // 不存在
+            $.messager.alert('提示', '不存在----', 'info');
+        }else{
+            $.messager.alert('提示', '存在', 'info');
+        }
+    }
+
+    function openCalendar() {
+        createModalDialog('dcWindowCalendar', '/static/html/_test_calendar.html', '舞管家', 1024, 800, 'icon-save');
+    }
+
+</script>
+
+</body>
+</html>
