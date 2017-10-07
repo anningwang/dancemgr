@@ -1419,3 +1419,19 @@ def api_dance_fee_mode_get():
     for rec in records:
         fee_mode.append({'fee_mode_id': rec.id, 'fee_mode': rec.fee_mode, 'disc_rate': rec.disc_rate})
     return jsonify(fee_mode)
+
+
+@app.route('/api/dance_school_get', methods=['POST'])
+@login_required
+def api_dance_school_get():
+    """
+    查询分校
+    :return:
+    [{
+            school_id:      分校id
+            school_no:      分校编号
+            school_name:    分校名称
+    }]
+    """
+    return jsonify(DanceSchool.dc_school('all'))
+

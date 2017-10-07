@@ -16,12 +16,6 @@ ROLE_ADMIN = 1
 GENDER_MALE = '男'
 GENDER_FEMALE = '女'
 
-'''
-DanceUserSchool = db.Table('dance_user_school',
-                           db.Column('user_id', db.Integer, db.ForeignKey('dance_user.id')),
-                           db.Column('school_id', db.Integer, db.ForeignKey('dance_school.id'))
-                           )
-'''
 
 followers = db.Table('followers',
                      db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
@@ -490,7 +484,7 @@ class DanceClass(db.Model):
     rem_code = db.Column(db.String(40, collation='NOCASE'))             # 助记码            06
     begin_year = db.Column(db.String(6))    # 开班年份      07
     class_type = db.Column(db.String(20))   # 班级类型， 教授类别： 舞蹈、美术、跆拳道、国际象棋等   08
-    class_style = db.Column(db.String(20))  # 班级形式： 集体课, 1对1      09
+    class_style = db.Column(db.String(20))  # 班级形式： 集体课 -- 0, 1对1 -- 1     09
     teacher = db.Column(db.String(20))      # 授课老师姓名        10
     cost_mode = db.Column(db.String(20))    # 收费模式            11     1-按课次  2-按课时
     cost = db.Column(db.Integer)            # 收费标准            12
@@ -645,6 +639,29 @@ class DanceSchool(db.Model):
         for sc in schools:
             school_list.append(sc.id)
         return school_list
+
+    @staticmethod
+    def dc_school(scope=None):
+        """
+        查询当前用户可以管理的 分校 列表
+        输入参数： scope   == 'all' 查询当前用户所在中心的所有分校。 否则，查找当前用户能够管理的分校
+        :return:
+        [{
+            school_id:      分校id
+            school_no:      分校编号
+            school_name:    分校名称
+        }]
+        """
+        dcq = DanceSchool.query.filter(DanceSchool.company_id == g.user.company_id)
+        if scope is not None and scope == 'all':
+            school_ids = DanceUserSchool.get_school_ids_by_uid()
+            dcq = dcq.filter(DanceSchool.id.in_(school_ids))
+
+        schools = dcq.all()
+        ret = []
+        for sc in schools:
+            ret.append({'school_id': sc.id, 'school_no': sc.school_no, 'school_name': sc.school_name})
+        return ret
 
     def __repr__(self):
         return '<DanceClass %r>' % self.school_no
@@ -1474,5 +1491,57 @@ class DcShowDetailFee(db.Model):
 
     def __repr__(self):
         return '<DcShowDetailFee %r>' % self.id
+
+
+class DcClassType(db.Model):
+    """ 班级类型表 """
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20, collation='NOCASE'))
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    create_at = db.Column(db.DateTime, nullable=False)
+    last_upd_at = db.Column(db.DateTime, nullable=False)
+    last_user = db.Column(db.String(20, collation='NOCASE'))
+    company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
+
+    def __init__(self, param):
+        self.name = param['name']
+        self.last_user = self.recorder = g.user.name
+        self.last_upd_at = self.create_at = datetime.datetime.today()
+        self.company_id = g.user.company_id
+
+    def update(self, param):
+        if 'name' in param:
+            self.name = param['name']
+        self.last_user = g.user.name
+        self.last_upd_at = datetime.datetime.today()
+
+    def __repr__(self):
+        return '<DcClassType %r>' % self.id
+
+
+class DanceTeacher(db.Model):
+    """
+    员工与老师信息 表
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    teacher_no = db.Column(db.String(20, collation='NOCASE'))
+    school_id = db.Column(db.Integer)
+    name = db.Column(db.String(40, collation='NOCASE'))  # 姓名
+    rem_code = db.Column(db.String(40))  # 助记码
+    gender = db.Column(db.Integer)  # 性别：男1/女0
+    degree = db.Column(db.String(20))  # 文化程度
+    birthday = db.Column(db.String(10))  # 出生日期
+    join_date = db.Column(db.DateTime)  # 入职日期
+    te_type = db.Column(db.Integer)  # 类别：专职1/兼职0
+    te_title = db.Column(db.Integer)  # 职位：校长、教师、前台、咨询师、清洁工、会计、出纳
+    in_job = db.Column(db.Integer)  # 是否在职：是1 / 否0
+    idcard = db.Column(db.String(30))  # 身份证号
+
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    create_at = db.Column(db.DateTime, nullable=False)
+    last_upd_at = db.Column(db.DateTime, nullable=False)
+    last_user = db.Column(db.String(20, collation='NOCASE'))
+    company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
+
 
 whooshalchemy.whoosh_index(app, Post)

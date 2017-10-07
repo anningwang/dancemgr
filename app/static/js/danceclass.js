@@ -48,12 +48,12 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
         toolbar: [{
             text:"增加", iconCls:'icon-add',
             handler:function(){
-                alert('add');
+                dcNewWindowDg('dcNewClass_Win', '/static/html/_add_class.html', '新增班级', datagridId);
             }
         }, {
             text:"编辑/查看", iconCls:'icon-edit',
             handler:function(){
-                alert('edit');
+                createModalDialog('dcNewClassWindow', '/static/html/_add_class.html', '新增班级')
             }
         }, {
             text:"删除", iconCls:'icon-remove',

@@ -4,18 +4,15 @@ from flask_login import login_user, logout_user, current_user, login_required
 from flask_sqlalchemy import get_debug_queries
 from flask_babel import gettext
 from app import app, db, lm, oid, babel
-from forms import LoginForm, EditForm, PostForm, SearchForm, DanceLoginForm, DanceRegistrationForm
+from forms import EditForm, SearchForm, DanceLoginForm, DanceRegistrationForm
 from models import User, ROLE_USER, ROLE_ADMIN, Post, HzLocation, DanceStudent, DanceClass, DanceSchool, DanceUser,\
     DanceStudentClass, DanceCompany, DanceUserSchool, DcShowDetailFee, DcCommFeeMode, DcShowRecpt, DcFeeItem,\
     DanceOtherFee, DanceReceipt, DanceClassReceipt, DanceTeaching
 from datetime import datetime
 from emails import follower_notification
-from guess_language import guessLanguage
 from translate import microsoft_translate
 from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY_TIMEOUT
-import random
 from dijkstra import min_dist2, get_nearest_vertex, hz_vertex
-from app.tools.upload import *
 from dcglobal import *
 
 
@@ -33,9 +30,6 @@ def get_locale():
 def before_request():
     g.user = current_user
     if g.user.is_authenticated:
-        # g.user.last_seen = datetime.utcnow()
-        # db.session.add(g.user)
-        # db.session.commit()
         g.search_form = SearchForm()
     g.locale = get_locale()
 

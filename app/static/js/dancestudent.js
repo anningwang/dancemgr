@@ -357,7 +357,7 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
             href: page,
             closable: true,
             loadingMessage: '加载中...',
-            onLoad : function (panel) {
+            onLoad : function () {
                 // console.log(panel);
                 $('#'+pagerStu).pagination({
                     showRefresh: uid > 0,

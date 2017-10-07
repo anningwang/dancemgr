@@ -7,13 +7,13 @@ from app.models import User
 
 
 class LoginForm(FlaskForm):
-    openid = StringField('openid', validators = [DataRequired()])
-    remember_me = BooleanField('remember_me', default = False)
+    openid = StringField('openid', validators=[DataRequired()])
+    remember_me = BooleanField('remember_me', default=False)
 
 
 class EditForm(FlaskForm):
-    nickname = StringField('nickname', validators = [DataRequired()])
-    about_me = TextAreaField('about_me', validators = [Length(min = 0, max = 140)])
+    nickname = StringField('nickname', validator=[DataRequired()])
+    about_me = TextAreaField('about_me', validators=[Length(min=0, max=140)])
     
     def __init__(self, original_nickname, *args, **kwargs):
         FlaskForm.__init__(self, *args, **kwargs)
@@ -28,18 +28,18 @@ class EditForm(FlaskForm):
             self.nickname.errors.append(gettext('This nickname has invalid characters. Please use letters, numbers, dots and underscores only.'))
             return False
         user = User.query.filter_by(nickname = self.nickname.data).first()
-        if user != None:
+        if user is not None:
             self.nickname.errors.append(gettext('This nickname is already in use. Please choose another one.'))
             return False
         return True
 
 
 class PostForm(FlaskForm):
-    post = StringField('post', validators = [DataRequired()])
+    post = StringField('post', validators=[DataRequired()])
 
 
 class SearchForm(FlaskForm):
-    search = StringField('search', validators = [DataRequired()])
+    search = StringField('search', validators=[DataRequired()])
 
 
 # get JoySuch's Token

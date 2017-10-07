@@ -146,6 +146,7 @@ function CloseMask() {
 }
 var loadComplete;
 $.parser.onComplete = function () {
+    // console.log('complete');
     if (loadComplete)
         clearTimeout(loadComplete);
     loadComplete = setTimeout(CloseMask, 500);
@@ -413,7 +414,7 @@ function dcNewWindow(dgId, panelId, winId, url, idx, field, title) {
     });
 }
 
-// 父窗口要刷新的为combobox(id: ccId)。 panel id 在 winId的基础上加上 '-Panel'
+// 父窗口要刷新的combobox(id: ccId)。 panel id 在 winId的基础上加上 '-Panel'
 function dcNewWindowEx(winId, url, title, ccId) {
     var panelId = winId + '-Panel';
     if(!document.getElementById(panelId)){
@@ -428,6 +429,25 @@ function dcNewWindowEx(winId, url, title, ccId) {
         onDestroy: function () {
             if(document.getElementById(ccId)) {    // 父窗口未被关闭
                 $('#'+ccId).combobox('reload');
+            }
+        }
+    });
+}
+
+function dcNewWindowDg(winId, url, title, dgId) {
+    var panelId = dcGetPanelId(winId);
+    if(!document.getElementById(panelId)){
+        $(document.body).append('<div id=' + panelId +  '></div>');
+    }
+    if (document.getElementById(winId)) {
+        $.messager.alert('提示', '[' + title + ']窗口已打开！', 'info');
+        return;
+    }
+    $('#'+panelId).panel({
+        href: url,
+        onDestroy: function () {
+            if(document.getElementById(dgId)) {    // 父窗口未被关闭
+                $('#'+dgId).datagrid('reload');
             }
         }
     });
@@ -489,7 +509,6 @@ function createModalDialog(id, _url, _title, _width, _height, _icon){
 
 // 创建窗口
 //createModalDialog("editForm","/static/html/_test.html","测试界面", 800, 600, 'icon-save');
-//$("#editForm").dialog('open');
 
 // 窗口操作 end ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
