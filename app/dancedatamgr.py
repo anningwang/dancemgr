@@ -4,7 +4,7 @@ from flask_login import login_required
 from app import app, db
 from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent, DcTeachingMaterial,\
     DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass, DanceStudentClass, DcShowRecpt, DcCommFeeMode,\
-    DcShow, DcShowFeeCfg, DcShowDetailFee
+    DcShow, DcShowFeeCfg, DcShowDetailFee, DcClassType
 from views import dance_student_query
 import json
 import datetime
@@ -1152,6 +1152,44 @@ def dc_comm_fee_mode_get():
     return jsonify({'rows': rows, 'total': total, 'errorCode': 0, 'msg': 'ok'})
 
 
+@app.route('/dc_class_type_update', methods=['POST'])
+@login_required
+def dc_class_type_update():
+    """
+    更新 班级类型。 包括新增 和 修改
+    输入参数
+        data:[{         输入参数
+                id:             班级类型id, 大于0 - 修改， 0 - 新增
+                row:{           记录
+                    name:       班级类型名称
+                    }
+            }]
+    :return:
+        errorCode:      错误码
+            0       成功
+            801     名称为[%s]的班级类型已经存在！
+        msg:            错误信息
+    """
+    obj = request.json
+    for rr in obj:
+        row = rr['row']
+        if 'id' not in rr or rr['id'] <= 0:
+            # 收费名称不能重复，查询是否有重复记录
+            dup = DcClassType.query.filter_by(company_id=g.user.company_id).filter_by(name=row['name']).first()
+            if dup is not None:
+                return jsonify({'errorCode': 801, 'msg': u'名称为[%s]的班级类型已经存在！' % row['name']})
+            nr = DcClassType(row)
+            db.session.add(nr)
+        else:
+            nr = DcClassType.query.get(rr['id'])
+            if nr is not None:
+                nr.update(row)
+                db.session.add(nr)
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
+
+
 @app.route('/dance_progressbar', methods=['POST'])
 @login_required
 def dance_progressbar():
@@ -1435,3 +1473,16 @@ def api_dance_school_get():
     """
     return jsonify(DanceSchool.dc_school('all'))
 
+
+@app.route('/api/dance_class_type_get', methods=['POST'])
+@login_required
+def api_dance_class_type_get():
+    """
+    查询分校
+    :return:
+    [{
+            ct_id:          班级类型id
+            ct_name:        班级类型名称
+    }]
+    """
+    return jsonify(DcClassType.dc_class_type())

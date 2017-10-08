@@ -3,8 +3,9 @@ import xlrd
 import xlwt
 from app import db
 from app.models import DanceStudent, DanceClass, DanceStudentClass, DanceSchool, DanceReceipt, DanceUserSchool,\
-    DcFeeItem, DanceOtherFee, DanceClassReceipt, DcTeachingMaterial, DanceTeaching
+    DcFeeItem, DanceOtherFee, DanceClassReceipt, DcTeachingMaterial, DanceTeaching, DcClassType
 from flask import g
+from dcglobal import *
 
 progressbar = {}         # 进度条的值  用户id(key) = {value: 60, sheet: u'收费单'}
 
@@ -187,6 +188,9 @@ def import_class(fn):
     num_wrong = 0
     school_ids = DanceSchool.get_school_id_list()
 
+    # 查询班级类型 与 id 的对应表
+    class_type_id = DcClassType.name_id()
+
     # 逆序遍历。第一行为表头需要过滤掉
     for row in range(cnt - 1, 0, -1):
         r = sh.row_values(row)
@@ -200,6 +204,18 @@ def import_class(fn):
         # 特殊列的处理
         parm['is_ended'] = 1 if parm['is_ended'] == u'是' else 0
         parm['school_id'] = school_ids[parm['school_id'].lower()]
+        if parm['class_type'] in class_type_id:
+            parm['class_type'] = class_type_id[parm['class_type']]
+        else:
+            db.session.add(DcClassType({'name': parm['class_type']}))
+            nr = DcClassType.query.filter_by(company_id=g.user.company_id, name=parm['class_type']).first()
+            if nr is None:
+                raise Exception('Add class type record error!')
+            else:
+                class_type_id[parm['class_type']] = nr.id
+                parm['class_type'] = nr.id
+        parm['class_style'] = class_style_val(parm['class_style'])
+        parm['cost_mode'] = class_mode_val(parm['cost_mode'])
 
         # 保证班级不能重复
         has = DanceClass.query.filter_by(school_id=parm['school_id']).filter_by(cno=parm['cno']).first()

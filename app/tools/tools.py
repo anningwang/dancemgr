@@ -10,14 +10,6 @@ def get_filename(sheet_name):
     return sheet_name + time1_str + str(time_tick) + '.xls'
 
 
-def get_stu_no(school_no, date=None):
-    if date is None:
-        date = datetime.datetime.today()
-    sno_str = datetime.datetime.strftime(date, '-XH-%y%m%d-')
-    sno_str = ('%04d' % school_no) + sno_str
-    return sno_str
-
-
 def dc_gen_code(school_no, tag, date=None):
     """
     生产单据编号，包括学号，班级编号，收费单号等。

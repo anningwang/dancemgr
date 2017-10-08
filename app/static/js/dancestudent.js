@@ -450,7 +450,7 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
                 $.extend(true, oldStu, data);
 
                 $('#'+stu_sno).textbox('setText',data.rows['sno']);
-                $('#'+stu_name).textbox('setText',data.rows['name']);
+                $('#'+stu_name).textbox('setText',data.rows['name']).textbox('textbox').focus();
                 $('#'+stu_register_day).datebox('setValue',data.rows['register_day']);
                 $('#'+stu_birthday).datebox('setValue',data.rows['birthday']);
                 $('#'+stu_school_name).combobox('loadData', [{school_id: data.rows.school_id,

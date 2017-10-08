@@ -7,7 +7,7 @@ import flask_whooshalchemy as whooshalchemy
 import re
 import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from tools.tools import get_stu_no, dc_gen_code, gen_code
+from tools.tools import dc_gen_code, gen_code
 from flask import g
 
 ROLE_USER = 0
@@ -447,10 +447,10 @@ class DanceStudent(db.Model):
     def create_sno(self):
         if self.school_id is None:
             raise Exception('Please input school_id first!')
-        search_sno = get_stu_no(self.school_id)
-        stu = DanceStudent.query.filter(DanceStudent.sno.like(
-            '%' + search_sno + '%')).order_by(DanceStudent.id.desc()).first()
-        number = 1 if stu is None else int(stu.sno.rsplit('-', 1)[1]) + 1
+        search_sno = dc_gen_code(self.school_id, 'XH')
+        r = DanceStudent.query.filter(DanceStudent.sno.like('%' + search_sno + '%'))\
+            .order_by(DanceStudent.id.desc()).first()
+        number = 1 if r is None else int(r.sno.rsplit('-', 1)[1]) + 1
         self.sno = search_sno + ('%03d' % number)
         return self.sno
 
@@ -496,12 +496,9 @@ class DanceClass(db.Model):
     school_id = db.Column(db.Integer, db.ForeignKey('dance_school.id'))
 
     def __init__(self, param):
-        if 'cno' in param:
-            self.cno = param['cno']              # 02
-        if 'school_no' in param:
-            self.school_no = param['school_no']         # 03
-        if 'school_name' in param:
-            self.school_name = param['school_name']      # 04
+        if 'school_id' in param:
+            self.school_id = int(param['school_id'])
+        self.cno = param['cno'] if 'cno' in param else self.create_sno()
         if 'class_name' in param:
             self.class_name = param['class_name']        # 班级名称          05
         if 'rem_code' in param:
@@ -526,10 +523,36 @@ class DanceClass(db.Model):
             self.is_ended = param['is_ended']            # 是否结束      1 -- 结束； 0 -- 未结束       15
         if 'remark' in param:
             self.remark = param['remark']            # 备注         16
-        if 'recorder' in param:
-            self.recorder = param['recorder']        # 录入员       17
+        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
+
+    def update(self, param):
+        if 'class_name' in param:
+            self.class_name = param['class_name']  # 班级名称          05
+        if 'rem_code' in param:
+            self.rem_code = param['rem_code']  # 助记码            06
+        if 'begin_year' in param:
+            self.begin_year = param['begin_year']  # 开班年份      07
+        if 'class_type' in param:
+            self.class_type = param['class_type']  # 班级类型， 教授类别： 舞蹈、美术、跆拳道、国际象棋等   08
+        if 'class_style' in param:
+            self.class_style = param['class_style']  # 班级形式： 集体课, 1对1      09
+        if 'teacher' in param:
+            self.teacher = param['teacher']  # 授课老师姓名        10
+        if 'cost_mode' in param:
+            self.cost_mode = param['cost_mode']  # 收费模式            11
+        if 'cost' in param:
+            self.cost = param['cost']  # 收费标准            12
+        if 'plan_students' in param:
+            self.plan_students = param['plan_students']  # 计划招收人数        13
+        if 'cur_students' in param:
+            self.cur_students = param['cur_students']  # 当前人数            14
+        if 'is_ended' in param:
+            self.is_ended = param['is_ended']  # 是否结束      1 -- 结束； 0 -- 未结束       15
+        if 'remark' in param:
+            self.remark = param['remark']  # 备注         16
         if 'school_id' in param:
             self.school_id = int(param['school_id'])
+        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
 
     @staticmethod
     def get_class_id_map():
@@ -549,6 +572,16 @@ class DanceClass(db.Model):
         for rec in records:
             ret[rec.cno] = rec
         return ret
+
+    def create_sno(self):
+        if self.school_id is None:
+            raise Exception('Please input school_id first!')
+        search_sno = dc_gen_code(self.school_id, 'BJ')
+        r = DanceClass.query.filter(DanceClass.cno.like('%' + search_sno + '%'))\
+            .order_by(DanceClass.id.desc()).first()
+        number = 1 if r is None else int(r.cno.rsplit('-', 1)[1]) + 1
+        self.cno = search_sno + ('%03d' % number)
+        return self.cno
 
     def __repr__(self):
         return '<DanceClass %r>' % self.cno
@@ -1514,6 +1547,40 @@ class DcClassType(db.Model):
             self.name = param['name']
         self.last_user = g.user.name
         self.last_upd_at = datetime.datetime.today()
+
+    @staticmethod
+    def dc_class_type():
+        """
+        查询班级类型
+        :return:
+        [{
+            ct_id:          班级类型id
+            ct_name:        班级类型名称
+        }]
+        """
+        dcq = DcClassType.query.filter(DcClassType.company_id == g.user.company_id)
+
+        records = dcq.all()
+        ret = []
+        for ct in records:
+            ret.append({'ct_id': ct.id, 'ct_name': ct.name})
+        return ret
+
+    @staticmethod
+    def name_id():
+        """
+        查询记录，返回name和id的键值对
+        :return:
+        {
+            name: id    键值对
+        }
+        """
+        records = DcClassType.query.filter_by(company_id=g.user.company_id).all()
+        data = {}
+        for rec in records:
+            data[rec.name] = rec.id
+
+        return data
 
     def __repr__(self):
         return '<DcClassType %r>' % self.id

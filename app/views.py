@@ -7,7 +7,7 @@ from app import app, db, lm, oid, babel
 from forms import EditForm, SearchForm, DanceLoginForm, DanceRegistrationForm
 from models import User, ROLE_USER, ROLE_ADMIN, Post, HzLocation, DanceStudent, DanceClass, DanceSchool, DanceUser,\
     DanceStudentClass, DanceCompany, DanceUserSchool, DcShowDetailFee, DcCommFeeMode, DcShowRecpt, DcFeeItem,\
-    DanceOtherFee, DanceReceipt, DanceClassReceipt, DanceTeaching
+    DanceOtherFee, DanceReceipt, DanceClassReceipt, DanceTeaching, DcClassType
 from datetime import datetime
 from emails import follower_notification
 from translate import microsoft_translate
@@ -882,7 +882,8 @@ def dance_class_get():
     total = dcq.count()
     offset = (page_no - 1) * page_size
     records = dcq.join(DanceSchool, DanceSchool.id == DanceClass.school_id)\
-        .add_columns(DanceSchool.school_name, DanceSchool.school_no)\
+        .join(DcClassType, DcClassType.id == DanceClass.class_type)\
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no, DcClassType.name)\
         .order_by(DanceClass.school_id, DanceClass.id.desc())\
         .limit(page_size).offset(offset).all()
     i = offset + 1
@@ -891,10 +892,104 @@ def dance_class_get():
         rec = recs[0]
         rows.append({"id": rec.id, "cno": rec.cno, "school_no": recs[2], "school_name": recs[1],
                      "class_name": rec.class_name, "rem_code": rec.rem_code, "begin_year": rec.begin_year,
-                     'class_type': rec.class_type, 'class_style': rec.class_style, 'teacher': rec.teacher,
-                     'cost_mode': rec.cost_mode, 'cost': rec.cost, 'plan_students': rec.plan_students,
+                     'class_type': recs[3], 'class_type_id': rec.class_style,
+                     'class_style': get_class_style(rec.class_style), 'class_style_value': rec.class_style,
+                     'teacher': rec.teacher,
+                     'cost_mode': get_class_mode(rec.cost_mode), 'cost_mode_value': rec.cost_mode,
+                     'cost': rec.cost, 'plan_students': rec.plan_students,
                      'cur_students': rec.cur_students, 'is_ended': rec.is_ended, 'remark': rec.remark,
-                     'recorder': rec.recorder, 'no': i
+                     'recorder': rec.recorder, 'no': i, 'school_id': rec.school_id
                      })
         i += 1
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_class_detail_get', methods=['POST'])
+@login_required
+def dance_class_detail_get():
+    """
+    查询班级详细信息
+    输入信息
+    {
+        id:     记录ID
+    }
+    :return:
+    """
+    obj = request.json
+
+    recs = DanceClass.query.filter(DanceClass.id == obj['id'])\
+        .join(DanceSchool, DanceSchool.id == DanceClass.school_id)\
+        .join(DcClassType, DcClassType.id == DanceClass.class_type)\
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no, DcClassType.name).first()
+    if recs is None:
+        return jsonify({"row": {}, 'errorCode': 120, 'msg': u'班级信息[id=%d]不存在！' % obj['id']})
+
+    rec = recs[0]
+    row = {"id": rec.id, "cno": rec.cno, "school_no": recs[2], "school_name": recs[1],
+           "class_name": rec.class_name, "rem_code": rec.rem_code, "begin_year": rec.begin_year,
+           'class_type': recs[3], 'class_type_id': rec.class_style,
+           'class_style': get_class_style(rec.class_style), 'class_style_value': rec.class_style,
+           'teacher': rec.teacher,
+           'cost_mode': get_class_mode(rec.cost_mode), 'cost_mode_value': rec.cost_mode,
+           'cost': rec.cost, 'plan_students': rec.plan_students,
+           'cur_students': rec.cur_students, 'is_ended': rec.is_ended, 'remark': rec.remark,
+           'recorder': rec.recorder, 'school_id': rec.school_id
+           }
+
+    return jsonify({"row": row, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_class_modify', methods=['POST'])
+@login_required
+def dance_class_modify():
+    """
+    新增/更新 班级。
+    输入参数：
+    {
+        id:             id, > 0 修改记录。 <= 0 新增
+        class_name:
+        begin_year:
+        class_type:
+        class_style:
+        teacher:
+        cost_mode:
+        cost:
+        plan_students:
+        cur_students:
+        is_ended:
+        remark:
+        school_id:
+    }
+    :return:
+        {errorCode :  0  or 其他。 0 表示成功
+            301     班级记录id[%s]不存在！
+            302     u'班级名称重复！'
+        msg : 'ok' or 其他错误
+        }
+    """
+    obj = request.json
+    if 'id' not in obj or obj['id'] <= 0:
+        """ 判断是否有重名班级 """
+        cls = DanceClass.query.filter_by(school_id=obj['school_id']).filter_by(class_name=obj['class_name']).first
+        if cls is not None:
+            return jsonify({'errorCode': 302, 'msg': u'班级名称重复！'})
+
+        cls = DanceClass(obj)
+        db.session.add(cls)
+    else:
+        # 修改记录
+        cls = DanceClass.query.get(obj['id'])
+        if cls is None:
+            return jsonify({'errorCode': 301, 'msg': u'班级记录id[%s]不存在！' % obj['id']})
+
+        """ 判断是否有重名班级 """
+        dup = DanceClass.query.filter_by(school_id=obj['school_id']).filter(DanceClass.id != obj['id'])\
+            .filter_by(class_name=obj['class_name']).first()
+        if dup is not None:
+            return jsonify({'errorCode': 302, 'msg': u'班级名称重复！'})
+
+        cls.update(obj)
+        db.session.add(cls)
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'更新成功！'})

@@ -4,13 +4,14 @@ from enum import Enum, unique
 
 @unique
 class FeeItemType(Enum):
-    # 收费项目 类别 type: 1 学费， 2 演出费， 3，普通收费
+    # 收费项目类别 type: 1 学费， 2 演出费， 3，普通收费
     Study = 1
     Show = 2
     Common = 3
 
 
 def get_feename(t):
+    """ 收费项目类别 """
     _t = FeeItemType(int(t))
     if _t == FeeItemType.Common:
         return u'普通收费'
@@ -20,3 +21,67 @@ def get_feename(t):
         return u'学费'
     else:
         return u'[未知](%d)' % t
+
+# 班级是否结束
+CLASS_IS_END = 1        # 已结束
+CLASS_IS_ON = 0         # 未结束
+
+
+def get_class_end(val):
+    """ 班级是否结束 """
+    if val == CLASS_IS_END:
+        return u'已结束'
+    elif val == CLASS_IS_ON:
+        return u'未结束'
+    else:
+        return u'[未知](%s)' % val
+
+# 班级授课形式
+CLASS_STYLE_GROUP = 1           # 集体课
+CLASS_STYLE_ONE_FOR_ONE = 2     # 1对1
+
+
+def get_class_style(val):
+    """ 班级授课形式 """
+    val = int(val)
+    if val == CLASS_STYLE_GROUP:
+        return u'集体课'
+    elif val == CLASS_STYLE_ONE_FOR_ONE:
+        return u'1对1'
+    else:
+        return u'[未知](%s)' % val
+
+
+def class_style_val(name):
+    """ 班级类型 转 value"""
+    if name == u'集体课':
+        return CLASS_STYLE_GROUP
+    elif name == u'1对1':
+        return CLASS_STYLE_ONE_FOR_ONE
+    else:
+        return CLASS_STYLE_GROUP
+
+# 学费收费模式
+CLASS_MODE_BY_TIMES = 1         # 按课次
+CLASS_MODE_BY_HOUR = 2          # 按课时
+
+
+def get_class_mode(val):
+    """  学费收费模式 """
+    val = int(val)
+    if val == CLASS_MODE_BY_TIMES:
+        return u'按课次'
+    elif val == CLASS_MODE_BY_HOUR:
+        return u'按课时'
+    else:
+        return u'[未知](%s)' % val
+
+
+def class_mode_val(mode):
+    """ 学费收费模式 转 value """
+    if mode == u'按课次':
+        return CLASS_MODE_BY_TIMES
+    elif mode == u'按课时':
+        return CLASS_MODE_BY_HOUR
+    else:
+        return CLASS_MODE_BY_TIMES
