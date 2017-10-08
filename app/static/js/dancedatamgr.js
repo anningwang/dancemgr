@@ -12,7 +12,8 @@ function danceAddTabSchool(title, tableId) {
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
     } else {
-        var content = '<table id=' + tableId + '></table>';
+        //var content = '<table id=' + tableId + '></table>';
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
         $(parentDiv).tabs('add', {
             title: title,
             content: content,
@@ -59,7 +60,8 @@ function danceAddTabUsers(title, tableId) {
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
     } else {
-        var content = '<table id=' + tableId + '></table>';
+        //var content = '<table id=' + tableId + '></table>';
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
         $(parentDiv).tabs('add', {
             title: title,
             content: content,
@@ -117,7 +119,8 @@ function danceAddTabFeeItem(title, tableId) {
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
     } else {
-        var content = '<table id=' + tableId + '></table>';
+        //var content = '<table id=' + tableId + '></table>';
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
         $(parentDiv).tabs('add', {
             title: title,
             content: content,
@@ -171,7 +174,8 @@ function danceAddTabTeachingMaterial(title, tableId) {
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
     } else {
-        var content = '<table id=' + tableId + '></table>';
+        //var content = '<table id=' + tableId + '></table>';
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
         $(parentDiv).tabs('add', {
             title: title,
             content: content,
@@ -216,7 +220,8 @@ function danceAddTabFeeMode(title, tableId) {
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
     } else {
-        var content = '<table id=' + tableId + '></table>';
+        //var content = '<table id=' + tableId + '></table>';
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
         $(parentDiv).tabs('add', {
             title: title,
             content: content,

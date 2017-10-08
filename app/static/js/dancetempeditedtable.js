@@ -37,7 +37,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         // title: '分校信息',
         // iconCls: 'icon-a_detail',
         fit: true,
-        //fitColumns: true,
+        fitColumns: true,
         pagination: true,   // True to show a pagination toolbar on datagrid bottom.
         //singleSelect: true, // True to allow selecting only one row.
         loadMsg: '正在加载数据...',
