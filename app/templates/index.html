@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html;" />
-    <title>舞蹈培训管理系统</title>
+    <title>舞管家</title>
 	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/default/easyui.css">
     <link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/icon.css">
     <link rel="stylesheet" type="text/css" href="/static/css/IconExtension.css">
@@ -55,8 +55,8 @@
 
 	<div data-options="region:'center'">
         <div class="easyui-tabs" data-options="fit:true,border:false,plain:true" id="danceTabs">
-            <div title="Test">
-                <table id="dg_machine_list"></table>
+            <div title="主页">
+                <div style="background:url(/static/img/hill-water.jpg) no-repeat fixed center; width: 100%; height: 100%"></div>
             </div>
         </div>
     </div>
@@ -149,6 +149,8 @@ $(function() {
                 danceAddTabFeeMode(node.text, tableId);
             }else if (node.text == '数据库备份') {
                 danceOpenTab(node.text, '/static/html/_db_backup.html')
+            }else if(node.text == '班级类型'){
+                danceAddTabClassType(node.text, tableId);
             }else {
                 $.messager.alert('提示', ' 制作中...', 'info');
             }
@@ -165,110 +167,6 @@ function getRootNode(tree, curNode) {
     }
     return root;
 }
-
-
-        createDatagrid('dg_machine_list');
-
-        function createDatagrid(datagridId) {
-            var _pageSize = 30;
-            var _pageNo = 1;
-            var dg = $('#' + datagridId);
-
-            $(dg).datagrid({
-                // title: '和仲位置信息',
-                iconCls: 'icon-a_detail',
-                fit: true,
-                fitColumns: true,
-                pagination: true,   // True to show a pagination toolbar on datagrid bottom.
-                // singleSelect: true, // True to allow selecting only one row.
-                loadMsg: '正在加载数据...',
-                border: false,
-                striped: true,
-                pageNumber: 1,
-                pageSize: _pageSize,     //每页显示条数
-                nowrap: true,   // True to display data in one line. Set to true can improve loading performance.
-                pageList: [20, 30, 40, 50, 100],   //每页显示条数供选项
-                rownumbers: true,   // True to show a row number column.
-                toolbar: [{
-                    text:"增加", iconCls:'icon-add',
-                    handler:function(){
-                        alert('add');
-                    }}, {
-                    text:"编辑/查看", iconCls:'icon-edit',
-                    handler:function(){
-                        alert('edit');
-                    }}, {
-                    text:"删除", iconCls:'icon-remove',
-                    handler:function(){
-                        alert('del');
-                    }}, '-', {
-                    text: '姓名：<select class="easyui-combobox" panelHeight="auto" style="width:100px"></select>'
-                    }, {
-                    text:"查询", iconCls: 'icon-search',
-                    handler: function () {
-                        alert('查询');
-                    }}
-                ],
-                columns: [[
-                    {field: 'ck', checkbox:true },   // checkbox
-                    // {field: 'no', title: '序号',  width: 15, align: 'center' },  //能自动显示行号，则不再需要自己实现
-                    {field: 'id', title: 'id',  width: 30, align: 'center' },
-                    {field: 'build_id', title: '建筑ID', width: 70, align: 'center'},
-                    {field: 'floor_no', title: '楼层', width: 100, align: 'center'},
-                    {field: 'user_id', title: '用户ID', width: 70, align: 'center'},
-                    {field: 'x', title: 'x坐标', width: 70, align: 'center'},
-                    {field: 'y', title: 'y坐标', width: 70, align: 'center'},
-                    {field: 'timestamp', title: '时间戳', width: 120, align: 'center'}
-                ]],
-                onLoadSuccess: function () {
-                    $(dg).datagrid("fixRownumber");
-                    $(dg).datagrid('loaded');
-                }
-            });
-
-            var pager = dg.datagrid('getPager');
-            $(pager).pagination({
-                //pageSize: _pageSize,//每页显示的记录条数，默认为10
-                //pageList: [20, 30, 40, 50],//可以设置每页记录条数的列表
-                beforePageText: '第',//页数文本框前显示的汉字
-                afterPageText: '页, 共 {pages} 页',
-                displayMsg: '当前记录 {from} - {to} , 共 {total} 条记录',
-                onSelectPage: function (pageNumber, pageSize) {
-                    $(dg).datagrid('loading');  // 打开等待div
-                    console.log('pageNo=' + pageNumber + " pageSize=" + pageSize);
-                    // 改变opts.pageNumber和opts.pageSize的参数值，用于下次查询传给数据层查询指定页码的数据
-                    var gridOpts = $(dg).datagrid('options');
-                    gridOpts.pageNumber = pageNumber;
-                    gridOpts.pageSize = pageSize;
-
-                    _pageSize = pageSize;
-                    _pageNo = pageNumber;
-                    doAjax();
-                }
-            });
-
-            // 先通过ajax获取数据，然后再传给datagrid
-            var doAjax = function () {
-                $.ajax({
-                    method: 'POST',
-                    url: '/dance_location_get',
-                    async: true,
-                    dataType: 'json',
-                    data: {'pageSize': _pageSize, 'pageNo': _pageNo},
-                    success: function (data) {
-                        console.log(data);
-
-                        // 注意此处从数据库传来的data数据有记录总行数的total列和 rows
-                        dg.datagrid('loadData', data);
-                    },
-                    error: function () {
-                        console.log('error in ajax.');
-                    }
-                });
-            };
-
-            doAjax();   // 获取数据
-        }
 
 </script>
 

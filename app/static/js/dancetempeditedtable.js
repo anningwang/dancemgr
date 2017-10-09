@@ -71,7 +71,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             panel.mousedown(function (event) {      // panel 鼠标按下事件
                 //console.log(event);
                 if (event.target.className === 'datagrid-body') { // datagrid-toolbar, datagrid-header-inner
-                    endEditing(); // datagrid-cell datagrid-cell-c2-recorder, datagrid-cell-rownumber
+                    endEditing();
                 }
             });
         },
@@ -84,29 +84,12 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             }
         },
         onEndEdit : function onEndEdit(index, row){
-            /*
-            var ed = $(this).datagrid('getEditor', {
-                index: index,
-                field: 'school_id'
-            });
-
-            if (ed) {
-                console.log($(ed.target).combobox('getText'));
-                console.log(ed.type);
-                row.school_name = $(ed.target).combobox('getText');
-            }*/
-
             var eds = $(dg).datagrid('getEditors', index);
             for(var i=0; i< eds.length; i++){
                 if (eds[i].type === 'combobox'){
                     console.log('eds[i].field', eds[i].field);
                     var textField = getTextField(eds[i].field);
                     row[textField] = $(eds[i].target).combobox('getText');
-
-                    //var valField = getTextField(eds[i].field);
-                    //row[valField] = $(eds[i].target).combobox('getValue');
-                    //console.log('editedtable->onEndEdit->valField', valField, ' val=',  row[valField]);
-                    //row[eds[i].field] = $(eds[i].target).combobox('getText');
                 }
             }
         }
@@ -262,12 +245,6 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             var ed = $(dg).datagrid('getEditor', {index:index,field:field});
             if (ed){
                 ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
-                /*
-                if(ed.type === 'combobox'){
-                    var row = $(dg).datagrid('getSelected');
-                    $(ed.target).combobox('setValue', row[getValueField(ed.field)]);
-                }
-                */
             }
             editIndex = index;
         }
@@ -308,8 +285,6 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             dataChanged[i].row = cmpChanges;
             setCellStyle(dg, dataChanged[i], true);      // 给发生改变的单元格，增加颜色，以突出显示
         }
-
-        // $('#'+btnSave).linkbutton(isDataChanged() ? 'enable':'disable');
     }
 
     // 设置/清除 单元样式
@@ -389,8 +364,6 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
     // 保存单元格修改
     function onSave(){
         if (validateDatagrid()){
-            //var rows = $(dg).datagrid('getChanges');
-            //alert(rows.length+' rows are changed!');
             console.log('onSave---');
             console.log(dataChanged);
             var dataToServer = [];

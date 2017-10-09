@@ -398,6 +398,8 @@ def dance_del_data():
         return dc_del_fee_item(ids)
     elif who == 'dc_comm_fee_mode':
         return dc_del_fee_mode(ids)
+    elif who == 'dc_class_type':
+        return dc_del_class_type(ids)
     else:
         return jsonify({'errorCode': 1, "msg": "Table not found!"})     # error
 
@@ -492,6 +494,33 @@ def dc_del_fee_mode(ids):
         """  收费单普通 判断是否使用了收费模式 """
 
     DcCommFeeMode.query.filter(DcCommFeeMode.id.in_(ids)).delete(synchronize_session=False)
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
+
+
+def dc_del_class_type(ids):
+    """
+    删除班级类型。删除前查看是否占用。
+    :param ids:
+    :return:
+    {
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   删除成功！
+            832                 班级类型[%s]已被使用，不能删除！
+    }
+    """
+    for i in ids:
+        r = DcClassType.query.get(i)
+        if r is None:
+            continue
+        is_use = DanceClass.query.filter_by(class_type=i).first()
+        if is_use is not None:
+            return jsonify({'errorCode': 832, 'msg': u'班级类型[%s]已被使用，不能删除！' % r.name})
+    DcClassType.query.filter(DcClassType.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 

@@ -1179,6 +1179,59 @@ def dc_comm_fee_mode_get():
     return jsonify({'rows': rows, 'total': total, 'errorCode': 0, 'msg': 'ok'})
 
 
+@app.route('/dc_class_type_get', methods=['POST'])
+@login_required
+def dc_class_type_get():
+    """
+    查询班级类型
+    输入参数：
+    {
+        condition:      查询条件
+    }
+    :return:
+    {
+        total:              记录总条数
+        rows: [{
+            id:
+            name:           班级类型名称
+            create_at:      创建时间
+            last_upd_at:    最后更新时间
+            last_user:      最后更新人
+            recorder:       记录员
+            no:             记录顺序号
+        }]
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   'ok'
+    }
+    """
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    if page_no <= 0:  # 补丁
+        page_no = 1
+
+    dcq = DcClassType.query.filter_by(company_id=g.user.company_id)
+    if 'condition' in request.form and request.form['condition'] != '':
+        dcq = dcq.filter(DcClassType.name.like('%' + request.form['condition'] + '%'))
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.order_by(DcClassType.id).limit(page_size).offset(offset)
+    i = offset + 1
+    rows = []
+    for rec in records:
+        rows.append({'no': i, 'id': rec.id, "name": rec.name, 'recorder': rec.recorder,
+                     'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d %H:%M:%S'),
+                     'last_upd_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d %H:%M:%S'),
+                     'last_user': rec.last_user
+                     })
+        i += 1
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
 @app.route('/dc_class_type_update', methods=['POST'])
 @login_required
 def dc_class_type_update():
@@ -1197,7 +1250,7 @@ def dc_class_type_update():
             801     名称为[%s]的班级类型已经存在！
         msg:            错误信息
     """
-    obj = request.json
+    obj = request.json if request.json is not None else json.loads(request.form['data'])
     for rr in obj:
         row = rr['row']
         if 'id' not in rr or rr['id'] <= 0:
@@ -1215,6 +1268,32 @@ def dc_class_type_update():
 
     db.session.commit()
     return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
+
+
+@app.route('/dc_class_type_query', methods=['POST'])
+@login_required
+def dc_class_type_query():
+    """
+    条件查询 班级类型
+    输入参数：
+    {
+        condition:          查询条件
+    }
+    :return:
+    [{
+        value:          班级类型
+        text:           班级类型
+    }]
+    """
+    name = request.form['condition']
+
+    ret = []
+    records = DcClassType.query.filter_by(company_id=g.user.company_id)\
+        .order_by(DcClassType.id).filter(DcClassType.name.like('%'+name + '%'))
+    for rec in records:
+        ret.append({'value': rec.name, 'text': rec.name})
+
+    return jsonify(ret)
 
 
 @app.route('/dance_progressbar', methods=['POST'])
