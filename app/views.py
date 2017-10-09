@@ -108,8 +108,6 @@ def login():
                 return redirect(request.args.get('next') or url_for('index'))
         else:
             flash(u'用户名或者密码错误！')
-    else:
-        print form.errors
 
     return render_template('login.html', form=form,
                            username='' if form.username.data is None else form.username.data)
@@ -129,6 +127,7 @@ def login():
                            form=form,
                            providers=app.config['OPENID_PROVIDERS'])
 '''
+
 
 @oid.after_login
 def after_login(resp):
@@ -166,7 +165,7 @@ def logout():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = DanceRegistrationForm()
-    if request.method == 'POST' and form.validate():
+    if request.method == 'POST' and form.validate_on_submit():
         if DanceUser.query.filter_by(name=form.username.data).first() is not None:
             flash(u'该用户已注册！')
             return render_template('register.html', form=form)  # dance_register
@@ -185,10 +184,10 @@ def register():
                              'role_id': ROLE_ADMIN,
                              'is_creator': 1})
         db.session.add(user_dc)
+        create_default_data(company.id)
+
         db.session.commit()
         return redirect(url_for('login'))
-    else:
-        print form.errors
 
     return render_template('register.html', form=form)        # dance_register
 
@@ -993,3 +992,16 @@ def dance_class_modify():
 
     db.session.commit()
     return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
+
+
+def create_default_data(company_id):
+    """ 用户注册后，创建默认数据 """
+    r = DanceSchool({'school_name': u'总部', 'company_id': company_id, 'school_no': '0001', 'recorder': u'[系统]'})
+    db.session.add(r)
+
+    # 增加 用户 管理 分校 的权限
+    sc = DanceSchool.query.filter_by(company_id=company_id).filter_by(school_no=r.school_no).first()
+    u = DanceUser.query.filter_by(company_id=company_id).filter_by(is_creator=1).first()
+    db.session.add(DanceUserSchool(user_id=u.id, school_id=sc.id))
+
+    db.session.commit()

@@ -28,22 +28,22 @@
 	<div data-options="region:'west',split:true,hideCollapsedContent:false,title:'功能栏'" style="width:200px;">
         <div class="easyui-accordion" data-options="fit:true,border:false">
             <div title="学员管理" data-options="iconCls:'icon-student',selected:true" style="padding:1px">
-                <ul id="treeStudent" class="easyui-tree" data-options="url:'/dance_tree_student',method:'get',animate:true,lines:true"></ul>
+                <ul id="treeStudent"></ul>
             </div>
             <div title="员工与老师" data-options="iconCls:'icon-teacher'" style="padding:1px">
-                <ul id="treeTeacher" class="easyui-tree" data-options="url:'/static/html/tree_teacher.json',method:'get',animate:true,lines:true"></ul>
+                <ul id="treeTeacher"></ul>
             </div>
             <div title="教学管理" data-options="iconCls:'icon-book'" style="padding:1px">
-                <ul id="treeSchool" class="easyui-tree" data-options="url:'/dance_tree_school',method:'post',animate:true,lines:true"></ul>
+                <ul id="treeSchool"></ul>
             </div>
             <div title="物品管理" data-options="iconCls:'icon-computer'" style="padding:1px">
-                <ul id="treeAsset" class="easyui-tree" data-options="url:'/static/html/tree_asset.json',method:'get',animate:true,lines:true"></ul>
+                <ul id="treeAsset"></ul>
             </div>
             <div title="财务管理" data-options="iconCls:'icon-money_yen'" style="padding:1px">
-                <ul id="treeFinance" class="easyui-tree" data-options="url:'/static/html/tree_finance.json',method:'get',animate:true,lines:true"></ul>
+                <ul id="treeFinance"></ul>
             </div>
             <div title="数据管理" data-options="iconCls:'icon-databases'" style="padding:1px">
-                <ul id="treeDb" class="easyui-tree" data-options="url:'/static/html/tree_db.json',method:'get',animate:true,lines:true"></ul>
+                <ul id="treeDb"></ul>
             </div>
         </div>
 	</div>
@@ -65,59 +65,106 @@
 <script>
 'use strict';
 
-$('.easyui-tree').tree({
-    onClick: function(node){
-        console.log('this.id=' + this.id + ', node.id=' + node.id + ', node.text=' + node.text);
-        if($(this).tree('isLeaf',node.target)){  // 判断是否是叶子节点
-        } else {
-            //$(this).tree('expand',node.target);
-        }
+$(function() {
+    $('#treeStudent').tree({
+        url: '/dance_tree_student', animate:true,lines:true,
+        onClick: function(node){
+            var root = getRootNode(this, node);
+            var tableRootId = this.id + root.id;
 
-        var root = node;
-        var parentNode = $(this).tree('getParent', root.target);
-        while (parentNode) {
-            root  = parentNode;
-            parentNode = $(this).tree('getParent', root.target);
-        }
-
-        var tableId = this.id + node.id;
-        if(this.id === 'treeSchool') {
-            if (root.id == 10) {     // 班级信息
-                danceAddTabClassDatagrid('danceTabs',root.text,this.id+root.id,node.attributes);
-            } else {
-                $.messager.alert('提示', ' 制作中...', 'info');
-            }
-        } else if (this.id === 'treeStudent') {
             if (root.id == 10) {   // 学员列表
-                danceAddTabStudentDatagrid('danceTabs',root.text,this.id+root.id,node.attributes);
+                danceAddTabStudentDatagrid('danceTabs', root.text, tableRootId, node.attributes);
             } else if (root.id == 60) {   // 班级学员统计
                 danceAddTabClassStudentStat(root.text, node.attributes);
             } else if (root.id == 30) {    // '收费单（学费）'
-                danceAddTabFeeStudyDatagrid('danceTabs',root.text,this.id+root.id,node.attributes);
+                danceAddTabFeeStudyDatagrid('danceTabs', root.text, tableRootId, node.attributes);
             } else if (root.id == 40) {    // 收费单（演出）
-                danceAddTabFeeShowDatagrid('danceTabs',root.text,this.id+root.id,node.attributes);
+                danceAddTabFeeShowDatagrid('danceTabs', root.text, tableRootId, node.attributes);
             } else if (root.id == 50) {    // 收费单（普通）
-                danceAddTabFeeOtherDatagrid('danceTabs',root.text,this.id+root.id,node.attributes);
+                danceAddTabFeeOtherDatagrid('danceTabs', root.text, tableRootId, node.attributes);
             } else {
                 $.messager.alert('提示', ' 制作中...', 'info');
             }
-        }else if(node.text == '收费项目') {
-            danceAddTabFeeItem(node.text, tableId);
-        }else if(node.text == '教材信息') {
-            danceAddTabTeachingMaterial(node.text, tableId);
-        }else if(node.text == '分校信息') {
-            danceAddTabSchool(node.text, tableId);
-        }else if(node.text == '用户管理') {
-            danceAddTabUsers(node.text, tableId);
-        }else if (node.text == '收费方式'){
-            danceAddTabFeeMode(node.text, tableId);
-        }else if (node.text == '数据库备份') {
-            danceOpenTab(node.text, '/static/html/_db_backup.html')
-        }else {
+        }
+    });
+
+    $('#treeTeacher').tree({
+        url:'/static/html/tree_teacher.json',method:'get',animate:true,lines:true,
+        onClick: function(node){
+            var root = getRootNode(this, node);
+            var tableRootId = this.id + root.id;
+            console.log(root.text, ' tableRootId=', tableRootId);
             $.messager.alert('提示', ' 制作中...', 'info');
         }
-    }
+    });
+
+    $('#treeSchool').tree({
+        url:'/dance_tree_school', animate:true,lines:true,
+        onClick:function (node) {
+            var root = getRootNode(this, node);
+            var tableRootId = this.id + root.id;
+
+            if (root.id == 10) {     // 班级信息
+                danceAddTabClassDatagrid('danceTabs', root.text, tableRootId, node.attributes);
+            } else {
+                $.messager.alert('提示', ' 制作中...', 'info');
+            }
+        }
+    });
+
+    $('#treeAsset').tree({
+        url:'/static/html/tree_asset.json',method:'get',animate:true,lines:true,
+        onClick: function(node){
+            var root = getRootNode(this, node);
+            var tableRootId = this.id + root.id;
+            console.log(root.text, ' tableRootId=', tableRootId);
+            $.messager.alert('提示', ' 制作中...', 'info');
+        }
+    });
+
+    $('#treeFinance').tree({
+        url:'/static/html/tree_finance.json',method:'get',animate:true,lines:true,
+        onClick: function(node){
+            var root = getRootNode(this, node);
+            var tableRootId = this.id + root.id;
+            console.log(root.text, ' tableRootId=', tableRootId);
+            $.messager.alert('提示', ' 制作中...', 'info');
+        }
+    });
+
+    $('#treeDb').tree({
+        url:'/static/html/tree_db.json',method:'get',animate:true,lines:true,
+        onClick:function (node) {
+            var tableId = this.id + node.id;
+
+            if(node.text == '收费项目') {
+                danceAddTabFeeItem(node.text, tableId);
+            }else if(node.text == '教材信息') {
+                danceAddTabTeachingMaterial(node.text, tableId);
+            }else if(node.text == '分校信息') {
+                danceAddTabSchool(node.text, tableId);
+            }else if(node.text == '用户管理') {
+                danceAddTabUsers(node.text, tableId);
+            }else if (node.text == '收费方式'){
+                danceAddTabFeeMode(node.text, tableId);
+            }else if (node.text == '数据库备份') {
+                danceOpenTab(node.text, '/static/html/_db_backup.html')
+            }else {
+                $.messager.alert('提示', ' 制作中...', 'info');
+            }
+        }
+    });
 });
+
+function getRootNode(tree, curNode) {
+    var root = curNode;
+    var parentNode = $(tree).tree('getParent', root.target);
+    while (parentNode) {
+        root  = parentNode;
+        parentNode = $(tree).tree('getParent', root.target);
+    }
+    return root;
+}
 
 
         createDatagrid('dg_machine_list');

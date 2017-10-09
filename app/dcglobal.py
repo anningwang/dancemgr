@@ -9,10 +9,25 @@ class FeeItemType(Enum):
     Show = 2
     Common = 3
 
+# 班级是否结束
+CLASS_IS_END = 1        # 已结束
+CLASS_IS_ON = 0         # 未结束
 
-def get_feename(t):
+# 班级授课形式
+CLASS_STYLE_GROUP = 1           # 集体课
+CLASS_STYLE_ONE_FOR_ONE = 2     # 1对1
+
+# 学费收费模式
+CLASS_MODE_BY_TIMES = 1         # 按课次
+CLASS_MODE_BY_HOUR = 2          # 按课时
+
+GENDER_MALE = '男'
+GENDER_FEMALE = '女'
+
+
+def get_feename(val):
     """ 收费项目类别 """
-    _t = FeeItemType(int(t))
+    _t = FeeItemType(int(val))
     if _t == FeeItemType.Common:
         return u'普通收费'
     elif _t == FeeItemType.Show:
@@ -20,11 +35,7 @@ def get_feename(t):
     elif _t == FeeItemType.Study:
         return u'学费'
     else:
-        return u'[未知](%d)' % t
-
-# 班级是否结束
-CLASS_IS_END = 1        # 已结束
-CLASS_IS_ON = 0         # 未结束
+        return u'[未知](%s)' % val
 
 
 def get_class_end(val):
@@ -35,10 +46,6 @@ def get_class_end(val):
         return u'未结束'
     else:
         return u'[未知](%s)' % val
-
-# 班级授课形式
-CLASS_STYLE_GROUP = 1           # 集体课
-CLASS_STYLE_ONE_FOR_ONE = 2     # 1对1
 
 
 def get_class_style(val):
@@ -60,10 +67,6 @@ def class_style_val(name):
         return CLASS_STYLE_ONE_FOR_ONE
     else:
         return CLASS_STYLE_GROUP
-
-# 学费收费模式
-CLASS_MODE_BY_TIMES = 1         # 按课次
-CLASS_MODE_BY_HOUR = 2          # 按课时
 
 
 def get_class_mode(val):

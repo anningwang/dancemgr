@@ -166,6 +166,9 @@ String.prototype.format = function(args) {
 /**
  * 更加text域返回value域。 用于 combobox。
  * 对value域赋值，值域为 someName_text, 则 value域为 someName。若值域不存在 _text，则值域固定为 value
+ *      someName_text        -> someName
+ *      school_name          -> school_id
+ *      other                -> other_value
  * @param textField
  * @returns {*}
  */
@@ -174,10 +177,31 @@ function getValueField(textField) {
     var idx = valField.lastIndexOf('_text');
     if(idx !== -1){
         valField = valField.slice(0, idx);
-    } else {
-        valField = 'value'
+    } else if( (idx = valField.lastIndexOf('_name')) !== -1 ){
+        valField = valField.slice(0, idx) + '_id';
+    } else{
+        valField += '_value'
     }
+    console.log('getValueField: textField=', textField, ' valField=', valField);
     return valField
+}
+
+
+//   someName_text      <-- someName
+//   school_name        <-- school_id
+//   some               <-- some_value
+function getTextField(valField) {
+    var textField = valField;
+    var idx = textField.lastIndexOf('_id');
+    if(idx !== -1){
+        textField = textField.slice(0, idx) + '_name';
+    }else if( (idx = textField.lastIndexOf('_value')) !== -1 ){
+        textField = valField.slice(0, idx);
+    } else{
+        textField += '_text'
+    }
+    console.log('getTextField: textField=', textField, ' valField=', valField);
+    return textField
 }
 
 

@@ -184,6 +184,11 @@ def dance_user_update():
             user.recorder = g.user.name
             user.user_no = str(new_id)
             db.session.add(user)
+
+            if 'school_id' in obj_data[i]['row']:
+                school_ids = obj_data[i]['row']['school_id'].split(',')
+                for sc_id in school_ids:
+                    user.add_relationship2school(sc_id)
         else:
             # update record
             user = DanceUser.query.filter_by(id=obj_data[i]['id']).first()
@@ -191,6 +196,7 @@ def dance_user_update():
                 continue
             user.update_data(obj_data[i]['row'])
             db.session.add(user)
+
             user.update_relationship2school(obj_data[i]['row'])
     db.session.commit()
 
@@ -214,18 +220,41 @@ def dance_user_query():
 @app.route('/dance_fee_item_get', methods=['POST'])
 @login_required
 def dance_fee_item_get():
+    """
+    查询收费项目
+    输入参数：
+    {
+        condition:      查询条件
+    }
+    :return:
+    {
+        total:          记录总条数
+        rows: [{
+            fee_item:   收费项目名称
+            type:       收费项目类型
+            type_text:  非数据库字段。+++
+            create_at:  创建时间
+            recorder:   记录员
+            no:         记录顺序号
+        }]
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   'ok'
+    }
+    """
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
     if page_no <= 0:    # 补丁
         page_no = 1
 
     dcq = DcFeeItem.query.filter_by(company_id=g.user.company_id)
-
     if 'condition' in request.form and request.form['condition'] != '':
         dcq = dcq.filter(DcFeeItem.fee_item.like('%'+request.form['condition']+'%'))
 
     total = dcq.count()
-
     offset = (page_no - 1) * page_size
     records = dcq.order_by(DcFeeItem.type, DcFeeItem.id).limit(page_size).offset(offset)
     i = offset + 1
@@ -233,10 +262,8 @@ def dance_fee_item_get():
     for rec in records:
         rows.append({'no': i, 'id': rec.id, "fee_item": rec.fee_item, 'recorder': rec.recorder,
                      'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d %H:%M:%S'),
-                     'type': rec.type,
-                     'type_text': get_feename(rec.type)
-                     })
-        """ type: 1 学费， 2  演出 ， 3，普通 """
+                     'type': rec.type, 'type_text': get_feename(rec.type)
+                     })   # 类型名称字段: 1 学费， 2  演出 ， 3，普通
         i += 1
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
 

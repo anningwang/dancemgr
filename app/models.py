@@ -13,9 +13,6 @@ from flask import g
 ROLE_USER = 0
 ROLE_ADMIN = 1
 
-GENDER_MALE = '男'
-GENDER_FEMALE = '女'
-
 
 followers = db.Table('followers',
                      db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
@@ -83,13 +80,16 @@ class User(db.Model):
                 break
             version += 1
         return new_nickname
-        
+
+    @property
     def is_authenticated(self):
         return True
 
+    @property
     def is_active(self):
         return True
 
+    @property
     def is_anonymous(self):
         return False
 
@@ -167,8 +167,6 @@ class DanceStudent(db.Model):
     id = db.Column(db.Integer, primary_key=True)            # 自动编号，主键  唯一///
     sno = db.Column(db.String(30))             # 学号，一个培训中心内唯一
     name = db.Column(db.String(40, collation='NOCASE'))  # 姓名
-    school_no = db.Column(db.String(20))    # 分校编号 ***废弃***
-    school_name = db.Column(db.String(40))  # 分校名称 ***废弃***
     consult_no = db.Column(db.String(30))   # 咨询编号
     rem_code = db.Column(db.String(40))     # 助记码
     gender = db.Column(db.String(4))          # 性别：男/女
@@ -207,11 +205,7 @@ class DanceStudent(db.Model):
     def __init__(self, param):
         if 'school_id' in param:
             self.school_id = int(param['school_id'])
-        self.sno = self.create_sno() if u'sno' not in param else param[u'sno']
-        if u'school_no' in param:
-            self.school_no = param[u'school_no']
-        if u'school_name' in param:
-            self.school_name = param[u'school_name']
+        self.sno = self.create_no() if u'sno' not in param else param[u'sno']
         if u'consult_no' in param:
             self.consult_no = param[u'consult_no']
         if u'name' in param:
@@ -407,35 +401,35 @@ class DanceStudent(db.Model):
             self.tel = param[u'tel']
         if u'address' in param:
             self.address = param[u'address']
-        if u'zipcode' in param:
+        if 'zipcode' in param:
             self.zipcode = param[u'zipcode']
-        if u'email' in param:
+        if 'email' in param:
             self.email = param[u'email']
-        if u'qq' in param:
-            self.qq = param[u'qq']
-        if u'wechat' in param:
-            self.wechat = param[u'wechat']
-        if u'mother_name' in param:
-            self.mother_name = param[u'mother_name']
-        if u'father_name' in param:
-            self.father_name = param[u'father_name']
-        if u'mother_phone' in param:
-            self.mother_phone = param[u'mother_phone']
-        if u'father_phone' in param:
-            self.father_phone = param[u'father_phone']
-        if u'mother_tel' in param:
-            self.mother_tel = param[u'mother_tel']
-        if u'father_tel' in param:
-            self.father_tel = param[u'father_tel']
-        if u'mother_company' in param:
-            self.mother_company = param[u'mother_company']
-        if u'father_company' in param:
-            self.father_company = param[u'father_company']
+        if 'qq' in param:
+            self.qq = param['qq']
+        if 'wechat' in param:
+            self.wechat = param['wechat']
+        if 'mother_name' in param:
+            self.mother_name = param['mother_name']
+        if 'father_name' in param:
+            self.father_name = param['father_name']
+        if 'mother_phone' in param:
+            self.mother_phone = param['mother_phone']
+        if 'father_phone' in param:
+            self.father_phone = param['father_phone']
+        if 'mother_tel' in param:
+            self.mother_tel = param['mother_tel']
+        if 'father_tel' in param:
+            self.father_tel = param['father_tel']
+        if 'mother_company' in param:
+            self.mother_company = param['mother_company']
+        if 'father_company' in param:
+            self.father_company = param['father_company']
         if u'card' in param:
             self.card = param[u'card']
-        if u'points' in param:
+        if 'points' in param:
             self.points = int(param[u'points'])
-        if u'remark' in param:
+        if 'remark' in param:
             self.remark = param[u'remark']
         if 'idcard' in param:
             self.idcard = param['idcard']
@@ -444,7 +438,7 @@ class DanceStudent(db.Model):
         if 'father_wechat' in param:
             self.father_wechat = param['father_wechat']
 
-    def create_sno(self):
+    def create_no(self):
         if self.school_id is None:
             raise Exception('Please input school_id first!')
         search_sno = dc_gen_code(self.school_id, 'XH')
@@ -478,15 +472,13 @@ class DanceClass(db.Model):
     # __bind_key__ = 'dance_class'
     id = db.Column(db.Integer, primary_key=True)    # id                01
     cno = db.Column(db.String(20))     # 班级编号          02
-    school_no = db.Column(db.String(20))            # 分校编号          03
-    school_name = db.Column(db.String(40))          # 分校名称          04
     class_name = db.Column(db.String(40, collation='NOCASE'))           # 班级名称          05
     rem_code = db.Column(db.String(40, collation='NOCASE'))             # 助记码            06
     begin_year = db.Column(db.String(6))    # 开班年份      07
-    class_type = db.Column(db.String(20))   # 班级类型， 教授类别： 舞蹈、美术、跆拳道、国际象棋等   08
-    class_style = db.Column(db.String(20))  # 班级形式： 集体课 -- 0, 1对1 -- 1     09
+    class_type = db.Column(db.Integer)      # 班级类型， 教授类别： 舞蹈、美术、跆拳道、国际象棋等   08
+    class_style = db.Column(db.Integer)     # 班级形式： 集体课 -- 0, 1对1 -- 1     09
     teacher = db.Column(db.String(20))      # 授课老师姓名        10
-    cost_mode = db.Column(db.String(20))    # 收费模式            11     1-按课次  2-按课时
+    cost_mode = db.Column(db.Integer)       # 收费模式            11     1-按课次  2-按课时
     cost = db.Column(db.Integer)            # 收费标准            12
     plan_students = db.Column(db.Integer)   # 计划招收人数        13
     cur_students = db.Column(db.Integer)    # 当前人数            14
@@ -498,7 +490,7 @@ class DanceClass(db.Model):
     def __init__(self, param):
         if 'school_id' in param:
             self.school_id = int(param['school_id'])
-        self.cno = param['cno'] if 'cno' in param else self.create_sno()
+        self.cno = param['cno'] if 'cno' in param else self.create_no()
         if 'class_name' in param:
             self.class_name = param['class_name']        # 班级名称          05
         if 'rem_code' in param:
@@ -573,7 +565,7 @@ class DanceClass(db.Model):
             ret[rec.cno] = rec
         return ret
 
-    def create_sno(self):
+    def create_no(self):
         if self.school_id is None:
             raise Exception('Please input school_id first!')
         search_sno = dc_gen_code(self.school_id, 'BJ')
@@ -606,8 +598,7 @@ class DanceSchool(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
 
     def __init__(self, param):
-        if 'school_no' in param:
-            self.school_no = param['school_no']   # 分校编号          02
+        self.school_no = self.create_no() if 'school_no' not in param else param['school_no']
         if 'school_name' in param:
             self.school_name = param['school_name']      # 分校名称          03
         if 'address' in param:
@@ -651,6 +642,12 @@ class DanceSchool(db.Model):
         if 'company_id' in param:
             self.company_id = int(param['company_id'])
 
+    def create_no(self):
+        r = DanceSchool.query.filter_by(company_id=g.user.company_id).order_by(DanceSchool.id.desc()).first()
+        number = 1 if r is None else int(r.school_no)
+        self.school_no = '%04d' % number
+        return self.school_no
+
     @staticmethod
     def get_school_id(school_name):
         school = DanceSchool.query.filter(DanceSchool.school_name == school_name,
@@ -659,6 +656,7 @@ class DanceSchool(db.Model):
 
     @staticmethod
     def get_school_id_list():
+        """ 分校名称 与 分校 id 键值对"""
         schools = DanceSchool.query.filter(DanceSchool.company_id == g.user.company_id).all()
         school_list = {}
         for sc in schools:
@@ -1593,22 +1591,81 @@ class DanceTeacher(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     teacher_no = db.Column(db.String(20, collation='NOCASE'))
     school_id = db.Column(db.Integer)
-    name = db.Column(db.String(40, collation='NOCASE'))  # 姓名
-    rem_code = db.Column(db.String(40))  # 助记码
-    gender = db.Column(db.Integer)  # 性别：男1/女0
-    degree = db.Column(db.String(20))  # 文化程度
-    birthday = db.Column(db.String(10))  # 出生日期
-    join_date = db.Column(db.DateTime)  # 入职日期
-    te_type = db.Column(db.Integer)  # 类别：专职1/兼职0
-    te_title = db.Column(db.Integer)  # 职位：校长、教师、前台、咨询师、清洁工、会计、出纳
-    in_job = db.Column(db.Integer)  # 是否在职：是1 / 否0
+    name = db.Column(db.String(20, collation='NOCASE'))  # 姓名
+    rem_code = db.Column(db.String(20))     # 助记码
+    degree = db.Column(db.String(20))   # 文化程度
+    birthday = db.Column(db.String(10))     # 出生日期
+    join_day = db.Column(db.DateTime)   # 入职日期
+    leave_day = db.Column(db.DateTime)  # 离职日期
+    te_title = db.Column(db.Integer)    # 职位：校长、教师、前台、咨询师、清洁工、会计、出纳
+    gender = db.Column(db.Boolean)      # 性别：男1/女0
+    te_type = db.Column(db.Boolean)     # 类别：专职1/兼职0
+    in_job = db.Column(db.Boolean)      # 是否在职：是1 / 否0
+    is_assist = db.Column(db.Boolean)   # 是否咨询师：是1 / 否0
+    has_class = db.Column(db.Boolean)   # 是否授课：是1 / 否0
+    nation = db.Column(db.String(10))   # 民族
+    birth_place = db.Column(db.String(10))  # 籍贯
     idcard = db.Column(db.String(30))  # 身份证号
-
+    class_type = db.Column(db.Integer)  # 教授班级类别
+    phone = db.Column(db.String(20))  # 手机号码  不可重复 唯一///
+    tel = db.Column(db.String(20))  # 固定电话  ***保留
+    address = db.Column(db.String(60))  # 联系地址
+    zipcode = db.Column(db.String(10))  # 邮政编码  ***保留
+    email = db.Column(db.String(30))  # email  不可重复 唯一///
+    qq = db.Column(db.String(20))  # qq
+    wechat = db.Column(db.String(60))  # 微信标识  ***保留
     recorder = db.Column(db.String(20, collation='NOCASE'))
     create_at = db.Column(db.DateTime, nullable=False)
     last_upd_at = db.Column(db.DateTime, nullable=False)
     last_user = db.Column(db.String(20, collation='NOCASE'))
     company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
 
+    def __repr__(self):
+        return '<DanceTeacher %r>' % self.id
+
+
+class DanceTeacherEdu(db.Model):
+    """ 教职工教育经历表"""
+    id = db.Column(db.Integer, primary_key=True)
+    teacher_id = db.Column(db.Integer, nullable=False)
+    begin_day = db.Column(db.Date)
+    end_day = db.Column(db.Date)
+    school = db.Column(db.String(20))
+    major = db.Column(db.String(20))
+    remark = db.Column(db.String(40))
+
+    def __repr__(self):
+        return '<TeacherEdu %r>' % self.id
+
+
+class DanceTeacherWork(db.Model):
+    """ 教职工工作经历表"""
+    id = db.Column(db.Integer, primary_key=True)
+    teacher_id = db.Column(db.Integer, nullable=False)
+    begin_day = db.Column(db.Date)
+    end_day = db.Column(db.Date)
+    firm = db.Column(db.String(20))
+    position = db.Column(db.String(20))
+    content = db.Column(db.String(100))  # 主要工作内容
+    remark = db.Column(db.String(40))
+
+    def __repr__(self):
+        return '<TeacherWork %r>' % self.id
+
+
+class DcCommon(db.Model):
+    """ 公共类型表 """
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(20, collation='NOCASE'))
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    create_at = db.Column(db.DateTime, nullable=False)
+    last_upd_at = db.Column(db.DateTime, nullable=False)
+    last_user = db.Column(db.String(20, collation='NOCASE'))
+    company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
+    scope = db.Column(db.Integer)   # 使用于 学员 2，教职工 3，还是全部 1
+
+    def __repr__(self):
+        return '<DcCommon %r>' % self.id
 
 whooshalchemy.whoosh_index(app, Post)

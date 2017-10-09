@@ -5,6 +5,7 @@ flask-mail==0.9.1
 flask-sqlalchemy==2.2
 sqlalchemy-migrate==0.11.0
 flask-whooshalchemy==0.56
+WTForms==2.1
 flask-wtf==0.14.2
 flask-babel==0.11.2
 guess_language==0.2

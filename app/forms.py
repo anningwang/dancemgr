@@ -20,14 +20,16 @@ class EditForm(FlaskForm):
         self.original_nickname = original_nickname
         
     def validate(self):
-        if not FlaskForm.validate(self):
+        if not FlaskForm.validate_on_submit(self):
             return False
         if self.nickname.data == self.original_nickname:
             return True
         if self.nickname.data != User.make_valid_nickname(self.nickname.data):
-            self.nickname.errors.append(gettext('This nickname has invalid characters. Please use letters, numbers, dots and underscores only.'))
+            self.nickname.errors.append(
+                gettext('This nickname has invalid characters. Please use letters, numbers, dots and underscores only.'
+                        ))
             return False
-        user = User.query.filter_by(nickname = self.nickname.data).first()
+        user = User.query.filter_by(nickname=self.nickname.data).first()
         if user is not None:
             self.nickname.errors.append(gettext('This nickname is already in use. Please choose another one.'))
             return False

@@ -99,10 +99,14 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             var eds = $(dg).datagrid('getEditors', index);
             for(var i=0; i< eds.length; i++){
                 if (eds[i].type === 'combobox'){
-                    var valField = getValueField(eds[i].field);
-                    row[valField] = $(eds[i].target).combobox('getValue');
+                    console.log('eds[i].field', eds[i].field);
+                    var textField = getTextField(eds[i].field);
+                    row[textField] = $(eds[i].target).combobox('getText');
 
-                    row[eds[i].field] = $(eds[i].target).combobox('getText');
+                    //var valField = getTextField(eds[i].field);
+                    //row[valField] = $(eds[i].target).combobox('getValue');
+                    //console.log('editedtable->onEndEdit->valField', valField, ' val=',  row[valField]);
+                    //row[eds[i].field] = $(eds[i].target).combobox('getText');
                 }
             }
         }
@@ -258,10 +262,12 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             var ed = $(dg).datagrid('getEditor', {index:index,field:field});
             if (ed){
                 ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
+                /*
                 if(ed.type === 'combobox'){
                     var row = $(dg).datagrid('getSelected');
                     $(ed.target).combobox('setValue', row[getValueField(ed.field)]);
                 }
+                */
             }
             editIndex = index;
         }
@@ -412,6 +418,9 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
                     if (_pageNo > 1 && (_pageNo-1)*_pageSize >= _total) { _pageNo--; }
                     doAjaxGetData();
                     btnStatus(BTN_STATUS.SAVE);
+
+                    if( options.who === 'DanceSchool')
+                        dcReloadTree();
                 } else {
                     $.messager.alert({title: '错误', msg: data.msg, icon:'error'});
                 }
@@ -458,6 +467,9 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
                                 $.messager.alert({title: '错误', msg: data.msg, icon:'error'});
                                 return false;
                             }
+                            if( options.who === 'DanceSchool')
+                                dcReloadTree();
+                            
                             $(dg).datagrid('loading');
                             _total -= row.length;
                             if (_pageNo > 1 && (_pageNo-1)*_pageSize >= _total) { _pageNo--; }

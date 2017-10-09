@@ -50,7 +50,7 @@ function danceAddTabSchool(title, tableId) {
 }
 
 /**
- * 打开 [分校信息] tab标签
+ * 打开 [ 用户信息 ] tab标签
  * @param title     Tab的标题
  * @param tableId   Datagrid id,创建在 table 上
  */
@@ -104,7 +104,7 @@ function danceAddTabUsers(title, tableId) {
             ]]
         };
 
-        danceCreateEditedDatagrid(tableId, '/dance_user', opts_user);
+        danceCreateEditedDatagrid(tableId, '/'+module, opts_user);
     }
 }
 
@@ -139,7 +139,11 @@ function danceAddTabFeeItem(title, tableId) {
                 {field: 'ck', checkbox:true },   // checkbox
                 //{field: 'id', title: 'id',  width: 30, align: 'center' },
                 {field: 'fee_item', title: '收费项目*', width: 160, align: 'center', editor: 'textbox'},
-                {field: 'type_text', title: '类别*', width: 90, align: 'center', editor: {
+                {field: 'type', title: '类别*', width: 90, align: 'center',
+                    formatter:function(value,row){
+                        return row.type_text;
+                    },
+                    editor: {
                     type: 'combobox', options:{
                         valueField: 'type', textField:'type_text', editable:false,panelHeight:'auto',
                         data: [{
@@ -211,7 +215,7 @@ function danceAddTabTeachingMaterial(title, tableId) {
 
 
 /**
- * 打开 [收费模式] tab标签
+ * 打开 [收费方式] tab标签
  * @param title     Tab的标题
  * @param tableId   Datagrid id,创建在 table 上
  */
@@ -228,7 +232,7 @@ function danceAddTabFeeMode(title, tableId) {
             closable: true
         });
         var module = 'dc_comm_fee_mode';
-        var optsTeachingMaterial = {
+        var optsFeeMode = {
             'defaultSelField' : 'fee_mode',
             'fieldValidate' : {'fee_mode': checkNotEmpty},
             'queryText': '收费方式：',
@@ -248,6 +252,6 @@ function danceAddTabFeeMode(title, tableId) {
             ]]
         };
 
-        danceCreateEditedDatagrid(tableId, '/'+module, optsTeachingMaterial);
+        danceCreateEditedDatagrid(tableId, '/'+module, optsFeeMode);
     }
 }
