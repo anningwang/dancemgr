@@ -32,8 +32,8 @@ function danceAddTabTeacher(title, tableId, condition) {
             'columns': [[
                 {field: 'ck', checkbox:true },
                 {field: 'school_name', title: '分校名称', width: 110, align: 'center'},
-                {field: 'teacher_no', title: '教职工编号', width: 140, align: 'center'},
-                {field: 'name', title: '教职工姓名', width: 110, align: 'center'},
+                {field: 'teacher_no', title: '员工与老师编号', width: 140, align: 'center'},
+                {field: 'name', title: '姓名', width: 110, align: 'center'},
                 {field: 'gender', title: '性别', width: 60, align: 'center'},
                 {field: 'phone', title: '手机', width: 90, align: 'center'},
                 {field: 'join_day', title: '入职日期', width: 80, align: 'center'},

@@ -340,6 +340,7 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
     var dgReceiptComm = 'dgStudent_contact';
     var dgStu_class = 'dgStudent_class';
     var footerStu = 'footerStudent';
+    var tbLayout = 'tableLayout';
 
     var editIndexClass = undefined;
     var edIndexContact = undefined;
@@ -388,8 +389,45 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
                 $('#'+stu_birthday).attr('id', stu_birthday+=uid);
                 $('#'+stu_remark).attr('id', stu_remark+=uid);
                 $('#'+footerStu).attr('id', footerStu+=uid);
+                $('#'+tbLayout).attr('id', tbLayout+=uid);
                 $('#'+dgReceiptComm).attr('id', dgReceiptComm+=uid).datagrid({
                     onClickCell: onClickContactCell,
+                    onResize: function (width, height) {
+                        //console.log('报班信息',width, height);
+                        var tb = $('#'+tbLayout);
+                        var parent = $(tb).parent();
+                        console.log('div=', parent.width(), 'tb=', tb.width());
+                        var tdFix = tb.find('td.dcTdFixed').css('width', 202);
+                        var w = parseInt((parent.width() - 202) / 3);
+                        console.log('w=', w, tdFix.width());
+                        var tdPercent = tb.find('td.dcTdPercent').css('width', w);
+                        console.log('div=', parent.width(), 'tb=', tb.width());
+                        //tb.width(parent.width());
+                        var wd = w - 10;
+                        //var x = tdPercent[0].clientWidth < wd ? tdPercent[0].clientWidth : wd;
+                        //console.log('x', x);
+                        $('#'+stu_sno).textbox('resize', wd);
+                        $('#'+stu_register_day).textbox('resize', wd);
+                        $('#'+stu_idcard).textbox('resize', wd);
+                        $('#'+stu_former_name).textbox('resize', wd);
+
+                        //x = tdPercent[1].clientWidth< wd ? tdPercent[1].clientWidth : wd;
+                        //console.log('x', x);
+                        $('#'+stu_name).textbox('resize', wd);
+                        $('#'+stu_school_name).textbox('resize', wd);
+                        $('#'+stu_counselor).textbox('resize', wd);
+                        $('#'+stu_birthday).textbox('resize', wd);
+
+                        //x = tdPercent[2].clientWidth < wd ? tdPercent[2].clientWidth : wd;
+                        //console.log('x', x);
+                        $('#'+stu_gender).textbox('resize', wd);
+                        $('#'+stu_information_source).textbox('resize', wd);
+                        $('#'+stu_degree).textbox('resize', wd);
+                        $('#'+stu_recorder).textbox('resize', wd);
+
+
+                        $('#'+stu_remark).textbox('resize', parent.width() - 202 - 16);
+                    },
                     onLoadSuccess: function () {
                         $('#'+dgReceiptComm).datagrid('mergeCells', {
                             index: 1, field: 'c2', colspan: 3

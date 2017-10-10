@@ -17,34 +17,35 @@
 <div class="easyui-panel" id="panelStudent" style="width:100%;height:100%;padding:2px;" title="学员详细信息" data-options="footer:'#footerStudent',fit:true, border:false">
     <div style="min-width: 1024px">
         <!-- 开始区域，学号，姓名，... -->
-        <table width="100%">
+        <table width="100%" id="tableLayout">
             <tr>
-                <td width="28%">
-                    <input class="easyui-textbox" id="sno" style="min-width:300px;width:100%" data-options="labelPosition:'left', label:'学号：',editable:false,
+                <td class="dcTdPercent">
+                    <input class="easyui-textbox" id="sno"  data-options="labelPosition:'left', label:'学号：',editable:false,
                            prompt:'无需输入，自动生成学号', labelPosition:'left'" >
 
                 </td>
 
-                <td width="28%">
-                    <input class="easyui-textbox" id="name" style="min-width:300px;width:100%" data-options="labelPosition:'left',label:'姓名*：'">
+                <td class="dcTdPercent">
+                    <input class="easyui-textbox" id="name" data-options="labelPosition:'left',label:'姓名*：'">
                 </td>
 
-                <td width="28%">
-                    <select class="easyui-combobox" id="gender" name="gender" style="min-width:300px;width:100%" data-options="labelPosition:'left',panelHeight:'auto', label:'性别：',editable:false">
+                <td class="dcTdPercent">
+                    <select class="easyui-combobox" id="gender" name="gender" data-options="labelPosition:'left',panelHeight:'auto', label:'性别：',editable:false">
                         <option value="女">女</option>
                         <option value="男">男</option>
                     </select>
                 </td>
-                <td rowspan="5" align="center"><div class="dc-headImage"><img src="/static/img/head09_400x400_big.jpg"></div></td>
+
+                <td class="dcTdFixed" rowspan="5" align="center"><div class="dc-headImage"><img src="/static/img/head09_400x400_big.jpg"></div></td>
             </tr>
 
             <tr>
                 <td>
-                    <input class="easyui-datebox" id="register_day" style="min-width:300px;width:100%" data-options="labelPosition:'left',editable:false,label:'登记日期：'">
+                    <input class="easyui-datebox" id="register_day" data-options="labelPosition:'left',editable:false,label:'登记日期：'">
                 </td>
 
                 <td>
-                    <select class="easyui-combobox" id="school_name" style="min-width:300px;width:100%"
+                    <select class="easyui-combobox" id="school_name"
                             data-options="labelPosition:'left',panelHeight:'auto', label:'所属分校：',editable:false,
                                 valueField: 'school_id',textField: 'school_name'">
                         <option>总部</option>
@@ -52,7 +53,7 @@
                 </td>
 
                 <td>
-                    <select class="easyui-combobox" id="information_source" style="min-width:300px;width:100%" data-options="labelPosition:'left',panelHeight:'auto', label:'信息来源：',editable:false">
+                    <select class="easyui-combobox" id="information_source" data-options="labelPosition:'left',panelHeight:'auto', label:'信息来源：',editable:false">
                         <option>　</option>
                         <option>朋友推荐</option>
                         <option>上门咨询</option>
@@ -62,18 +63,18 @@
 
             <tr>
                 <td>
-                    <input class="easyui-textbox" id="idcard" style="min-width:300px;width:100%" data-options="labelPosition:'left',label:'身份证号：'">
+                    <input class="easyui-textbox" id="idcard" data-options="labelPosition:'left',label:'身份证号：'">
                 </td>
 
                 <td>
-                    <select class="easyui-combobox" id="counselor" style="min-width:300px;width:100%" data-options="labelPosition:'left',panelHeight:60,label:'咨询师：',editable:false">
+                    <select class="easyui-combobox" id="counselor" data-options="labelPosition:'left',panelHeight:60,label:'咨询师：',editable:false">
                         <option>　</option>
                         <option>李老师</option>
                     </select>
                 </td>
 
                 <td>
-                    <select class="easyui-combobox" id="degree" style="min-width:300px;width:100%"data-options="labelPosition:'left',panelHeight:'auto',label:'文化程度：',editable:false">
+                    <select class="easyui-combobox" id="degree" data-options="labelPosition:'left',panelHeight:'auto',label:'文化程度：',editable:false">
                         <option>　</option>
                         <option>小学</option>
                         <option>初中</option>
@@ -86,24 +87,24 @@
 
             <tr>
                 <td>
-                    <input class="easyui-textbox" id="former_name"  style="min-width:300px;width:100%" data-options="labelPosition:'left',label:'曾用名：'">
+                    <input class="easyui-textbox" id="former_name" data-options="labelPosition:'left',label:'曾用名：'">
                 </td>
 
                 <td>
-                    <input class="easyui-datebox" id="birthday" style="min-width:300px;width:100%"
+                    <input class="easyui-datebox" id="birthday"
                            data-options="labelPosition:'left',formatter:danceFormatter,parser:danceParser,
                            label:'出生日期：', prompt: '年-月-日（yyyy-mm-dd）'
                            ">
                 </td>
 
                 <td>
-                    <input class="easyui-textbox" id="recorder" style="min-width:300px;width:100%" data-options="labelPosition:'left', label:'录入员：',editable:false,prompt: '根据当前登录用户生成，不需要填写。'">
+                    <input class="easyui-textbox" id="recorder" data-options="labelPosition:'left', label:'录入员：',editable:false,prompt: '根据当前登录用户生成，不需要填写。'">
                 </td>
             </tr>
 
             <tr>
                 <td colspan="3">
-                    <input class="easyui-textbox" id="remark" style="width:100%;height:80px" data-options="labelPosition:'top', multiline:true, label:'备注：'" >
+                    <input class="easyui-textbox" id="remark" style="height:80px" data-options="labelPosition:'top', multiline:true, label:'备注：'" >
                 </td>
             </tr>
         </table>
