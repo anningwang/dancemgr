@@ -9,6 +9,7 @@ import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from tools.tools import dc_gen_code, gen_code
 from flask import g
+from dcglobal import *
 
 ROLE_USER = 0
 ROLE_ADMIN = 1
@@ -655,13 +656,22 @@ class DanceSchool(db.Model):
         return -1 if school is None else school.id
 
     @staticmethod
-    def get_school_id_list():
+    def name_to_id():
         """ 分校名称 与 分校 id 键值对"""
         schools = DanceSchool.query.filter(DanceSchool.company_id == g.user.company_id).all()
         school_list = {}
         for sc in schools:
             school_list[sc.school_name.lower()] = sc.id
         return school_list
+
+    @staticmethod
+    def no_to_id():
+        """ 分校编号 与 分校 id 键值对"""
+        schools = DanceSchool.query.filter(DanceSchool.company_id == g.user.company_id).all()
+        school_dict = {}
+        for sc in schools:
+            school_dict[sc.school_no] = sc.id
+        return school_dict
 
     @staticmethod
     def get_school_id_lst():
@@ -1593,7 +1603,7 @@ class DanceTeacher(db.Model):
     school_id = db.Column(db.Integer)
     name = db.Column(db.String(20, collation='NOCASE'))  # 姓名
     rem_code = db.Column(db.String(20))     # 助记码
-    degree = db.Column(db.String(20))   # 文化程度
+    degree = db.Column(db.Integer)          # 文化程度
     birthday = db.Column(db.String(10))     # 出生日期
     join_day = db.Column(db.DateTime)   # 入职日期
     leave_day = db.Column(db.DateTime)  # 离职日期
@@ -1619,6 +1629,150 @@ class DanceTeacher(db.Model):
     last_upd_at = db.Column(db.DateTime, nullable=False)
     last_user = db.Column(db.String(20, collation='NOCASE'))
     company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
+    is_all = db.Column(db.Boolean)  # 是否所有分校可见：是1 / 否0，排课可以搜索。
+    remark = db.Column(db.String(140))  # 备注
+
+    def __init__(self, param):
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        self.teacher_no = param['teacher_no'] if 'teacher_no' in param else self.create_no()
+        if 'name' in param:
+            self.name = param['name']
+        if 'rem_code' in param:
+            self.rem_code = param['rem_code']
+        if 'degree' in param:
+            self.degree = param['degree']
+        if 'birthday' in param:
+            self.birthday = param['birthday']
+        if 'join_day' in param:
+            if param['join_day'] != '':
+                self.join_day = datetime.datetime.strptime(param['join_day'], '%Y-%m-%d')
+                if self.join_day.date() == datetime.date.today():
+                    self.join_day = datetime.datetime.today()
+        if 'leave_day' in param:
+            if param['leave_day'] != '':
+                self.leave_day = datetime.datetime.strptime(param['leave_day'], '%Y-%m-%d')
+                if self.leave_day.date() == datetime.date.today():
+                    self.leave_day = datetime.datetime.today()
+        if 'te_title' in param:
+            self.te_title = param['te_title']
+        if 'gender' in param:
+            self.gender = param['gender']
+        if 'te_type' in param:
+            self.te_type = param['te_type']
+        if 'in_job' in param:
+            self.in_job = param['in_job']
+        if 'is_assist' in param:
+            self.is_assist = param['is_assist']
+        if 'has_class' in param:
+            self.has_class = param['has_class']
+        if 'nation' in param:
+            self.nation = param['nation']
+        if 'birth_place' in param:
+            self.birth_place = param['birth_place']
+        if 'idcard' in param:
+            self.idcard = param['idcard']
+        if 'class_type' in param:
+            self.class_type = param['class_type']
+        if 'phone' in param:
+            self.phone = param['phone']
+        if 'tel' in param:
+            self.tel = param['tel']
+        if 'address' in param:
+            self.address = param['address']
+        if 'zipcode' in param:
+            self.zipcode = param['zipcode']
+        if 'email' in param:
+            self.email = param['email']
+        if 'qq' in param:
+            self.qq = param['qq']
+        if 'wechat' in param:
+            self.wechat = param['wechat']
+        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
+        self.create_at = datetime.datetime.today()
+        self.last_upd_at = datetime.datetime.today()
+        self.last_user = g.user.name
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
+        if 'is_all' in param:
+            self.is_all = param['is_all']
+        if 'remark' in param:
+            self.remark = param['remark']
+
+    def update(self, param):
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        if 'name' in param:
+            self.name = param['name']
+        if 'rem_code' in param:
+            self.rem_code = param['rem_code']
+        if 'degree' in param:
+            self.degree = param['degree']
+        if 'birthday' in param:
+            self.birthday = param['birthday']
+        if 'join_day' in param:
+            if param['join_day'] != '':
+                self.join_day = datetime.datetime.strptime(param['join_day'], '%Y-%m-%d')
+                if self.join_day.date() == datetime.date.today():
+                    self.join_day = datetime.datetime.today()
+        if 'leave_day' in param:
+            if param['leave_day'] != '':
+                self.leave_day = datetime.datetime.strptime(param['leave_day'], '%Y-%m-%d')
+                if self.leave_day.date() == datetime.date.today():
+                    self.leave_day = datetime.datetime.today()
+        if 'te_title' in param:
+            self.te_title = param['te_title']
+        if 'gender' in param:
+            self.gender = param['gender']
+        if 'te_type' in param:
+            self.te_type = param['te_type']
+        if 'in_job' in param:
+            self.in_job = param['in_job']
+        if 'is_assist' in param:
+            self.is_assist = param['is_assist']
+        if 'has_class' in param:
+            self.has_class = param['has_class']
+        if 'nation' in param:
+            self.nation = param['nation']
+        if 'birth_place' in param:
+            self.birth_place = param['birth_place']
+        if 'idcard' in param:
+            self.idcard = param['idcard']
+        if 'class_type' in param:
+            self.class_type = param['class_type']
+        if 'phone' in param:
+            self.phone = param['phone']
+        if 'tel' in param:
+            self.tel = param['tel']
+        if 'address' in param:
+            self.address = param['address']
+        if 'zipcode' in param:
+            self.zipcode = param['zipcode']
+        if 'email' in param:
+            self.email = param['email']
+        if 'qq' in param:
+            self.qq = param['qq']
+        if 'wechat' in param:
+            self.wechat = param['wechat']
+        self.last_upd_at = datetime.datetime.today()
+        self.last_user = g.user.name
+        if 'is_all' in param:
+            self.is_all = param['is_all']
+        if 'remark' in param:
+            self.remark = param['remark']
+
+    @staticmethod
+    def no_to_id():
+        records = DanceTeacher.query.filter_by(company_id=g.user.company_id).all()
+        no_id_dict = {}
+        for r in records:
+            no_id_dict[r.teacher_no] = r.id
+        return no_id_dict
+
+    def create_no(self):
+        r = DanceTeacher.query.filter_by(company_id=g.user.company_id).order_by(DanceTeacher.id.desc()).first()
+        number = 1 if r is None else int(r.teacher_no.rsplit('-', 1)[1]) + 1
+        self.teacher_no = 'JZG-%04d' % number
+        return self.teacher_no
 
     def __repr__(self):
         return '<DanceTeacher %r>' % self.id
@@ -1633,6 +1787,34 @@ class DanceTeacherEdu(db.Model):
     school = db.Column(db.String(20))
     major = db.Column(db.String(20))
     remark = db.Column(db.String(40))
+
+    def __init__(self, param):
+        if 'teacher_id' in param:
+            self.teacher_id = param['teacher_id']
+        if 'begin_day' in param and param['begin_day'] != '':
+            self.begin_day = datetime.datetime.strftime(param['begin_day'], '%Y-%m-%d')
+        if 'end_day' in param and param['end_day'] != '':
+            self.end_day = datetime.datetime.strftime(param['end_day'], '%Y-%m-%d')
+        if 'major' in param:
+            self.major = param['major']
+        if 'remark' in param:
+            slice.remark = param['remark']
+
+    def update(self, param):
+        if 'begin_day' in param:
+            if param['begin_day'] != '':
+                self.begin_day = datetime.datetime.strftime(param['begin_day'], '%Y-%m-%d')
+            else:
+                self.begin_day = None
+        if 'end_day' in param:
+            if param['end_day'] != '':
+                self.end_day = datetime.datetime.strftime(param['end_day'], '%Y-%m-%d')
+            else:
+                self.end_day = None
+        if 'major' in param:
+            self.major = param['major']
+        if 'remark' in param:
+            slice.remark = param['remark']
 
     def __repr__(self):
         return '<TeacherEdu %r>' % self.id
@@ -1649,6 +1831,38 @@ class DanceTeacherWork(db.Model):
     content = db.Column(db.String(100))  # 主要工作内容
     remark = db.Column(db.String(40))
 
+    def __init__(self, param):
+        if 'teacher_id' in param:
+            self.teacher_id = param['teacher_id']
+        if 'begin_day' in param and param['begin_day'] != '':
+            self.begin_day = datetime.datetime.strftime(param['begin_day'], '%Y-%m-%d')
+        if 'end_day' in param and param['end_day'] != '':
+            self.end_day = datetime.datetime.strftime(param['end_day'], '%Y-%m-%d')
+        if 'firm' in param:
+            self.firm = param['firm']
+        if 'position' in param:
+            self.position = param['position']
+        if 'remark' in param:
+            slice.remark = param['remark']
+
+    def update(self, param):
+        if 'begin_day' in param:
+            if param['begin_day'] != '':
+                self.begin_day = datetime.datetime.strftime(param['begin_day'], '%Y-%m-%d')
+            else:
+                self.begin_day = None
+        if 'end_day' in param:
+            if param['end_day'] != '':
+                self.end_day = datetime.datetime.strftime(param['end_day'], '%Y-%m-%d')
+            else:
+                self.end_day = None
+        if 'firm' in param:
+            self.firm = param['firm']
+        if 'position' in param:
+            self.position = param['position']
+        if 'remark' in param:
+            slice.remark = param['remark']
+
     def __repr__(self):
         return '<TeacherWork %r>' % self.id
 
@@ -1664,6 +1878,29 @@ class DcCommon(db.Model):
     last_user = db.Column(db.String(20, collation='NOCASE'))
     company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
     scope = db.Column(db.Integer)   # 使用于 学员 2，教职工 3，还是全部 1
+
+    def __init__(self, param):
+        if 'type' in param:
+            self.type = param['type']
+        if 'name' in param:
+            self.name = param['name']
+        if 'scope' in param:
+            self.scope = param['scope']
+        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
+        self.create_at = datetime.datetime.today()
+        self.last_upd_at = datetime.datetime.today()
+        self.last_user = g.user.name
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
+
+    def update(self, param):
+        if 'type' in param:
+            self.type = param['type']
+        if 'name' in param:
+            self.name = param['name']
+        if 'scope' in param:
+            self.scope = param['scope']
+        self.last_upd_at = datetime.datetime.today()
+        self.last_user = g.user.name
 
     def __repr__(self):
         return '<DcCommon %r>' % self.id

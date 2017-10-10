@@ -2106,7 +2106,7 @@ function danceAddTabFeeStudyDatagrid(divId, title, tableId, condition) {
         $(parentDiv).tabs('select', title);
         $('#'+tableId).datagrid('load', condition);
     } else {
-        var content = '<table id=' + tableId + '></table>';
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
         $(parentDiv).tabs('add', {
             title: title,
             content: content,
@@ -2166,7 +2166,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
         iconCls: 'icon-a_detail',
         fit: true,
         url: url + '_get',
-        //fitColumns: true,
+        fitColumns: true,
         pagination: true,   // True to show a pagination toolbar on datagrid bottom.
         singleSelect: true, // True to allow selecting only one row.
         loadMsg: '正在加载数据...',

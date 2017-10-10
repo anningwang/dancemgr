@@ -79,3 +79,31 @@ def dance_tree_student():
         tree[5]['state'] = 'closed'
 
     return jsonify(tree)
+
+
+@app.route('/dance_tree_teacher', methods=['POST', 'GET'])
+@login_required
+def dance_tree_teacher():
+    tree = [{"id": 10, "text": "员工与老师", 'attributes': {'school_id': 'all', 'in_job': 1}},
+            ]
+
+    school_ids, school_map = DanceUserSchool.get_school_map_by_uid()
+    if len(school_ids) == 1:
+        t1 = [{'text': '在职员工与老师', 'attributes': {'school_id': 'all', 'in_job': 1}},
+              {'text': '本校全部员工与老师', 'attributes': {'school_id': 'all'}}]
+        tree[0]['children'] = t1
+    elif len(school_ids) > 1:
+        t1 = []
+        for i in range(len(school_ids)):
+            name = school_map[school_ids[i]]
+            sid = school_ids[i]
+
+            t11 = [{'text': '在职员工与老师', 'attributes': {'school_id': sid, 'in_job': 1}},
+                   {'text': '本校全部员工与老师', 'attributes': {'school_id': sid}}]
+            t1.append({'text': name, 'state': 'closed', 'children': t11,
+                       'attributes': {'school_id': sid, 'in_job': 1}})
+        t1.append({'text': '所有分校员工与老师', 'attributes': {'school_id': 'all'}})
+        tree[0]['children'] = t1
+        # tree[0]['state'] = 'closed'
+
+    return jsonify(tree)

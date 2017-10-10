@@ -3,7 +3,8 @@ import xlrd
 import xlwt
 from app import db
 from app.models import DanceStudent, DanceClass, DanceStudentClass, DanceSchool, DanceReceipt, DanceUserSchool,\
-    DcFeeItem, DanceOtherFee, DanceClassReceipt, DcTeachingMaterial, DanceTeaching, DcClassType
+    DcFeeItem, DanceOtherFee, DanceClassReceipt, DcTeachingMaterial, DanceTeaching, DcClassType, DanceTeacher,\
+    DanceTeacherEdu, DanceTeacherWork
 from flask import g
 from dcglobal import *
 
@@ -98,11 +99,12 @@ def import_student(fn):
     ck = dc_check_col(sh.row_values(0), cols_cn, cols_need)
     if ck['errorCode'] != 0:
         return ck
-    cols_num = ck['excel_idx']
+    cols_num = list(ck['excel_idx'])
+    col_idx = list(ck['col_idx'])
 
     num_right = 0
     num_wrong = 0
-    school_ids = DanceSchool.get_school_id_list()
+    school_ids = DanceSchool.name_to_id()
 
     # 逆序遍历。第一行为表头需要过滤掉
     for row in range(cnt - 1, 0, -1):
@@ -112,7 +114,7 @@ def import_student(fn):
 
         parm = {}
         for i in range(len(cols_num)):
-            parm[columns[i]] = r[cols_num[i]]
+            parm[columns[col_idx[i]]] = r[cols_num[i]]
 
         # 特殊列的处理
         parm['school_id'] = school_ids[parm['school_id'].lower()]
@@ -182,11 +184,12 @@ def import_class(fn):
     ck = dc_check_col(sh.row_values(0), cols_cn, cols_need)
     if ck['errorCode'] != 0:
         return ck
-    cols_num = ck['excel_idx']
+    cols_num = list(ck['excel_idx'])
+    col_idx = list(ck['col_idx'])
 
     num_right = 0
     num_wrong = 0
-    school_ids = DanceSchool.get_school_id_list()
+    school_ids = DanceSchool.name_to_id()
 
     # 查询班级类型 与 id 的对应表
     class_type_id = DcClassType.name_id()
@@ -199,7 +202,7 @@ def import_class(fn):
 
         parm = {}
         for i in range(len(cols_num)):
-            parm[columns[i]] = r[cols_num[i]]
+            parm[columns[col_idx[i]]] = r[cols_num[i]]
 
         # 特殊列的处理
         parm['is_ended'] = 1 if parm['is_ended'] == u'是' else 0
@@ -271,11 +274,12 @@ def import_receipt(fn):
     ck = dc_check_col(sh.row_values(0), cols_cn, cols_need)
     if ck['errorCode'] != 0:
         return ck
-    cols_num = ck['excel_idx']
+    cols_num = list(ck['excel_idx'])
+    col_idx = list(ck['col_idx'])
 
     num_right = 0
     num_wrong = 0
-    school_ids = DanceSchool.get_school_id_list()
+    school_ids = DanceSchool.name_to_id()
     sid = list(school_ids.values())
     students = DanceStudent.get_records(sid)
 
@@ -287,7 +291,7 @@ def import_receipt(fn):
 
         parm = {}
         for i in range(len(cols_num)):
-            parm[columns[i]] = r[cols_num[i]]
+            parm[columns[col_idx[i]]] = r[cols_num[i]]
 
         # 特殊列的处理
         # 分校名称 转为 分校ID
@@ -342,6 +346,128 @@ def import_receipt(fn):
     return {'errorCode': 0, 'msg': msg}
 
 
+def import_teacher(fn):
+    """
+    :param fn:   文件名，需要导入数据的Excel文件名
+    :return:     errorCode     0 成功， 非0 错误
+                  msg           信息: 'ok' -- 正确，其他错误,
+    """
+    sheet_pages = [u'员工与老师信息', u'教育经历', u'工作经历']
+    global progressbar
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': sheet_pages[0]}
+
+    columns = ['teacher_no', 'school_id', 'name', 'rem_code', 'degree',
+               'birthday', 'join_day', 'leave_day', 'te_title', 'gender',
+               'te_type', 'in_job', 'is_assist', 'has_class', 'nation',
+               'birth_place', 'idcard', 'class_type', 'phone', 'tel',
+               'address', 'zipcode', 'email', 'qq', 'wechat',
+               'recorder', 'remark'
+               ]
+    cols_cn = [u'员工与老师编号', u'所属分校', u'姓名', u'助记码', u'文化程度',
+               u'出生日期', u'入职日期', u'离职日期', u'职位', u'性别',
+               u'类别', u'是否在职', u'是否是咨询师', u'是否授课', u'民族',
+               u'籍贯', u'身份证号码', u'教授课程', u'手机', u'电话',
+               u'联系地址', u'邮政编码', u'Email', u'QQ', u'微信标识',
+               u'录入员', u'备注'
+               ]
+    cols_need = [u'员工与老师编号', u'所属分校', u'姓名', u'性别', u'类别',
+                 u'是否在职', u'是否是咨询师', u'是否授课'
+                 ]
+    workbook = xlrd.open_workbook(fn)
+    worksheets = workbook.sheet_names()
+
+    for page in sheet_pages:
+        if page not in worksheets:
+            return {'errorCode': 880, 'msg': u'未找到页面[%s]' % page}
+
+    sh = workbook.sheet_by_name(sheet_pages[0])
+    cnt = sh.nrows
+    if cnt <= 1:
+        return {'errorCode': 2000, 'msg': u"无有效数据！"}
+
+    ck = dc_check_col(sh.row_values(0), cols_cn, cols_need)
+    if ck['errorCode'] != 0:
+        return ck
+    cols_num = list(ck['excel_idx'])
+    col_idx = list(ck['col_idx'])
+
+    num_right = 0
+    num_wrong = 0
+    school_ids = DanceSchool.name_to_id()
+    class_type = DcClassType.name_id()
+
+    # 逆序遍历。第一行为表头需要过滤掉
+    for row in range(cnt - 1, 0, -1):
+        r = sh.row_values(row)
+        if r[0] == u'合计':
+            continue
+
+        parm = {}
+        for i in range(len(cols_num)):
+            parm[columns[col_idx[i]]] = r[cols_num[i]]
+
+        # 特殊列的处理
+        # 分校名称 转为 分校ID
+        school_name = parm['school_id'].lower()
+        if school_name in school_ids:
+            parm['school_id'] = school_ids[school_name]
+        else:
+            rec = DanceSchool({'school_name': parm['school_id']})
+            db.session.add(rec)
+
+            rec = DanceSchool.query.filter_by(company_id=g.user.id, chool_name=parm['school_id']).first()
+            if rec is not None:
+                school_ids[school_name] = rec.id
+                parm['school_id'] = rec.id
+            else:
+                raise Exception(u'Can not add new record school[%s]!' % school_name)
+
+        parm['gender'] = gender_v(parm['gender'])
+        parm['te_type'] = True if parm['te_type'] == u'专职' else False
+        parm['in_job'] = True if parm['in_job'] == u'是' else False
+        parm['is_assist'] = True if parm['is_assist'] == u'是' else False
+        parm['has_class'] = True if parm['has_class'] == u'是' else False
+        if 'class_type' in parm:
+            if parm['class_type'] in class_type:
+                parm['class_type'] = class_type[parm['class_type']]
+            else:
+                parm.pop('class_type')
+        # -----------------------------------------------------------------------------------------
+        # 保证 教职工不能重复 分校id+教职工编号 不能重复
+        has = DanceTeacher.query.filter_by(school_id=parm['school_id'], teacher_no=parm['teacher_no']).first()
+        if has is None:
+            dt = DanceTeacher(parm)
+            db.session.add(dt)
+            num_right += 1
+        else:
+            num_wrong += 1  # 重复数据
+        # -----------------------------------------------------------------------------------------
+
+        value = int((num_wrong+num_right)*100.0/(cnt-1))
+        progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
+
+    progressbar[str(g.user.id)]['value'] = 100
+    msg = u'[%s]页%s' % (sh.name, '' if num_right + num_wrong != 0 else u' 无数据！')
+    msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
+    msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
+
+    # 导入 [教育经历] 页面 -------------------------------------------------------------
+    teachers = DanceTeacher.no_to_id()
+    ret = dc_import_teacher_edu(workbook.sheet_by_name(sheet_pages[1]), teachers)
+    msg += ret['msg']
+    if ret['errorCode'] != 0:
+        return ret
+
+    # 导入 [工作经历] 页面 ----------------------------------------------------------
+    ret = dc_import_teacher_work(workbook.sheet_by_name(sheet_pages[2]), teachers)
+    msg += ret['msg']
+    if ret['errorCode'] != 0:
+        return ret
+
+    db.session.commit()
+    return {'errorCode': 0, 'msg': msg}
+
+
 def dc_check_col(xlhead, cols_cn, cols_need=None):
     """
     excel 导入检查，检查列名是否存在，并返回 存在的列名和excel文件中对应列的索引
@@ -353,7 +479,7 @@ def dc_check_col(xlhead, cols_cn, cols_need=None):
                     excel_idx       excel 文件中列的序号，从 0 开始
                     col_idx         输入参数 cols_cn 在excel文件中有对应列的索引
     """
-    excel_idx = []  # excel 对应 列号，从1开始
+    excel_idx = []  # excel 对应 列号，从0开始
     col_idx = []    # col_cn中可以在xlhead中找到对应列的列索引，从0开始
 
     for i in range(len(cols_cn)):
@@ -364,8 +490,10 @@ def dc_check_col(xlhead, cols_cn, cols_need=None):
                 excel_idx.append(j)
                 col_idx.append(i)
                 break
-        if not found and cols_need is not None and cols_cn[i] in cols_need:
-            return {'errorCode': 2000, 'msg': u"文件中未找到列名[%s]！" % cols_cn[i]}
+        if not found:
+            print 'not found col:', cols_cn[i]
+            if cols_need is not None and cols_cn[i] in cols_need:
+                return {'errorCode': 2000, 'msg': u"文件中未找到列名[%s]！" % cols_cn[i]}
 
     return {'errorCode': 0, 'msg': 'ok', 'excel_idx': excel_idx, 'col_idx': col_idx}
 
@@ -650,7 +778,8 @@ def import_teaching_material(fn):
     ck = dc_check_col(sh.row_values(0), cols_cn, cols_need)
     if ck['errorCode'] != 0:
         return ck
-    cols_num = ck['excel_idx']
+    cols_num = list(ck['excel_idx'])
+    col_idx = list(ck['col_idx'])
 
     num_right = 0
     num_wrong = 0
@@ -663,7 +792,7 @@ def import_teaching_material(fn):
 
         parm = {}
         for i in range(len(cols_num)):
-            parm[columns[i]] = r[cols_num[i]]
+            parm[columns[col_idx[i]]] = r[cols_num[i]]
 
         # 特殊列的处理============
 
@@ -687,6 +816,124 @@ def import_teaching_material(fn):
     msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
 
     db.session.commit()
+    return {'errorCode': 0, 'msg': msg}
+
+
+def dc_import_teacher_edu(worksheet, teachers):
+    """ [ 员工与老师 ] 导入项目，导入[ 教育经历 ]sheet 页
+    输入信息：
+        worksheet:      Excel 工作区页面
+        teachers:       教职工编号--> 教职工记录id dict
+    """
+    global progressbar
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': worksheet.name}
+    columns = ['teacher_id', 'begin_day', 'end_day', 'school', 'major',
+               'remark']
+    cols_cn = [u'员工与老师编号', u'起始年月', u'结束年月', u'所在学校', u'专业及学历',
+               u'备注']
+
+    num_right = 0
+    num_wrong = 0
+
+    cnt = worksheet.nrows
+    ck = dc_check_col(worksheet.row_values(0), cols_cn)
+    if ck['errorCode'] != 0:
+        return ck
+    cols_num = list(ck['excel_idx'])
+    col_idx = list(ck['col_idx'])
+
+    # 逆序遍历。第一行为表头需要过滤掉
+    for row in range(cnt - 1, 0, -1):
+        r = worksheet.row_values(row)
+        if r[0] == u'合计':
+            continue
+
+        parm = {}
+        for i in range(len(cols_num)):
+            parm[columns[col_idx[i]]] = r[cols_num[i]]
+
+        # 特殊列的处理
+        # 教职工编号 --> 教职工ID
+        parm['teacher_id'] = teachers[parm['teacher_id']]
+
+        # -----------------------------------------------------------------------------------------
+        # 保证 信息(员工与老师id+起始年月+结束年月) 不能重复
+        has = DanceTeacherEdu.query.filter_by(teacher_id=parm['teacher_id'], begin_day=parm['begin_day'],
+                                              end_day=parm['end_day']).first()
+        if has is None:
+            record = DanceTeacherEdu(parm)
+            db.session.add(record)
+            num_right += 1
+        else:
+            num_wrong += 1  # 重复数据
+            # -----------------------------------------------------------------------------------------
+
+        value = int((num_wrong + num_right) * 100.0 / (cnt - 1))
+        progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
+
+    progressbar[str(g.user.id)]['value'] = 100
+    msg = '[' + worksheet.name + u']页 %s' % ('' if num_right+num_wrong != 0 else u'为空。')
+    msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
+    msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
+    return {'errorCode': 0, 'msg': msg}
+
+
+def dc_import_teacher_work(worksheet, teachers):
+    """ [ 员工与老师 ] 导入项目，导入[ 教育经历 ]sheet 页
+    输入信息：
+        worksheet:      Excel 工作区页面
+        teachers:       教职工编号--> 教职工记录id dict
+    """
+    global progressbar
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': worksheet.name}
+    columns = ['teacher_id', 'begin_day', 'end_day', 'firm', 'position',
+               'content', 'remark']
+    cols_cn = [u'员工与老师编号', u'起始年月', u'结束年月', u'所在单位', u'岗位或职位',
+               u'主要工作', u'备注']
+
+    num_right = 0
+    num_wrong = 0
+
+    cnt = worksheet.nrows
+    ck = dc_check_col(worksheet.row_values(0), cols_cn)
+    if ck['errorCode'] != 0:
+        return ck
+    cols_num = list(ck['excel_idx'])
+    col_idx = list(ck['col_idx'])
+
+    # 逆序遍历。第一行为表头需要过滤掉
+    for row in range(cnt - 1, 0, -1):
+        r = worksheet.row_values(row)
+        if r[0] == u'合计':
+            continue
+
+        parm = {}
+        for i in range(len(cols_num)):
+            parm[columns[col_idx[i]]] = r[cols_num[i]]
+
+        # 特殊列的处理
+        # 教职工编号 --> 教职工ID
+        parm['teacher_id'] = teachers[parm['teacher_id']]
+
+        # -----------------------------------------------------------------------------------------
+        # 保证 信息(员工与老师id+起始年月+结束年月) 不能重复
+        has = DanceTeacherWork.query.filter_by(teacher_id=parm['teacher_id'], begin_day=parm['begin_day'],
+                                               end_day=parm['end_day']).first()
+        if has is None:
+            record = DanceTeacherWork(parm)
+            db.session.add(record)
+            num_right += 1
+        else:
+            num_wrong += 1  # 重复数据
+            # -----------------------------------------------------------------------------------------
+
+        value = int((num_wrong + num_right) * 100.0 / (cnt - 1))
+        progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
+
+    progressbar[str(g.user.id)]['value'] = 100
+    msg = '[' + worksheet.name + u']页 %s' % ('' if num_right+num_wrong != 0 else u'为空。')
+    msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
+    msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
     return {'errorCode': 0, 'msg': msg}
 
 

@@ -4,7 +4,7 @@ from flask_login import login_required
 from app import app, db
 from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent, DcTeachingMaterial,\
     DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass, DanceStudentClass, DcShowRecpt, DcCommFeeMode,\
-    DcShow, DcShowFeeCfg, DcShowDetailFee, DcClassType
+    DcShow, DcShowFeeCfg, DcShowDetailFee, DcClassType, DanceTeacher, DanceTeacherEdu, DanceTeacherWork, DcCommon
 from views import dance_student_query
 import json
 import datetime
@@ -1073,6 +1073,86 @@ def dance_show_add():
 
     db.session.commit()
     return jsonify({'errorCode': 0, 'msg': '成功增加演出信息！'})
+
+
+@app.route('/dance_teacher_get', methods=['POST', 'GET'])
+@login_required
+def dance_teacher_get():
+    """
+    查询 员工与老师 列表
+        查询条件：rows          每页显示的条数
+                  page          页码，第几页，从1开始
+                  school_id     分校ID
+                  in_job        是否在职
+                  name          教职工姓名过滤条件
+    :return:    符合条件的 教职工 列表
+    {
+        total:          记录数
+        rows: [{
+            id:
+            name:       员工与老师姓名
+        }]
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   'ok'
+            600                 '您没有管理分校的权限！'
+    }
+    """
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    print 'page_size=', page_size, ' page_no=', page_no
+    if page_no <= 0:    # 容错处理
+        page_no = 1
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    dcq = DanceTeacher.query.filter_by(company_id=g.user.company_id)
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    school_id_intersection.append(TEACHER_IN_ALL_SCHOOL)
+    dcq = dcq.filter(DanceTeacher.school_id.in_(school_id_intersection))
+
+    if 'in_job' in request.form:
+        dcq = dcq.filter_by(in_job=request.form['in_job'])
+
+    if 'name' in request.form and request.form['name'] != '':
+        dcq = dcq.filter(DanceTeacher.name.like('%' + request.form['name'] + '%'))
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.join(DanceSchool, DanceSchool.id == DanceTeacher.school_id)\
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no)\
+        .order_by(DanceTeacher.school_id, DanceTeacher.id.desc())\
+        .limit(page_size).offset(offset).all()
+    i = offset + 1
+    rows = []
+    for rec in records:
+        r = rec[0]
+        leave_day = datetime.datetime.strftime(r.leave_day, '%Y-%m-%d') if r.leave_day is not None else None
+        rows.append({"id": r.id, "teacher_no": r.teacher_no, "school_no": rec[2], 'no': i,
+                     "school_name": rec[1], "name": r.name, "rem_code": r.rem_code, 'degree': r.degree,
+                     'birthday': r.birthday, 'join_day': datetime.datetime.strftime(r.join_day, '%Y-%m-%d'),
+                     'leave_day': leave_day,
+                     'te_title': r.te_title, 'gender': u'男' if r.gender else u'女',
+                     'te_type': teacher_type_s(r.te_type), 'in_job': u'是' if r.in_job else u'否',
+                     'is_assist': u'是' if r.is_assist else u'否',
+                     'has_class': u'是' if r.has_class else u'否',
+                     'nation': r.nation,
+                     'birth_place': r.birth_place, 'idcard': r.idcard, 'class_type': r.class_type,
+                     'phone': r.phone, 'tel': r.tel, 'address': r.address, 'zipcode': r.zipcode, 'email': r.email,
+                     'qq': r.qq, 'wechat': r.wechat, 'remark': r.remark, 'recorder': r.recorder,
+                     'create_at': datetime.datetime.strftime(r.create_at, '%Y-%m-%d %H:%M'),
+                     'last_upd_at': datetime.datetime.strftime(r.last_upd_at, '%Y-%m-%d %H:%M'),
+                     'last_user': r.last_user
+                     })
+        i += 1
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
 
 
 @app.route('/dc_comm_fee_mode_update', methods=['POST'])

@@ -89,12 +89,17 @@ $(function() {
     });
 
     $('#treeTeacher').tree({
-        url:'/static/html/tree_teacher.json',method:'get',animate:true,lines:true,
+        url:'/dance_tree_teacher',method:'get',animate:true,lines:true,
         onClick: function(node){
             var root = getRootNode(this, node);
             var tableRootId = this.id + root.id;
             console.log(root.text, ' tableRootId=', tableRootId);
-            $.messager.alert('提示', ' 制作中...', 'info');
+
+            if(root.id == 10){
+                danceAddTabTeacher(root.text, tableRootId, node.attributes);
+            }else{
+                $.messager.alert('提示', ' 制作中...', 'info');
+            }
         }
     });
 
@@ -176,5 +181,6 @@ function getRootNode(tree, curNode) {
 <script src="/static/js/dancedatamgr.js"  type="text/javascript"></script>
 <script src="/static/js/dancetempeditedtable.js"  type="text/javascript"></script>
 <script src="/static/js/dancerept.js"></script>
+<script src="/static/js/dance.teacher.js"></script>
 
 </html>

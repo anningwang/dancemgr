@@ -21,8 +21,14 @@ CLASS_STYLE_ONE_FOR_ONE = 2     # 1对1
 CLASS_MODE_BY_TIMES = 1         # 按课次
 CLASS_MODE_BY_HOUR = 2          # 按课时
 
-GENDER_MALE = '男'
-GENDER_FEMALE = '女'
+TEACHER_IN_ALL_SCHOOL = -99     # 员工与老师在所有分校任教
+
+GENDER_MALE = u'男'
+GENDER_FEMALE = u'女'
+
+DC_GENDER = {1: u'男', u'男': 1,
+             0: u'女', u'女': 0
+             }
 
 
 def get_feename(val):
@@ -88,3 +94,29 @@ def class_mode_val(mode):
         return CLASS_MODE_BY_HOUR
     else:
         return CLASS_MODE_BY_TIMES
+
+
+def gender_text(val):
+    try:
+        _v = int(val)
+        if _v in DC_GENDER:
+            return DC_GENDER[_v]
+        else:
+            return GENDER_FEMALE
+    except KeyError:
+        return GENDER_FEMALE
+
+
+def gender_val(text):
+    if text in DC_GENDER:
+        return DC_GENDER[text]
+    else:
+        return DC_GENDER[GENDER_FEMALE]
+
+
+def gender_v(text):
+    return True if text == GENDER_MALE else False
+
+
+def teacher_type_s(val):
+    return u'专职' if val else u'兼职'
