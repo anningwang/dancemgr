@@ -377,7 +377,7 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
                 $('#'+stu_recorder).attr('id', stu_recorder+=uid).textbox('textbox').css('background','#e4e4e4');
                 // #ccc #fff #ffee00 #6293BB e4e4e4 #99ff99
                 $('#'+stu_sno).attr('id', stu_sno+=uid).textbox('textbox').css('background','#e4e4e4');
-                $('#'+stu_name).attr('id', stu_name+=uid);
+                $('#'+stu_name).attr('id', stu_name+=uid).textbox('textbox').focus();
                 $('#'+stu_gender).attr('id', stu_gender+=uid);
                 $('#'+stu_register_day).attr('id', stu_register_day+=uid);
                 $('#'+stu_school_name).attr('id', stu_school_name+=uid);
@@ -393,38 +393,27 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
                 $('#'+dgReceiptComm).attr('id', dgReceiptComm+=uid).datagrid({
                     onClickCell: onClickContactCell,
                     onResize: function (width, height) {
-                        //console.log('报班信息',width, height);
                         var tb = $('#'+tbLayout);
                         var parent = $(tb).parent();
-                        console.log('div=', parent.width(), 'tb=', tb.width());
-                        var tdFix = tb.find('td.dcTdFixed').css('width', 202);
+                        tb.find('td.dcTdFixed').css('width', 202);
                         var w = parseInt((parent.width() - 202) / 3);
-                        console.log('w=', w, tdFix.width());
-                        var tdPercent = tb.find('td.dcTdPercent').css('width', w);
-                        console.log('div=', parent.width(), 'tb=', tb.width());
-                        //tb.width(parent.width());
+                        tb.find('td.dcTdPercent').css('width', w);
+
                         var wd = w - 10;
-                        //var x = tdPercent[0].clientWidth < wd ? tdPercent[0].clientWidth : wd;
-                        //console.log('x', x);
                         $('#'+stu_sno).textbox('resize', wd);
                         $('#'+stu_register_day).textbox('resize', wd);
                         $('#'+stu_idcard).textbox('resize', wd);
                         $('#'+stu_former_name).textbox('resize', wd);
 
-                        //x = tdPercent[1].clientWidth< wd ? tdPercent[1].clientWidth : wd;
-                        //console.log('x', x);
                         $('#'+stu_name).textbox('resize', wd);
                         $('#'+stu_school_name).textbox('resize', wd);
                         $('#'+stu_counselor).textbox('resize', wd);
                         $('#'+stu_birthday).textbox('resize', wd);
 
-                        //x = tdPercent[2].clientWidth < wd ? tdPercent[2].clientWidth : wd;
-                        //console.log('x', x);
                         $('#'+stu_gender).textbox('resize', wd);
                         $('#'+stu_information_source).textbox('resize', wd);
                         $('#'+stu_degree).textbox('resize', wd);
                         $('#'+stu_recorder).textbox('resize', wd);
-
 
                         $('#'+stu_remark).textbox('resize', parent.width() - 202 - 16);
                     },
@@ -723,8 +712,7 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
                 $.messager.alert('提示', data.msg, 'info');
             }
         }).fail(function(jqXHR, textStatus, errorThrown) {
-            console.log(jqXHR);
-            var msg = $.format("请求失败。错误码：{1}({2}) ", [jqXHR.status, errorThrown]);
+            var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
             $.messager.alert('提示', msg, 'info');
         });
     }

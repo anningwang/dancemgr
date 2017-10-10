@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>舞管家</title>
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/icon.css">
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+</head>
+<body>
+<style>
+    .dc-headImage{border:1px solid #58a3ef;}
+    div.dc-headImage img{width: 200px;height: 200px;}
+</style>
+
+<div class="easyui-panel" id="panelTeacher" style="width:100%;height:100%;padding:2px;" title="学员详细信息" data-options="footer:'#footerTeacher',fit:true, border:false">
+    <div style="min-width: 1024px">
+        <!-- 开始区域，学号，姓名，... -->
+        <table width="100%" id="tableLayout">
+            <tr>
+                <td class="dcTdPercent">
+                    <input class="easyui-textbox" id="teacherNo"  data-options="labelAlign:'right', label:'员工与老师编号：',editable:false,prompt:'自动生成',labelWidth:120" >
+                </td>
+
+                <td class="dcTdPercent">
+                    <input class="easyui-textbox" id="name" data-options="labelAlign:'right',label:'*姓名：',labelWidth:120">
+                </td>
+
+                <td class="dcTdPercent">
+                    <select class="easyui-combobox" id="gender" name="gender" data-options="labelAlign:'right',panelHeight:'auto', label:'性别：',editable:false,labelWidth:120">
+                        <option value="0">女</option>
+                        <option value="1">男</option>
+                    </select>
+                </td>
+
+                <td class="dcTdFixed" rowspan="7" align="center"><div class="dc-headImage"><img src="/static/img/head09_400x400_big.jpg"></div></td>
+            </tr>  <!-- 1 end -->
+
+            <tr>  <!-- 2 begin -->
+                <td>
+                    <input class="easyui-datebox" id="joinDay" data-options="labelAlign:'right',editable:false,label:'入职日期：',labelWidth:120">
+                </td>
+
+                <td>
+                    <select class="easyui-combobox" id="school_name" data-options="labelAlign:'right',panelHeight:'auto', label:'所属分校：',editable:false,valueField: 'school_id',textField: 'school_name',labelWidth:120"></select>
+                </td>
+
+                <td>
+                    <select class="easyui-combobox" id="teacherType" data-options="labelAlign:'right',panelHeight:'auto', label:'类别：',editable:false,labelWidth:120">
+                        <option>朋友推荐</option>
+                        <option>上门咨询</option>
+                    </select>
+                </td>
+            </tr>  <!-- 2  end -->
+
+            <tr>  <!-- 3 -->
+                <td>
+                    <select class="easyui-combobox" id="inJob" data-options="labelAlign:'right',label:'是否在职：',panelHeight:'auto',editable:false,width:120,labelWidth:120">
+                        <option value="1">是</option>
+                        <option value="0">否</option>
+                    </select>
+                </td>
+
+                <td>
+                    <select class="easyui-combobox" id="isAssist" data-options="labelAlign:'right',panelHeight:60,label:'是否咨询师：',editable:false,width:120,labelWidth:120">
+                        <option value="1">是</option>
+                        <option value="0">否</option>
+                    </select>
+                </td>
+
+                <td>
+                    <select class="easyui-combobox" id="hasClass" data-options="labelAlign:'right',panelHeight:'auto',label:'是否授课：',editable:false,width:120,labelWidth:120">
+                        <option value="1">是</option>
+                        <option value="0">否</option>
+                    </select>
+                </td>
+            </tr>  <!-- 3 -->
+
+            <tr>  <!-- 4 -->
+                <td>
+                    <input class="easyui-textbox" id="idcard" data-options="labelAlign:'right',label:'身份证号：',labelWidth:120">
+                </td>
+
+                <td>
+                    <select class="easyui-combobox" id="teacherTitle" data-options="labelAlign:'right',panelHeight:60,label:'职位：',editable:false,labelWidth:120">
+                    </select>
+                </td>
+
+                <td>
+                    <select class="easyui-combobox" id="degree" data-options="labelAlign:'right',panelHeight:'auto',label:'文化程度：',editable:false,labelWidth:120"></select>
+                </td>
+            </tr>  <!-- 4 -->
+
+            <tr>  <!-- 5 -->
+                <td>
+                    <input class="easyui-textbox" id="nation" data-options="labelAlign:'right',label:'民族：',labelWidth:120">
+                </td>
+
+                <td>
+                    <input class="easyui-textbox" id="birthPlace" data-options="labelAlign:'right',panelHeight:60,label:'籍贯：',labelWidth:120">
+                </td>
+
+                <td>
+                    <select class="easyui-combobox" id="classType" data-options="labelAlign:'right',panelHeight:'auto',label:'教授班级类型：',editable:false, width:120,labelWidth:120"></select>
+                </td>
+            </tr>  <!-- 5 -->
+
+            <tr>  <!-- 6 -->
+                <td>
+                    <input class="easyui-textbox" id="phone" data-options="labelAlign:'right',label:'手机：',labelWidth:120">
+                </td>
+
+                <td>
+                    <input class="easyui-textbox" id="qq" data-options="labelAlign:'right',panelHeight:60,label:'QQ：',labelWidth:120"/>
+                </td>
+
+                <td>
+                    <input class="easyui-textbox" id="tel" data-options="labelAlign:'right',panelHeight:'auto',label:'电话：',labelWidth:120"/>
+                </td>
+            </tr>  <!-- 6 -->
+
+            <tr>  <!-- 7 -->
+                <td>
+                    <input class="easyui-datebox" id="leaveDay" data-options="labelAlign:'right',formatter:danceFormatter,parser:danceParser,label:'离职日期：', prompt: '年-月-日（yyyy-mm-dd）',labelWidth:120">
+                </td>
+
+                <td>
+                    <input class="easyui-datebox" id="birthday" data-options="labelAlign:'right',formatter:danceFormatter,parser:danceParser,label:'出生日期：', prompt:'年-月-日（yyyy-mm-dd）',labelWidth:120">
+                </td>
+
+                <td>
+                    <input class="easyui-textbox" id="zipcode" data-options="width:220,labelAlign:'right',panelHeight:60,label:'邮编：',labelWidth:120"/>
+                </td>
+            </tr>  <!-- 7 -->
+
+            <tr>  <!-- 8 -->
+                <td colspan="2">
+                    <input class="easyui-textbox" id="address" data-options="width:400,labelAlign:'right',label:'地址：',labelWidth:120"/>
+                </td>
+
+                <td>
+                    <input class="easyui-textbox" id="createAt" data-options="labelAlign:'right',panelHeight:60,label:'创建时间：',editable:false,labelWidth:120">
+
+                </td>
+                <td>
+                    <input class="easyui-textbox" id="recorder" data-options="labelAlign:'right', label:'录入员：',editable:false,prompt: '当前登录用户'">
+                </td>
+            </tr>  <!-- 8 -->
+
+            <tr>
+                <td colspan="2">
+                    <input class="easyui-textbox" id="wechat" data-options="labelAlign:'right',label:'微信标识：',width:300,labelWidth:120">
+                </td>
+
+                <td>
+                    <input class="easyui-textbox" id="lastUpd" data-options="labelAlign:'right',panelHeight:60,label:'最后更新时间：',editable:false,labelWidth:120">
+                </td>
+                <td>
+                    <input class="easyui-textbox" id="lastUser" data-options="labelAlign:'right', label:'最后更新人：',editable:false">
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="4">
+                    <input class="easyui-textbox" id="remark" style="width:98%; height:80px" data-options="labelAlign:'right', multiline:true, label:'备注：',labelWidth:120" >
+                </td>
+            </tr>
+        </table>
+
+        <!-- 中间区域，教育经历  -->
+        <table id="dgTeacherEdu" class="easyui-datagrid" title="教育经历" style="width:100%;" data-options="checkbox:true, rownumbers:true,fitColumns:true,singleSelect:true,collapsible:true">
+
+            <thead>
+            <tr>
+                <th data-options="field:'ck',checkbox:true"></th>
+                <th data-options="field:'begin_day',width:100,align:'center', editor: {
+                            type:'datebox',
+                            options: {
+                                editable:false
+                            }
+                        }">起始年月*</th>
+                <th data-options="field:'end_day',width:140,align:'center'">结束年月</th>
+                <th data-options="field:'firm',width:200,align:'center',editor:{
+							type:'combobox',
+							options:{
+								valueField:'class_id',
+								textField:'class_name',
+								panelWidth: 260,
+								formatter: formatItem,
+								groupField:'class_type'
+							}
+						}">所在学校*</th>
+                <th data-options="field:'position',width:140,align:'center',editor:{
+                        type:'combobox',
+                        options:{
+                            valueField:'status',
+							textField:'status',
+							editable:false,
+							panelHeight:'auto',
+							data: [{
+			                    status_id:'正常',
+			                    status:'正常'
+		                    },{
+			                    status_id:'退班',
+			                    status: '退班'
+		                    },{
+			                    status_id:'结束',
+			                    status:'结束'
+		                    },{
+			                    status_id:'续班',
+			                    status:'续班'
+		                    }]
+                        }
+                    }">专业及学历</th>
+                <th data-options="field:'remark',width:400,align:'center',editor:'textbox'">备注</th>
+            </tr>
+            </thead>
+        </table>
+
+        <!-- 分割符================== -->
+        <div style="height: 2px"></div>
+
+        <!-- 下方区域，工作经历 -->
+        <table id="dgTeacherWork" class="easyui-datagrid" title="工作经历" style="width:100%;" data-options="checkbox:true, rownumbers:true,fitColumns:true,singleSelect:true,collapsible:true">
+
+            <thead>
+            <tr>
+                <th data-options="field:'ck',checkbox:true"></th>
+                <th data-options="field:'begin_day',width:100,align:'center', editor: {
+                            type:'datebox',
+                            options: {
+                                editable:false
+                            }
+                        }">起始年月*</th>
+                <th data-options="field:'end_day',width:140,align:'center'">结束年月</th>
+                <th data-options="field:'firm',width:200,align:'center',editor:{
+							type:'combobox',
+							options:{
+								valueField:'class_id',
+								textField:'class_name',
+								panelWidth: 260,
+								formatter: formatItem,
+								groupField:'class_type'
+							}
+						}">所在单位</th>
+                <th data-options="field:'position',width:140,align:'center',editor:{
+                        type:'combobox',
+                        options:{
+                            valueField:'status',
+							textField:'status',
+							editable:false,
+							panelHeight:'auto',
+							data: [{
+			                    status_id:'正常',
+			                    status:'正常'
+		                    },{
+			                    status_id:'退班',
+			                    status: '退班'
+		                    },{
+			                    status_id:'结束',
+			                    status:'结束'
+		                    },{
+			                    status_id:'续班',
+			                    status:'续班'
+		                    }]
+                        }
+                    }">岗位或者职位</th>
+                <th data-options="field:'content',width:100">主要工作</th>
+                <th data-options="field:'remark',width:400,align:'center',editor:'textbox'">备注</th>
+            </tr>
+            </thead>
+        </table>
+
+    </div>
+</div>
+
+
+<div id="footerTeacher">
+    <div id="pagerTeacher" class="easyui-pagination"></div>
+</div>
+
+<script type="text/javascript">
+
+    function formatItem(row){
+        return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
+                '<span style="color:#888">' + row['class_id'] + '</span>';
+    }
+
+</script>
+
+</body>
+</html>

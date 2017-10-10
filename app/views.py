@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from flask import render_template, flash, redirect, session, url_for, request, g, jsonify, json
+from flask import render_template, flash, redirect, session, url_for, request, g, jsonify, json, Response
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_sqlalchemy import get_debug_queries
 from flask_babel import gettext
@@ -191,6 +191,17 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html', form=form)        # dance_register
+
+
+@app.route('/favicon.ico')
+def response_favicon():
+    import os
+
+    curdir = os.path.abspath(os.path.dirname(__file__))
+    fn = os.path.join(curdir, 'static/img/favicon.ico')
+    image = file(fn)
+    resp = Response(image, mimetype="image/jpeg")
+    return resp
 
 
 @app.route('/user/<nickname>')

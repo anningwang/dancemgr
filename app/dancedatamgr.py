@@ -1103,7 +1103,6 @@ def dance_teacher_get():
     """
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
-    print 'page_size=', page_size, ' page_no=', page_no
     if page_no <= 0:    # 容错处理
         page_no = 1
 
@@ -1115,7 +1114,6 @@ def dance_teacher_get():
         school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
     if len(school_id_intersection) == 0:
         return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
-    school_id_intersection.append(TEACHER_IN_ALL_SCHOOL)
     dcq = dcq.filter(DanceTeacher.school_id.in_(school_id_intersection))
 
     if 'in_job' in request.form:
@@ -1153,6 +1151,113 @@ def dance_teacher_get():
                      })
         i += 1
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_teacher_details_get', methods=['POST'])
+@login_required
+def dance_teacher_details_get():
+    """
+    查询 员工与老师 列表
+        查询条件：rows          每页显示的条数
+                  page          页码，第几页，从1开始
+                                特殊值 -2，表示根据 teacher_id 查询，并求出该 单据 的序号
+                  teacher_id    员工与老师数据 id, optional, 当 page==-2,必填
+                  school_id     分校ID
+                  in_job        是否在职
+                  name          教职工姓名过滤条件
+
+    :return:    符合条件的 教职工 列表
+    {
+        total:          记录数
+        row: {
+            id:
+            name:       员工与老师姓名
+        }
+        edu: {}         教育经历
+        work: {}        工作经历
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   'ok'
+            600                 '您没有管理分校的权限！'
+    }
+    """
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    dcq = DanceTeacher.query.filter_by(company_id=g.user.company_id)
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(DanceTeacher.school_id.in_(school_id_intersection))
+
+    if 'in_job' in request.form:
+        dcq = dcq.filter_by(in_job=request.form['in_job'])
+
+    if 'name' in request.form and request.form['name'] != '':
+        dcq = dcq.filter(DanceTeacher.name.like('%' + request.form['name'] + '%'))
+
+    total = dcq.count()
+    if page_no <= -2:
+        # 根据 id 获取 教职工 详细信息，并求出其序号。
+        if 'teacher_id' not in request.form:
+            print u'输入参数错误，缺少字段 teacher_id'
+            return jsonify({'errorCode': 401, 'msg': u'输入参数错误，缺少字段 teacher_id'})
+        rid = int(request.form['teacher_id'])
+        r = DanceTeacher.query.get(rid)
+        if r is None:
+            return jsonify({'errorCode': 400, 'msg': u'不存在id为[%s]的员工与老师信息！' % rid})
+        rec_no = dcq.filter(DanceTeacher.id >= r.id).count()
+    else:
+        if page_no <= 0:  # 容错处理
+            page_no = 1
+        offset = (page_no - 1) * page_size
+        r = dcq.order_by(DanceTeacher.id.desc()).limit(page_size).offset(offset).first()
+        if r is None:
+            return jsonify({'errorCode': 400, 'msg': u'不存在id为[%s]的员工与老师信息！' % request.form['teacher_id']})
+        rec_no = offset + 1
+
+    """ 查询 员工与老师 所在的分校名称和编号 """
+    sc = DanceSchool.query.filter_by(id=r.school_id).first()
+
+    leave_day = datetime.datetime.strftime(r.leave_day, '%Y-%m-%d') if r.leave_day is not None else None
+    row = {"id": r.id, "teacher_no": r.teacher_no, "school_no": sc.school_no, 'no': rec_no,
+           "school_name": sc.school_name, "name": r.name, "rem_code": r.rem_code, 'degree': r.degree,
+           'birthday': r.birthday, 'join_day': datetime.datetime.strftime(r.join_day, '%Y-%m-%d'),
+           'leave_day': leave_day,
+           'te_title': r.te_title, 'gender': u'男' if r.gender else u'女',
+           'te_type': teacher_type_s(r.te_type), 'in_job': u'是' if r.in_job else u'否',
+           'is_assist': u'是' if r.is_assist else u'否',
+           'has_class': u'是' if r.has_class else u'否',
+           'nation': r.nation,
+           'birth_place': r.birth_place, 'idcard': r.idcard, 'class_type': r.class_type,
+           'phone': r.phone, 'tel': r.tel, 'address': r.address, 'zipcode': r.zipcode, 'email': r.email,
+           'qq': r.qq, 'wechat': r.wechat, 'remark': r.remark, 'recorder': r.recorder,
+           'create_at': datetime.datetime.strftime(r.create_at, '%Y-%m-%d %H:%M'),
+           'last_upd_at': datetime.datetime.strftime(r.last_upd_at, '%Y-%m-%d %H:%M'),
+           'last_user': r.last_user
+           }
+
+    """ 查询 教育经历"""
+    eds = DanceTeacherEdu.query.filter_by(teacher_id=r.id).all()
+    edu = []
+    for ed in eds:
+        edu.append({'id': ed.id, 'teacher_id': ed.teacher_id, 'begin_day': ed.begin_day, 'end_day': ed.end_day,
+                    'school': ed.school, 'major': ed.major, 'remark': ed.remark})
+
+    """ 查询 工作经历"""
+    works = DanceTeacherWork.query.filter_by(teacher_id=r.id).all()
+    work = []
+    for wk in works:
+        work.append({'id': wk.id, 'teacher_id': wk.teacher_id, 'begin_day': ed.begin_day, 'end_day': ed.end_day,
+                     'firm': wk.firm, 'position': wk.position, 'content': wk.content, 'remark': wk.remark})
+    return jsonify({"total": total, "row": row, 'edu': edu, 'work': work, 'errorCode': 0, 'msg': 'ok'})
 
 
 @app.route('/dc_comm_fee_mode_update', methods=['POST'])
