@@ -646,12 +646,16 @@ function dcRecordsChanged(oldR, newR, field) {  // 求 增、改、删 记录的
 function dcLoadTree() {
     $.ajax({
         method: "POST",
-        url: '/dance_tree_student',
+        url: '/api/dance_tree_get',
         data: {}
     }).done(function(data) {
         if (data.errorCode === 0) {
             $('#treeStudent').tree('loadData', data['stu']);
             $('#treeDb').tree('loadData', data['db']);
+            $('#treeTeacher').tree('loadData', data['teacher']);
+            $('#treeSchool').tree('loadData', data['school']);
+            $('#treeAsset').tree('loadData', data['asset']);
+            $('#treeFinance').tree('loadData', data['finance']);
         } else {
             $.messager.alert('提示', data.msg, 'info');
         }

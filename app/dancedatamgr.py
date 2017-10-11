@@ -1442,7 +1442,7 @@ def dc_common_degree_get():
 
     rows = []
     for rec in records:
-        rows.append({'id': rec.id, 'name': rec.name, 'scope': rec.scope,
+        rows.append({'id': rec.id, 'name': rec.name, 'scope': rec.scope, 'scope_text': degree_scope_s(rec.scope),
                      'recorder': rec.recorder, 'last_user': rec.last_user,
                      'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d'),
                      'last_upd_at': datetime.datetime.strftime(rec.last_upd_at, '%Y-%m-%d %H:%M')})
@@ -1499,6 +1499,7 @@ def dc_common_degree_update():
                 .filter_by(name=row['name']).first()
             if dup is not None:
                 return jsonify({'errorCode': 901, 'msg': u'名称为[%s]的记录已经存在！' % row['name']})
+            row['type'] = COMM_TYPE_DEGREE
             nr = DcCommon(row)
             db.session.add(nr)
         else:
@@ -1508,7 +1509,7 @@ def dc_common_degree_update():
                     .filter_by(name=row['name']).filter(DcCommon.id != info['id']).first()
                 if dup is not None:
                     return jsonify({'errorCode': 801, 'msg': u'名称为[%s]的记录已经存在！' % row['name']})
-            nr = DcCommFeeMode.query.get(info['id'])
+            nr = DcCommon.query.get(info['id'])
             if nr is not None:
                 nr.update(row)
                 db.session.add(nr)

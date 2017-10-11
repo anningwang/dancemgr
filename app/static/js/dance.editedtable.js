@@ -250,7 +250,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         }
     }
 
-    function getChangedData(index,row,changes){
+    function getChangedData(index,row){     // ,changes unused
         var i;
         for (i = 0; i< dataChanged.length; i++) {
             if (dataChanged[i].rowIndex == index) {
@@ -393,7 +393,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
                     btnStatus(BTN_STATUS.SAVE);
 
                     if( options.who === 'DanceSchool')
-                        dcReloadTree();
+                        dcLoadTree();
                 } else {
                     $.messager.alert({title: '错误', msg: data.msg, icon:'error'});
                 }
@@ -441,7 +441,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
                                 return false;
                             }
                             if( options.who === 'DanceSchool')
-                                dcReloadTree();
+                                dcLoadTree();
                             
                             $(dg).datagrid('loading');
                             _total -= row.length;

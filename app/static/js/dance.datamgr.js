@@ -294,3 +294,62 @@ function danceAddTabClassType(title, tableId) {
         danceCreateEditedDatagrid(tableId, '/'+module, optsFeeMode);
     }
 }
+
+/**
+ * 打开 [ 文化程度 ] tab标签
+ * @param title     Tab的标题
+ * @param tableId   Datagrid id,创建在 table 上
+ */
+function danceAddTabDegree(title, tableId) {
+    var parentDiv = $('#danceTabs');
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+    } else {
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
+        $(parentDiv).tabs('add', {
+            title: title,
+            content: content,
+            closable: true
+        });
+        var module = 'dc_common_degree';
+        var optsFeeMode = {
+            defaultSelField: 'name',
+            fieldValidate: {name: checkNotEmpty, scope: checkNotEmpty},
+            queryText: '文化程度：',
+            queryPrompt: '名称或拼音首字母查找',
+            who: module,     // 删除数据时，表明身份
+            danceModuleName: module,   // 传递给 导入、导出 模块的身份标识
+            danceModuleTitle: title,          // 导入、导出 窗口 title
+            columns: [[
+                {field: 'ck', checkbox:true },   // checkbox
+                {field: 'name', title: '文化程度', width: 140, halign:'center', align: 'left', editor: 'textbox'},
+                {field: 'scope', title: '类别', width: 100, halign:'center', align: 'left',
+                    formatter:function(value,row){
+                        return row.scope_text;
+                    },
+                    editor: {
+                        type: 'combobox', options:{
+                            valueField: 'scope', textField:'scope_text', editable:false,panelHeight:'auto',
+                            data: [{
+                                scope: 1,
+                                scope_text: '两者'
+                            },{
+                                scope: 2,
+                                scope_text: '仅用于学员'
+                            },{
+                                scope: 3,
+                                scope_text: '仅用于员工与老师'
+                            }]
+                        }
+                    }
+                },
+                {field: 'create_at', title: '创建时间', width: 100, align: 'center'},
+                {field: 'last_upd_at', title: '最后更新日期', width: 100, align: 'center'},
+                {field: 'last_user', title: '最后更新人', width: 100, align: 'center'},
+                {field: 'recorder', title: '录入员', width: 100, align: 'center'}
+            ]]
+        };
+
+        danceCreateEditedDatagrid(tableId, '/'+module, optsFeeMode);
+    }
+}

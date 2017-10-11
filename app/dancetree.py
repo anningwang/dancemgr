@@ -5,39 +5,9 @@ from app import app
 from models import DanceUserSchool
 
 
-@app.route('/dance_tree_school', methods=['POST', 'GET'])
+@app.route('/api/dance_tree_get', methods=['POST', 'GET'])
 @login_required
-def dance_tree_school():
-    tree = [{"id": 10, "text": "班级信息", 'attributes': {'school_id': 'all', 'is_ended': 0}},
-            {"id": 20, "text": "课程表"},
-            {"id": 30, "text": "教室列表"}
-            ]
-
-    school_ids, school_map = DanceUserSchool.get_school_map_by_uid()
-    if len(school_ids) == 1:
-        t1 = [{'text': '已结束班级', 'attributes': {'school_id': 'all', 'is_ended': 1}},
-              {'text': '全部班级', 'attributes': {'school_id': 'all'}}]
-        tree[0]['children'] = t1
-    elif len(school_ids) > 1:
-        t1 = []
-        for i in range(len(school_ids)):
-            name = school_map[school_ids[i]]
-            sid = school_ids[i]
-
-            t11 = [{'text': '已结束班级', 'attributes': {'school_id': sid, 'is_ended': 1}},
-                   {'text': '全部班级', 'attributes': {'school_id': sid}}]
-            t1.append({'text': name, 'state': 'closed', 'children': t11,
-                       'attributes': {'school_id': sid, 'is_ended': 0}})
-
-            tree[0]['children'] = t1
-        # tree[0]['state'] = 'closed'
-
-    return jsonify(tree)
-
-
-@app.route('/dance_tree_student', methods=['POST', 'GET'])
-@login_required
-def dance_tree_student():
+def api_dance_tree_get():
     tree = [{"id": 10, "text": "学员列表", 'attributes': {'school_id': 'all', 'is_training': u'是'}},
             {"id": 20, "text": "准学员列表"},
             {"id": 30, "text": "收费单（学费）", 'attributes': {'school_id': 'all'}},
@@ -79,18 +49,50 @@ def dance_tree_student():
         tree[5]['state'] = 'closed'
 
     db_tree = dance_tree_db()
+    teacher_tree = dance_tree_teacher(school_ids, school_map)
+    school_tree = dance_tree_school(school_ids, school_map)
+    asset_tree = dance_tree_asset()
+    finance_tree = dance_tree_finance()
     return jsonify({'stu': tree,
                     'db': db_tree,
+                    'teacher': teacher_tree,
+                    'school': school_tree,
+                    'asset': asset_tree,
+                    'finance': finance_tree,
                     'errorCode': 0, 'msg': 'ok'})
 
 
-@app.route('/dance_tree_teacher', methods=['POST', 'GET'])
-@login_required
-def dance_tree_teacher():
+def dance_tree_school(school_ids, school_map):
+    tree = [{"id": 10, "text": "班级信息", 'attributes': {'school_id': 'all', 'is_ended': 0}},
+            {"id": 20, "text": "课程表"},
+            {"id": 30, "text": "教室列表"}
+            ]
+
+    if len(school_ids) == 1:
+        t1 = [{'text': '已结束班级', 'attributes': {'school_id': 'all', 'is_ended': 1}},
+              {'text': '全部班级', 'attributes': {'school_id': 'all'}}]
+        tree[0]['children'] = t1
+    elif len(school_ids) > 1:
+        t1 = []
+        for i in range(len(school_ids)):
+            name = school_map[school_ids[i]]
+            sid = school_ids[i]
+
+            t11 = [{'text': '已结束班级', 'attributes': {'school_id': sid, 'is_ended': 1}},
+                   {'text': '全部班级', 'attributes': {'school_id': sid}}]
+            t1.append({'text': name, 'state': 'closed', 'children': t11,
+                       'attributes': {'school_id': sid, 'is_ended': 0}})
+
+            tree[0]['children'] = t1
+        # tree[0]['state'] = 'closed'
+
+    return tree
+
+
+def dance_tree_teacher(school_ids, school_map):
     tree = [{"id": 10, "text": "员工与老师", 'attributes': {'school_id': 'all', 'in_job': 1}},
             ]
 
-    school_ids, school_map = DanceUserSchool.get_school_map_by_uid()
     if len(school_ids) == 1:
         t1 = [{'text': '在职员工与老师', 'attributes': {'school_id': 'all', 'in_job': 1}},
               {'text': '本校全部员工与老师', 'attributes': {'school_id': 'all'}}]
@@ -109,7 +111,7 @@ def dance_tree_teacher():
         tree[0]['children'] = t1
         # tree[0]['state'] = 'closed'
 
-    return jsonify(tree)
+    return tree
 
 
 def dance_tree_db():
@@ -125,4 +127,20 @@ def dance_tree_db():
                 {"id": 55, "text": "文化程度"}
             ]}
             ]
+    return tree
+
+
+def dance_tree_asset():
+    tree = [
+        {"id": 1, "text": "舞蹈用品列表" },
+        {"id": 2, "text": "办公用品列表" }
+    ]
+    return tree
+
+
+def dance_tree_finance():
+    tree = [
+        {"id": 1, "text": "退费单（学费）列表" },
+        {"id": 2, "text": "房租" }
+    ]
     return tree

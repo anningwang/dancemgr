@@ -7,7 +7,8 @@ from config import basedir
 from werkzeug.utils import secure_filename
 import base64
 import time
-from excel import import_student, import_class, import_receipt, import_teaching_material, import_teacher,\
+from excel import import_student, import_class, import_receipt, import_teaching_material, import_teacher, \
+    import_common_degree, \
     export_student
 from tools import get_filename
 
@@ -105,6 +106,8 @@ def dispatch_import_file(fn, dance_module_name):
     elif dance_module_name == 'dance_teaching_material':
         return import_teaching_material(fn)
     elif dance_module_name == 'dance_teacher':
-        return import_teacher(fn)
+        return import_teacher(fn, True)
+    elif dance_module_name == 'dc_common_degree':
+        return import_common_degree(fn, True)
     else:
         return {'errorCode': 201, 'msg': u'Unknown module name %s' % dance_module_name}

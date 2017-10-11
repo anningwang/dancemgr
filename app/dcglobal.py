@@ -30,6 +30,12 @@ DC_GENDER = {1: u'男', u'男': 1,
              0: u'女', u'女': 0
              }
 
+DEGREE_SCOPE_ALL = 1
+DEGREE_SCOPE_STUDENT = 2
+DEGREE_SCOPE_TEACHER = 3
+
+COMM_TYPE_DEGREE = 2        # 文化程度
+
 
 def get_feename(val):
     """ 收费项目类别 """
@@ -120,3 +126,12 @@ def gender_v(text):
 
 def teacher_type_s(val):
     return u'专职' if val else u'兼职'
+
+
+def degree_scope_s(val):
+    if val == DEGREE_SCOPE_ALL:
+        return u'两者'
+    elif val == DEGREE_SCOPE_STUDENT:
+        return u'仅用于学员'
+    else:
+        return u'仅用于员工与老师'

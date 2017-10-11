@@ -623,13 +623,3 @@ function dcOpenDialogNewClassType(id, _title, _width, _height, _icon){
         });
     }
 }
-
-// 重新加载左侧树形导航栏中的内容。
-function dcReloadTree() {
-    $('#treeTeacher').tree('reload');
-    $('#treeSchool').tree('reload');
-    $('#treeAsset').tree('reload');
-    $('#treeFinance').tree('reload');
-
-    dcLoadTree();
-}
