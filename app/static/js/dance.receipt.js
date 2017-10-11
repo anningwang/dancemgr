@@ -211,7 +211,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                 dgLoadData(data['showDetail']);
             }
         }).fail(function(jqXHR, textStatus, errorThrown) {
-            $.messager.alert('提示', "请求失败。错误码：{0}({1}) ".format(jqXHR.status, errorThrown), 'info');
+            $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
         });
     }
 

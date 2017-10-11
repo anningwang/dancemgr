@@ -421,47 +421,48 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
 
     // 删除数据 //////////////////////////////////////
     function onDel() {
-        var row = $(dg).datagrid('getSelections');
-        if (row.length == 0) {
+        var rows = $(dg).datagrid('getSelections');
+        if (rows.length == 0) {
             $.messager.alert('提示', '请选择要删除的数据行！' , 'info');
             return false;
         } else {
-            var text = '数据删除后不能恢复！是否要删除选中的 ' + row.length + '条 数据？';
+            var text = '数据删除后不能恢复！是否要删除选中的 ' + rows.length + '条 数据？';
             $.messager.confirm('确认删除', text , function(r){
                 if (r){
-                    var ids = [];
-                    for (var i = 0; i < row.length; i++) {
-                        ids.push(row[i].id);
-                    }
-                    //console.log('del:' + ids);
-                    $.ajax({
-                        method: 'POST',
-                        url: '/dance_del_data',
-                        dataType: 'json',
-                        data: {'ids': ids, 'who':options.who},
-                        success: function (data,status) {
-                            console.log('success in ajax. data.msg=' + data.msg + " status=" + status);
-                            if (data.errorCode != 0) {
-                                $.messager.alert({title: '错误', msg: data.msg, icon:'error'});
-                                return false;
-                            }
-                            if( options.who === 'DanceSchool')
-                                dcLoadTree();
-                            
-                            $(dg).datagrid('loading');
-                            _total -= row.length;
-                            if (_pageNo > 1 && (_pageNo-1)*_pageSize >= _total) { _pageNo--; }
-                            doAjaxGetData();
-                        },
-                        error: function (XMLHttpRequest, textStatus, errorThrown) {
-                            console.log('error in ajax. XMLHttpRequest=', + XMLHttpRequest
-                                + ' textStatus=' + textStatus + ' errorThrown=' + errorThrown);
-                        }
-                    });
+                    doDel(rows);
                 }
             });
         }
     }   // end of 删除数据 //////////////////////////////////////
+
+    function doDel(rows) {
+        var ids = [];
+        for (var i = 0; i < rows.length; i++) {
+            ids.push(rows[i].id);
+        }
+        //console.log('del:' + ids);
+        $.ajax({
+            method: 'POST',
+            url: '/dance_del_data',
+            dataType: 'json',
+            data: {'ids': ids, 'who': options.who}
+        }).done(function (data) {
+            console.log('success in ajax. data.msg=' + data.msg);
+            if (data.errorCode != 0) {
+                $.messager.alert({title: '错误', msg: data.msg, icon:'error'});
+                return false;
+            }
+            if( options.who === 'DanceSchool')
+                dcLoadTree();
+
+            $(dg).datagrid('loading');
+            _total -= rows.length;
+            if (_pageNo > 1 && (_pageNo-1)*_pageSize >= _total) { _pageNo--; }
+            doAjaxGetData();
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
+        });
+    }
 
     var __pagerHeight = 30;
     function btnStatus(action) {
