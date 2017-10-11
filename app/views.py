@@ -8,7 +8,7 @@ from forms import EditForm, SearchForm, DanceLoginForm, DanceRegistrationForm
 from models import User, ROLE_USER, ROLE_ADMIN, Post, HzLocation, DanceStudent, DanceClass, DanceSchool, DanceUser,\
     DanceStudentClass, DanceCompany, DanceUserSchool, DcShowDetailFee, DcCommFeeMode, DcShowRecpt, DcFeeItem,\
     DanceOtherFee, DanceReceipt, DanceClassReceipt, DanceTeaching, DcClassType, DanceTeacher, DanceTeacherEdu,\
-    DanceTeacherWork
+    DanceTeacherWork, DcCommon
 from datetime import datetime
 from emails import follower_notification
 from translate import microsoft_translate
@@ -414,6 +414,8 @@ def dance_del_data():
         return dc_del_class_type(ids)
     elif who == 'dance_teacher':
         return dc_del_teacher(ids)
+    elif who == 'dc_common_job_title':
+        return dc_del_common(ids)
     else:
         return jsonify({'errorCode': 1, "msg": "Table not found!"})     # error
 
@@ -465,17 +467,20 @@ def dc_del_fee_item(ids):
         errorCode       错误码
             811         收费项目[%s]已经被使用，不能删除！
     """
+    school_ids = DanceSchool.get_id_list()
     for i in ids:
         fee = DcFeeItem.query.get(i)
         if fee is None:
             continue
         t = FeeItemType(int(fee.type))
         if t == FeeItemType.Study:
-            is_use = DanceOtherFee.query.filter_by(fee_item_id=i).first()
+            is_use = DanceOtherFee.query.join(DanceReceipt, DanceReceipt.id == DanceOtherFee.receipt_id)\
+                .filter(DanceReceipt.school_id.in_(school_ids)).filter(DanceOtherFee.fee_item_id == i).first()
             if is_use is not None:
                 return jsonify({'errorCode': 811, 'msg': u'收费项目[%s]已经被使用，不能删除！' % fee.fee_item})
         elif t == FeeItemType.Show:
-            is_use = DcShowDetailFee.query.filter_by(fee_item_id=i).first()
+            is_use = DcShowDetailFee.query.join(DcShowRecpt, DcShowRecpt.id == DcShowDetailFee.recpt_id)\
+                .filter(DcShowRecpt.school_id.in_(school_ids)).filter(DcShowDetailFee.fee_item_id == i).first()
             if is_use is not None:
                 return jsonify({'errorCode': 811, 'msg': u'收费项目[%s]已经被使用，不能删除！' % fee.fee_item})
         elif t == FeeItemType.Common:
@@ -501,7 +506,7 @@ def dc_del_fee_mode(ids):
         if fee is None:
             continue
         """  收费单演出 判断是否使用了收费模式 """
-        is_use = DcShowRecpt.query.filter_by(fee_mode_id=i).first()
+        is_use = DcShowRecpt.query.filter_by(company_id=g.user.company_id, fee_mode_id=i).first()
         if is_use is not None:
             return jsonify({'errorCode': 831, 'msg': u'收费模式[%s]已被使用，不能删除！' % fee.fee_mode})
         """  收费单班级 判断是否使用了收费模式 """
@@ -527,11 +532,13 @@ def dc_del_class_type(ids):
             832                 班级类型[%s]已被使用，不能删除！
     }
     """
+    school_ids = DanceSchool.get_id_list()
     for i in ids:
         r = DcClassType.query.get(i)
         if r is None:
             continue
-        is_use = DanceClass.query.filter_by(class_type=i).first()
+        is_use = DanceClass.query.filter(DanceClass.school_id.in_(school_ids))\
+            .filter(DanceClass.class_type == i).first()
         if is_use is not None:
             return jsonify({'errorCode': 832, 'msg': u'班级类型[%s]已被使用，不能删除！' % r.name})
     DcClassType.query.filter(DcClassType.id.in_(ids)).delete(synchronize_session=False)
@@ -565,6 +572,47 @@ def dc_del_teacher(ids):
         DanceTeacherEdu.query.filter(DanceTeacherEdu.id == i).delete()
         DanceTeacherWork.query.filter(DanceTeacherWork.id == i).delete()
     DanceTeacher.query.filter(DanceTeacher.id.in_(ids)).delete(synchronize_session=False)
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
+
+
+def dc_del_common(ids):
+    """
+    删除 公共信息：包括 职位信息，文化程度等， 若记录已经被引用，则不能删除。
+    :param ids:     记录 id list
+    :return: {
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   删除成功！
+            811                 [%s]已经被使用，不能删除！
+            812                 未知类型[%d]！
+    }
+    """
+    for i in ids:
+        r = DcCommon.query.get(i)
+        if r is None:
+            continue
+        if r.type == COMM_TYPE_JOB_TITLE:
+            is_use = DanceTeacher.query.filter_by(company_id=g.user.company_id, te_title=i).first()
+            if is_use is not None:
+                return jsonify({'errorCode': 811, 'msg': u'[%s]已经被使用，不能删除！' % r.name})
+        elif r.type == COMM_TYPE_DEGREE:
+            if r.scope == DEGREE_SCOPE_STUDENT or r.scope == DEGREE_SCOPE_ALL:
+                is_use = DanceStudent.query.filter_by(company_id=g.user.company_id, degree=i).first()
+                if is_use is not None:
+                    return jsonify({'errorCode': 811, 'msg': u'[%s]已经被使用，不能删除！' % r.name})
+
+            if r.scope == DEGREE_SCOPE_TEACHER or r.scope == DEGREE_SCOPE_ALL:
+                is_use = DanceTeacher.query.filter_by(company_id=g.user.company_id, degree=i).first()
+                if is_use is not None:
+                    return jsonify({'errorCode': 811, 'msg': u'[%s]已经被使用，不能删除！' % r.name})
+        else:
+            return jsonify({'errorCode': 812, 'msg': u'未知类型[%d]！' % r.type})
+
+    DcCommon.query.filter(DcCommon.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 

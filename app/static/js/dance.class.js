@@ -235,14 +235,15 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
                 var pagerOpts = $(dg).datagrid('getPager').pagination('options');
                 pagerOpts.pageNumber = _pageNo;
                 pagerOpts.pageSize = _pageSize;
+                dg.datagrid('loadData', data);
             } else {
                 $.messager.alert({title: '错误', msg: data.msg, icon:'error'});
             }
-            dg.datagrid('loadData', data);
         }).fail(function(jqXHR, textStatus, errorThrown) {
-            //console.log(jqXHR);
             var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
             $.messager.alert('提示', msg, 'info');
+        }).always(function () {
+            dg.datagrid('loaded');
         });
     };
 

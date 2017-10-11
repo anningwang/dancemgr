@@ -35,6 +35,7 @@ DEGREE_SCOPE_STUDENT = 2
 DEGREE_SCOPE_TEACHER = 3
 
 COMM_TYPE_DEGREE = 2        # 文化程度
+COMM_TYPE_JOB_TITLE = 3     # 职位
 
 
 def get_feename(val):

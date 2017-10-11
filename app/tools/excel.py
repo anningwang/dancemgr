@@ -372,7 +372,7 @@ def import_teacher(fn, is_asc=False):
                u'录入员', u'备注'
                ]
     cols_need = [u'员工与老师编号', u'所属分校', u'姓名', u'性别', u'类别',
-                 u'是否在职', u'是否是咨询师', u'是否授课'
+                 u'是否在职', u'是否是咨询师', u'是否授课', u'职位'
                  ]
     workbook = xlrd.open_workbook(fn)
     worksheets = workbook.sheet_names()
@@ -396,6 +396,7 @@ def import_teacher(fn, is_asc=False):
     num_wrong = 0
     school_ids = DanceSchool.name_to_id()
     class_type = DcClassType.name_id()
+    title_dict = DcCommon.title_to_id()
 
     # 逆序遍历。第一行为表头需要过滤掉
     for row in (range(1, cnt) if is_asc else range(cnt - 1, 0, -1)):
@@ -433,6 +434,16 @@ def import_teacher(fn, is_asc=False):
                 parm['class_type'] = class_type[parm['class_type']]
             else:
                 parm.pop('class_type')
+        if parm['te_title'] not in title_dict:
+            new_r = DcCommon({'name': parm['te_title'], 'type': COMM_TYPE_JOB_TITLE})
+            db.session.add(new_r)
+            new_r = DcCommon.query.filter_by(company_id=g.user.company_id, type=COMM_TYPE_JOB_TITLE,
+                                             name=parm['te_title']).first()
+            if new_r is None:
+                raise Exception(u'Add record failed.name={}, type={}'.format(parm['te_title'], COMM_TYPE_JOB_TITLE))
+            title_dict[parm['te_title']] = new_r.id
+        parm['te_title'] = title_dict[parm['te_title']]
+
         # -----------------------------------------------------------------------------------------
         # 保证 教职工不能重复 分校id+教职工编号 不能重复
         has = DanceTeacher.query.filter_by(school_id=parm['school_id'], teacher_no=parm['teacher_no']).first()
@@ -529,6 +540,77 @@ def import_common_degree(fn, is_asc=False):
                                        name=parm['name'], scope=parm['scope']).first()
         if has is None:
             parm['type'] = COMM_TYPE_DEGREE
+            dt = DcCommon(parm)
+            db.session.add(dt)
+            num_right += 1
+        else:
+            num_wrong += 1  # 重复数据
+        # -----------------------------------------------------------------------------------------
+
+        value = int((num_wrong+num_right)*100.0/(cnt-1))
+        progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
+
+    progressbar[str(g.user.id)]['value'] = 100
+    msg = u'[%s]页%s' % (sh.name, '' if num_right + num_wrong != 0 else u' 无数据！')
+    msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
+    msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
+
+    db.session.commit()
+    return {'errorCode': 0, 'msg': msg}
+
+
+def import_common_job_title(fn, is_asc=False):
+    """
+    :param fn:          文件名，需要导入数据的Excel文件名
+    :param is_asc       是否 顺序导入。True 顺序导入， False 逆序导入
+    :return:     errorCode     0 成功， 非0 错误
+                  msg           信息: 'ok' -- 正确，其他错误,
+    """
+    sheet_pages = [u'职位信息']
+    global progressbar
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': sheet_pages[0]}
+
+    columns = ['name', 'recorder']
+    cols_cn = [u'职位名称', u'录入员']
+    cols_need = [u'职位名称']
+    workbook = xlrd.open_workbook(fn)
+    worksheets = workbook.sheet_names()
+
+    for page in sheet_pages:
+        if page not in worksheets:
+            return {'errorCode': 880, 'msg': u'未找到页面[%s]' % page}
+
+    sh = workbook.sheet_by_name(sheet_pages[0])
+    cnt = sh.nrows
+    if cnt <= 1:
+        return {'errorCode': 2000, 'msg': u"无有效数据！"}
+
+    ck = dc_check_col(sh.row_values(0), cols_cn, cols_need)
+    if ck['errorCode'] != 0:
+        return ck
+    cols_num = list(ck['excel_idx'])
+    col_idx = list(ck['col_idx'])
+
+    num_right = 0
+    num_wrong = 0
+
+    # 逆序遍历。第一行为表头需要过滤掉
+    for row in (range(1, cnt) if is_asc else range(cnt - 1, 0, -1)):
+        r = sh.row_values(row)
+        if r[0] == u'合计':
+            continue
+
+        parm = {}
+        for i in range(len(cols_num)):
+            parm[columns[col_idx[i]]] = r[cols_num[i]]
+
+        # 特殊列的处理
+        # -----------------------------------------------------------------------------------------
+        # 重复校验
+        has = DcCommon.query.filter_by(company_id=g.user.company_id,
+                                       type=COMM_TYPE_JOB_TITLE, name=parm['name']).first()
+        if has is None:
+            parm['type'] = COMM_TYPE_JOB_TITLE
             dt = DcCommon(parm)
             db.session.add(dt)
             num_right += 1

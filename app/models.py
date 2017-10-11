@@ -202,6 +202,7 @@ class DanceStudent(db.Model):
     mother_wechat = db.Column(db.String(60))    # 微信标识  ***保留
     father_wechat = db.Column(db.String(60))    # 微信标识  ***保留
     school_id = db.Column(db.Integer, db.ForeignKey('dance_school.id'))
+    company_id = db.Column(db.Integer, index=True)
 
     def __init__(self, param):
         if 'school_id' in param:
@@ -277,6 +278,7 @@ class DanceStudent(db.Model):
             self.mother_wechat = param['mother_wechat']
         if 'father_wechat' in param:
             self.father_wechat = param['father_wechat']
+        self.company_id = g.user.company_id
 
     def getval(self, col_name):
         """
@@ -549,7 +551,7 @@ class DanceClass(db.Model):
 
     @staticmethod
     def get_class_id_map():
-        school_ids = DanceSchool.get_school_id_lst()
+        school_ids = DanceSchool.get_id_list()
         if len(school_ids) == 0:
             return {}
         classes = DanceClass.query.filter_by(is_ended=0).filter(DanceClass.school_id.in_(school_ids)).all()
@@ -674,7 +676,7 @@ class DanceSchool(db.Model):
         return school_dict
 
     @staticmethod
-    def get_school_id_lst():
+    def get_id_list():
         schools = DanceSchool.query.filter(DanceSchool.company_id == g.user.company_id).all()
         school_list = []
         for sc in schools:
@@ -916,6 +918,7 @@ class DanceReceipt(db.Model):
     fee_mode = db.Column(db.String(6))      # 收费方式 支付宝/微信/刷卡/现金
     paper_receipt = db.Column(db.String(15))    # 收据号  例如：1347269
     type = db.Column(db.Integer)    # 收费单类型（学费 1、演出 2、普通 3）
+    company_id = db.Column(db.Integer, index=True)
 
     def __init__(self, param):
         if 'school_id' in param:
@@ -953,6 +956,7 @@ class DanceReceipt(db.Model):
         if 'paper_receipt' in param:
             self.paper_receipt = param['paper_receipt']
         self.type = 1 if 'type' not in param else param['type']
+        self.company_id = g.user.company_id
         
     def update(self, param):
         if 'student_id' in param:
@@ -1427,6 +1431,7 @@ class DcShowRecpt(db.Model):
     last_user = db.Column(db.String(20, collation='NOCASE'))    # 最后操作者
     remark = db.Column(db.String(40))
     paper_receipt = db.Column(db.String(15))  # 收据号  例如：1347269
+    company_id = db.Column(db.Integer, index=True)
 
     def __init__(self, param):
         if 'school_id' in param:
@@ -1451,6 +1456,7 @@ class DcShowRecpt(db.Model):
             self.remark = param['remark']
         if 'paper_receipt' in param:
             self.paper_receipt = param['paper_receipt']
+        self.company_id = g.user.company_id
 
     def update(self, param):
         if 'school_id' in param:
@@ -1893,8 +1899,6 @@ class DcCommon(db.Model):
         self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
 
     def update(self, param):
-        if 'type' in param:
-            self.type = param['type']
         if 'name' in param:
             self.name = param['name']
         if 'scope' in param:
@@ -1904,5 +1908,13 @@ class DcCommon(db.Model):
 
     def __repr__(self):
         return '<DcCommon %r>' % self.id
+
+    @staticmethod
+    def title_to_id():
+        records = DcCommon.query.filter_by(company_id=g.user.company_id, type=COMM_TYPE_JOB_TITLE).all()
+        title = {}
+        for rec in records:
+            title[rec.name] = rec.id
+        return title
 
 whooshalchemy.whoosh_index(app, Post)

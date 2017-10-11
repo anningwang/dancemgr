@@ -119,12 +119,13 @@ def dance_tree_db():
             {"id": 2, "text": "操作日志"},
             {"id": 3, "text": "分校信息"},
             {"id": 4, "text": "用户管理"},
-            {"id": 5, "text": "分校共用信息", "children": [
+            {"id": 5, "text": "分校公共信息", "children": [
                 {"id": 51, "text": "收费项目"},
                 {"id": 52, "text": "教材信息"},
                 {"id": 53, "text": "收费方式"},
                 {"id": 54, "text": "班级类型"},
-                {"id": 55, "text": "文化程度"}
+                {"id": 55, "text": "文化程度"},
+                {"id": 56, "text": "职位信息"}
             ]}
             ]
     return tree

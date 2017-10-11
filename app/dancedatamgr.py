@@ -1518,6 +1518,133 @@ def dc_common_degree_update():
     return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
 
 
+@app.route('/dc_common_job_title_get', methods=['POST'])
+@login_required
+def dc_common_job_title_get():
+    """查询职位信息"""
+    return dc_common_get(COMM_TYPE_JOB_TITLE, request.form)
+
+
+@app.route('/dc_common_job_title_query', methods=['POST'])
+@login_required
+def dc_common_job_title_query():
+    """条件查询职位信息"""
+    return dc_common_query(COMM_TYPE_JOB_TITLE, request.form)
+
+
+@app.route('/dc_common_job_title_update', methods=['POST'])
+@login_required
+def dc_common_job_title_update():
+    """更新、新增职位信息"""
+    return dc_common_update(COMM_TYPE_JOB_TITLE, request.form)
+
+
+def dc_common_get(ty, obj):
+    """
+    查询 职位
+    输入：
+    ty:     类型
+    obj = {
+        rows:       记录数
+        page:       页码
+        condition:  查询条件
+    }
+    :return:
+        rows:       符合条件的记录
+        total:      符合条件的记录总条数
+        errorCode   错误码
+            0       成功
+        msg         错误信息
+            'ok'    成功
+    """
+    page_size = int(obj['rows'])
+    page_no = int(obj['page'])
+    if page_no <= 0:  # 补丁
+        page_no = 1
+
+    dcq = DcCommon.query.filter_by(company_id=g.user.company_id, type=ty)
+
+    if 'condition' in obj:
+        cond = '%' + obj['condition'] + '%'
+        dcq = dcq.filter(DcCommon.name.like(cond))
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.order_by(DcCommon.id).limit(page_size).offset(offset).all()
+
+    rows = []
+    for rec in records:
+        rows.append({'id': rec.id, 'name': rec.name,
+                     'recorder': rec.recorder, 'last_user': rec.last_user,
+                     'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d'),
+                     'last_upd_at': datetime.datetime.strftime(rec.last_upd_at, '%Y-%m-%d %H:%M')})
+    return jsonify({'rows': rows, 'total': total, 'errorCode': 0, 'msg': 'ok'})
+
+
+def dc_common_query(ty, obj):
+    name = obj['condition']
+    ret = []
+    records = DcCommon.query.filter_by(company_id=g.user.company_id, type=ty)\
+        .order_by(DcCommon.id.asc()).filter(DcCommon.name.like('%'+name + '%'))
+    for rec in records:
+        ret.append({'value': rec.name, 'text': rec.name})
+    return jsonify(ret)
+
+
+def dc_common_update(ty, obj_in):
+    """
+    更新 文化程度。 包括新增 和 修改
+    输入参数
+        ty:         类型
+        obj_in = {
+            data:[{         输入参数
+                id:             记录id, 大于0 - 修改， 0 - 新增
+                row:{
+                    name:       名称
+                    scope       收费方式范围
+                    }
+            }]
+        }
+    :return:
+        errorCode:      错误码
+            0       成功
+            600     Parameter error. [data] required.
+            901     名称为[%s]的记录已经存在！
+            904     请输入名称!
+        msg:            错误信息
+    """
+    if 'data' not in obj_in:
+        return jsonify({'errorCode': 600, 'msg': 'Parameter error. [data] required.'})
+    json_str = obj_in['data']
+    obj = json.loads(json_str)
+    for info in obj:
+        row = info['row']
+        if 'id' not in info or info['id'] <= 0:
+            if 'name' not in row:
+                return jsonify({'errorCode': 904, 'msg': u'请输入名称!'})
+            # 查询是否有重复记录
+            dup = DcCommon.query.filter_by(company_id=g.user.company_id, type=ty).filter_by(name=row['name']).first()
+            if dup is not None:
+                return jsonify({'errorCode': 901, 'msg': u'名称为[%s]的记录已经存在！' % row['name']})
+            row['type'] = ty
+            nr = DcCommon(row)
+            db.session.add(nr)
+        else:
+            # 查询是否有重复记录
+            if 'name' in row:
+                dup = DcCommon.query.filter_by(company_id=g.user.company_id, type=ty) \
+                    .filter_by(name=row['name']).filter(DcCommon.id != info['id']).first()
+                if dup is not None:
+                    return jsonify({'errorCode': 801, 'msg': u'名称为[%s]的记录已经存在！' % row['name']})
+            nr = DcCommon.query.get(info['id'])
+            if nr is not None:
+                nr.update(row)
+                db.session.add(nr)
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
+
+
 @app.route('/dc_class_type_get', methods=['POST'])
 @login_required
 def dc_class_type_get():

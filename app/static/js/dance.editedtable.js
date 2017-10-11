@@ -132,9 +132,12 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             $(dg).datagrid('loading');  // 打开等待div
             console.log('pageNo=' + pageNumber + " pageSize=" + pageSize);
             // 改变opts.pageNumber和opts.pageSize的参数值，用于下次查询传给数据层查询指定页码的数据
-            var gridOpts = $(dg).datagrid('options');
-            gridOpts.pageNumber = pageNumber;
-            gridOpts.pageSize = pageSize;
+            //var gridOpts = $(dg).datagrid('options');
+            //gridOpts.pageNumber = pageNumber;
+            //gridOpts.pageSize = pageSize;
+            var pagerOpts = $(pager).pagination('options');
+            pagerOpts.pageNumber = pageNumber;
+            pagerOpts.pageSize = pageSize;
 
             _pageSize = pageSize;
             _pageNo = pageNumber;
@@ -182,6 +185,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             dataType: 'json',
             data: {'rows': _pageSize, 'page': _pageNo, 'condition': dance_condition}
         }).done(function(data) {
+            console.log('edit table receive:', data);
             if (data.errorCode == 0) {
                 // 注意此处从数据库传来的data数据有记录总行数的total列和 rows
                 dg.datagrid('loadData', data);
@@ -190,9 +194,10 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
                 $.messager.alert('提示', data.msg, 'info');
             }
         }).fail(function(jqXHR, textStatus, errorThrown) {
-            dg.datagrid('loaded');
             var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
             $.messager.alert('提示', msg, 'info');
+        }).always(function () {
+            dg.datagrid('loaded');
         });
     }
 
