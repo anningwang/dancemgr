@@ -28,7 +28,7 @@
                 </td>
 
                 <td class="dcTdPercent">
-                    <select class="easyui-combobox" id="gender" name="gender" data-options="labelAlign:'right',panelHeight:'auto', label:'性别：',editable:false,labelWidth:120">
+                    <select class="easyui-combobox" id="gender" name="gender" data-options="labelAlign:'right',panelHeight:'auto', label:'*性别：',editable:false,labelWidth:120">
                         <option value="0">女</option>
                         <option value="1">男</option>
                     </select>
@@ -48,8 +48,8 @@
 
                 <td>
                     <select class="easyui-combobox" id="teacherType" data-options="labelAlign:'right',panelHeight:'auto', label:'类别：',editable:false,labelWidth:120">
-                        <option>朋友推荐</option>
-                        <option>上门咨询</option>
+                        <option value="1">专职</option>
+                        <option value="0">兼职</option>
                     </select>
                 </td>
             </tr>  <!-- 2  end -->
@@ -63,7 +63,7 @@
                 </td>
 
                 <td>
-                    <select class="easyui-combobox" id="isAssist" data-options="labelAlign:'right',panelHeight:60,label:'是否咨询师：',editable:false,width:120,labelWidth:120">
+                    <select class="easyui-combobox" id="isAssist" data-options="labelAlign:'right',panelHeight:'auto',label:'是否咨询师：',editable:false,width:120,labelWidth:120">
                         <option value="1">是</option>
                         <option value="0">否</option>
                     </select>
@@ -116,7 +116,7 @@
                 </td>
 
                 <td>
-                    <input class="easyui-textbox" id="tel" data-options="labelAlign:'right',panelHeight:'auto',label:'电话：',labelWidth:120"/>
+                    <input class="easyui-textbox" id="email" data-options="labelAlign:'right',panelHeight:'auto',label:'Email：',labelWidth:120"/>
                 </td>
             </tr>  <!-- 6 -->
 

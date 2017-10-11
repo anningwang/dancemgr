@@ -641,3 +641,22 @@ function dcRecordsChanged(oldR, newR, field) {  // 求 增、改、删 记录的
 
     return {add:addIdx, del:delIdx, upd:updIdx}
 }
+
+
+function dcLoadTree() {
+    $.ajax({
+        method: "POST",
+        url: '/dance_tree_student',
+        data: {}
+    }).done(function(data) {
+        if (data.errorCode === 0) {
+            $('#treeStudent').tree('loadData', data['stu']);
+            $('#treeDb').tree('loadData', data['db']);
+        } else {
+            $.messager.alert('提示', data.msg, 'info');
+        }
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
+        $.messager.alert('提示', msg, 'info');
+    });
+}

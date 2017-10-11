@@ -360,7 +360,7 @@ def import_teacher(fn):
                'birthday', 'join_day', 'leave_day', 'te_title', 'gender',
                'te_type', 'in_job', 'is_assist', 'has_class', 'nation',
                'birth_place', 'idcard', 'class_type', 'phone', 'tel',
-               'address', 'zipcode', 'email', 'qq', 'wechat',
+               'address', 'zipcode', 'Email', 'QQ', 'wechat',
                'recorder', 'remark'
                ]
     cols_cn = [u'员工与老师编号', u'所属分校', u'姓名', u'助记码', u'文化程度',

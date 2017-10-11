@@ -67,7 +67,7 @@
 
 $(function() {
     $('#treeStudent').tree({
-        url: '/dance_tree_student', animate:true,lines:true,
+        animate:true,lines:true,
         onClick: function(node){
             var root = getRootNode(this, node);
             var tableRootId = this.id + root.id;
@@ -138,7 +138,7 @@ $(function() {
     });
 
     $('#treeDb').tree({
-        url:'/static/html/tree_db.json',method:'get',animate:true,lines:true,
+        animate:true,lines:true,
         onClick:function (node) {
             var tableId = this.id + node.id;
 
@@ -161,6 +161,8 @@ $(function() {
             }
         }
     });
+
+    dcLoadTree();
 });
 
 function getRootNode(tree, curNode) {

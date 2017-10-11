@@ -95,7 +95,7 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
     var tch_classType = 'classType';
     var tch_phone = 'phone';
     var tch_qq = 'qq';
-    var tch_tel = 'tel';
+    var tch_email = 'email';
     var tch_address = 'address';
     var tch_zipcode = 'zipcode';
     var tch_wechat = 'wechat';
@@ -111,26 +111,21 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
     var edIdxEdu = undefined;
     var classlist = [];
     var schoollist = [];
-    var stuInfo = {'student': {}, 'class': []};
-    var oldStu = {};        // 修改学员记录时，保存原始信息
+    var teacher = {'student': {}, 'class': []};
+    var oldTch = {};        // 修改学员记录时，保存原始信息
 
     var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
     } else {
         $(parentDiv).tabs('add', {
-            title: title,
-            href: page,
-            closable: true,
-            loadingMessage: '加载中...',
+            title: title, closable: true, loadingMessage: '加载中...', href: page,
             onLoad : function () {
                 $('#'+pager).pagination({
-                    showRefresh: uid > 0,
+                    showRefresh: uid > 0,  total: 0, pageSize: 1, showPageList: false, showPageInfo: false,
                     buttons:[{ text:'保存', iconCls:'icon-save',  handler:onSave}],
-                    total: 0, pageSize: 1,
                     beforePageText: '第', afterPageText: '条，总 {pages} 条',
-                    showPageList: false, showPageInfo: false,
-                    onSelectPage:function(pageNumber, pageSize){
+                    onSelectPage:function(pageNumber){  // , pageSize 参数固定为 1
                         if (uid> 0) {
                             no = pageNumber;
                             ajaxTeacherDetail();
@@ -142,7 +137,7 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
                     onClickCell: dgEduClickCell,
                     onResize: resizeTextbox,
                     toolbar: [{iconCls: 'icon-add', text: '增加行', handler:function () {$('#'+dgEdu).datagrid('appendRow', {});}},
-                        {iconCls: 'icon-remove', text: '删除行', handler: danceDelRow}
+                        {iconCls: 'icon-remove', text: '删除行', handler: function () {danceDelRow(dgEdu);}}
                     ]
                 });
                 $('#'+dgWork).datagrid({
@@ -155,7 +150,7 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
                         row.class_name = $(ed.target).combobox('getText');
                     },
                     toolbar: [{iconCls: 'icon-add', text: '增加行', handler: function () {$('#'+dgWork).datagrid('appendRow', {});}},
-                        {iconCls: 'icon-remove', text: '删除行', handler: danceDelRow}
+                        {iconCls: 'icon-remove', text: '删除行', handler: function () {danceDelRow(dgWork);}}
                     ]
                 });
 
@@ -188,23 +183,37 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
             data: cond
         }).done(function(data) {
             console.log(data);
-            $.extend(true, oldStu, data);
+            $.extend(true, oldTch, data);
 
-            $('#'+tch_no).textbox('setText',data.row['teacher_no']);
-            $('#'+tch_name).textbox('setText',data.row['name']).textbox('textbox').focus();
-            $('#'+tch_joinDay).datebox('setValue',data.row['join_day']);
-            $('#'+tch_birthday).datebox('setValue',data.row['birthday']);
+            $('#'+tch_no).textbox('setValue',data.row['teacher_no']);
+            $('#'+tch_name).textbox('setValue',data.row.name).textbox('textbox').focus();
+            $('#'+tch_joinDay).datebox('setValue',data.row.join_day);
+            $('#'+tch_birthday).datebox('setValue',data.row.birthday);
             $('#'+tch_schoolName).combobox('loadData', [{school_id: data.row.school_id,
                 school_name: data.row.school_name}]).combobox('setValue', data.row.school_id);
-            $('#'+tch_idcard).textbox('setText',data.row['idcard']);     // 身份证号
-            $('#'+tch_type).combobox('setText',data.row['te_type']);
-            $('#'+tch_title).combobox('setText',data.row['te_title']);
-            $('#'+tch_degree).combobox('setText',data.row['degree']);
-
-            $('#'+tch_leaveDay).textbox('setText',data.row['leave_day']);
+            $('#'+tch_idcard).textbox('setValue',data.row.idcard);     // 身份证号
+            $('#'+tch_type).combobox('setValue',data.row.te_type);
+            $('#'+tch_title).combobox('setValue',data.row.te_title);
+            $('#'+tch_degree).combobox('setValue',data.row.degree);
+            $('#'+tch_classType).combobox('setValue',data.row.class_type);
+            $('#'+tch_leaveDay).textbox('setValue',data.row.leave_day);
             $('#'+tch_recorder).textbox('setText',data.row['recorder']);
-            $('#'+tch_gender).combobox('select',data.row['gender']);
-            $('#'+tch_remark).textbox('setText',data.row['remark']);
+            $('#'+tch_gender).combobox('setValue',data.row.gender);
+            $('#'+tch_inJob).combobox('setValue',data.row.in_job);
+            $('#'+tch_isAssist).combobox('setValue',data.row.is_assist);
+            $('#'+tch_hasClass).combobox('setValue',data.row.has_class);
+            $('#'+tch_address).textbox('setValue',data.row.address);
+            $('#'+tch_zipcode).textbox('setValue',data.row.zipcode);
+            $('#'+tch_email).textbox('setValue',data.row.email);
+            $('#'+tch_phone).textbox('setValue',data.row.phone);
+            $('#'+tch_qq).textbox('setValue',data.row.qq);
+            $('#'+tch_wechat).textbox('setValue',data.row.wechat);
+            $('#'+tch_nation).textbox('setValue',data.row.nation);
+            $('#'+tch_birthPlace).textbox('setValue',data.row.birth_place);
+            $('#'+tch_remark).textbox('setValue',data.row.remark);
+            $('#'+tch_createAt).textbox('setText',data.row['create_at']);
+            $('#'+tch_lastUpd).textbox('setText',data.row['last_upd_at']);
+            $('#'+tch_lastUser).textbox('setText',data.row['last_user']);
 
             $('#'+pager).pagination({total: data.total, pageNumber:no===-2?data.row.no:no });
 
@@ -228,7 +237,7 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
         dgLoadData(dgWork, []);
         dgLoadData(dgEdu, []);
 
-        //设置时间
+        // 设置时间
         var curr_time = new Date();
         $("#"+tch_joinDay).datebox("setValue",danceFormatter(curr_time));
     }
@@ -241,18 +250,6 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
                 $(dg).datagrid('endEdit', edIdxWork);
             }
             $(dg).datagrid('selectRow', index).datagrid('beginEdit', index);
-
-            var classEd =  $(dg).datagrid('getEditor', {index:index,field:'class_name'});
-            if (classEd){
-                $(classEd.target).combobox('loadData' , classlist);
-                $(classEd.target).combobox({
-                    //data: classlist,
-                    onClick: onClickClass
-                });
-                var row = $(dg).datagrid("getSelected");
-                $(classEd.target).combobox('setValue', row['class_id']);
-            }
-
             var ed = $(dg).datagrid('getEditor', {index:index,field:field});
             if (ed){
                 ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
@@ -313,37 +310,12 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
 
     function endEditEdu(){
         if (edIdxEdu !== undefined){
-            $('#'+dgEdu).datagrid('endEdit', edIdxEdu)
-                .datagrid('mergeCells', { index: 1, field: 'c2', colspan: 3});
+            $('#'+dgEdu).datagrid('endEdit', edIdxEdu);
             edIdxEdu = undefined;
         }
     }
-
-    function onClickClass(record) {
-        var dg = $('#'+dgWork);
-        var row = $(dg).datagrid("getSelected");
-        if (row) {
-            row['class_id'] =  record['class_id'];
-            row['class_name'] = record['class_name'];
-            //row['status'] = '正常';
-            //row['join_date'] = new Date();
-            //console.info(row);
-            var edStatus =  $(dg).datagrid('getEditor', {index:edIdxWork,field:'status'});
-            if (edStatus && !$(edStatus.target).combobox('getValue')){
-                $(edStatus.target).combobox('setValue', '正常');
-            }
-            var edJoin =  $(dg).datagrid('getEditor', {index:edIdxWork,field:'join_date'});
-            if (edJoin && !$(edJoin.target).combobox('getValue')){
-                $(edJoin.target).datebox('setValue', danceFormatter(new Date()));
-            }
-
-            $(dg).datagrid('updateRow', {index: edIdxWork, row: row});
-            setTimeout(function(){
-                endEditWork();
-            },0);
-        }
-    }
-    ////////////////////
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     function onSave() {
         endEditEdu();
         endEditWork();
@@ -351,35 +323,14 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
             return false;
         }
 
-        stuInfo = {'student': {}, 'class': []};
+        teacher = {row: {}, edu: [], work: []};
         packageTeacherInfo();
-        //console.log(stuInfo);
-
-        var url =  uid > 0 ? '/dance_student_modify' : '/dance_student_add';
-        if (uid > 0) {
-            stuInfo.student.id = oldStu.rows.id;
-            // find student's class for delete
-            var delClass = [];
-            var m,n;
-            for (m=0; m<oldStu.class_info.length; m++) {
-                for (n=0; n<stuInfo.class.length; n++) {
-                    if ('id' in stuInfo.class[n] && stuInfo.class[n].id === oldStu.class_info[m].id){
-                        break;
-                    }
-                }
-                if (n>=stuInfo.class.length) {  // not find
-                    delClass.push({'id': oldStu.class_info[m].id, 'oper': 2})
-                }
-            }
-            for (n=0; n<delClass.length; n++){
-                stuInfo.class.push(delClass[n]);
-            }
-        }
+        console.log('send:', teacher);
 
         $.ajax({
             method: "POST",
-            url: url,
-            data: { data: JSON.stringify(stuInfo) }
+            url: '/dance_teacher_modify',
+            data: JSON.stringify(teacher)
         }).done(function(data) {
             if (data.errorCode === 0) {
                 if (uid > 0) {
@@ -397,7 +348,7 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
 
     function validateTeacherInfo() {
         if (!$('#'+tch_name).textbox('getText')) {
-            $.messager.alert({ title: '提示',icon:'info', msg: '学员姓名不能为空！',
+            $.messager.alert({ title: '提示',icon:'info', msg: '姓名不能为空！',
                 fn: function(){
                     $('#'+tch_name).textbox('textbox').focus();
                 }
@@ -409,42 +360,56 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
     }
 
     function packageTeacherInfo() {
-        stuInfo.student.name = $('#'+tch_name).textbox('getText');     // 姓名
-        stuInfo.student.register_day = $('#'+tch_joinDay).datebox('getValue');   // 注册日期
-        stuInfo.student.gender = $('#'+tch_gender).combobox('getValue');      // 性别
-        stuInfo.student.school_id = $('#'+tch_schoolName).combobox('getValue');      // 所属分校 名称/id
-        stuInfo.student.information_source = $('#'+tch_type).combobox('getText');   // 信息来源
-        stuInfo.student.idcard = $('#'+tch_idcard).textbox('getText');   // 身份证
-        stuInfo.student.counselor = $('#'+tch_title).combobox('getText');   // 咨询师
-        stuInfo.student.degree = $('#'+tch_degree).combobox('getText');   // 文化程度
-        stuInfo.student.birthday = $('#'+tch_birthday).datebox('getValue');   // 出生日期
-        stuInfo.student.remark = $('#'+tch_remark).textbox('getText');   // 备注
-
-        stuInfo.student.information_source = stuInfo.student.information_source.replace('　', '');    // 删除全角空格
-        stuInfo.student.counselor = stuInfo.student.counselor.replace('　', '');
-        stuInfo.student.degree = stuInfo.student.degree.replace('　', '');
+        if (uid > 0) {
+            teacher.row.id = oldTch.row.id;
+        }
+        teacher.row.name = $('#'+tch_name).textbox('getText');     // 姓名
+        teacher.row.gender = $('#'+tch_gender).combobox('getValue');      // 性别
+        teacher.row.join_day = $('#'+tch_joinDay).datebox('getValue');
+        teacher.row.school_id = $('#'+tch_schoolName).combobox('getValue');      // 所属分校 名称/id
+        teacher.row.te_type = $('#'+tch_type).combobox('getValue');
+        teacher.row.in_job = $('#'+tch_inJob).combobox('getValue');
+        teacher.row.is_assist = $('#'+tch_isAssist).combobox('getValue');
+        teacher.row.has_class = $('#'+tch_hasClass).combobox('getValue');
+        teacher.row.idcard = $('#'+tch_idcard).textbox('getText');   // 身份证
+        teacher.row.te_title = $('#'+tch_title).combobox('getValue');   // 咨询师
+        teacher.row.degree = $('#'+tch_degree).combobox('getValue');// 文化程度
+        teacher.row.nation = $('#'+tch_nation).combobox('getValue');
+        teacher.row.birth_place = $('#'+tch_birthPlace).combobox('getValue');
+        teacher.row.class_type = $('#'+tch_classType).combobox('getValue');
+        teacher.row.phone = $('#'+tch_phone).combobox('getValue');
+        teacher.row.qq = $('#'+tch_qq).combobox('getValue');
+        teacher.row.email = $('#'+tch_email).combobox('getValue');
+        teacher.row.birthday = $('#'+tch_birthday).datebox('getValue');   // 出生日期
+        teacher.row.leave_day = $('#'+tch_leaveDay).datebox('getValue');
+        teacher.row.zipcode = $('#'+tch_zipcode).datebox('getValue');
+        teacher.row.address = $('#'+tch_address).datebox('getValue');
+        teacher.row.wechat = $('#'+tch_wechat).datebox('getValue');
+        teacher.row.remark = $('#'+tch_remark).textbox('getText');   // 备注
 
         var dg = $('#'+dgWork);
-        var data = dg.datagrid('getData');
+        var rows = dg.datagrid('getRows');
         //console.log(data);
-        for(var i = 0; i< data.rows.length; i++) {
+        var i;
+        for(i = 0; i< rows.length; i++) {
             //console.log(data);
-            if (data.rows[i].class_id) {
-                stuInfo.class.push(data.rows[i]);
+            if (rows[i]['begin_day']) {
+                teacher.work.push(rows[i]);
             }
         }
 
         var dgCnt = $('#'+dgEdu);
-        var rows = dgCnt.datagrid('getRows');
-        stuInfo.student.reading_school = rows[0].c2;
-        stuInfo.student.grade = rows[0].c4;
-        stuInfo.student.phone = rows[0].c6;
-        stuInfo.student.tel = rows[0].c8;
+        rows = dgCnt.datagrid('getRows');
+        for(i = 0; i< rows.length; i++) {
+            if (rows[i]['begin_day']) {
+                teacher.edu.push(rows[i]);
+            }
+        }
     }
 
-    function danceDelRow() {
+    function danceDelRow(dgId) {
         //console.log('del row');
-        var dg = $('#'+dgWork);
+        var dg = $('#'+dgId);
         var rows = dg.datagrid('getRows');
         if (rows.length === 0) {
             $.messager.alert('提示','无数据可删！','info');
@@ -453,7 +418,7 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
         var row = dg.datagrid('getSelected');
         var rowToDel = row ? row : rows[rows.length-1]; // 删除选中行 或 最后一行
         var idx = dg.datagrid('getRowIndex', rowToDel);
-        if (rowToDel.class_id) { // 本行有数据，询问是否要删除
+        if (rowToDel['begin_day']) { // 本行有数据，询问是否要删除
             $.messager.confirm('确认删除', '确认删除第 '+(idx+1)+' 行数据吗？', function(r){
                 if (r){
                     dg.datagrid('deleteRow', idx);
@@ -484,9 +449,9 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
         $('#'+tch_nation).attr('id', tch_nation+=uid);
         $('#'+tch_birthPlace).attr('id', tch_birthPlace+=uid);
         $('#'+tch_classType).attr('id', tch_classType+=uid);
-        $('#'+tch_phone).attr('id', tch_phone+=uid);
+        $('#'+tch_email).attr('id', tch_email+=uid);
         $('#'+tch_qq).attr('id', tch_qq+=uid);
-        $('#'+tch_tel).attr('id', tch_tel+=uid);
+        $('#'+tch_phone).attr('id', tch_phone+=uid);
         $('#'+tch_address).attr('id', tch_address+=uid);
         $('#'+tch_zipcode).attr('id', tch_zipcode+=uid);
         $('#'+tch_wechat).attr('id', tch_wechat+=uid);
@@ -502,11 +467,16 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
         $('#'+panel).attr('id', panel+=uid);
     }
 
-    function resizeTextbox(width, height) {
+    var _p_w = null;    // 记录上次的宽度
+    function resizeTextbox() {
         var tb = $('#'+tbLayout);
         var parent = $(tb).parent();
+        var pw = parent.width();
+        if(pw === _p_w)
+            return;
+        _p_w = pw;
         tb.find('td.dcTdFixed').css('width', 202);
-        var w = parseInt((parent.width() - 202) / 3);
+        var w = parseInt((pw - 202) / 3);
         tb.find('td.dcTdPercent').css('width', w);
 
         var wd = w - 14;
@@ -533,7 +503,7 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
         $('#'+tch_hasClass).textbox('resize', wd);
         $('#'+tch_degree).textbox('resize', wd);
         $('#'+tch_classType).textbox('resize', wd);
-        $('#'+tch_tel).textbox('resize', wd);
+        $('#'+tch_email).textbox('resize', wd);
         $('#'+tch_zipcode).textbox('resize', wd);
         $('#'+tch_createAt).textbox('resize', wd);
         $('#'+tch_lastUpd).textbox('resize', wd);

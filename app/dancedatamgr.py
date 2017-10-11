@@ -1230,11 +1230,12 @@ def dance_teacher_details_get():
     row = {"id": r.id, "teacher_no": r.teacher_no, "school_no": sc.school_no, 'no': rec_no,
            "school_name": sc.school_name, "name": r.name, "rem_code": r.rem_code, 'degree': r.degree,
            'birthday': r.birthday, 'join_day': datetime.datetime.strftime(r.join_day, '%Y-%m-%d'),
-           'leave_day': leave_day,
-           'te_title': r.te_title, 'gender': u'男' if r.gender else u'女',
-           'te_type': teacher_type_s(r.te_type), 'in_job': u'是' if r.in_job else u'否',
-           'is_assist': u'是' if r.is_assist else u'否',
-           'has_class': u'是' if r.has_class else u'否',
+           'leave_day': leave_day, 'te_title': r.te_title,
+           'gender': 1 if r.gender else 0, 'gender_text': u'男' if r.gender else u'女',
+           'te_type': 1 if r.te_type else 0, 'te_type_text': teacher_type_s(r.te_type),
+           'in_job': 1 if r.in_job else 0, 'in_job_text': u'是' if r.in_job else u'否',
+           'is_assist': 1 if r.is_assist else 0, 'is_assist_text': u'是' if r.is_assist else u'否',
+           'has_class': 1 if r.has_class else 0, 'has_class_text': u'是' if r.has_class else u'否',
            'nation': r.nation,
            'birth_place': r.birth_place, 'idcard': r.idcard, 'class_type': r.class_type,
            'phone': r.phone, 'tel': r.tel, 'address': r.address, 'zipcode': r.zipcode, 'email': r.email,
@@ -1258,6 +1259,48 @@ def dance_teacher_details_get():
         work.append({'id': wk.id, 'teacher_id': wk.teacher_id, 'begin_day': ed.begin_day, 'end_day': ed.end_day,
                      'firm': wk.firm, 'position': wk.position, 'content': wk.content, 'remark': wk.remark})
     return jsonify({"total": total, "row": row, 'edu': edu, 'work': work, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_teacher_query', methods=['POST'])
+@login_required
+def dance_teacher_query():
+    """
+    根据姓名或者 姓名拼音 查询 符合条件的 员工与老师信息
+    输入参数：
+    {
+        name:           老师姓名，   可选参数
+        school_id:      分校id，   可选参数
+        in_job:         是否在职，   可选参数
+    }
+    :return:
+    {   value:          老师姓名
+        text:           老师姓名
+    }
+    """
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if len(school_ids) == 0:
+        return jsonify({'errorCode': 0, 'msg': 'no data'})
+
+    name = request.form['name']
+    if name.encode('UTF-8').isalpha():
+        dcq = DanceTeacher.query.filter(DanceTeacher.rem_code.like('%' + name + '%'))
+    else:
+        dcq = DanceTeacher.query.filter(DanceTeacher.name.like('%' + name + '%'))
+
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        dcq = dcq.filter(DanceTeacher.school_id.in_(school_ids))
+    else:
+        dcq = dcq.filter(DanceTeacher.school_id.in_(request.form['school_id']))
+
+    if 'in_job' in request.form:
+        dcq = dcq.filter_by(in_job=request.form['in_job'])
+
+    ret = []
+    records = dcq.order_by(DanceTeacher.id.desc()).all()
+    for rec in records:
+        ret.append({'value': rec.name, 'text': rec.name})
+
+    return jsonify(ret)
 
 
 @app.route('/dc_comm_fee_mode_update', methods=['POST'])
@@ -1362,6 +1405,116 @@ def dc_comm_fee_mode_get():
                      'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d'),
                      'last_upd_at': datetime.datetime.strftime(rec.last_upd_at, '%Y-%m-%d %H:%M')})
     return jsonify({'rows': rows, 'total': total, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dc_common_degree_get', methods=['POST'])
+@login_required
+def dc_common_degree_get():
+    """
+    查询 文化程度
+    输入：{
+        rows:       记录数
+        page:       页码
+        condition:  查询条件
+    }
+    :return:
+        rows:       符合条件的记录
+        total:      符合条件的记录总条数
+        errorCode   错误码
+            0       成功
+        msg         错误信息
+            'ok'    成功
+    """
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    if page_no <= 0:  # 补丁
+        page_no = 1
+
+    dcq = DcCommon.query.filter_by(company_id=g.user.company_id, type=COMM_TYPE_DEGREE)
+
+    if 'condition' in request.form:
+        cond = '%' + request.form['condition'] + '%'
+        dcq = dcq.filter(DcCommon.name.like(cond))
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.order_by(DcCommon.id).limit(page_size).offset(offset).all()
+
+    rows = []
+    for rec in records:
+        rows.append({'id': rec.id, 'name': rec.name, 'scope': rec.scope,
+                     'recorder': rec.recorder, 'last_user': rec.last_user,
+                     'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d'),
+                     'last_upd_at': datetime.datetime.strftime(rec.last_upd_at, '%Y-%m-%d %H:%M')})
+    return jsonify({'rows': rows, 'total': total, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dc_common_degree_query', methods=['POST'])
+@login_required
+def dc_common_degree_query():
+    name = request.form['condition']
+    ret = []
+    records = DcCommon.query.filter_by(company_id=g.user.company_id, type=COMM_TYPE_DEGREE)\
+        .order_by(DcCommon.id.asc()).filter(DcCommon.name.like('%'+name + '%'))
+    for rec in records:
+        ret.append({'value': rec.name, 'text': rec.name})
+    return jsonify(ret)
+
+
+@app.route('/dc_common_degree_update', methods=['POST'])
+@login_required
+def dc_common_degree_update():
+    """
+    更新 文化程度。 包括新增 和 修改
+    输入参数
+        data:[{         输入参数
+                id:             记录id, 大于0 - 修改， 0 - 新增
+                row:{
+                    name:       名称
+                    scope       收费方式范围
+                    }
+            }]
+    :return:
+        errorCode:      错误码
+            0       成功
+            600     Parameter error. [data] required.
+            901     名称为[%s]的记录已经存在！
+            903     请输入适用范围!
+            904     请输入名称!
+        msg:            错误信息
+    """
+    if 'data' not in request.form:
+        return jsonify({'errorCode': 600, 'msg': 'Parameter error. [data] required.'})
+    json_str = request.form['data']
+    obj = json.loads(json_str)
+    for info in obj:
+        row = info['row']
+        if 'id' not in info or info['id'] <= 0:
+            if 'scope' not in row:
+                return jsonify({'errorCode': 903, 'msg': u'请输入适用范围!'})
+            if 'name' not in row:
+                return jsonify({'errorCode': 904, 'msg': u'请输入名称!'})
+            # 查询是否有重复记录
+            dup = DcCommon.query.filter_by(company_id=g.user.company_id, type=COMM_TYPE_DEGREE)\
+                .filter_by(name=row['name']).first()
+            if dup is not None:
+                return jsonify({'errorCode': 901, 'msg': u'名称为[%s]的记录已经存在！' % row['name']})
+            nr = DcCommon(row)
+            db.session.add(nr)
+        else:
+            # 查询是否有重复记录
+            if 'name' in row:
+                dup = DcCommon.query.filter_by(company_id=g.user.company_id, type=COMM_TYPE_DEGREE) \
+                    .filter_by(name=row['name']).filter(DcCommon.id != info['id']).first()
+                if dup is not None:
+                    return jsonify({'errorCode': 801, 'msg': u'名称为[%s]的记录已经存在！' % row['name']})
+            nr = DcCommFeeMode.query.get(info['id'])
+            if nr is not None:
+                nr.update(row)
+                db.session.add(nr)
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
 
 
 @app.route('/dc_class_type_get', methods=['POST'])
