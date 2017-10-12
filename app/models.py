@@ -1614,11 +1614,11 @@ class DanceTeacher(db.Model):
     join_day = db.Column(db.DateTime)   # 入职日期
     leave_day = db.Column(db.DateTime)  # 离职日期
     te_title = db.Column(db.Integer)    # 职位：校长、教师、前台、咨询师、清洁工、会计、出纳
-    gender = db.Column(db.Boolean)      # 性别：男1/女0
-    te_type = db.Column(db.Boolean)     # 类别：专职1/兼职0
-    in_job = db.Column(db.Boolean)      # 是否在职：是1 / 否0
-    is_assist = db.Column(db.Boolean)   # 是否咨询师：是1 / 否0
-    has_class = db.Column(db.Boolean)   # 是否授课：是1 / 否0
+    gender = db.Column(db.SmallInteger)      # 性别：男1/女0
+    te_type = db.Column(db.SmallInteger)     # 类别：专职1/兼职0
+    in_job = db.Column(db.SmallInteger)      # 是否在职：是1 / 否0
+    is_assist = db.Column(db.SmallInteger)   # 是否咨询师：是1 / 否0
+    has_class = db.Column(db.SmallInteger)   # 是否授课：是1 / 否0
     nation = db.Column(db.String(10))   # 民族
     birth_place = db.Column(db.String(10))  # 籍贯
     idcard = db.Column(db.String(30))  # 身份证号
@@ -1635,7 +1635,7 @@ class DanceTeacher(db.Model):
     last_upd_at = db.Column(db.DateTime, nullable=False)
     last_user = db.Column(db.String(20, collation='NOCASE'))
     company_id = db.Column(db.Integer, db.ForeignKey('dance_company.id'))
-    is_all = db.Column(db.Boolean)  # 是否所有分校可见：是1 / 否0，排课可以搜索。
+    is_all = db.Column(db.SmallInteger)  # 是否所有分校可见：是1 / 否0，排课可以搜索。
     remark = db.Column(db.String(140))  # 备注
 
     def __init__(self, param):
@@ -1798,29 +1798,33 @@ class DanceTeacherEdu(db.Model):
         if 'teacher_id' in param:
             self.teacher_id = param['teacher_id']
         if 'begin_day' in param and param['begin_day'] != '':
-            self.begin_day = datetime.datetime.strftime(param['begin_day'], '%Y-%m-%d')
+            self.begin_day = datetime.datetime.strptime(param['begin_day'], '%Y-%m').date()
         if 'end_day' in param and param['end_day'] != '':
-            self.end_day = datetime.datetime.strftime(param['end_day'], '%Y-%m-%d')
+            self.end_day = datetime.datetime.strptime(param['end_day'], '%Y-%m').date()
+        if 'school' in param:
+            self.school = param['school']
         if 'major' in param:
             self.major = param['major']
         if 'remark' in param:
-            slice.remark = param['remark']
+            self.remark = param['remark']
 
     def update(self, param):
         if 'begin_day' in param:
             if param['begin_day'] != '':
-                self.begin_day = datetime.datetime.strftime(param['begin_day'], '%Y-%m-%d')
+                self.begin_day = datetime.datetime.strptime(param['begin_day'], '%Y-%m').date()
             else:
                 self.begin_day = None
         if 'end_day' in param:
             if param['end_day'] != '':
-                self.end_day = datetime.datetime.strftime(param['end_day'], '%Y-%m-%d')
+                self.end_day = datetime.datetime.strptime(param['end_day'], '%Y-%m').date()
             else:
                 self.end_day = None
+        if 'school' in param:
+            self.school = param['school']
         if 'major' in param:
             self.major = param['major']
         if 'remark' in param:
-            slice.remark = param['remark']
+            self.remark = param['remark']
 
     def __repr__(self):
         return '<TeacherEdu %r>' % self.id
@@ -1841,25 +1845,25 @@ class DanceTeacherWork(db.Model):
         if 'teacher_id' in param:
             self.teacher_id = param['teacher_id']
         if 'begin_day' in param and param['begin_day'] != '':
-            self.begin_day = datetime.datetime.strftime(param['begin_day'], '%Y-%m-%d')
+            self.begin_day = datetime.datetime.strptime(param['begin_day'], '%Y-%m').date()
         if 'end_day' in param and param['end_day'] != '':
-            self.end_day = datetime.datetime.strftime(param['end_day'], '%Y-%m-%d')
+            self.end_day = datetime.datetime.strptime(param['end_day'], '%Y-%m').date()
         if 'firm' in param:
             self.firm = param['firm']
         if 'position' in param:
             self.position = param['position']
         if 'remark' in param:
-            slice.remark = param['remark']
+            self.remark = param['remark']
 
     def update(self, param):
         if 'begin_day' in param:
             if param['begin_day'] != '':
-                self.begin_day = datetime.datetime.strftime(param['begin_day'], '%Y-%m-%d')
+                self.begin_day = datetime.datetime.strptime(param['begin_day'], '%Y-%m').date()
             else:
                 self.begin_day = None
         if 'end_day' in param:
             if param['end_day'] != '':
-                self.end_day = datetime.datetime.strftime(param['end_day'], '%Y-%m-%d')
+                self.end_day = datetime.datetime.strptime(param['end_day'], '%Y-%m').date()
             else:
                 self.end_day = None
         if 'firm' in param:
@@ -1867,7 +1871,7 @@ class DanceTeacherWork(db.Model):
         if 'position' in param:
             self.position = param['position']
         if 'remark' in param:
-            slice.remark = param['remark']
+            self.remark = param['remark']
 
     def __repr__(self):
         return '<TeacherWork %r>' % self.id
@@ -1918,6 +1922,14 @@ class DcCommon(db.Model):
         return title
 
     @staticmethod
+    def id_to_title():
+        records = DcCommon.query.filter_by(company_id=g.user.company_id, type=COMM_TYPE_JOB_TITLE).all()
+        title = {}
+        for rec in records:
+            title[rec.id] = rec.name
+        return title
+
+    @staticmethod
     def intention_to_id():
         records = DcCommon.query.filter_by(company_id=g.user.company_id, type=COMM_TYPE_INTENTION).all()
         intention = {}
@@ -1935,6 +1947,7 @@ class DcCommon(db.Model):
 
     @staticmethod
     def add(ty, name):
+        """ 添加记录，返回记录的id"""
         r = DcCommon({'name': name, 'type': ty})
         db.session.add(r)
         r = DcCommon.query.filter_by(company_id=g.user.company_id, type=ty, name=name).first()

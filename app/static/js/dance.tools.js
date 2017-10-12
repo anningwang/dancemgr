@@ -232,18 +232,20 @@ String.prototype.format = function(args) {
     });
 };
 
-function dcDateboxYM(dbId) {
-    dcDatebox($('#'+dbId));
-}
-
+/**
+ * 将 datebox 控件，只显示 年月 输入
+ * @param obj       datebox 控件 jquery 选择器
+ * @param func      选择月份后的回调函数。传入参数为 当前 年-月(yyyy-mm)
+ */
 function dcDatebox(obj, func) {
     var db = $(obj);
+    var tds = null;    // 日期选择对象中月份
     db.datebox({
         onShowPanel: function () {  // 显示日期选择对象后再触发弹出月份层的事件，初始化时没有生成月份层
+            var p = db.datebox('panel');                // 日期选择对象
+            var span = p.find('span.calendar-text');    // 1.4.x +版本, span 为 显示月份控件
             span.trigger('click');   // 触发click事件弹出月份层
-            // fix 1.3.x不选择日期点击其他地方隐藏在弹出日期框显示日期面板
-            if (p.find('div.calendar-menu').is(':hidden')) p.find('div.calendar-menu').show();
-            if (!tds) setTimeout(function () {  // 延时触发获取月份对象，因为上面的事件触发和对象生成有时间间隔
+            if (!tds) setTimeout(function () {
                 tds = p.find('div.calendar-menu-month-inner td');
                 tds.click(function (e) {
                     e.stopPropagation(); // 禁止冒泡执行easyui给月份绑定的事件
@@ -254,7 +256,6 @@ function dcDatebox(obj, func) {
                     if(func) func(db.datebox('getValue'));
                 });
             }, 0);
-            // yearIpt.unbind();   // 解绑年份输入框中任何事件
         },
         parser: function (s) {
             if (!s) return new Date();
@@ -264,21 +265,8 @@ function dcDatebox(obj, func) {
         formatter: function (d) {
             var m = d.getMonth() + 1;
             return d.getFullYear() + '-' + (m<10?('0'+m):m);
-        }
+        }, currentText: '本月'
     }).textbox({editable:false});
-    var p = db.datebox('panel'), // 日期选择对象
-        tds = false, // 日期选择对象中月份
-        aToday = p.find('a.datebox-current'),
-        yearIpt = p.find('input.calendar-menu-year'),//年份输入框
-    // 显示月份控件
-        span = aToday.length ? p.find('div.calendar-title span') ://1.3.x版本
-            p.find('span.calendar-text'); //1.4.x版本
-    if (aToday.length) {//1.3.x版本，取消Today按钮的click事件，重新绑定新事件设置日期框为今天，防止弹出日期选择面板
-        aToday.unbind('click').click(function () {
-            var now=new Date();
-            db.datebox('hidePanel').datebox('setValue', now.getFullYear() + '-' + (now.getMonth() + 1));
-        });
-    }
 }
 
 
@@ -306,9 +294,14 @@ function getValueField(textField) {
 }
 
 
-//   someName_text      <-- someName
-//   school_name        <-- school_id
-//   some               <-- some_value
+/**
+ * 用于combobox， 根据 value域得到 text 域的名称， 转换规则如下
+ *      school_name        <-- school_id        有_id后缀，则将 _id 转换为 _name
+ *      some               <-- some_value       有_value后缀，则将 _value 后缀删除
+ *      someName_text      <-- someName         其他情况，在value域基础上增加 _text 后缀
+ * @param valField          value 域
+ * @returns {*}             text 域
+ */
 function getTextField(valField) {
     var textField = valField;
     var idx = textField.lastIndexOf('_id');

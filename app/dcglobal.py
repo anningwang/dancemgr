@@ -25,7 +25,8 @@ TEACHER_IN_ALL_SCHOOL = -99     # 员工与老师在所有分校任教
 
 GENDER_MALE = u'男'
 GENDER_FEMALE = u'女'
-
+GENDER_MALE_V = 1
+GENDER_FEMALE_V = 0
 
 DEGREE_SCOPE_ALL = 1
 DEGREE_SCOPE_STUDENT = 2
@@ -104,7 +105,7 @@ def class_mode_val(mode):
 
 
 def gender_v(text):
-    return True if text == GENDER_MALE else False
+    return GENDER_MALE_V if text == GENDER_MALE else GENDER_FEMALE_V
 
 
 def teacher_type_s(val):

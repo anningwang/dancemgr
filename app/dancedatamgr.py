@@ -1130,6 +1130,7 @@ def dance_teacher_get():
         .limit(page_size).offset(offset).all()
     i = offset + 1
     rows = []
+    title_dict = DcCommon.id_to_title()
     for rec in records:
         r = rec[0]
         leave_day = datetime.datetime.strftime(r.leave_day, '%Y-%m-%d') if r.leave_day is not None else None
@@ -1137,10 +1138,12 @@ def dance_teacher_get():
                      "school_name": rec[1], "name": r.name, "rem_code": r.rem_code, 'degree': r.degree,
                      'birthday': r.birthday, 'join_day': datetime.datetime.strftime(r.join_day, '%Y-%m-%d'),
                      'leave_day': leave_day,
-                     'te_title': r.te_title, 'gender': u'男' if r.gender else u'女',
-                     'te_type': teacher_type_s(r.te_type), 'in_job': u'是' if r.in_job else u'否',
-                     'is_assist': u'是' if r.is_assist else u'否',
-                     'has_class': u'是' if r.has_class else u'否',
+                     'te_title': title_dict.get(r.te_title, 'error'),
+                     'gender': u'男' if r.gender == GENDER_MALE else u'女',
+                     'te_type': teacher_type_s(r.te_type),
+                     'in_job': u'是' if r.in_job == 1 else u'否',
+                     'is_assist': u'是' if r.is_assist == 1 else u'否',
+                     'has_class': u'是' if r.has_class == 1 else u'否',
                      'nation': r.nation,
                      'birth_place': r.birth_place, 'idcard': r.idcard, 'class_type': r.class_type,
                      'phone': r.phone, 'tel': r.tel, 'address': r.address, 'zipcode': r.zipcode, 'email': r.email,
@@ -1242,21 +1245,25 @@ def dance_teacher_details_get():
            'qq': r.qq, 'wechat': r.wechat, 'remark': r.remark, 'recorder': r.recorder,
            'create_at': datetime.datetime.strftime(r.create_at, '%Y-%m-%d %H:%M'),
            'last_upd_at': datetime.datetime.strftime(r.last_upd_at, '%Y-%m-%d %H:%M'),
-           'last_user': r.last_user
+           'last_user': r.last_user, 'school_id': r.school_id
            }
 
     """ 查询 教育经历"""
     eds = DanceTeacherEdu.query.filter_by(teacher_id=r.id).all()
     edu = []
     for ed in eds:
-        edu.append({'id': ed.id, 'teacher_id': ed.teacher_id, 'begin_day': ed.begin_day, 'end_day': ed.end_day,
+        edu.append({'id': ed.id, 'teacher_id': ed.teacher_id,
+                    'begin_day': datetime.date.strftime(ed.begin_day, '%Y-%m'),
+                    'end_day': datetime.date.strftime(ed.end_day, '%Y-%m'),
                     'school': ed.school, 'major': ed.major, 'remark': ed.remark})
 
     """ 查询 工作经历"""
     works = DanceTeacherWork.query.filter_by(teacher_id=r.id).all()
     work = []
     for wk in works:
-        work.append({'id': wk.id, 'teacher_id': wk.teacher_id, 'begin_day': ed.begin_day, 'end_day': ed.end_day,
+        work.append({'id': wk.id, 'teacher_id': wk.teacher_id,
+                     'begin_day': datetime.date.strftime(ed.begin_day, '%Y-%m'),
+                    'end_day': datetime.date.strftime(ed.end_day, '%Y-%m'),
                      'firm': wk.firm, 'position': wk.position, 'content': wk.content, 'remark': wk.remark})
     return jsonify({"total": total, "row": row, 'edu': edu, 'work': work, 'errorCode': 0, 'msg': 'ok'})
 
@@ -1301,6 +1308,122 @@ def dance_teacher_query():
         ret.append({'value': rec.name, 'text': rec.name})
 
     return jsonify(ret)
+
+
+@app.route('/dance_teacher_modify', methods=['POST'])
+@login_required
+def dance_teacher_modify():
+    """
+    新增/更新 员工与老师。
+    输入参数：
+        {row: {},               员工与老师基本信息
+        edu: Array,             教育经历
+        work: [{                工作经历
+        }]
+    :return:
+    {
+        errorCode:          错误码
+        msg:                错误信息
+        ----------------    ----------------------------------------------
+        errorCode           msg
+        ----------------    ----------------------------------------------
+        0                   更新成功！
+        202                 参数错误！
+        301                 员工与老师记录[id=%d]不存在！
+    }
+    """
+    if request.json is not None:
+        obj = request.json
+    else:
+        if 'data' not in request.form:
+            return jsonify({'errorCode': 600, 'msg': 'Parameter error. [data] required.'})
+        json_str = request.form['data']
+        obj = json.loads(json_str)
+    if 'row' not in obj or 'edu' not in obj or 'work' not in obj:
+        return jsonify({'errorCode': 202, 'msg': u'参数错误！'})
+    if 'id' not in obj['row'] or obj['row']['id'] <= 0:
+        return dance_teacher_add(obj)  # 新增记录
+
+    """ 修改 员工与老师 基本情况 """
+    rid = obj['row']['id']
+    rec = DanceTeacher.query.get(rid)
+    if rec is None:
+        return jsonify({'errorCode': 301, 'msg': u'员工与老师记录[id=%d]不存在！' % rid})
+    rec.update(obj['row'])
+    db.session.add(rec)
+
+    """ 修改 教育经历"""
+    data = obj['edu']
+    records = DanceTeacherEdu.query.filter_by(teacher_id=rid).all()
+    old_ids = []
+    for rec in records:
+        old_ids.append({'id': rec.id})
+    change = dc_records_changed(old_ids, data, 'id')
+    for i in change['add']:
+        data[i]['teacher_id'] = rid
+        nr = DanceTeacherEdu(data[i])
+        db.session.add(nr)
+    for i in change['upd']:
+        nr = DanceTeacherEdu.query.get(data[i]['id'])
+        nr.update(data[i])
+        db.session.add(nr)
+    for i in change['del']:
+        DanceTeacherEdu.query.filter_by(id=old_ids[i]['id']).delete()
+
+    """ 修改 工作经历"""
+    data = obj['work']
+    records = DanceTeacherWork.query.filter_by(teacher_id=rid).all()
+    old_ids = []
+    for rec in records:
+        old_ids.append({'id': rec.id})
+    change = dc_records_changed(old_ids, data, 'id')
+    for i in change['add']:
+        data[i]['teacher_id'] = rid
+        nr = DanceTeacherWork(data[i])
+        db.session.add(nr)
+    for i in change['upd']:
+        nr = DanceTeacherWork.query.get(data[i]['id'])
+        nr.update(data[i])
+        db.session.add(nr)
+    for i in change['del']:
+        DanceTeacherWork.query.filter_by(id=old_ids[i]['id']).delete()
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
+
+
+def dance_teacher_add(obj):
+    """
+    新增 员工与老师。
+    :param obj:
+        {row: {},               员工与老师基本信息
+        edu: Array,             教育经历
+        work: [{                工作经历
+        }]
+    :return:
+    """
+    """判断是否有重名"""
+    tch = obj['row']
+    dup = DanceTeacher.query.filter_by(company_id=g.user.company_id, name=tch['name'], idcard=tch['idcard']).first()
+    if dup is not None:
+        return jsonify({'errorCode': 1001, 'msg': u'姓名重复'})
+    nr = DanceTeacher(tch)
+    db.session.add(nr)
+    nr = DanceTeacher.query.filter_by(company_id=g.user.company_id, teacher_no=nr.teacher_no,
+                                      school_id=tch['school_id']).first()
+    if nr is None:
+        return jsonify({'errorCode': 1002, 'msg': u'新增员工与老师记录失败。'})
+    """ 新增 教育经历"""
+    for dt in obj['edu']:
+        dt['teacher_id'] = nr.id
+        db.session.add(DanceTeacherEdu(dt))
+    """ 新增 工作经历"""
+    for dt in obj['work']:
+        dt['teacher_id'] = nr.id
+        db.session.add(DanceTeacherWork(dt))
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'新增成功！'})
 
 
 @app.route('/dc_comm_fee_mode_update', methods=['POST'])

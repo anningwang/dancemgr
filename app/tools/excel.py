@@ -429,10 +429,10 @@ def import_teacher(fn, is_asc=False):
                 raise Exception(u'Can not add new record school[%s]!' % school_name)
 
         parm['gender'] = gender_v(parm['gender'])
-        parm['te_type'] = True if parm['te_type'] == u'专职' else False
-        parm['in_job'] = True if parm['in_job'] == u'是' else False
-        parm['is_assist'] = True if parm['is_assist'] == u'是' else False
-        parm['has_class'] = True if parm['has_class'] == u'是' else False
+        parm['te_type'] = 1 if parm['te_type'] == u'专职' else 0
+        parm['in_job'] = 1 if parm['in_job'] == u'是' else 0
+        parm['is_assist'] = 1 if parm['is_assist'] == u'是' else 0
+        parm['has_class'] = 1 if parm['has_class'] == u'是' else 0
         if 'class_type' in parm:
             if parm['class_type'] in class_type:
                 parm['class_type'] = class_type[parm['class_type']]

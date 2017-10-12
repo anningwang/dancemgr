@@ -149,6 +149,7 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
 
                 $('#'+panel).mousedown(function (event) {      // panel 鼠标按下事件
                     if (event.target.id === panel) {
+                        event.stopPropagation(); // 禁止冒泡执行事件
                         endEditWork();
                         endEditEdu();
                     }
@@ -233,6 +234,7 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
         // 设置时间
         var curr_time = new Date();
         $("#"+tch_joinDay).datebox("setValue",danceFormatter(curr_time));
+        $('#'+tch_isAssist).combobox('setValue', 0);    // 默认 不是咨询师
     }
 
     function dgWorkClickCell(index, field) {
@@ -276,7 +278,7 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
         var arr = null;
         if(db) {
             dcDatebox(db.target, selectDate);
-            if(!row['begin_day'] && index > 0) {    // 不是第一行，且当前日期没有赋值
+            if(!row['begin_day'] && index > 0) {    // 不是第一行，且 开始年月无值，则设置上一行结束年月的 下一月
                 var endDay = rows[index-1]['end_day'];
                 if(endDay){
                     arr = endDay.split('-');
@@ -286,22 +288,21 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
                         m = 1;
                         y++;
                     } else m++;
-                    var setDay = y + '-' + (m<10?('0'+m):m);   // 下一月
-                    row.begin_day = setDay;
+                    row.begin_day = y + '-' + (m<10?('0'+m):m);   // 下一月
                 }
             }
             $(db.target).datebox('setValue', row['begin_day']);
         }
         if(dbEnd) {
             dcDatebox(dbEnd.target);
-            if(row.begin_day && !row.end_day){
+            if(row.begin_day && !row.end_day){  // 开始年月有值 且 结束年月无值，则设置为开始年月的 下一年
                 arr = row.begin_day.split('-');
                 row.end_day = (parseInt(arr[0]) +1) + '-' + arr[1];   // 下一年
             }
             $(dbEnd.target).datebox('setValue', row['end_day']);
         }
 
-        function selectDate(ym){
+        function selectDate(ym){    // 开始年月选择日期后，设置 结束年月的 日期 为 下一年
             if(!row['end_day']) {
                 arr = ym.split('-');
                 var netYear = (parseInt(arr[0]) +1) + '-' + arr[1];   // 下一年
@@ -320,17 +321,17 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
             url: '/dance_student_details_extras',
             async: true,
             dataType: 'json',
-            data: {'student_id': uid, 'school_id': condition.school_id},
-            success: function (data) {
-                if(data.errorCode === 0) {
-                    classlist = data['classlist'];
-                    schoollist = data['schoollist'];
-                    setSchoolName(schoollist);
-                } else {
-                    $.messager.alert('错误',data.msg,'error');
-                }
+            data: {'student_id': uid, 'school_id': condition.school_id}
+        }).done(function (data) {
+            if(data.errorCode === 0) {
+                classlist = data['classlist'];
+                schoollist = data['schoollist'];
+                setSchoolName(schoollist);
+            } else {
+                $.messager.alert('错误',data.msg,'error');
             }
         });
+
     }
 
     /**
@@ -373,6 +374,7 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
         $.ajax({
             method: "POST",
             url: '/dance_teacher_modify',
+            contentType: "application/json;charset=utf-8",
             data: JSON.stringify(teacher)
         }).done(function(data) {
             if (data.errorCode === 0) {
@@ -390,7 +392,7 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
     }
 
     function validateTeacherInfo() {
-        if (!$('#'+tch_name).textbox('getText')) {
+        if (!$('#'+tch_name).textbox('getValue')) {
             $.messager.alert({ title: '提示',icon:'info', msg: '姓名不能为空！',
                 fn: function(){
                     $('#'+tch_name).textbox('textbox').focus();
@@ -399,7 +401,67 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
             return false;
         }
 
+        if (!$('#'+tch_schoolName).textbox('getValue')) {
+            $.messager.alert({ title: '提示',icon:'info', msg: '请选择分校！',
+                fn: function(){
+                    $('#'+tch_schoolName).textbox('textbox').focus();
+                }
+            });
+            return false;
+        }
+
+        if (!$('#'+tch_title).textbox('getValue')) {
+            $.messager.alert({ title: '提示',icon:'info', msg: '请选择职位！',
+                fn: function(){
+                    $('#'+tch_title).textbox('textbox').focus();
+                }
+            });
+            return false;
+        }
+
+        var rows = $('#'+dgEdu).datagrid('getRows');
+        for(var i=0; i< rows.length; i++){
+            if(!$.isEmptyObject(rows[i])){  // 非空对象
+                if(!rows[i].begin_day || !rows[i].end_day || !rows[i]['school']) { // 三个字段 任何一个为空
+                    $.messager.alert('提示', '请填写教育经历第 ' + (i + 1) + ' 行的必填字段', 'info');
+                    return false;
+                }
+
+                if(rows[i].begin_day && rows[i].end_day && dcCompareYM(rows[i].begin_day, rows[i].end_day) >= 0){
+                    $.messager.alert('提示', '教育经历第 ' + (i + 1) + ' 行结束年月须大于开始年月', 'info');
+                    return false;
+                }
+            }
+        }
+
+        rows = $('#'+dgWork).datagrid('getRows');
+        for(i=0; i< rows.length; i++){
+            if(!$.isEmptyObject(rows[i])){  // 非空对象
+                if(!rows[i].begin_day || !rows[i].end_day || !rows[i]['firm']) {
+                    $.messager.alert('提示', '请填写工作经历第 ' + (i + 1) + ' 行的必填字段', 'info');
+                    return false;
+                }
+
+                if(rows[i].begin_day && rows[i].end_day && dcCompareYM(rows[i].begin_day, rows[i].end_day) >= 0){
+                    $.messager.alert('提示', '工作经历第 ' + (i + 1) + ' 行结束年月须大于开始年月', 'info');
+                    return false;
+                }
+            }
+        }
+
         return true;
+    }
+
+    function dcCompareYM(ym1, ym2) {    // ym1 为 yyyy-mm 格式的字符串
+        var arr = ym1.split('-');
+        var y1 = parseInt(arr[0]);
+        var m1 = parseInt(arr[1]);
+
+        arr = ym2.split('-');
+        var y2 = parseInt(arr[0]);
+        var m2 = parseInt(arr[1]);
+        if(y1 !== y2) return y1-y2;
+        return m1-m2;
     }
 
     function packageTeacherInfo() {
