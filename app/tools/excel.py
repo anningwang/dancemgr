@@ -54,9 +54,10 @@ def check_excel_col_name(cols):
     return True, 'ok'
 
 
-def import_student(fn):
+def import_student(fn, is_asc=False):
     """
     :param fn:   文件名，需要导入数据的Excel文件名
+    :param is_asc      是否 顺序导入。True 顺序导入， False 逆序导入
     :return:     读取的 Excel 数据,
                   信息: 'ok' -- 正确，其他错误,
                   正确存入条数,
@@ -106,8 +107,8 @@ def import_student(fn):
     num_wrong = 0
     school_ids = DanceSchool.name_to_id()
 
-    # 逆序遍历。第一行为表头需要过滤掉
-    for row in range(cnt - 1, 0, -1):
+    # 逆序或顺序遍历。第一行为表头需要过滤掉
+    for row in (range(1, cnt) if is_asc else range(cnt - 1, 0, -1)):
         r = sh.row_values(row)
         if r[0] == u'合计':
             continue
@@ -147,9 +148,10 @@ def import_student(fn):
     return {'errorCode': 0, 'msg': msg}
 
 
-def import_class(fn):
+def import_class(fn, is_asc=False):
     """
     :param fn:   文件名，需要导入数据的Excel文件名
+    :param is_asc      是否 顺序导入。True 顺序导入， False 逆序导入
     :return:     1. 读取的 Excel 数据,
                   2. 信息: 'ok' -- 正确，其他错误,
                   3. 正确存入条数,
@@ -194,8 +196,8 @@ def import_class(fn):
     # 查询班级类型 与 id 的对应表
     class_type_id = DcClassType.name_id()
 
-    # 逆序遍历。第一行为表头需要过滤掉
-    for row in range(cnt - 1, 0, -1):
+    # 逆序或顺序遍历。第一行为表头需要过滤掉
+    for row in (range(1, cnt) if is_asc else range(cnt - 1, 0, -1)):
         r = sh.row_values(row)
         if r[0] == u'合计':
             continue
@@ -242,9 +244,10 @@ def import_class(fn):
     return {'errorCode': 0, 'msg': msg}
 
 
-def import_receipt(fn):
+def import_receipt(fn, is_asc=False):
     """
     :param fn:   文件名，需要导入数据的Excel文件名
+    :param is_asc      是否 顺序导入。True 顺序导入， False 逆序导入
     :return:     errorCode     0 成功， 非0 错误
                   msg           信息: 'ok' -- 正确，其他错误,
     """
@@ -283,8 +286,8 @@ def import_receipt(fn):
     sid = list(school_ids.values())
     students = DanceStudent.get_records(sid)
 
-    # 逆序遍历。第一行为表头需要过滤掉
-    for row in range(cnt - 1, 0, -1):
+    # 逆序或顺序遍历。第一行为表头需要过滤掉
+    for row in (range(1, cnt) if is_asc else range(cnt - 1, 0, -1)):
         r = sh.row_values(row)
         if r[0] == u'合计':
             continue
@@ -398,7 +401,7 @@ def import_teacher(fn, is_asc=False):
     class_type = DcClassType.name_id()
     title_dict = DcCommon.title_to_id()
 
-    # 逆序遍历。第一行为表头需要过滤掉
+    # 逆序或者顺序遍历。第一行为表头需要过滤掉
     for row in (range(1, cnt) if is_asc else range(cnt - 1, 0, -1)):
         r = sh.row_values(row)
         if r[0] == u'合计':
@@ -611,6 +614,127 @@ def import_common_job_title(fn, is_asc=False):
                                        type=COMM_TYPE_JOB_TITLE, name=parm['name']).first()
         if has is None:
             parm['type'] = COMM_TYPE_JOB_TITLE
+            dt = DcCommon(parm)
+            db.session.add(dt)
+            num_right += 1
+        else:
+            num_wrong += 1  # 重复数据
+        # -----------------------------------------------------------------------------------------
+
+        value = int((num_wrong+num_right)*100.0/(cnt-1))
+        progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
+
+    progressbar[str(g.user.id)]['value'] = 100
+    msg = u'[%s]页%s' % (sh.name, '' if num_right + num_wrong != 0 else u' 无数据！')
+    msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
+    msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
+
+    db.session.commit()
+    return {'errorCode': 0, 'msg': msg}
+
+
+def import_common_intention(fn, is_asc=False):
+    """
+    :param fn:          文件名，需要导入数据的Excel文件名
+    :param is_asc       是否 顺序导入。True 顺序导入， False 逆序导入
+    :return:     errorCode     0 成功， 非0 错误
+                  msg           信息: 'ok' -- 正确，其他错误,
+    """
+    sheet_pages = [u'意向程度']
+    global progressbar
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': sheet_pages[0]}
+
+    columns = ['name', 'recorder']
+    cols_cn = [u'意向程度', u'录入员']
+    cols_need = [u'意向程度']
+    workbook = xlrd.open_workbook(fn)
+    worksheets = workbook.sheet_names()
+
+    for page in sheet_pages:
+        if page not in worksheets:
+            return {'errorCode': 880, 'msg': u'未找到页面[%s]' % page}
+    return dc_common_table(workbook, sheet_pages[0], columns, cols_cn, cols_need, COMM_TYPE_INTENTION, is_asc)
+
+
+def import_common_consult_mode(fn, is_asc=False):
+    """
+    :param fn:          文件名，需要导入数据的Excel文件名
+    :param is_asc       是否 顺序导入。True 顺序导入， False 逆序导入
+    :return:     errorCode     0 成功， 非0 错误
+                  msg           信息: 'ok' -- 正确，其他错误,
+    """
+    sheet_pages = [u'咨询方式']
+    global progressbar
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': sheet_pages[0]}
+
+    columns = ['name', 'recorder']
+    cols_cn = [u'咨询方式', u'录入员']
+    cols_need = [u'咨询方式']
+    workbook = xlrd.open_workbook(fn)
+    worksheets = workbook.sheet_names()
+
+    for page in sheet_pages:
+        if page not in worksheets:
+            return {'errorCode': 880, 'msg': u'未找到页面[%s]' % page}
+    return dc_common_table(workbook, sheet_pages[0], columns, cols_cn, cols_need, COMM_TYPE_CONSULT_MODE, is_asc)
+
+
+def import_common_info_src(fn, is_asc=False):
+    """
+    :param fn:          文件名，需要导入数据的Excel文件名
+    :param is_asc       是否 顺序导入。True 顺序导入， False 逆序导入
+    :return:     errorCode     0 成功， 非0 错误
+                  msg           信息: 'ok' -- 正确，其他错误,
+    """
+    first_col = u'信息来源'
+    sheet_pages = [first_col]
+    global progressbar
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': sheet_pages[0]}
+
+    columns = ['name', 'recorder']
+    cols_cn = [first_col, u'录入员']
+    cols_need = [first_col]
+    workbook = xlrd.open_workbook(fn)
+    worksheets = workbook.sheet_names()
+
+    for page in sheet_pages:
+        if page not in worksheets:
+            return {'errorCode': 880, 'msg': u'未找到页面[%s]' % page}
+    return dc_common_table(workbook, sheet_pages[0], columns, cols_cn, cols_need, COMM_TYPE_INFO_SRC, is_asc)
+
+
+def dc_common_table(workbook, sh_name, columns, cols_cn, cols_need, ty, is_asc):
+    sh = workbook.sheet_by_name(sh_name)
+    cnt = sh.nrows
+    if cnt <= 1:
+        return {'errorCode': 2000, 'msg': u"无有效数据！"}
+
+    ck = dc_check_col(sh.row_values(0), cols_cn, cols_need)
+    if ck['errorCode'] != 0:
+        return ck
+    cols_num = list(ck['excel_idx'])
+    col_idx = list(ck['col_idx'])
+
+    num_right = 0
+    num_wrong = 0
+
+    # 逆序遍历。第一行为表头需要过滤掉
+    for row in (range(1, cnt) if is_asc else range(cnt - 1, 0, -1)):
+        r = sh.row_values(row)
+        if r[0] == u'合计':
+            continue
+
+        parm = {}
+        for i in range(len(cols_num)):
+            parm[columns[col_idx[i]]] = r[cols_num[i]]
+
+        # 特殊列的处理
+        # -----------------------------------------------------------------------------------------
+        # 重复校验
+        has = DcCommon.query.filter_by(company_id=g.user.company_id,
+                                       type=ty, name=parm['name']).first()
+        if has is None:
+            parm['type'] = ty
             dt = DcCommon(parm)
             db.session.add(dt)
             num_right += 1

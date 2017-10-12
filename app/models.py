@@ -1917,4 +1917,12 @@ class DcCommon(db.Model):
             title[rec.name] = rec.id
         return title
 
+    @staticmethod
+    def intention_to_id():
+        records = DcCommon.query.filter_by(company_id=g.user.company_id, type=COMM_TYPE_INTENTION).all()
+        intention = {}
+        for rec in records:
+            intention[rec.name] = rec.id
+        return intention
+
 whooshalchemy.whoosh_index(app, Post)

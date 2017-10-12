@@ -8,7 +8,8 @@ from werkzeug.utils import secure_filename
 import base64
 import time
 from excel import import_student, import_class, import_receipt, import_teaching_material, import_teacher, \
-    import_common_degree, import_common_job_title,\
+    import_common_degree, import_common_job_title, import_common_intention, import_common_info_src,\
+    import_common_consult_mode, \
     export_student
 from tools import get_filename
 
@@ -97,6 +98,11 @@ def show(name):
 
 
 def dispatch_import_file(fn, dance_module_name):
+    entrance = {
+        'dc_common_intention':    {'func': import_common_intention, 'asc': True},
+        'dc_common_consult_mode': {'func': import_common_consult_mode, 'asc': True},
+        'dc_common_info_src':     {'func': import_common_info_src, 'asc': True}
+    }
     if dance_module_name == 'DanceStudent':
         return import_student(fn)
     elif dance_module_name == 'DanceClass':
@@ -111,5 +117,7 @@ def dispatch_import_file(fn, dance_module_name):
         return import_common_degree(fn, True)
     elif dance_module_name == 'dc_common_job_title':
         return import_common_job_title(fn, True)
+    elif dance_module_name in entrance:
+        return entrance[dance_module_name]['func'](fn, entrance[dance_module_name]['asc'])
     else:
         return {'errorCode': 201, 'msg': u'Unknown module name %s' % dance_module_name}

@@ -1539,6 +1539,69 @@ def dc_common_job_title_update():
     return dc_common_update(COMM_TYPE_JOB_TITLE, request.form)
 
 
+@app.route('/dc_common_intention_get', methods=['POST'])
+@login_required
+def dc_common_intention_get():
+    """查询 意向程度"""
+    return dc_common_get(COMM_TYPE_INTENTION, request.form)
+
+
+@app.route('/dc_common_intention_query', methods=['POST'])
+@login_required
+def dc_common_intention_query():
+    """条件查询 意向程度"""
+    return dc_common_query(COMM_TYPE_INTENTION, request.form)
+
+
+@app.route('/dc_common_intention_update', methods=['POST'])
+@login_required
+def dc_common_intention_update():
+    """更新、新增 意向程度"""
+    return dc_common_update(COMM_TYPE_INTENTION, request.form)
+
+
+@app.route('/dc_common_info_src_get', methods=['POST'])
+@login_required
+def dc_common_info_src_get():
+    """查询 信息来源"""
+    return dc_common_get(COMM_TYPE_INFO_SRC, request.form)
+
+
+@app.route('/dc_common_info_src_query', methods=['POST'])
+@login_required
+def dc_common_info_src_query():
+    """条件查询 信息来源"""
+    return dc_common_query(COMM_TYPE_INFO_SRC, request.form)
+
+
+@app.route('/dc_common_info_src_update', methods=['POST'])
+@login_required
+def dc_common_info_src_update():
+    """更新、新增 信息来源"""
+    return dc_common_update(COMM_TYPE_INFO_SRC, request.form)
+
+
+@app.route('/dc_common_consult_mode_get', methods=['POST'])
+@login_required
+def dc_common_consult_mode_get():
+    """查询咨询方式"""
+    return dc_common_get(COMM_TYPE_CONSULT_MODE, request.form)
+
+
+@app.route('/dc_common_consult_mode_query', methods=['POST'])
+@login_required
+def dc_common_consult_mode_query():
+    """条件查询咨询方式"""
+    return dc_common_query(COMM_TYPE_CONSULT_MODE, request.form)
+
+
+@app.route('/dc_common_consult_mode_update', methods=['POST'])
+@login_required
+def dc_common_consult_mode_update():
+    """更新、新增咨询方式"""
+    return dc_common_update(COMM_TYPE_CONSULT_MODE, request.form)
+
+
 def dc_common_get(ty, obj):
     """
     查询 职位

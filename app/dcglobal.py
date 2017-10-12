@@ -10,8 +10,8 @@ class FeeItemType(Enum):
     Common = 3
 
 # 班级是否结束
-CLASS_IS_END = 1        # 已结束
-CLASS_IS_ON = 0         # 未结束
+CLASS_IS_END = 1                # 已结束
+CLASS_IS_ON = 0                 # 未结束
 
 # 班级授课形式
 CLASS_STYLE_GROUP = 1           # 集体课
@@ -26,16 +26,16 @@ TEACHER_IN_ALL_SCHOOL = -99     # 员工与老师在所有分校任教
 GENDER_MALE = u'男'
 GENDER_FEMALE = u'女'
 
-DC_GENDER = {1: u'男', u'男': 1,
-             0: u'女', u'女': 0
-             }
 
 DEGREE_SCOPE_ALL = 1
 DEGREE_SCOPE_STUDENT = 2
 DEGREE_SCOPE_TEACHER = 3
 
-COMM_TYPE_DEGREE = 2        # 文化程度
-COMM_TYPE_JOB_TITLE = 3     # 职位
+COMM_TYPE_DEGREE = 2            # 文化程度
+COMM_TYPE_JOB_TITLE = 3         # 职位
+COMM_TYPE_INFO_SRC = 4          # 信息来源
+COMM_TYPE_CONSULT_MODE = 5      # 咨询方式
+COMM_TYPE_INTENTION = 6         # 意向程度
 
 
 def get_feename(val):
@@ -101,24 +101,6 @@ def class_mode_val(mode):
         return CLASS_MODE_BY_HOUR
     else:
         return CLASS_MODE_BY_TIMES
-
-
-def gender_text(val):
-    try:
-        _v = int(val)
-        if _v in DC_GENDER:
-            return DC_GENDER[_v]
-        else:
-            return GENDER_FEMALE
-    except KeyError:
-        return GENDER_FEMALE
-
-
-def gender_val(text):
-    if text in DC_GENDER:
-        return DC_GENDER[text]
-    else:
-        return DC_GENDER[GENDER_FEMALE]
 
 
 def gender_v(text):
