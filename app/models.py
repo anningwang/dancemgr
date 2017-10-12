@@ -1646,7 +1646,7 @@ class DanceTeacher(db.Model):
             self.name = param['name']
         if 'rem_code' in param:
             self.rem_code = param['rem_code']
-        if 'degree' in param:
+        if 'degree' in param and param['degree'] != '':
             self.degree = param['degree']
         if 'birthday' in param:
             self.birthday = param['birthday']
@@ -1924,5 +1924,20 @@ class DcCommon(db.Model):
         for rec in records:
             intention[rec.name] = rec.id
         return intention
+
+    @staticmethod
+    def name_to_id(ty):
+        records = DcCommon.query.filter_by(company_id=g.user.company_id, type=ty).all()
+        name_dict = {}
+        for rec in records:
+            name_dict[rec.name] = rec.id
+        return name_dict
+
+    @staticmethod
+    def add(ty, name):
+        r = DcCommon({'name': name, 'type': ty})
+        db.session.add(r)
+        r = DcCommon.query.filter_by(company_id=g.user.company_id, type=ty, name=name).first()
+        return r.id if r is not None else -1
 
 whooshalchemy.whoosh_index(app, Post)

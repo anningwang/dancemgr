@@ -142,13 +142,6 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
                 });
                 $('#'+dgWork).datagrid({
                     onClickCell: dgWorkClickCell,
-                    onEndEdit : function onEndEdit(index, row){
-                        var ed = $(this).datagrid('getEditor', {
-                            index: index,
-                            field: 'class_name'
-                        });
-                        row.class_name = $(ed.target).combobox('getText');
-                    },
                     toolbar: [{iconCls: 'icon-add', text: '增加行', handler: function () {$('#'+dgWork).datagrid('appendRow', {});}},
                         {iconCls: 'icon-remove', text: '删除行', handler: function () {danceDelRow(dgWork);}}
                     ]
@@ -159,8 +152,8 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
                         endEditWork();
                         endEditEdu();
                     }
-                }); 
-
+                });
+                
                 if (uid > 0) {  // 修改，查看
                     ajaxTeacherDetail();
                 } else {    // 新增
@@ -243,13 +236,12 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
     }
 
     function dgWorkClickCell(index, field) {
-        //console.log('dgWorkClickCell');
+        endEditEdu();
         if (edIdxWork !== index) {
+            endEditWork();
             var dg = $('#'+dgWork);
-            if (edIdxWork !== undefined) {
-                $(dg).datagrid('endEdit', edIdxWork);
-            }
             $(dg).datagrid('selectRow', index).datagrid('beginEdit', index);
+            dcFormatYM(dgWork, index);
             var ed = $(dg).datagrid('getEditor', {index:index,field:field});
             if (ed){
                 ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
@@ -258,17 +250,68 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
         }
     }
 
+
     function dgEduClickCell(index, field) {
+        endEditWork();
         if (edIdxEdu !== index) {
             endEditEdu();
             var dg = $('#'+dgEdu);
             $(dg).datagrid('selectRow', index).datagrid('beginEdit', index);
+            dcFormatYM(dgEdu, index);
             var ed = $(dg).datagrid('getEditor', {index:index,field:field});
             if (ed){
                 ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
             }
             edIdxEdu = index;
         }
+    }
+
+    // dg 必须处于编辑状态
+    function dcFormatYM(dgId, index) {
+        var dg = $('#'+dgId);
+        var rows = $(dg).datagrid('getRows');
+        var row = $(dg).datagrid('getSelected');
+        var db = $(dg).datagrid('getEditor', {index:index,field:'begin_day'});
+        var dbEnd = $(dg).datagrid('getEditor', {index:index,field:'end_day'});
+        var arr = null;
+        if(db) {
+            dcDatebox(db.target, selectDate);
+            if(!row['begin_day'] && index > 0) {    // 不是第一行，且当前日期没有赋值
+                var endDay = rows[index-1]['end_day'];
+                if(endDay){
+                    arr = endDay.split('-');
+                    var y = parseInt(arr[0]);
+                    var m = parseInt(arr[1]);
+                    if(m === 12) {
+                        m = 1;
+                        y++;
+                    } else m++;
+                    var setDay = y + '-' + (m<10?('0'+m):m);   // 下一月
+                    row.begin_day = setDay;
+                }
+            }
+            $(db.target).datebox('setValue', row['begin_day']);
+        }
+        if(dbEnd) {
+            dcDatebox(dbEnd.target);
+            if(row.begin_day && !row.end_day){
+                arr = row.begin_day.split('-');
+                row.end_day = (parseInt(arr[0]) +1) + '-' + arr[1];   // 下一年
+            }
+            $(dbEnd.target).datebox('setValue', row['end_day']);
+        }
+
+        function selectDate(ym){
+            if(!row['end_day']) {
+                arr = ym.split('-');
+                var netYear = (parseInt(arr[0]) +1) + '-' + arr[1];   // 下一年
+                if(dbEnd) {
+                    row.end_day = netYear;
+                    $(dbEnd.target).datebox('setValue', netYear);
+                }
+            }
+        }
+
     }
 
     function ajaxTeacherExtras() {
@@ -374,17 +417,17 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
         teacher.row.idcard = $('#'+tch_idcard).textbox('getText');   // 身份证
         teacher.row.te_title = $('#'+tch_title).combobox('getValue');   // 咨询师
         teacher.row.degree = $('#'+tch_degree).combobox('getValue');// 文化程度
-        teacher.row.nation = $('#'+tch_nation).combobox('getValue');
-        teacher.row.birth_place = $('#'+tch_birthPlace).combobox('getValue');
+        teacher.row.nation = $('#'+tch_nation).textbox('getValue');
+        teacher.row.birth_place = $('#'+tch_birthPlace).textbox('getValue');
         teacher.row.class_type = $('#'+tch_classType).combobox('getValue');
-        teacher.row.phone = $('#'+tch_phone).combobox('getValue');
-        teacher.row.qq = $('#'+tch_qq).combobox('getValue');
-        teacher.row.email = $('#'+tch_email).combobox('getValue');
+        teacher.row.phone = $('#'+tch_phone).textbox('getValue');
+        teacher.row.qq = $('#'+tch_qq).textbox('getValue');
+        teacher.row.email = $('#'+tch_email).textbox('getValue');
         teacher.row.birthday = $('#'+tch_birthday).datebox('getValue');   // 出生日期
         teacher.row.leave_day = $('#'+tch_leaveDay).datebox('getValue');
-        teacher.row.zipcode = $('#'+tch_zipcode).datebox('getValue');
-        teacher.row.address = $('#'+tch_address).datebox('getValue');
-        teacher.row.wechat = $('#'+tch_wechat).datebox('getValue');
+        teacher.row.zipcode = $('#'+tch_zipcode).textbox('getValue');
+        teacher.row.address = $('#'+tch_address).textbox('getValue');
+        teacher.row.wechat = $('#'+tch_wechat).textbox('getValue');
         teacher.row.remark = $('#'+tch_remark).textbox('getText');   // 备注
 
         var dg = $('#'+dgWork);
@@ -409,6 +452,8 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
 
     function danceDelRow(dgId) {
         //console.log('del row');
+        endEditWork();
+        endEditEdu();
         var dg = $('#'+dgId);
         var rows = dg.datagrid('getRows');
         if (rows.length === 0) {

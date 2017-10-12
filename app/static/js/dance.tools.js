@@ -89,6 +89,76 @@
         }
     });
 
+    // 用法 html: <input id="ym" >
+    //      js:   $('#ym').combobox('yearMonth');
+    $.extend($.fn.combobox.methods, {
+        yearMonth: function (jq) { return jq.each(function () {
+            var obj = $(this).combobox();
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var table = $('<table>');
+            var tr1 = $('<tr>');
+            var tr1td1 = $('<td>', {
+                text: '-',
+                click: function () {
+                    var y = $(this).next().html();
+                    y = parseInt(y) - 1;
+                    $(this).next().html(y);
+                }
+            });
+            tr1td1.appendTo(tr1);
+            var tr1td2 = $('<td>', {
+                text: year
+            }).appendTo(tr1);
+
+            var tr1td3 = $('<td>', {
+                text: '+',
+                click: function () {
+                    var y = $(this).prev().html();
+                    y = parseInt(y) + 1;
+                    $(this).prev().html(y);
+                }
+            }).appendTo(tr1);
+            tr1.appendTo(table);
+
+            var m_text = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+            var n = 1;
+            for (var i = 1; i <= 4; i++) {
+                var tr = $('<tr>');
+                for (var m = 1; m <= 3; m++) {
+                    var td = $('<td>', {
+                        val: n,
+                        text: m_text[n-1] + (n<11 ? '月' : ''),
+                        click: function () {
+                            var yyyy = $(table).find("tr:first>td:eq(1)").html();
+                            //var cell = $(this).html();
+                            var cell = $(this).val();
+                            console.log(cell);
+                            var v = yyyy + '-' + (cell.length < 2 ? '0' + cell : cell);
+                            obj.combobox('setValue', v).combobox('hidePanel');
+                        }
+                    });
+                    if (n == month) {
+                        td.addClass('tdbackground');
+                    }
+                    td.appendTo(tr);
+                    n++;
+                }
+                tr.appendTo(table);
+            }
+            table.addClass('mytable cursor');
+            table.find('td').hover(function () {
+                $(this).addClass('tdbackground');
+            }, function () {
+                $(this).removeClass('tdbackground');
+            });
+            table.appendTo(obj.combobox("panel"));
+        });}
+    });
+
+
+
     /** @author  Anningwang
      * @requires jQuery,EasyUI
      * 防止panel/window/dialog组件超出浏览器边界，将代码放到easyui.min.js后
@@ -161,6 +231,55 @@ String.prototype.format = function(args) {
         return _dic[key] || str;    // 如果在 _dic 找不到对应的值，就返回原字符
     });
 };
+
+function dcDateboxYM(dbId) {
+    dcDatebox($('#'+dbId));
+}
+
+function dcDatebox(obj, func) {
+    var db = $(obj);
+    db.datebox({
+        onShowPanel: function () {  // 显示日期选择对象后再触发弹出月份层的事件，初始化时没有生成月份层
+            span.trigger('click');   // 触发click事件弹出月份层
+            // fix 1.3.x不选择日期点击其他地方隐藏在弹出日期框显示日期面板
+            if (p.find('div.calendar-menu').is(':hidden')) p.find('div.calendar-menu').show();
+            if (!tds) setTimeout(function () {  // 延时触发获取月份对象，因为上面的事件触发和对象生成有时间间隔
+                tds = p.find('div.calendar-menu-month-inner td');
+                tds.click(function (e) {
+                    e.stopPropagation(); // 禁止冒泡执行easyui给月份绑定的事件
+                    var year = /\d{4}/.exec(span.html())[0];     // 得到年份
+                    var month = parseInt($(this).attr('abbr'), 10); // 月份，这里不需要+1
+                    db.datebox('hidePanel')     // 隐藏日期对象
+                        .datebox('setValue', year + '-' + month); // 设置日期的值
+                    if(func) func(db.datebox('getValue'));
+                });
+            }, 0);
+            // yearIpt.unbind();   // 解绑年份输入框中任何事件
+        },
+        parser: function (s) {
+            if (!s) return new Date();
+            var arr = s.split('-');
+            return new Date(parseInt(arr[0], 10), parseInt(arr[1], 10) - 1, 1);
+        },
+        formatter: function (d) {
+            var m = d.getMonth() + 1;
+            return d.getFullYear() + '-' + (m<10?('0'+m):m);
+        }
+    }).textbox({editable:false});
+    var p = db.datebox('panel'), // 日期选择对象
+        tds = false, // 日期选择对象中月份
+        aToday = p.find('a.datebox-current'),
+        yearIpt = p.find('input.calendar-menu-year'),//年份输入框
+    // 显示月份控件
+        span = aToday.length ? p.find('div.calendar-title span') ://1.3.x版本
+            p.find('span.calendar-text'); //1.4.x版本
+    if (aToday.length) {//1.3.x版本，取消Today按钮的click事件，重新绑定新事件设置日期框为今天，防止弹出日期选择面板
+        aToday.unbind('click').click(function () {
+            var now=new Date();
+            db.datebox('hidePanel').datebox('setValue', now.getFullYear() + '-' + (now.getMonth() + 1));
+        });
+    }
+}
 
 
 /**

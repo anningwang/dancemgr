@@ -2121,3 +2121,93 @@ def api_dance_class_type_get():
     }]
     """
     return jsonify(DcClassType.dc_class_type())
+
+
+@app.route('/api/dc_common_degree_get', methods=['POST'])
+@login_required
+def api_dc_common_degree_get():
+    """
+    查询 文化程度
+    输入参数：
+    {
+        type        类型， 'teacher', 'student'
+    }
+    :return:
+        id          文化程度id
+        text        文化程度
+    """
+    if 'type' in request.form and request.form['type'] == 'teacher':
+        tys = [DEGREE_SCOPE_ALL, DEGREE_SCOPE_TEACHER]
+    else:
+        tys = [DEGREE_SCOPE_ALL, DEGREE_SCOPE_STUDENT]
+    records = DcCommon.query.filter_by(company_id=g.user.company_id, type=COMM_TYPE_DEGREE)\
+        .filter(DcCommon.scope.in_(tys)).all()
+    ret = []
+    for rec in records:
+        ret.append({'id': rec.id, 'text': rec.name})
+    return jsonify(ret)
+
+
+@app.route('/api/dc_common_job_title_get', methods=['POST'])
+@login_required
+def api_dc_common_job_title_get():
+    """
+    查询 职位
+    输入参数：
+    :return:
+        id:
+        text:
+    """
+    return api_dc_common(COMM_TYPE_JOB_TITLE)
+
+
+@app.route('/api/dc_common_intention_get', methods=['POST'])
+@login_required
+def api_dc_common_intention_get():
+    """
+    查询 意向程度
+    输入参数：
+    :return:
+        id:
+        text:
+    """
+    return api_dc_common(COMM_TYPE_INTENTION)
+
+
+@app.route('/api/dc_common_consult_mode_get', methods=['POST'])
+@login_required
+def api_dc_common_consult_mode_get():
+    """
+    查询 咨询方式
+    输入参数：
+    :return:
+        id:
+        text:
+    """
+    return api_dc_common(COMM_TYPE_CONSULT_MODE)
+
+
+@app.route('/api/dc_common_info_src_get', methods=['POST'])
+@login_required
+def api_dc_common_info_src_get():
+    """
+    查询 信息来源
+    输入参数：
+    :return:
+        id:
+        text:
+    """
+    return api_dc_common(COMM_TYPE_INFO_SRC)
+
+
+def api_dc_common(ty):
+    """
+    查询公共类型数据
+    :param ty:      类型，COMM_TYPE_JOB_TITLE, 等
+    :return:
+    """
+    records = DcCommon.query.filter_by(company_id=g.user.company_id, type=ty).all()
+    ret = []
+    for rec in records:
+        ret.append({'id': rec.id, 'text': rec.name})
+    return jsonify(ret)

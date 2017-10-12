@@ -400,6 +400,7 @@ def import_teacher(fn, is_asc=False):
     school_ids = DanceSchool.name_to_id()
     class_type = DcClassType.name_id()
     title_dict = DcCommon.title_to_id()
+    degree_dict = DcCommon.name_to_id(COMM_TYPE_DEGREE)
 
     # 逆序或者顺序遍历。第一行为表头需要过滤掉
     for row in (range(1, cnt) if is_asc else range(cnt - 1, 0, -1)):
@@ -447,6 +448,13 @@ def import_teacher(fn, is_asc=False):
             title_dict[parm['te_title']] = new_r.id
         parm['te_title'] = title_dict[parm['te_title']]
 
+        if 'degree' in parm and parm['degree'] != '':
+            if parm['degree'] not in degree_dict:
+                rid = DcCommon.add(COMM_TYPE_DEGREE, parm['degree'])
+                if rid <= 0:
+                    raise Exception(u'Add record failed.name={}, type={}'.format(parm['degree'], COMM_TYPE_DEGREE))
+                degree_dict[parm['degree']] = rid
+            parm['degree'] = degree_dict[parm['degree']]
         # -----------------------------------------------------------------------------------------
         # 保证 教职工不能重复 分校id+教职工编号 不能重复
         has = DanceTeacher.query.filter_by(school_id=parm['school_id'], teacher_no=parm['teacher_no']).first()

@@ -29,8 +29,8 @@
 
                 <td class="dcTdPercent">
                     <select class="easyui-combobox" id="gender" name="gender" data-options="labelAlign:'right',panelHeight:'auto', label:'*性别：',editable:false,labelWidth:120">
-                        <option value="0">女</option>
-                        <option value="1">男</option>
+                        <option value=0>女</option>
+                        <option value=1>男</option>
                     </select>
                 </td>
 
@@ -47,32 +47,32 @@
                 </td>
 
                 <td>
-                    <select class="easyui-combobox" id="teacherType" data-options="labelAlign:'right',panelHeight:'auto', label:'类别：',editable:false,labelWidth:120">
-                        <option value="1">专职</option>
-                        <option value="0">兼职</option>
+                    <select class="easyui-combobox" id="teacherType" data-options="labelAlign:'right',panelHeight:'auto', label:'*类别：',editable:false,labelWidth:120">
+                        <option value=1>专职</option>
+                        <option value=0>兼职</option>
                     </select>
                 </td>
             </tr>  <!-- 2  end -->
 
             <tr>  <!-- 3 -->
                 <td>
-                    <select class="easyui-combobox" id="inJob" data-options="labelAlign:'right',label:'是否在职：',panelHeight:'auto',editable:false,width:120,labelWidth:120">
-                        <option value="1">是</option>
-                        <option value="0">否</option>
+                    <select class="easyui-combobox" id="inJob" data-options="labelAlign:'right',label:'*是否在职：',panelHeight:'auto',editable:false,width:120,labelWidth:120">
+                        <option value=1>是</option>
+                        <option value=0>否</option>
                     </select>
                 </td>
 
                 <td>
-                    <select class="easyui-combobox" id="isAssist" data-options="labelAlign:'right',panelHeight:'auto',label:'是否咨询师：',editable:false,width:120,labelWidth:120">
-                        <option value="1">是</option>
-                        <option value="0">否</option>
+                    <select class="easyui-combobox" id="isAssist" data-options="labelAlign:'right',panelHeight:'auto',label:'*是否咨询师：',editable:false,width:120,labelWidth:120">
+                        <option value=1>是</option>
+                        <option value=0>否</option>
                     </select>
                 </td>
 
                 <td>
-                    <select class="easyui-combobox" id="hasClass" data-options="labelAlign:'right',panelHeight:'auto',label:'是否授课：',editable:false,width:120,labelWidth:120">
-                        <option value="1">是</option>
-                        <option value="0">否</option>
+                    <select class="easyui-combobox" id="hasClass" data-options="labelAlign:'right',panelHeight:'auto',label:'*是否授课：',editable:false,width:120,labelWidth:120">
+                        <option value=1>是</option>
+                        <option value=0>否</option>
                     </select>
                 </td>
             </tr>  <!-- 3 -->
@@ -83,12 +83,14 @@
                 </td>
 
                 <td>
-                    <select class="easyui-combobox" id="teacherTitle" data-options="labelAlign:'right',panelHeight:60,label:'职位：',editable:false,labelWidth:120">
-                    </select>
+                    <input class="easyui-combobox" id="teacherTitle" data-options="labelAlign:'right',panelHeight:'auto',label:'*职位：',editable:false,labelWidth:120,
+                    url:'/api/dc_common_job_title_get',valueField:'id',textField:'text'">
+
                 </td>
 
                 <td>
-                    <select class="easyui-combobox" id="degree" data-options="labelAlign:'right',panelHeight:'auto',label:'文化程度：',editable:false,labelWidth:120"></select>
+                    <input class="easyui-combobox" id="degree" data-options="labelAlign:'right',panelHeight:'auto',label:'文化程度：',
+                    editable:false,labelWidth:120,url:'/api/dc_common_degree_get',valueField:'id',textField:'text',queryParams:{type: 'teacher'}">
                 </td>
             </tr>  <!-- 4 -->
 
@@ -102,7 +104,8 @@
                 </td>
 
                 <td>
-                    <select class="easyui-combobox" id="classType" data-options="labelAlign:'right',panelHeight:'auto',label:'教授班级类型：',editable:false, width:120,labelWidth:120"></select>
+                    <input class="easyui-combobox" id="classType" data-options="labelAlign:'right',panelHeight:'auto',label:'教授班级类型：',editable:false, width:120,labelWidth:120,
+                    url:'/api/dance_class_type_get',valueField:'ct_id',textField:'ct_name' ">
                 </td>
             </tr>  <!-- 5 -->
 
@@ -130,13 +133,13 @@
                 </td>
 
                 <td>
-                    <input class="easyui-textbox" id="zipcode" data-options="width:220,labelAlign:'right',panelHeight:60,label:'邮编：',labelWidth:120"/>
+                    <input class="easyui-textbox" id="zipcode" data-options="width:220,labelAlign:'right',panelHeight:60,label:'邮编：',labelWidth:120">
                 </td>
             </tr>  <!-- 7 -->
 
             <tr>  <!-- 8 -->
                 <td colspan="2">
-                    <input class="easyui-textbox" id="address" data-options="width:400,labelAlign:'right',label:'地址：',labelWidth:120"/>
+                    <input class="easyui-textbox" id="address" data-options="width:400,labelAlign:'right',label:'地址：',labelWidth:120">
                 </td>
 
                 <td>
@@ -175,44 +178,19 @@
             <tr>
                 <th data-options="field:'ck',checkbox:true"></th>
                 <th data-options="field:'begin_day',width:100,align:'center', editor: {
-                            type:'datebox',
-                            options: {
-                                editable:false
-                            }
-                        }">起始年月*</th>
-                <th data-options="field:'end_day',width:140,align:'center'">结束年月</th>
-                <th data-options="field:'firm',width:200,align:'center',editor:{
-							type:'combobox',
-							options:{
-								valueField:'class_id',
-								textField:'class_name',
-								panelWidth: 260,
-								formatter: formatItem,
-								groupField:'class_type'
-							}
-						}">所在学校*</th>
-                <th data-options="field:'position',width:140,align:'center',editor:{
-                        type:'combobox',
-                        options:{
-                            valueField:'status',
-							textField:'status',
-							editable:false,
-							panelHeight:'auto',
-							data: [{
-			                    status_id:'正常',
-			                    status:'正常'
-		                    },{
-			                    status_id:'退班',
-			                    status: '退班'
-		                    },{
-			                    status_id:'结束',
-			                    status:'结束'
-		                    },{
-			                    status_id:'续班',
-			                    status:'续班'
-		                    }]
-                        }
-                    }">专业及学历</th>
+                    type:'datebox',
+                    options: {
+                        editable:false
+                    }
+                }">起始年月*</th>
+                <th data-options="field:'end_day',width:140,align:'center', editor: {
+                    type:'datebox',
+                    options: {
+                        editable:false
+                    }
+                }">结束年月</th>
+                <th data-options="field:'school',width:200,align:'center',editor:'textbox'">所在学校*</th>
+                <th data-options="field:'major',width:140,align:'center',editor:'textbox'">专业及学历</th>
                 <th data-options="field:'remark',width:400,align:'center',editor:'textbox'">备注</th>
             </tr>
             </thead>
@@ -223,50 +201,24 @@
 
         <!-- 下方区域，工作经历 -->
         <table id="dgTeacherWork" class="easyui-datagrid" title="工作经历" style="width:100%;" data-options="checkbox:true, rownumbers:true,fitColumns:true,singleSelect:true,collapsible:true">
-
             <thead>
             <tr>
                 <th data-options="field:'ck',checkbox:true"></th>
                 <th data-options="field:'begin_day',width:100,align:'center', editor: {
-                            type:'datebox',
-                            options: {
-                                editable:false
-                            }
-                        }">起始年月*</th>
-                <th data-options="field:'end_day',width:140,align:'center'">结束年月</th>
-                <th data-options="field:'firm',width:200,align:'center',editor:{
-							type:'combobox',
-							options:{
-								valueField:'class_id',
-								textField:'class_name',
-								panelWidth: 260,
-								formatter: formatItem,
-								groupField:'class_type'
-							}
-						}">所在单位</th>
-                <th data-options="field:'position',width:140,align:'center',editor:{
-                        type:'combobox',
-                        options:{
-                            valueField:'status',
-							textField:'status',
-							editable:false,
-							panelHeight:'auto',
-							data: [{
-			                    status_id:'正常',
-			                    status:'正常'
-		                    },{
-			                    status_id:'退班',
-			                    status: '退班'
-		                    },{
-			                    status_id:'结束',
-			                    status:'结束'
-		                    },{
-			                    status_id:'续班',
-			                    status:'续班'
-		                    }]
-                        }
-                    }">岗位或者职位</th>
-                <th data-options="field:'content',width:100">主要工作</th>
+                    type:'datebox',
+                    options: {
+                        editable:false
+                    }
+                }">起始年月*</th>
+                <th data-options="field:'end_day',width:140,align:'center', editor: {
+                    type:'datebox',
+                    options: {
+                        editable:false
+                    }
+                }">结束年月</th>
+                <th data-options="field:'firm',width:200,align:'center',editor:'textbox'">所在单位</th>
+                <th data-options="field:'position',width:140,align:'center',editor: 'textbox'">岗位或者职位</th>
+                <th data-options="field:'content',width:100,editor:'textbox'">主要工作</th>
                 <th data-options="field:'remark',width:400,align:'center',editor:'textbox'">备注</th>
             </tr>
             </thead>
@@ -275,19 +227,9 @@
     </div>
 </div>
 
-
 <div id="footerTeacher">
     <div id="pagerTeacher" class="easyui-pagination"></div>
 </div>
-
-<script type="text/javascript">
-
-    function formatItem(row){
-        return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
-                '<span style="color:#888">' + row['class_id'] + '</span>';
-    }
-
-</script>
 
 </body>
 </html>
