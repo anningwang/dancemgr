@@ -1032,9 +1032,10 @@ def dc_import_student_class(worksheet):
     return {'errorCode': 0, 'msg': msg}
 
 
-def import_teaching_material(fn):
+def import_teaching_material(fn, is_asc=False):
     """
     :param fn:   文件名，需要导入数据的Excel文件名
+    :param is_asc      是否 顺序导入。True 顺序导入， False 逆序导入
     :return:     errorCode     0 成功， 非0 错误
                   msg           信息: 'ok' -- 正确，其他错误,
     """
@@ -1070,8 +1071,8 @@ def import_teaching_material(fn):
     num_right = 0
     num_wrong = 0
 
-    # 逆序遍历。第一行为表头需要过滤掉
-    for row in range(cnt - 1, 0, -1):
+    # 逆序或者顺序遍历。第一行为表头需要过滤掉
+    for row in (range(1, cnt) if is_asc else range(cnt - 1, 0, -1)):
         r = sh.row_values(row)
         if r[0] == u'合计':
             continue

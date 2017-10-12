@@ -392,31 +392,7 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
                 $('#'+tbLayout).attr('id', tbLayout+=uid);
                 $('#'+dgReceiptComm).attr('id', dgReceiptComm+=uid).datagrid({
                     onClickCell: onClickContactCell,
-                    onResize: function (width, height) {
-                        var tb = $('#'+tbLayout);
-                        var parent = $(tb).parent();
-                        tb.find('td.dcTdFixed').css('width', 202);
-                        var w = parseInt((parent.width() - 202) / 3);
-                        tb.find('td.dcTdPercent').css('width', w);
-
-                        var wd = w - 10;
-                        $('#'+stu_sno).textbox('resize', wd);
-                        $('#'+stu_register_day).textbox('resize', wd);
-                        $('#'+stu_idcard).textbox('resize', wd);
-                        $('#'+stu_former_name).textbox('resize', wd);
-
-                        $('#'+stu_name).textbox('resize', wd);
-                        $('#'+stu_school_name).textbox('resize', wd);
-                        $('#'+stu_counselor).textbox('resize', wd);
-                        $('#'+stu_birthday).textbox('resize', wd);
-
-                        $('#'+stu_gender).textbox('resize', wd);
-                        $('#'+stu_information_source).textbox('resize', wd);
-                        $('#'+stu_degree).textbox('resize', wd);
-                        $('#'+stu_recorder).textbox('resize', wd);
-
-                        $('#'+stu_remark).textbox('resize', parent.width() - 202 - 16);
-                    },
+                    onResize: resizeTextbox,
                     onLoadSuccess: function () {
                         $('#'+dgReceiptComm).datagrid('mergeCells', {
                             index: 1, field: 'c2', colspan: 3
@@ -803,6 +779,37 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
         } else {
             dg.datagrid('deleteRow', idx);
         }
+    }
+
+    var _p_w = null;    // 记录上次的宽度
+    function resizeTextbox() {
+        var tb = $('#'+tbLayout);
+        var parent = $(tb).parent();
+        var pw = parent.width();
+        if(pw === _p_w)
+            return;
+        _p_w = pw;
+        tb.find('td.dcTdFixed').css('width', 202);
+        var w = parseInt((pw - 202) / 3);
+        tb.find('td.dcTdPercent').css('width', w);
+
+        var wd = w - 10;
+        $('#'+stu_sno).textbox('resize', wd);
+        $('#'+stu_register_day).textbox('resize', wd);
+        $('#'+stu_idcard).textbox('resize', wd);
+        $('#'+stu_former_name).textbox('resize', wd);
+
+        $('#'+stu_name).textbox('resize', wd);
+        $('#'+stu_school_name).textbox('resize', wd);
+        $('#'+stu_counselor).textbox('resize', wd);
+        $('#'+stu_birthday).textbox('resize', wd);
+
+        $('#'+stu_gender).textbox('resize', wd);
+        $('#'+stu_information_source).textbox('resize', wd);
+        $('#'+stu_degree).textbox('resize', wd);
+        $('#'+stu_recorder).textbox('resize', wd);
+
+        $('#'+stu_remark).textbox('resize', parent.width() - 202 - 16);
     }
 }
 
@@ -1208,7 +1215,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                 updateMenu(data.cls);
             }
         }).fail(function(jqXHR, textStatus, errorThrown) {
-            var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+            var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
             $.messager.alert('提示', msg, 'info');
         });
     }

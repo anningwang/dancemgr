@@ -97,27 +97,23 @@ def show(name):
     return render_template('show.html', url=url, name=name)
 
 
-def dispatch_import_file(fn, dance_module_name):
+def dispatch_import_file(fn, m_name):
     entrance = {
-        'dc_common_intention':    {'func': import_common_intention, 'asc': True},
-        'dc_common_consult_mode': {'func': import_common_consult_mode, 'asc': True},
-        'dc_common_info_src':     {'func': import_common_info_src, 'asc': True}
+        'dc_common_intention':      {'func': import_common_intention, 'asc': True},
+        'dc_common_consult_mode':   {'func': import_common_consult_mode, 'asc': True},
+        'dc_common_info_src':       {'func': import_common_info_src, 'asc': True},
+        'dance_teacher':            {'func': import_teacher, 'asc': True},
+        'dc_common_degree':         {'func': import_common_degree, 'asc': True},
+        'dc_common_job_title':      {'func': import_common_job_title, 'asc': True},
+        'dance_teaching_material':  {'func': import_teaching_material, 'asc': True},
     }
-    if dance_module_name == 'DanceStudent':
+    if m_name == 'DanceStudent':
         return import_student(fn)
-    elif dance_module_name == 'DanceClass':
+    elif m_name == 'DanceClass':
         return import_class(fn)
-    elif dance_module_name == 'DanceReceipt':
+    elif m_name == 'DanceReceipt':
         return import_receipt(fn)
-    elif dance_module_name == 'dance_teaching_material':
-        return import_teaching_material(fn)
-    elif dance_module_name == 'dance_teacher':
-        return import_teacher(fn, True)
-    elif dance_module_name == 'dc_common_degree':
-        return import_common_degree(fn, True)
-    elif dance_module_name == 'dc_common_job_title':
-        return import_common_job_title(fn, True)
-    elif dance_module_name in entrance:
-        return entrance[dance_module_name]['func'](fn, entrance[dance_module_name]['asc'])
+    elif m_name in entrance:
+        return entrance[m_name]['func'](fn, entrance[m_name]['asc'])
     else:
-        return {'errorCode': 201, 'msg': u'Unknown module name %s' % dance_module_name}
+        return {'errorCode': 201, 'msg': u'Unknown m_name name %s' % m_name}
