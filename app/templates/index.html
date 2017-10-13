@@ -6,6 +6,7 @@
     <title>舞管家</title>
 	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/default/easyui.css">
     <link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="/static/lib/jquery-easyui-1.5.2/themes/color.css">
     <link rel="stylesheet" type="text/css" href="/static/css/IconExtension.css">
     <link rel="stylesheet" type="text/css" href="/static/css/dancemgr.css">
     <script type="text/javascript" src="/static/lib/jquery-easyui-1.5.2/jquery.min.js"></script>
@@ -108,9 +109,13 @@ $(function() {
         onClick:function (node) {
             var root = getRootNode(this, node);
             var tableRootId = this.id + root.id;
+            var entrance = {
+                10: {fn: danceAddTabClassDatagrid},     // 班级信息
+                20: {fn: danceAddTabCourse}
+            };
 
-            if (root.id == 10) {     // 班级信息
-                danceAddTabClassDatagrid('danceTabs', root.text, tableRootId, node.attributes);
+            if(root.id in entrance){
+                entrance[root.id].fn(root.text, tableRootId, node.attributes);
             } else {
                 $.messager.alert('提示', ' 制作中...', 'info');
             }
@@ -157,7 +162,7 @@ $(function() {
 
             if (node.text == '数据库备份') {
                 danceOpenTab(node.text, '/static/html/_db_backup.html')
-            }else if(node.id = 510){
+            }else if(node.id == 510){
                 danceOpenTab(node.text, '/static/html/_pre_student_details.html')
             }else if(node.id in entrance){
                 entrance[node.id].fn(node.text, tableId);
@@ -189,5 +194,5 @@ function getRootNode(tree, curNode) {
 <script src="/static/js/dance.editedtable.js"></script>
 <script src="/static/js/dance.receipt.js"></script>
 <script src="/static/js/dance.teacher.js"></script>
-
+<script src="/static/js/dance.course.js"></script>
 </html>

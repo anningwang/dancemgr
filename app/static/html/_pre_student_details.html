@@ -10,78 +10,130 @@
 </head>
 <body>
 
+<style>
+    .dc-headImage{border:1px solid #58a3ef;}
+    div.dc-headImage img{width: 200px;height: 200px;}
+</style>
+
 <div class="easyui-panel" id="panelTeacher" style="width:100%;height:100%;padding:2px;" title="学员详细信息" data-options="footer:'#footerTeacher',fit:true, border:false">
     <div style="min-width: 1024px">
         <!-- 开始区域，学号，姓名，... -->
         <table width="100%" cellpadding="0" cellspacing="3" style="width:100%">
             <tr>
-                <td width="25%">
-                    <input class="easyui-textbox" id="teacherNo" data-options="labelAlign:'right', label:'员工与老师编号：',
+                <td width="26%">
+                    <input class="easyui-textbox" data-options="labelAlign:'right', label:'员工与老师编号：',
                     editable:false,prompt:'自动生成',labelWidth:120, width:'100%'" >
                 </td>
-                <td width="25%">
+                <td width="26%">
                     <input class="easyui-textbox" data-options="labelAlign:'right', label:'员工与老师编号：',
                     editable:false,prompt:'自动生成',labelWidth:120, width:'100%'" >
                 </td>
 
-                <td width="25%">
-                    <input class="easyui-textbox" id="name" data-options="labelAlign:'right',label:'*姓名：',labelWidth:120,width:'100%'">
+                <td width="26%">
+                    <input class="easyui-textbox" data-options="labelAlign:'right',label:'*姓名：',labelWidth:120,width:'100%'">
                 </td>
 
-                <td width="25%">
-                    <select class="easyui-combobox" id="gender" name="gender" data-options="labelAlign:'right',panelHeight:'auto',
-                     label:'*性别：',editable:false,labelWidth:120,width:'100%'">
-                        <option value=0>女</option>
-                        <option value=1>男</option>
-                    </select>
+                <td width="22%" rowspan="7">
+                    <div class="dc-headImage"><img src="/static/img/head09_400x400_big.jpg"></div>
                 </td>
             </tr>  <!-- 1 end -->
 
             <tr>
-                <td width="25%">
+                <td width="26%">
                     <input class="easyui-textbox" data-options="labelAlign:'right', label:'员工与老师编号：',
                     editable:false,prompt:'自动生成',labelWidth:120, width:'100%'" >
                 </td>
-                <td width="25%">
+                <td width="26%">
                     <input class="easyui-textbox" data-options="labelAlign:'right', label:'员工与老师编号：',
                     editable:false,prompt:'自动生成',labelWidth:120, width:'100%'" >
                 </td>
 
-                <td width="25%">
+                <td width="26%" style="max-width: 200px">
                     <input class="easyui-textbox" data-options="labelAlign:'right',label:'*姓名：',labelWidth:120,width:'100%'">
                 </td>
 
-                <td width="25%">
-                    <select class="easyui-combobox" data-options="labelAlign:'right',panelHeight:'auto',
-                     label:'*性别：',editable:false,labelWidth:120,width:'100%'">
-                        <option value=0>女</option>
-                        <option value=1>男</option>
-                    </select>
-                </td>
+
             </tr>  <!-- 2 end -->
 
             <tr>
-                <td width="25%">
+                <td width="26%">
                     <input class="easyui-textbox" data-options="labelAlign:'right', label:'员工与老师编号：',
                     editable:false,prompt:'自动生成',labelWidth:120, width:'100%'" >
                 </td>
-                <td width="25%">
+                <td width="26%">
                     <input class="easyui-textbox" data-options="labelAlign:'right', label:'员工与老师编号：',
                     editable:false,prompt:'自动生成',labelWidth:120, width:'100%'" >
                 </td>
 
-                <td width="25%">
+                <td width="26%">
                     <input class="easyui-textbox" data-options="labelAlign:'right',label:'*姓名：',labelWidth:120,width:'100%'">
                 </td>
 
-                <td width="25%">
-                    <select class="easyui-combobox" name="gender" data-options="labelAlign:'right',panelHeight:'auto',
-                     label:'*性别：',editable:false,labelWidth:120,width:'100%'">
-                        <option value=0>女</option>
-                        <option value=1>男</option>
-                    </select>
-                </td>
+
             </tr>  <!-- 3 end -->
+
+            <tr>
+                <td width="26%">
+                    <input class="easyui-textbox" data-options="labelAlign:'right', label:'员工与老师编号：',
+                    editable:false,prompt:'自动生成',labelWidth:120, width:'100%'" >
+                </td>
+                <td width="26%">
+                    <input class="easyui-textbox" data-options="labelAlign:'right', label:'员工与老师编号：',
+                    editable:false,prompt:'自动生成',labelWidth:120, width:'100%'" >
+                </td>
+
+                <td width="26%">
+                    <input class="easyui-textbox" data-options="labelAlign:'right',label:'*姓名：',labelWidth:120,width:'100%'">
+                </td>
+            </tr>  <!-- 4 end -->
+
+            <tr>
+                <td width="26%">
+                    <input class="easyui-textbox" data-options="labelAlign:'right', label:'员工与老师编号：',
+                    editable:false,prompt:'自动生成',labelWidth:120, width:'100%'" >
+                </td>
+                <td width="26%">
+                    <input class="easyui-textbox" data-options="labelAlign:'right', label:'员工与老师编号：',
+                    editable:false,prompt:'自动生成',labelWidth:120, width:'100%'" >
+                </td>
+
+                <td width="26%">
+                    <input class="easyui-textbox" data-options="labelAlign:'right',label:'*姓名：',labelWidth:120,width:'100%'">
+                </td>
+            </tr>  <!-- 5 end -->
+
+            <tr>
+                <td width="26%">
+                    <input class="easyui-textbox" data-options="labelAlign:'right', label:'员工与老师编号：',
+                    editable:false,prompt:'自动生成',labelWidth:120, width:'100%'" >
+                </td>
+                <td width="26%">
+                    <input class="easyui-textbox" data-options="labelAlign:'right', label:'员工与老师编号：',
+                    editable:false,prompt:'自动生成',labelWidth:120, width:'100%'" >
+                </td>
+
+                <td width="26%">
+                    <input class="easyui-textbox" data-options="labelAlign:'right',label:'*姓名：',labelWidth:120,width:'100%'">
+                </td>
+            </tr>  <!-- 6 end -->
+
+            <tr>
+                <td width="26%">
+                    <input class="easyui-textbox" data-options="labelAlign:'right', label:'员工与老师编号：',
+                    editable:false,prompt:'自动生成',labelWidth:120, width:'100%'" >
+                </td>
+                <td width="26%">
+                    <input class="easyui-textbox" data-options="labelAlign:'right', label:'员工与老师编号：',
+                    editable:false,prompt:'自动生成',labelWidth:120, width:'100%'" >
+                </td>
+
+                <td width="26%">
+                    <input class="easyui-textbox" data-options="labelAlign:'right',label:'*姓名：',labelWidth:120,width:'100%'">
+                </td>
+            </tr>  <!-- 7 end -->
+
+
+
         </table>
 
         <!-- 中间区域，教育经历  -->

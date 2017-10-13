@@ -5,14 +5,12 @@ var danceClassCallFunc = undefined;
 
 /**
  * 打开 班级信息 Tab页
- * @param divId
  * @param title
  * @param tableId
  * @param condition
  */
-function danceAddTabClassDatagrid(divId, title, tableId, condition) {
-    //console.log(tableId);
-    var parentDiv = $('#'+divId);
+function danceAddTabClassDatagrid(title, tableId, condition) {
+    var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
         danceClassCallFunc(condition);

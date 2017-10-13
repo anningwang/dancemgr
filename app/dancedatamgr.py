@@ -1426,6 +1426,19 @@ def dance_teacher_add(obj):
     return jsonify({'errorCode': 0, 'msg': u'新增成功！'})
 
 
+@app.route('/dance_course_get', methods=['POST'])
+@login_required
+def dance_course_get():
+    course = []
+    tm = {'h': 8, 'm': 0}
+    for i in range(28):
+        course.append({'time': '%02d:%02d' % (tm['h'], tm['m'])})
+        tm['m'] = 30 if tm['m'] == 0 else 0
+        tm['h'] += 1 if tm['m'] == 0 else 0
+
+    return jsonify({'total': len(course), 'rows': course, 'errorCode': 0, 'msg': 'ok'})
+
+
 @app.route('/dc_comm_fee_mode_update', methods=['POST'])
 @login_required
 def dc_comm_fee_mode_update():
@@ -2334,3 +2347,38 @@ def api_dc_common(ty):
     for rec in records:
         ret.append({'id': rec.id, 'text': rec.name})
     return jsonify(ret)
+
+
+@app.route('/api/dance_class_get', methods=['POST'])
+@login_required
+def api_dance_class_get():
+    """
+    查询某分校下的班级列表
+    :return:
+    [{
+        id:
+        name:
+        no:
+        class_type
+    }]
+    """
+    dcq = DanceClass.query.filter(DanceClass.is_ended == 0)
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(DanceClass.school_id.in_(school_id_intersection))
+    records = dcq.order_by(DanceClass.id.desc()).all()
+
+    classes = []
+    for cls in records:
+        classes.append({'id': cls.id, 'name': cls.class_name, 'class_type': cls.class_type, 'no': cls.cno})
+
+    if 'ctrl' in request.form and request.form['ctrl'] == 'combogrid':
+        return jsonify({'errorCode': 0, 'msg': 'ok', 'rows': classes, 'total': len(classes)})
+    else:
+        return jsonify(classes)

@@ -11,17 +11,15 @@ var danceModuleTitle = '';                  // 导入、导出 窗口标题
 
 /**
  * danceAddTab       增加tab标签
- * @param divId     父节点，在该节点上添加 Tab
  * @param title     Tab的标题
  * @param tableId   Datagrid id,创建在 table 上
  */
-function danceAddTab(divId, title, tableId) {
-    console.log(tableId);
-    var parentDiv = $('#'+divId);
+function danceAddTab(title, tableId) {
+    var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
     } else {
-        var content = '<table id=' + tableId + '></table>';
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
         $(parentDiv).tabs('add', {
             title: title,
             content: content,
