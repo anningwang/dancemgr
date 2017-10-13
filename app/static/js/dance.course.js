@@ -14,7 +14,9 @@ function danceAddTabCourse(title, tableId, condition) {
         $(parentDiv).tabs('select', title);
         $('#'+tableId).datagrid('load', condition);
     } else {
-        var content = '<div id=div-'+tableId+' style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table>/div>';
+        var content = '<div id=div-'+tableId+' style="min-width:1024px;width:100%;height:100%">';
+        content += '<div id=dcDiv' + tableId + ' style="top:87px;height:700px;width:100%;position:absolute;overflow:hidden"></div>';
+        content += '<table id=' + tableId + '></table> </div>';
         content +=  '<style> #div-'+tableId+' .datagrid-btable tr{height:30px;}</style>';
         $(parentDiv).tabs('add', {
             title: title,
@@ -59,8 +61,10 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
     var ccId = 'cc' + datagridId;       // Combo box,姓名查找框ID
     var sbId = 'sb' + datagridId;
     var dg = $('#' + datagridId);       // datagrid ID
+    var divId = 'dcDiv' + datagridId;
 
     var dance_condition = '';               // 主datagrid表查询条件
+    var WIN_TOP = 25;
 
     $(dg).datagrid({
         // title: '学员列表',
@@ -119,7 +123,13 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             //getDgCellCoord(dg, 1, 'w1');
         },
         onResize:function (width, height) {
-            console.log('resize,w=', width,'h=', height);
+            var pos = $(pager).position();
+            console.log('resize,w=', width,'h=', height, 'pos', pos);
+            if(pos) {
+                $('#'+divId).height(pos.top - 55 - 2);
+            }
+            console.log($('#'+divId).height());
+
             resizeCourse();
         }
     });
@@ -189,6 +199,12 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             }
         }]
     });
+
+    // pager position top是相对Tab页顶点的高度，left是距离 Tab 页 左侧的距离  {top: 758, left: 0}
+    // offset top 是距离屏幕顶端的距离 (North:60, Tab头30)，left是距离屏幕左侧的距离 (左侧Tree 200px)
+    // {top: 848, left: 201}
+    //console.log($(pager).position(), $(pager).offset());
+    $('#'+divId).height($(pager).position().top - 55 - 2);
 
     function doDel() {
         var row = $(dg).datagrid('getSelections');
@@ -407,7 +423,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             else if (r_minutes > 90 && r_minutes <= 120)
                 win_h = 115;
 
-            var param = {p: parent, w: 100, h: win_h, teacher:tchName, room: roomText,  // parent
+            var param = {p: divId, w: 100, h: win_h, teacher:tchName, room: roomText,  // parent
                 time: formatTimeSpan(r_h, r_m, r_minutes)
             };
             var winId = 'cid'+_courseId;
@@ -425,7 +441,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             dcCourse[winId].mintues = r_minutes;
 
             var left = coord.pos.left + 32;
-            var top = coord.pos.top + 62;
+            var top = coord.pos.top - WIN_TOP;
             $(win).dialog('move',{left:left, top:top});
 
 
@@ -452,52 +468,21 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
     }
 
 
-    function onMouseWheel(ev) { // 当鼠标滚轮事件发生时，执行一些操作
-        ev = ev || window.event;
-        // 定义一个标志，当滚轮向下滚时，执行一些操作
-        //var down = ev.wheelDelta?ev.wheelDelta<0:ev.detail>0;
-        //console.log('dc mouse wheel', down, 'ev', ev);
-
-        //setTimeout(function () {
-        //    resizeCourse();
-        //}, 100);
-
-        //if(down){
-            //oDiv.style.height = oDiv.offsetHeight+10+'px';
-        //}else{
-            //oDiv.style.height = oDiv.offsetHeight-10+'px';
-        //}
-        //if(ev.preventDefault){      // FF 和 Chrome
-        //    ev.preventDefault();    // 阻止默认事件
-        //}
-        //return false;
-    }
-    var obj = document.getElementById('div-'+datagridId);
-    addEvent(obj, 'mousewheel',onMouseWheel);
-    addEvent(obj, 'DOMMouseScroll',onMouseWheel);
-
-
     function resizeCourse() {
         for(var win in dcCourse){
             if(!dcCourse.hasOwnProperty(win))
                 continue;
             var coord = getDgCellCoord(dg, dcCourse[win].idx, dcCourse[win].field);
-            $('#'+win).window('move', {left: coord.pos.left + 32, top: coord.pos.top + 62});
+            $('#'+win).window('move', {left: coord.pos.left + 32, top: coord.pos.top - WIN_TOP});
         }
     }
 
-
+    // 表格纵向滚动，触发 课程表小窗口 跟着滚动。
     var contents = $('#div-'+datagridId +' div.datagrid-body');
     contents.scroll(function () {
-        //contents.not(this).prop({
-        //    scrollLeft: this.scrollLeft, scrollTop: this.scrollTop
-        //});
-
         //console.log('scroll');
-
         resizeCourse();
     });
-
 
 }
 
@@ -524,7 +509,10 @@ function dcOpenCourseWin(id, _title, param){
         collapsible: false, minimizable:false,maximizable: false, resizable: false,
         cls: param.cls ? param.cls : 'c6',
         border:'thin', inline:true,
-        onBeforeClose: function () { $("#"+id).dialog('destroy'); }
+        onBeforeClose: function () { $("#"+id).dialog('destroy'); },
+        onMove:function (left, top) {
+            
+        }
     }).dialog('open');
 
     $('#'+name).css({'font-size': '9px', "font-family":"宋体"})
