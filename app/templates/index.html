@@ -157,6 +157,8 @@ $(function() {
 
             if (node.text == '数据库备份') {
                 danceOpenTab(node.text, '/static/html/_db_backup.html')
+            }else if(node.id = 510){
+                danceOpenTab(node.text, '/static/html/_pre_student_details.html')
             }else if(node.id in entrance){
                 entrance[node.id].fn(node.text, tableId);
             }else {

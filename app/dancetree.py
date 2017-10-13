@@ -128,7 +128,8 @@ def dance_tree_db():
                 {"id": 56, "text": "职位信息"},
                 {"id": 57, "text": "意向程度"},
                 {"id": 58, "text": "信息来源"},
-                {"id": 59, "text": "咨询方式"}
+                {"id": 59, "text": "咨询方式"},
+                {"id": 510, "text": "表格测试"}
             ]}
             ]
     return tree
