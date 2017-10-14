@@ -21,7 +21,7 @@ def dc_gen_code(school_no, tag, date=None):
     if date is None:
         date = datetime.datetime.today()
     data_str = datetime.datetime.strftime(date, '%y%m%d-')
-    code_str = '%04d-%s-%s' % (school_no, tag, data_str)
+    code_str = '%04d-%s-%s' % (int(school_no), tag, data_str)
     return code_str
 
 

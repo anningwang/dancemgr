@@ -8,13 +8,14 @@ from forms import EditForm, SearchForm, DanceLoginForm, DanceRegistrationForm
 from models import User, ROLE_USER, ROLE_ADMIN, Post, HzLocation, DanceStudent, DanceClass, DanceSchool, DanceUser,\
     DanceStudentClass, DanceCompany, DanceUserSchool, DcShowDetailFee, DcCommFeeMode, DcShowRecpt, DcFeeItem,\
     DanceOtherFee, DanceReceipt, DanceClassReceipt, DanceTeaching, DcClassType, DanceTeacher, DanceTeacherEdu,\
-    DanceTeacherWork, DcCommon
+    DanceTeacherWork, DcCommon, DanceCourse, DanceCourseItem
 from datetime import datetime
 from emails import follower_notification
 from translate import microsoft_translate
 from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY_TIMEOUT
 from dijkstra import min_dist2, get_nearest_vertex, hz_vertex
 from dcglobal import *
+from tools.tools import dc_records_changed
 
 
 @lm.user_loader
@@ -1113,6 +1114,97 @@ def dance_class_modify():
 
     db.session.commit()
     return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
+
+
+@app.route('/dance_course_modify', methods=['POST'])
+@login_required
+def dance_course_modify():
+    """
+    新增/更新 课程表。
+    输入参数：
+        {row: {},               课程表 基本信息
+        item: [{                课程表明细，可选参数
+        }]
+    :return:
+    {
+        errorCode:          错误码
+        msg:                错误信息
+        ----------------    ----------------------------------------------
+        errorCode           msg
+        ----------------    ----------------------------------------------
+        0                   更新成功！
+        202                 参数错误！
+        301                 记录[id=%d]不存在！
+        600                 Parameter error. [data] required.
+    }
+    """
+    if request.json is not None:
+        obj = request.json
+    else:
+        if 'data' not in request.form:
+            return jsonify({'errorCode': 600, 'msg': 'Parameter error. [data] required.'})
+        json_str = request.form['data']
+        obj = json.loads(json_str)
+    if 'row' not in obj:
+        return jsonify({'errorCode': 202, 'msg': u'参数错误！'})
+    if 'id' not in obj['row'] or int(obj['row']['id']) <= 0:
+        return dance_course_add(obj)  # 新增记录
+
+    """ 修改 课程表 基本情况 """
+    rid = obj['row']['id']
+    rec = DanceCourse.query.get(rid)
+    if rec is None:
+        return jsonify({'errorCode': 301, 'msg': u'记录[id=%d]不存在！' % rid})
+    rec.update(obj['row'])
+    db.session.add(rec)
+
+    """ 修改 课程表明细"""
+    if 'item' in obj:
+        data = obj['edu']
+        records = DanceCourseItem.query.filter_by(course_id=rid).all()
+        old_ids = []
+        for rec in records:
+            old_ids.append({'id': rec.id})
+        change = dc_records_changed(old_ids, data, 'id')
+        for i in change['add']:
+            data[i]['teacher_id'] = rid
+            nr = DanceCourseItem(data[i])
+            db.session.add(nr)
+        for i in change['upd']:
+            nr = DanceCourseItem.query.get(data[i]['id'])
+            nr.update(data[i])
+            db.session.add(nr)
+        for i in change['del']:
+            DanceCourseItem.query.filter_by(id=old_ids[i]['id']).delete()
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
+
+
+def dance_course_add(obj):
+    """
+    新增 课程表 明细。
+    :param obj:
+        {row: {},               课程表基本信息
+        item: [{                课程表明细
+        }]
+    :return:
+    """
+
+    tch = obj['row']
+    nr = DanceCourse(tch)
+    db.session.add(nr)
+    nr = DanceCourse.query.filter_by(company_id=g.user.company_id, code=nr.code).first()
+    if nr is None:
+        return jsonify({'errorCode': 1002, 'msg': u'新增课程表失败。'})
+    """ 新增 课程表明细"""
+    if 'item' in obj:
+        for dt in obj['item']:
+            dt['course_id'] = nr.id
+            db.session.add(DanceCourseItem(dt))
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'新增成功！'})
 
 
 def create_default_data(company_id):

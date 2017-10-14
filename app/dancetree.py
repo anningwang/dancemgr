@@ -64,7 +64,9 @@ def api_dance_tree_get():
 
 def dance_tree_school(school_ids, school_map):
     tree = [{"id": 10, "text": "班级信息", 'attributes': {'school_id': 'all', 'is_ended': 0}},
-            {"id": 20, "text": "课程表"},
+            {"id": 20, "text": "课程表", "children": [
+                {"id": 2001, "text": "课程表列表", 'attributes': {'showList': 1}}
+            ]},
             {"id": 30, "text": "教室列表"}
             ]
 

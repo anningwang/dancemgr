@@ -444,7 +444,10 @@ class DanceStudent(db.Model):
     def create_no(self):
         if self.school_id is None:
             raise Exception('Please input school_id first!')
-        search_sno = dc_gen_code(self.school_id, 'XH')
+        school_no = DanceSchool.get_no(self.school_id)
+        if school_no == -1:
+            raise Exception('school id [%s] error.' % self.school_id)
+        search_sno = dc_gen_code(school_no, 'XH')
         r = DanceStudent.query.filter(DanceStudent.sno.like('%' + search_sno + '%'))\
             .order_by(DanceStudent.id.desc()).first()
         number = 1 if r is None else int(r.sno.rsplit('-', 1)[1]) + 1
@@ -571,7 +574,10 @@ class DanceClass(db.Model):
     def create_no(self):
         if self.school_id is None:
             raise Exception('Please input school_id first!')
-        search_sno = dc_gen_code(self.school_id, 'BJ')
+        school_no = DanceSchool.get_no(self.school_id)
+        if school_no == -1:
+            raise Exception('school id [%s] error.' % self.school_id)
+        search_sno = dc_gen_code(school_no, 'BJ')
         r = DanceClass.query.filter(DanceClass.cno.like('%' + search_sno + '%'))\
             .order_by(DanceClass.id.desc()).first()
         number = 1 if r is None else int(r.cno.rsplit('-', 1)[1]) + 1
@@ -696,7 +702,7 @@ class DanceSchool(db.Model):
         }]
         """
         dcq = DanceSchool.query.filter(DanceSchool.company_id == g.user.company_id)
-        if scope is not None and scope == 'all':
+        if scope is not None and scope != 'all':
             school_ids = DanceUserSchool.get_school_ids_by_uid()
             dcq = dcq.filter(DanceSchool.id.in_(school_ids))
 
@@ -705,6 +711,13 @@ class DanceSchool(db.Model):
         for sc in schools:
             ret.append({'school_id': sc.id, 'school_no': sc.school_no, 'school_name': sc.school_name})
         return ret
+
+    @staticmethod
+    def get_no(uid):
+        r = DanceSchool.query.get(uid)
+        if r is None:
+            return -1
+        return r.school_no
 
     def __repr__(self):
         return '<DanceClass %r>' % self.school_no
@@ -1006,7 +1019,10 @@ class DanceReceipt(db.Model):
     def create_code(self):
         if self.school_id is None:
             raise Exception('Please input school_id first!')
-        search_no = dc_gen_code(self.school_id, 'SFD')
+        school_no = DanceSchool.get_no(self.school_id)
+        if school_no == -1:
+            raise Exception('school id [%s] error.' % self.school_id)
+        search_no = dc_gen_code(school_no, 'SFD')
         rec = DanceReceipt.query.filter(DanceReceipt.receipt_no.like('%' + search_no + '%'))\
             .order_by(DanceReceipt.id.desc()).first()
         number = 1 if rec is None else int(rec.receipt_no.rsplit('-', 1)[1]) + 1
@@ -1484,7 +1500,10 @@ class DcShowRecpt(db.Model):
     def create_code(self):
         if self.school_id is None:
             raise Exception('Please input school_id first!')
-        search_no = dc_gen_code(self.school_id, 'SHW')
+        school_no = DanceSchool.get_no(self.school_id)
+        if school_no == -1:
+            raise Exception('school id [%s] error.' % self.school_id)
+        search_no = dc_gen_code(school_no, 'SHW')
         rec = DcShowRecpt.query.filter(DcShowRecpt.show_recpt_no.like('%' + search_no + '%'))\
             .order_by(DcShowRecpt.id.desc()).first()
         number = 1 if rec is None else int(rec.show_recpt_no.rsplit('-', 1)[1]) + 1
@@ -1952,5 +1971,141 @@ class DcCommon(db.Model):
         db.session.add(r)
         r = DcCommon.query.filter_by(company_id=g.user.company_id, type=ty, name=name).first()
         return r.id if r is not None else -1
+
+
+class DanceCourse(db.Model):
+    """ 课程表"""
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(25, collation='NOCASE'), index=True)     # 编号
+    name = db.Column(db.String(20, collation='NOCASE'))
+    school_id = db.Column(db.Integer, index=True)
+    company_id = db.Column(db.Integer, index=True)
+    begin = db.Column(db.DateTime, nullable=False)
+    end = db.Column(db.DateTime)
+    valid = db.Column(db.SmallInteger)
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    create_at = db.Column(db.DateTime, nullable=False)
+    last_t = db.Column(db.DateTime, nullable=False)
+    last_u = db.Column(db.String(20, collation='NOCASE'))
+
+    def __init__(self, param):
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        if 'code' in param:
+            self.code = param['code']
+        else:
+            self.create_no()
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
+        if 'name' in param:
+            self.name = param['name']
+        if 'begin' in param:
+            if param['begin'] != '':
+                self.begin = datetime.datetime.strptime(param['begin'], '%Y-%m-%d')
+        if 'end' in param:
+            if param['end'] != '':
+                self.end = datetime.datetime.strptime(param['end'], '%Y-%m-%d')
+        self.valid = 1
+        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
+        self.create_at = datetime.datetime.today()
+        self.last_t = datetime.datetime.today()
+        self.last_u = g.user.name
+
+    def update(self, param):
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        if 'begin' in param:
+            if param['begin'] != '':
+                self.begin = datetime.datetime.strptime(param['begin'], '%Y-%m-%d')
+        if 'end' in param:
+            if param['end'] != '':
+                self.end = datetime.datetime.strptime(param['end'], '%Y-%m-%d')
+            else:
+                self.end = None
+        if 'name' in param:
+            self.name = param['name']
+        if self.end is not None and datetime.datetime.today() > self.end:
+            self.valid = 0
+        self.last_t = datetime.datetime.today()
+        self.last_u = g.user.name
+
+    def create_no(self):
+        if self.school_id is None:
+            raise Exception('Please input school_id first!')
+        school_no = DanceSchool.get_no(self.school_id)
+        if school_no == -1:
+            raise Exception('school id [%s] error.' % self.school_id)
+        search_sno = dc_gen_code(school_no, 'KC')
+        r = DanceCourse.query.filter(DanceCourse.code.like('%' + search_sno + '%'))\
+            .order_by(DanceCourse.id.desc()).first()
+        number = 1 if r is None else int(r.code.rsplit('-', 1)[1]) + 1
+        self.code = search_sno + ('%03d' % number)
+        return self.code
+
+    def __repr__(self):
+        return '<Course %r>' % self.id
+
+
+class DanceCourseItem(db.Model):
+    """ 课程表 详细项目"""
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, index=True)
+    class_id = db.Column(db.Integer)
+    short_name = db.Column(db.String(6, collation='NOCASE'))
+    teacher_id = db.Column(db.Integer)
+    room_id = db.Column(db.Integer)
+    time = db.Column(db.String(15))         # 9:00--10:30
+    minutes = db.Column(db.SmallInteger)    # 上课时长，单位分钟
+    week = db.Column(db.SmallInteger)       # 周几上课 1~7 代表 周一到周天
+    fee_id = db.Column(db.Integer)          # 老师课时计费方式id
+    company_id = db.Column(db.Integer, index=True)
+    last_t = db.Column(db.DateTime, nullable=False)
+    last_u = db.Column(db.String(20, collation='NOCASE'))
+
+    def __init__(self, param):
+        if 'course_id' in param:
+            self.course_id = param['course_id']
+        if 'class_id' in param:
+            self.class_id = param['class_id']
+        if 'short_name' in param:
+            self.short_name = param['short_name']
+        if 'teacher_id' in param:
+            self.teacher_id = param['teacher_id']
+        if 'room_id' in param:
+            self.room_id = param['room_id']
+        if 'time' in param:
+            self.time = param['time']
+        if 'minutes' in param:
+            self.minutes = param['minutes']
+        if 'week' in param:
+            self.week = param['week']
+        if 'fee_id' in param:
+            self.fee_id = param['fee_id']
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
+        self.last_t = datetime.datetime.today()
+        self.last_u = g.user.name
+
+    def update(self, param):
+        if 'class_id' in param:
+            self.class_id = param['class_id']
+        if 'short_name' in param:
+            self.short_name = param['short_name']
+        if 'teacher_id' in param:
+            self.teacher_id = param['teacher_id']
+        if 'room_id' in param:
+            self.room_id = param['room_id']
+        if 'time' in param:
+            self.time = param['time']
+        if 'minutes' in param:
+            self.minutes = param['minutes']
+        if 'week' in param:
+            self.week = param['week']
+        if 'fee_id' in param:
+            self.fee_id = param['fee_id']
+        self.last_t = datetime.datetime.today()
+        self.last_u = g.user.name
+
+    def __repr__(self):
+        return '<CourseItem %r>' % self.id
+
 
 whooshalchemy.whoosh_index(app, Post)

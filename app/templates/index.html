@@ -108,14 +108,16 @@ $(function() {
         animate:true,lines:true,
         onClick:function (node) {
             var root = getRootNode(this, node);
-            var tableRootId = this.id + root.id;
             var entrance = {
                 10: {fn: danceAddTabClassDatagrid},     // 班级信息
-                20: {fn: danceAddTabCourse}
+                20: {fn: danceAddTabCourse},
+                2001:   {fn: danceAddTabCourseList}
             };
 
-            if(root.id in entrance){
-                entrance[root.id].fn(root.text, tableRootId, node.attributes);
+            if(node.id in entrance){
+                entrance[node.id].fn(node.text, this.id + node.id, node.attributes);
+            }else if(root.id in entrance){
+                entrance[root.id].fn(root.text, this.id + root.id, node.attributes);
             } else {
                 $.messager.alert('提示', ' 制作中...', 'info');
             }

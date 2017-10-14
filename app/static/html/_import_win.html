@@ -68,7 +68,7 @@
 						$.messager.alert('提示', '文件导入失败！ '+ret.msg, 'info');
 					}
 				}).fail(function(jqXHR, textStatus, errorThrown) {
-                    var msg = $.format("请求失败。错误码：{0}({1}) ", [jqXHR.status, errorThrown]);
+                    var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
                     $.messager.alert('提示', msg, 'info');
                 }).always(function () {
                     if (dcTimer) {dcTimer = window.clearInterval(dcTimer);}
@@ -84,13 +84,13 @@
         //console.log('onOpenImportWin');
         var title = '导入数据';
         if (danceModuleName === 'DanceClass') {
-            title = $.format('导入数据[{0}]', ['班级信息'])
+            title = '导入数据[{0}]'.format('班级信息')
         } else if (danceModuleName === 'DanceStudent') {
-            title = $.format('导入数据[{0}]', ['学员列表'])
+            title = '导入数据[{0}]'.format('学员列表')
         } else if (danceModuleName === 'DanceReceipt') {
-            title = $.format('导入数据[{0}]', ['收费单（学费）'])
+            title = '导入数据[{0}]'.format('收费单（学费）')
 		} else {
-            title = $.format('导入数据[{0}]', [danceModuleTitle])
+            title = '导入数据[{0}]'.format(danceModuleTitle)
         }
         $('#danceWinImport').window('setTitle', title);
     }
@@ -109,7 +109,7 @@
         $.post( "/dance_progressbar", function(data){
             $('#danceProgress').progressbar({
                 value: data.value,
-                text: data.sheet ? '['+data.sheet+']页 {value}%' : '{value}%'
+                text: data['sheet'] ? '['+data['sheet']+']页 {value}%' : '{value}%'
             });
         } );
     }

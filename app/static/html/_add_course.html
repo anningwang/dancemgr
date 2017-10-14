@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>舞管家</title>
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/icon.css">
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+</head>
+<body>
+
+
+<div class="easyui-window" title="课程表基本信息" data-options="iconCls:'icon-save',minimizable:false,collapsible:false,
+        maximizable:false,closable:false,
+        onBeforeClose: onBeforeCloseFeeItem
+        " id="dcCourseNewWin" style="width:320px; height:215px;padding:5px;">
+
+    <div class="easyui-layout" data-options="fit:true">
+        <div data-options="region:'center', border:true" style="padding:10px;overflow: hidden">
+            <input class="easyui-textbox" id="crsName" data-options="label:'*课程表名称：',labelAlign:'right',labelWidth:90" style="width:100%;">
+            <div style="height: 3px"></div> <!-- 分隔符 -->
+            <input class="easyui-combobox" id="crsSchool" data-options="label:'*所属分校：',labelAlign:'right',labelWidth:90,
+                valueField:'school_id', textField:'school_name',editable:false,panelHeight:'auto',url:'/api/dance_school_get'
+                " style="width:100%;">
+            <div style="height: 3px"></div><!-- 分隔符 -->
+            <input class="easyui-datebox" id="crsBegin" data-options="label:'*开始时间：',editable:false,labelAlign:'right',labelWidth:90" style="width:100%;">
+            <div style="height: 3px"></div><!-- 分隔符 -->
+            <input class="easyui-datebox" id="crsEnd" data-options="label:'结束时间：',editable:false,labelAlign:'right',labelWidth:90" style="width:100%;">
+        </div>
+
+        <div data-options="region:'south',border:false" style="text-align:right;padding:2px 0;">
+            <a href="javascript:void(0)" onclick="saveCourse()" class="easyui-linkbutton" iconCls="icon-ok" style="width:80px;height:30px">保存</a>
+            <a href="javascript:void(0)" onclick="closeWinCourse()" class="easyui-linkbutton" iconCls="icon-cancel" style="width:80px;height:30px">关闭</a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // 'use strict';
+    function onBeforeCloseFeeItem() {
+        var winId = 'dcCourseNewWin';
+        $('#'+winId).window('destroy');
+        
+        var panelId = dcGetPanelId(winId);
+        $('#'+panelId).panel('destroy');
+    }
+
+    function closeWinCourse() {
+        $('#dcCourseNewWin').window('close');
+    }
+
+    function saveCourse() {
+        if (!validateCourse()) {
+            return;
+        }
+
+        var course = packetCourse();
+        console.log('send:', course);
+        $.ajax({
+            method: 'POST',
+            url: '/dance_course_modify',
+            async: true,
+            dataType: 'json',
+            data: {data: JSON.stringify({row: course})}
+        }).done(function(data) {
+            $.messager.alert('提示', data.msg, 'info');
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
+        });
+    }
+
+    function validateCourse() {
+        var nameCtrl = $('#crsName');
+        var name = $(nameCtrl).textbox('getValue');
+        if(!name || name.length > 20) {
+            $.messager.alert({title:'提示', msg:'课程表名称不能为空，且不能大于20字符！', icon: 'info', fn:function () {
+                $(nameCtrl).textbox('textbox').focus();
+            }});
+            return false;
+        }
+
+        return true;
+    }
+
+    function packetCourse() {
+        var data = {};
+        data.name = $('#crsName').textbox('getValue');
+        data.school_id = $('#crsSchool').combobox('getValue');
+        data.begin = $('#crsBegin').datebox('getValue');
+        data.end = $('#crsEnd').datebox('getValue');
+        return data;
+    }
+
+    /*
+    $(function () {
+        var winId = 'dcCourseNewWin';
+
+        if(danceNewCourseUUID > 0){
+            $('#'+winId).window('setTitle', '新增 课程表基本信息');
+        }else{
+            $('#'+winId).window('setTitle', '查看/修改 课程表基本信息');
+        }
+
+    });
+    */
+    
+    function ajaxRequest() {
+
+    }
+
+</script>
+
+</body>
+</html>

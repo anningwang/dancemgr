@@ -4,7 +4,8 @@ from flask_login import login_required
 from app import app, db
 from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent, DcTeachingMaterial,\
     DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass, DanceStudentClass, DcShowRecpt, DcCommFeeMode,\
-    DcShow, DcShowFeeCfg, DcShowDetailFee, DcClassType, DanceTeacher, DanceTeacherEdu, DanceTeacherWork, DcCommon
+    DcShow, DcShowFeeCfg, DcShowDetailFee, DcClassType, DanceTeacher, DanceTeacherEdu, DanceTeacherWork, DcCommon,\
+    DanceCourse, DanceCourseItem
 from views import dance_student_query
 import json
 import datetime
@@ -1439,6 +1440,70 @@ def dance_course_get():
     return jsonify({'total': len(course), 'rows': course, 'errorCode': 0, 'msg': 'ok'})
 
 
+@app.route('/dance_course_list_get', methods=['POST'])
+@login_required
+def dance_course_list_get():
+    """
+    查询课程表列表
+    :return:
+    """
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    if page_no <= 0:    # 补丁
+        page_no = 1
+
+    dcq = DanceCourse.query.filter_by(company_id=g.user.company_id)
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(DanceCourse.school_id.in_(school_id_intersection))
+
+    dcq = dcq.join(DanceSchool, DanceSchool.id == DanceCourse.school_id)
+    if 'name' in request.form and request.form['name'] != '':
+        name = request.form['name']
+        if name.encode('UTF-8').isalpha():
+            dcq = dcq.filter(DanceSchool.rem_code.like('%' + name + '%'))
+        else:
+            dcq = dcq.filter(DanceSchool.school_name.like('%' + name + '%'))
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.add_columns(DanceSchool.school_name, DanceSchool.school_no)\
+        .order_by(DanceCourse.id.desc()).limit(page_size).offset(offset).all()
+    i = offset + 1
+
+    rows = []
+    for dcr in records:
+        rec = dcr[0]
+        rows.append({'no': i, 'id': rec.id, "code": rec.code, 'recorder': rec.recorder,
+                     'last_u': rec.last_u, 'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d'),
+                     'last_t': datetime.datetime.strftime(rec.last_t, '%Y-%m-%d %H:%M:%S'),
+                     'begin': datetime.datetime.strftime(rec.begin, '%Y-%m-%d'),
+                     'end': datetime.datetime.strftime(rec.end, '%Y-%m-%d') if rec.end is not None else None,
+                     'valid': rec.valid, 'valid_text': u'否' if rec.valid == 1 else u'是',
+                     'school_name': dcr[1], 'school_no': dcr[2]
+                     })
+        i += 1
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_course_list_query', methods=['POST'])
+@login_required
+def dance_course_list_query():
+    dcq = DanceSchool.query.filter_by(company_id=g.user.company_id)
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    dcq = dcq.filter(DanceSchool.id.in_(school_ids))
+    schools = dcq.all()
+    ret = []
+    for sc in schools:
+        ret.append({'value': sc.school_name, 'text': sc.school_name})
+    return jsonify(ret)
+
+
 @app.route('/dc_comm_fee_mode_update', methods=['POST'])
 @login_required
 def dc_comm_fee_mode_update():
@@ -2242,6 +2307,10 @@ def api_dance_school_get():
             school_name:    分校名称
     }]
     """
+    if ('school_id' in request.form and request.form['school_id'] != 'all') \
+            or (request.json is not None and 'school_id' in request.json and request.json['school_id'] != 'all'):
+        return jsonify(DanceSchool.dc_school())
+
     return jsonify(DanceSchool.dc_school('all'))
 
 

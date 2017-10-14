@@ -536,6 +536,10 @@ function danceFormatter(date){
     return y+'-'+(m<10?('0'+m):m)+'-'+(d<10?('0'+d):d);
 }
 
+function danceGetDate() {
+    return danceFormatter(new Date());
+}
+
 /**
  * 将日期字符串（格式：yyyy-mm-dd）转换为 日期 Date 对象。
  * @param s

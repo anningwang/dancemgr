@@ -449,7 +449,6 @@ function dcOpenDialogNewClass(id, title, dgId, uuid, icon){
                 $('#'+remark).textbox('setValue', data.row.remark);
 
                 $('#'+uid).val(data.row.id);
-                console.log($('#'+uid).val());
             }else {
                 $.messager.alert('提示', data.msg, 'info');
             }
