@@ -1485,6 +1485,7 @@ def dance_course_list_get():
                      'begin': datetime.datetime.strftime(rec.begin, '%Y-%m-%d'),
                      'end': datetime.datetime.strftime(rec.end, '%Y-%m-%d') if rec.end is not None else None,
                      'valid': rec.valid, 'valid_text': u'否' if rec.valid == 1 else u'是',
+                     'name': rec.name,
                      'school_name': dcr[1], 'school_no': dcr[2]
                      })
         i += 1

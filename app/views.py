@@ -5,7 +5,7 @@ from flask_sqlalchemy import get_debug_queries
 from flask_babel import gettext
 from app import app, db, lm, oid, babel
 from forms import EditForm, SearchForm, DanceLoginForm, DanceRegistrationForm
-from models import User, ROLE_USER, ROLE_ADMIN, Post, HzLocation, DanceStudent, DanceClass, DanceSchool, DanceUser,\
+from models import User, ROLE_USER, ROLE_ADMIN, Post, DanceStudent, DanceClass, DanceSchool, DanceUser,\
     DanceStudentClass, DanceCompany, DanceUserSchool, DcShowDetailFee, DcCommFeeMode, DcShowRecpt, DcFeeItem,\
     DanceOtherFee, DanceReceipt, DanceClassReceipt, DanceTeaching, DcClassType, DanceTeacher, DanceTeacherEdu,\
     DanceTeacherWork, DcCommon, DanceCourse, DanceCourseItem
@@ -13,7 +13,6 @@ from datetime import datetime
 from emails import follower_notification
 from translate import microsoft_translate
 from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY_TIMEOUT
-from dijkstra import min_dist2, get_nearest_vertex, hz_vertex
 from dcglobal import *
 from tools.tools import dc_records_changed
 
@@ -318,84 +317,20 @@ def translate():
             request.form['destLang'])})
 
 
-# JoySuch get Token
-@app.route('/token', methods=['POST', 'GET'])
-@login_required
-def gettoken():
-    return render_template('index.html')
-
-
-@app.route('/show_all_users', methods=['POST', 'GET'])
-@login_required
-def show_all_users():
-    users = User.query.all()
-    return render_template('show_all_users.html', users=users)
-
-
-@app.route('/get_location', methods=['POST'])
-def get_pos():
-    ret_loc = []
-    hz_location = HzLocation.query.group_by(HzLocation.user_id)
-    for loc in hz_location:  # 如果存在，则获取最新的一个坐标
-        ret_loc.append({'userId': loc.user_id, 'x': loc.x, 'y': loc.y})
-
-    # print ret_loc
-    return jsonify(ret_loc)
-
-
-@app.route('/go', methods=['POST'])
-def get_path():
-    location = int(request.form['location'])
-    user_id = request.form['userId']
-    px = py = 0
-
-    points = []
-    hz_location = HzLocation.query.group_by(HzLocation.user_id)
-    for loc in hz_location:  # 如果存在，则获取最新的一个坐标
-        if user_id == loc.user_id:
-            px = loc.x
-            py = loc.y
-        points.append({'userId': loc.user_id, 'x': loc.x, 'y': loc.y})
-
-    pt_from = get_nearest_vertex(px, py)
-    path = min_dist2(pt_from, location)
-    print path
-
-    ret = []
-    for p in path:
-        ret.append(hz_vertex[p])
-
-    ret_loc_with_path = {'x': px, 'y': py, 'path': ret, 'points': points}
-    return jsonify(ret_loc_with_path)
-
-
-@app.route('/dance_location_get', methods=['POST'])
-def dance_location_get():
-    page_size = int(request.form['pageSize'])
-    page_no = int(request.form['pageNo'])
-    if page_no <= 0:
-        page_no = 1
-    rows = []
-    total = HzLocation.query.count()
-    offset = (page_no - 1) * page_size
-    hz_location = HzLocation.query.order_by(HzLocation.id.desc()).limit(page_size).offset(offset)
-    # hz_location = HzLocation.query.all()
-    # hz_location = HzLocation.query.limit(100)
-    i = offset + 1
-    for loc in hz_location:
-        rows.append({"id": loc.id, "build_id": loc.build_id, "floor_no": loc.floor_no,
-                     "user_id": loc.user_id, "x": loc.x, "y": loc.y,
-                     "timestamp": loc.timestamp, 'no': i})
-        i += 1
-    return jsonify({"total": total, "rows": rows})
-
-
 @app.route('/dance_del_data', methods=['POST'])
 @login_required
 def dance_del_data():
     who = request.form['who']
     ids = request.form.getlist('ids[]')
     print 'who=', who, 'ids=', ids
+    entrance = {'dance_course_list': {'func': dc_del_course},
+                'DanceReceipt': {'func': dc_del_receipt},
+                'dance_fee_item': {'func': dc_del_fee_item},
+                'dc_comm_fee_mode': {'func': dc_del_fee_mode},
+                'dc_class_type': {'func': dc_del_class_type},
+                'dance_teacher': {'func': dc_del_teacher},
+                'dc_common_job_title': {'func': dc_del_common}
+                }
 
     if who == 'DanceClass':
         dcq = DanceClass.query
@@ -405,18 +340,8 @@ def dance_del_data():
         dcq = DanceSchool.query
     elif who == 'DanceUser':
         dcq = DanceUser.query
-    elif who == 'DanceReceipt':
-        return dc_del_receipt(ids)
-    elif who == 'dance_fee_item':
-        return dc_del_fee_item(ids)
-    elif who == 'dc_comm_fee_mode':
-        return dc_del_fee_mode(ids)
-    elif who == 'dc_class_type':
-        return dc_del_class_type(ids)
-    elif who == 'dance_teacher':
-        return dc_del_teacher(ids)
-    elif who == 'dc_common_job_title':
-        return dc_del_common(ids)
+    elif who in entrance:
+        return entrance[who]['func'](ids)
     else:
         return jsonify({'errorCode': 1, "msg": "Table not found!"})     # error
 
@@ -614,6 +539,37 @@ def dc_del_common(ids):
             return jsonify({'errorCode': 812, 'msg': u'未知类型[%d]！' % r.type})
 
     DcCommon.query.filter(DcCommon.id.in_(ids)).delete(synchronize_session=False)
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
+
+
+def dc_del_course(ids):
+    """
+    删除 课程表：包括 课程表明细， 若课程表没有结束（无结束日期，或者结束日期未到），则不能删除。
+    :param ids:     记录 id list
+    :return: {
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   删除成功！
+            811                 [%s]已经被使用，不能删除！
+            812                 未知类型[%d]！
+    }
+    """
+    for i in ids:
+        r = DanceCourse.query.get(i)
+        if r is None:
+            continue
+
+        item = DanceCourseItem.query.filter_by(course_id=i).first()
+        if item is not None and r.valid == 1:
+            return jsonify({'errorCode': 811, 'msg': u'课程表未结束，不能删除！'})
+        """删除课程表明细"""
+        DanceCourseItem.query.filter_by(course_id=i).delete()
+
+    DanceCourse.query.filter(DanceCourse.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 
@@ -1205,6 +1161,31 @@ def dance_course_add(obj):
 
     db.session.commit()
     return jsonify({'errorCode': 0, 'msg': u'新增成功！'})
+
+
+@app.route('/dance_course_single_get', methods=['POST'])
+@login_required
+def dance_course_single_get():
+    if request.json is not None:
+        obj = request.json
+    else:
+        return jsonify({'errorCode': 700, 'msg': u'输入参数错误。'})
+
+    dcq = DanceCourse.query.filter_by(company_id=g.user.company_id, id=obj['id'])
+    dcq = dcq.join(DanceSchool, DanceSchool.id == DanceCourse.school_id)
+
+    dcr = dcq.add_columns(DanceSchool.school_name, DanceSchool.school_no).first()
+    rec = dcr[0]
+    row = {'id': rec.id, "code": rec.code, 'recorder': rec.recorder,
+           'last_u': rec.last_u, 'create_at': datetime.strftime(rec.create_at, '%Y-%m-%d'),
+           'last_t': datetime.strftime(rec.last_t, '%Y-%m-%d %H:%M:%S'),
+           'begin': datetime.strftime(rec.begin, '%Y-%m-%d'),
+           'end': datetime.strftime(rec.end, '%Y-%m-%d') if rec.end is not None else None,
+           'valid': rec.valid, 'valid_text': u'否' if rec.valid == 1 else u'是',
+           'name': rec.name, 'school_id': rec.school_id,
+           'school_name': dcr[1], 'school_no': dcr[2]}
+
+    return jsonify({"total": 1, "row": row, 'errorCode': 0, 'msg': 'ok'})
 
 
 def create_default_data(company_id):

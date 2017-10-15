@@ -584,6 +584,7 @@ function danceAddTabCourseList(title, tableId, condition) {
             columns: [[
                 {field: 'ck', checkbox:true },
                 {field: 'code', title: '课程表编号', width: 120, align: 'center'},
+                {field: 'name', title: '课程表名称', width: 120, align: 'center'},
                 {field: 'school_name', title: '所属分校', width: 120, align: 'center'},
                 {field: 'begin', title: '开始时间', width: 100, align: 'center'},
                 {field: 'end', title: '结束时间', width: 100, align: 'center'},
@@ -603,7 +604,7 @@ function danceAddTabCourseList(title, tableId, condition) {
 
 function danceCourseInfo(param) {
     if(param.uuid > 0) {
-        dcOpenDialogCourse('dcModifyCourseWindow', '查看/修改 课程表基本信息', param.dgId, param.uuid, 'icon-save');
+        dcOpenDialogCourse('dcModifyCourseWindow', '编辑/查看 课程表基本信息', param.dgId, param.uuid, 'icon-save');
     } else{
         dcOpenDialogCourse('dcNewCourseWindow', '增加 课程表基本信息', param.dgId, 0, 'icon-save');
     }
@@ -619,6 +620,7 @@ function danceCourseInfo(param) {
  * @param icon
  */
 function dcOpenDialogCourse(id, title, dgId, uuid, icon){
+    var noId = 'courseNo'+id;
     var name = 'crsName'+id;
     var school = 'crsSchool'+id;
     var begin = 'crsBegin'+id;
@@ -635,7 +637,8 @@ function dcOpenDialogCourse(id, title, dgId, uuid, icon){
     $('body').append('<div id=' + id + ' style="padding:5px"></div>');
     
     var ctrls = '<div class="easyui-panel" data-options="fit:true" style="padding:10px;overflow: hidden">';
-    ctrls += '<input id='+name+'>';
+    ctrls += '<input id='+noId+'>';
+    ctrls += '<div style="height:3px"></div><input id='+name+'>';
     ctrls += '<div style="height:3px"></div><input id='+school+'>';
     ctrls += '<div style="height:3px"></div><input id='+begin+'>';
     ctrls += '<div style="height:3px"></div><input id='+end+'>';
@@ -644,10 +647,17 @@ function dcOpenDialogCourse(id, title, dgId, uuid, icon){
     ctrls += '</div>';
 
     $("#"+id).dialog({
-        title:title,width:320,height:215,cache:false,iconCls:icon,content:ctrls,modal:false,closed:true,
-        collapsible: false, minimizable:false,maximizable: false, resizable: false,
+        title:title,width:320,height:245,
+        cache:false,iconCls:icon,content:ctrls,
+        modal:false,closed:true,
+        collapsible: false, minimizable:false,
+        maximizable: false, resizable: false,
         buttons: [{text:'保存',iconCls:'icon-ok',width:80,height:30,handler:save},
-            {text:'关闭',iconCls:'icon-cancel',width:80,height:30,handler:function(){ $("#"+id).dialog('close'); }}],
+            {text:'关闭',iconCls:'icon-cancel',width:80,height:30,
+                handler:function(){
+                    $("#"+id).dialog('close');
+                }
+            }],
         onOpen:function () {
             if(uuid > 0){
                 ajaxRequest();
@@ -661,6 +671,9 @@ function dcOpenDialogCourse(id, title, dgId, uuid, icon){
         }
     }).dialog('open');
 
+    $('#'+noId).textbox({
+        label:'课程表编号：',labelAlign:'right',labelWidth:90,prompt:'自动生成',disabled:true,width:'98%'
+    });
     $('#'+name).textbox({
         label:'*课程表名称：',labelAlign:'right',labelWidth:90,prompt:'不可重复',width:'98%'
     }).textbox('textbox').focus();
@@ -694,9 +707,10 @@ function dcOpenDialogCourse(id, title, dgId, uuid, icon){
             console.log('ajaxRequest', data);
             if(data.errorCode == 0)
             {
+                $('#'+noId).textbox('setValue', data.row.code);
                 $('#'+name).textbox('setValue', data.row.name);
                 $('#'+school).combobox('setValue', data.row.school_id);
-                $('#'+begin).datebox()('setValue', data.row.begin);
+                $('#'+begin).datebox('setValue', data.row.begin);
                 $('#'+end).datebox('setValue', data.row.end);
 
                 $('#'+uid).val(data.row.id);
