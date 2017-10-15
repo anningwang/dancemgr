@@ -274,10 +274,10 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             data.row.name = '未命名';
         }
 
-        for(var win in dcCourse){
-            if(!dcCourse.hasOwnProperty(win))
+        for(var win in _dcCourse){
+            if(!_dcCourse.hasOwnProperty(win))
                 continue;
-            data.item.push(dcCourse[win].param);
+            data.item.push(_dcCourse[win].param);
         }
         console.log('send:', data);
 
@@ -305,23 +305,40 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         }).menu('appendItem', {  // append a top menu item
             text: '克隆',
             iconCls: 'icon-ok',
-            onclick: function(){alert('New Item')}
+            id: 'm-course-copy',
+            onclick: function(){
+                if(!_curCourseId) return;
+                var pr = {};
+                $.extend(pr, _dcCourse[_curCourseId].param);
+                pr.isCopy = true;
+                addCourse(pr);
+            }
         }).menu('appendItem', {  // append a menu separator
             separator: true
         }).menu('appendItem', {  // append a top menu item
             text: '新建',
-            iconCls: 'icon-ok',
-            onclick: function(){alert('New Item')}
+            iconCls: 'icon-add',
+            id: 'm-course-new',
+            onclick: function(){
+                dcOpenDialogNewCourse('dc-add-course', '增加课程表', 'div-'+datagridId)
+            }
         }).menu('appendItem', {  // append a top menu item
             text: '删除',
-            iconCls: 'icon-ok',
-            onclick: function(){alert('New Item')}
+            iconCls: 'icon-remove',
+            id: 'm-course-del',
+            onclick: function(){
+                if(!_curCourseId) return;
+                $('#'+ _curCourseId).dialog('close');
+            }
         }).menu('appendItem', {  // append a top menu item
             text: '修改',
             iconCls: 'icon-ok',
-            onclick: function(){alert('New Item')}
+            id: 'm-course-modify',
+            onclick: function(){
+                if(!_curCourseId) return;
+                courseDbClick(_curCourseId);
+            }
         });
-
     }
 
 
@@ -542,13 +559,15 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
                     return false;
                 }
             }
+            return true;
         }
         //--------------------------------------------------------------------------------------------------------------
-    }
+    } // end of dcOpenDialogNewCourse
 
 
     var _courseId = 100;
-    var dcCourse = {};      // {id: {time: '8:30-10:00', teacher: '李老师', room: '舞蹈1室', short_name: '17上美术'}};
+    var _dcCourse = {};      // {id: {time: '8:30-10:00', teacher: '李老师', room: '舞蹈1室', short_name: '17上美术'}};
+    var _curCourseId = undefined;
 
     /**
      * 打开 课程表明细 窗口
@@ -564,21 +583,33 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         pr.w = 100;
         pr.h = w_h;
         pr.winId = 'cid'+_courseId;
-        dcCourse[pr.winId] = {};
+        _dcCourse[pr.winId] = {};
 
         var idx = getRowIndex(pr.time.split('-')[0]);
         var coord = getDgCellCoord(dg, idx,  'w'+pr.week);
-        dcCourse[pr.winId].idx = idx;
-        dcCourse[pr.winId].field = 'w'+pr.week;
+        _dcCourse[pr.winId].idx = idx;
+        _dcCourse[pr.winId].field = 'w'+pr.week;
 
         pr.left = coord.pos.left + 32;
         pr.top = coord.pos.top - WIN_TOP;
-        dcCourse[pr.winId].param = pr ;
+        _dcCourse[pr.winId].param = pr ;
         var win = dcOpenCourseWin(pr.winId, pr.short_name, pr);
         var panel = $(win).dialog('panel');
         panel.dblclick(function (e) {
             console.log(e);
             courseDbClick(pr.winId);
+        });
+
+        panel.contextmenu(function (e) {
+            // console.log('right click:',pr.winId);
+            _curCourseId = pr.winId;
+            e.preventDefault();
+            $('#'+mmId).menu('show', {
+                left: e.pageX,
+                top: e.pageY
+            }).menu('enableItem',  $('#m-course-copy')[0])
+                .menu('enableItem',  $('#m-course-del')[0])
+                .menu('enableItem',  $('#m-course-modify')[0]);
         });
 
         _courseId++;
@@ -595,8 +626,8 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
 
         var idx = getRowIndex(pr.time.split('-')[0]);
         var coord = getDgCellCoord(dg, idx,  'w'+pr.week);
-        dcCourse[pr.winId].idx = idx;
-        dcCourse[pr.winId].field = 'w'+pr.week;
+        _dcCourse[pr.winId].idx = idx;
+        _dcCourse[pr.winId].field = 'w'+pr.week;
 
         dcSetCourseContent(pr.winId, pr.time, pr.teacher, pr.room);
         $('#'+pr.winId).window('setTitle', pr.short_name)
@@ -605,15 +636,15 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
     }
 
     function courseDbClick(cid) {
-        console.log('panel db click', cid, dcCourse[cid]);
-        dcOpenDialogNewCourse('dc-modify-course', '修改课程表', 'div-'+datagridId, dcCourse[cid].param);
+        console.log('panel db click', cid, _dcCourse[cid]);
+        dcOpenDialogNewCourse('dc-modify-course', '修改课程表', 'div-'+datagridId, _dcCourse[cid].param);
     }
 
     function resizeCourse() {
-        for(var win in dcCourse){
-            if(!dcCourse.hasOwnProperty(win))
+        for(var win in _dcCourse){
+            if(!_dcCourse.hasOwnProperty(win))
                 continue;
-            var coord = getDgCellCoord(dg, dcCourse[win].idx, dcCourse[win].field);
+            var coord = getDgCellCoord(dg, _dcCourse[win].idx, _dcCourse[win].field);
             $('#'+win).window('move', {left: coord.pos.left + 32, top: coord.pos.top - WIN_TOP});
         }
     }
@@ -641,25 +672,34 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
 
     contents.contextmenu(function (e) {
         e.preventDefault();          //对标准DOM 中断 默认点击右键事件处理函数
+        _curCourseId = undefined;
         $('#'+mmId).menu('show', {
             left: e.pageX,
             top: e.pageY
-        });
+        }).menu('disableItem',  $('#m-course-copy')[0])
+            .menu('disableItem',  $('#m-course-del')[0])
+            .menu('disableItem',  $('#m-course-modify')[0]);
     });
 
-    document.getElementById(divId).addEventListener("contextmenu", myFunction);
-    function myFunction(e) {
+    // 以下增加右键菜单，没问题，但是不好确认点击的 窗口。用坐标判断比较麻烦。故将
+    // 右键菜单移到具体窗口上去捕获
+    //document.getElementById(divId).addEventListener("contextmenu", myFunction);
+    //function myFunction(e) {
         /*
         var x = document.getElementById("demo");
         x.innerHTML = "你在 div 中点击了鼠标右键!";
         x.style.fontSize = "30px";
         */
-        e.preventDefault();
-        $('#'+mmId).menu('show', {
-            left: e.pageX,
-            top: e.pageY
-        });
-    }
+    //    console.log('右键菜单',e.target.id);
+    //    e.preventDefault();
+    //    $('#'+mmId).menu('show', {
+    //        left: e.pageX,
+    //        top: e.pageY
+    //    }).menu('enableItem',  $('#m-course-copy')[0])
+    //        .menu('enableItem',  $('#m-course-del')[0])
+    //        .menu('enableItem',  $('#m-course-modify')[0]);
+    //}
+
 
 }
 
