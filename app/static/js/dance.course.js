@@ -63,6 +63,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
     var dg = $('#' + datagridId);       // datagrid ID
     var divId = 'dcDiv' + datagridId;
     var bcId = 'courseName' + datagridId;
+    var mmId = 'courseMM'+datagridId;
 
     var dance_condition = '';               // 主datagrid表查询条件
     var WIN_TOP = 25;   // 表头高度
@@ -89,7 +90,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             handler:function(){
                 //var cond = $(dg).datagrid('options').queryParams;
                 //options.addEditFunc(options.page, url, cond);
-                dcOpenDialogNewCourse('dc-add-course', '增加课程表', 'div-'+datagridId )
+                dcOpenDialogNewCourse('dc-add-course', '增加课程表', 'div-'+datagridId)
             }}, {iconCls:'icon-edit', text:"编辑/查看",  ///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             handler:function(){
                 var row = $(dg).datagrid('getSelections');
@@ -122,9 +123,8 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         },
         onLoadSuccess:function (data) {
             var coord = getDgCellCoord(dg, 0, 'time');
-            console.log('(0,时间)坐标:', coord);
-            //getDgCellCoord(dg, 0, 'w1');
-            //getDgCellCoord(dg, 1, 'w1');
+            console.log('(row 0,时间)坐标:', coord);
+
             WIN_TOP = coord.pos.top;
             $('#'+divId).css('top', (60+coord.top+2)+'px')       // 60 == Tab头高度 30，dg表Toolbar高度 30
                 .height($(pager).position().top - 30 - WIN_TOP - 2);    // Tab头高度 30
@@ -135,17 +135,6 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             for(var i=0; i<data['item'].length; i++){
                 addCourse(data['item'][i]);
             }
-
-            /*
-            var panel =  $(dg).datagrid('getPanel');
-            panel = $('#'+divId);
-            panel.mousedown(function (event) {      // panel 鼠标按下事件
-                console.log(event, 'id:', event.target.id);
-                if (event.target.className === 'datagrid-body') { // datagrid-toolbar, datagrid-header-inner
-                    //endEditing();
-                }
-            });
-            */
         },
         onResize:function (width, height) {
             var pos = $(pager).position();
@@ -226,6 +215,8 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         }]
     });
 
+    createMenu(mmId);
+
     // pager position top是相对Tab页顶点的高度，left是距离 Tab 页 左侧的距离  {top: 758, left: 0}
     // offset top 是距离屏幕顶端的距离 (North:60, Tab头30)，left是距离屏幕左侧的距离 (左侧Tree 200px)
     // {top: 848, left: 201}
@@ -305,36 +296,32 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         });
     }
 
-    var _courseId = 100;
-    var dcCourse = {};      // {id: {time: '8:30-10:00', teacher: '李老师', room: '舞蹈1室', short_name: '17上美术'}};
-
-    function addCourse(pr) {
-        var w_min = (pr.minutes) ? pr.minutes : 90;
-        var w_h = 85;
-        if(w_min <= 60) w_h = 60;
-        else if (w_min > 90 && w_min <= 120) w_h = 115;
-
-        pr.p = divId;
-        pr.w = 100;
-        pr.h = w_h;
-        pr.winId = 'cid'+_courseId;
-        dcCourse[pr.winId] = {};
-
-        var idx = getRowIndex(pr.time.split('-')[0]);
-        var coord = getDgCellCoord(dg, idx,  'w'+pr.week);
-        dcCourse[pr.winId].idx = idx;
-        dcCourse[pr.winId].field = 'w'+pr.week;
-
-        pr.left = coord.pos.left + 32;
-        pr.top = coord.pos.top - WIN_TOP;
-        dcCourse[pr.winId].param = pr ;
-        var win = dcOpenCourseWin(pr.winId, pr.short_name, pr);
-        var panel = $(win).dialog('panel');
-        panel.dblclick(function () {
-            console.log('panel', pr.winId);
+    function createMenu(mmId) {
+        $('body').append('<div id='+mmId+'></div>');
+        $('#'+mmId).menu({
+            onClick:function(item){
+                //console.log(item);
+            }
+        }).menu('appendItem', {  // append a top menu item
+            text: '克隆',
+            iconCls: 'icon-ok',
+            onclick: function(){alert('New Item')}
+        }).menu('appendItem', {  // append a menu separator
+            separator: true
+        }).menu('appendItem', {  // append a top menu item
+            text: '新建',
+            iconCls: 'icon-ok',
+            onclick: function(){alert('New Item')}
+        }).menu('appendItem', {  // append a top menu item
+            text: '删除',
+            iconCls: 'icon-ok',
+            onclick: function(){alert('New Item')}
+        }).menu('appendItem', {  // append a top menu item
+            text: '修改',
+            iconCls: 'icon-ok',
+            onclick: function(){alert('New Item')}
         });
 
-        _courseId++;
     }
 
 
@@ -342,24 +329,10 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
      * 打开 新增 课程表 单项 窗口
      * @param parent        窗口的父节点
      * @param id
-     * @param _title
-     * @param _width
-     * @param _height
-     * @param _icon
+     * @param title
+     * @param pr
      */
-    function dcOpenDialogNewCourse(id, _title, parent, _width, _height, _icon){
-        if (document.getElementById(id)) {
-            $.messager.alert('提示', '[' + _title + ']窗口已打开！', 'info');
-            return;
-        }
-        var pId = parent ? '#'+parent : 'body';
-        $(pId).append('<div id=' + id + ' style="padding:5px"></div>');
-
-        if (_width == null)
-            _width = 360;
-        if (_height == null)
-            _height = 245;
-
+    function dcOpenDialogNewCourse(id, title, parent, pr){
         var name = 'className'+id;
         var shortName = 'shortName'+id;
         var wk = 'week'+id;
@@ -368,86 +341,137 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         var time = 'courseTime'+id;
         var hours = 'courseHours'+id;
 
+        if (document.getElementById(id)) {
+            if(pr && pr.id > 0)
+                setData(pr);
+            else
+                $.messager.alert('提示', '[' + title + ']窗口已打开！', 'info');
+            return;
+        }
+        var pId = parent ? '#'+parent : 'body';
+        $(pId).append('<div id=' + id + ' style="padding:5px"></div>');
+
         var ctrls = '<div class="easyui-panel" data-options="fit:true" style="padding:10px;overflow: hidden">';
         ctrls += '<input id='+name+'>';
         ctrls += '<div style="height:3px"></div><input id='+shortName+'><input id='+wk+'>';
         ctrls += '<div style="height:3px"></div><input id='+teacher+'>';
         ctrls += '<div style="height:3px"></div><input id='+room+'>';
         ctrls += '<div style="height:3px"></div><input id='+time+'><input id='+hours+'>';
-
         ctrls += '</div>';
 
         $("#"+id).dialog({
-            title:_title,width:_width,height:_height,cache:false,iconCls:_icon,
+            title:title,width:360,height:245,maximizable: false, resizable: false, inline:true,
+            cache:false,iconCls:null,
             content:ctrls,modal:false,closed:true,
-            collapsible: false, minimizable:false,maximizable: false, resizable: false, inline:true,
+            collapsible: false, minimizable:false,
             buttons: [{text:'保存',iconCls:'icon-ok',width:80,height:30,handler:save},
                 {text:'关闭',iconCls:'icon-cancel',width:80,height:30,
                     handler:function(){ $("#"+id).dialog('close'); }}],
             onBeforeClose: function () { $("#"+id).dialog('destroy'); }
         }).dialog('open');
+        
+        createCtrls();      // 生成控件
+        setData(pr);        // 对控件赋值
 
-        $('#'+name).combogrid({
-            label:'*班级名称：',labelAlign:'right',labelWidth:100,prompt:'请选择班级',width:'98%',
-            url:'/api/dance_class_get', editable:false,
-            panelWidth:220,
-            idField: 'id',
-            textField: 'name',
-            fitColumns: true,
-            queryParams: {ctrl: 'combogrid'},
-            columns:[[
-                {field:'no',title:'班级编号',width:80},
-                {field:'name',title:'班级名称',width:120}
-            ]],
-            onSelect:function (index, row) {
-                $('#'+shortName).textbox('setValue', row.name);
-            }
-        });
+        function save() {   // 保存按钮
+            if(!validate()) return false;
 
-        $('#'+shortName).textbox({
-            label:'班级名称简称：',labelAlign:'right',labelWidth:100,width:'64%'
-        });
-        $('#'+wk).combobox({
-            label:'星期：',labelAlign:'right',labelWidth:'50',width:'34%',
-            valueField:'id',
-            textField:'text',
-            panelHeight:'auto',
-            data: [{"id":1, "text":"一", "selected":true},
-                {"id":2, "text":"二"},
-                {"id":3, "text":"三"},
-                {"id":4, "text":"四"},
-                {"id":5, "text":"五"},
-                {"id":6, "text":"六"},
-                {"id":7, "text":"天"}]
-        });
+            var r_minutes = $('#'+hours).combobox('getValue');
+            var ctrlTime = $('#'+time);
+            var r_h = $(ctrlTime).timespinner('getHours');
+            var r_m = $(ctrlTime).timespinner('getMinutes');
 
-        $('#'+teacher).combobox({
-            label:'任课老师：',labelAlign:'right',labelWidth:100,width:'98%',
-            url:'/api/dance_teacher_get', textField:'name', valueField:'id'
-        });
+            var param = {week: $('#'+wk).combobox('getValue'),
+                minutes: r_minutes,
+                room_id: $('#'+room).textbox('getValue'), room:  $('#'+room).textbox('getText'),
+                class_id: $('#'+name).textbox('getValue'),
+                teacher_id: $('#'+teacher).textbox('getValue'), teacher: $('#'+teacher).textbox('getText'),
+                time: formatTimeSpan(r_h, r_m, r_minutes), hour:r_h, m: r_m,
+                short_name: $('#'+shortName).textbox('getText')
+            };
+            if(pr && pr.id && pr.id > 0) {
+                $.extend(pr, param);
+                modifyCourse(pr);
+            }else
+                addCourse(param);
+        }
 
-        $('#'+room).combobox({
-            label:'教室：',labelAlign:'right',labelWidth:100,width:'98%'
-        });
+        //--------------------------------------------------------------------------------------------------------------
+        // 窗口控件生成和赋值，校验等操作
+        function createCtrls() {
+            $('#'+name).combogrid({
+                label:'*班级名称：',labelAlign:'right',labelWidth:100,prompt:'请选择班级',width:'98%',
+                url:'/api/dance_class_get', editable:false,
+                panelWidth:220,
+                idField: 'id',
+                textField: 'name',
+                fitColumns: true,
+                queryParams: {ctrl: 'combogrid'},
+                columns:[[
+                    {field:'no',title:'班级编号',width:80},
+                    {field:'name',title:'班级名称',width:120}
+                ]],
+                onSelect:function (index, row) {
+                    $('#'+shortName).textbox('setValue', row.name);
+                }
+            });
 
-        $('#'+time).timespinner({
-            label:'开课时间：',labelAlign:'right',labelWidth:100,width:'64%',
-            increment:1, required:true,min: '07:00', max:'22:30'
-        });
-        $('#'+hours).combobox({
-            label:'分钟：',labelAlign:'right',labelWidth:'50',width:'34%',
-            valueField:'id',
-            textField:'text',
-            panelHeight:'auto',
-            data: [{"id":60, "text":"1 H"},
-                {"id":90, "text":"1.5 H", "selected":true},
-                {"id":120, "text":"2 H"},
-                {"id":150, "text":"2.5 H"},
-                {"id":180, "text":"3 H"}
-            ]
-        });
+            $('#'+shortName).textbox({
+                label:'班级名称简称：',labelAlign:'right',labelWidth:100,width:'64%'
+            });
+            $('#'+wk).combobox({
+                label:'星期：',labelAlign:'right',labelWidth:'50',width:'34%',
+                valueField:'id',
+                textField:'text',
+                panelHeight:'auto',
+                data: [{"id":1, "text":"一", "selected":true},
+                    {"id":2, "text":"二"},
+                    {"id":3, "text":"三"},
+                    {"id":4, "text":"四"},
+                    {"id":5, "text":"五"},
+                    {"id":6, "text":"六"},
+                    {"id":7, "text":"天"}]
+            });
 
-        function save() {
+            $('#'+teacher).combobox({
+                label:'任课老师：',labelAlign:'right',labelWidth:100,width:'98%',
+                url:'/api/dance_teacher_get', textField:'name', valueField:'id'
+            });
+
+            $('#'+room).combobox({
+                label:'教室：',labelAlign:'right',labelWidth:100,width:'98%'
+            });
+
+            $('#'+time).timespinner({
+                label:'开课时间：',labelAlign:'right',labelWidth:100,width:'64%',
+                increment:1, required:true,min: '07:00', max:'22:30'
+            });
+            $('#'+hours).combobox({
+                label:'分钟：',labelAlign:'right',labelWidth:'50',width:'34%',
+                valueField:'id',
+                textField:'text',
+                panelHeight:'auto',
+                data: [{"id":60, "text":"1 H"},
+                    {"id":90, "text":"1.5 H", "selected":true},
+                    {"id":120, "text":"2 H"},
+                    {"id":150, "text":"2.5 H"},
+                    {"id":180, "text":"3 H"}
+                ]
+            });
+        }
+        
+        // 给 课程表明细 窗口 设置数据
+        function setData(pr){
+            if(!pr) return;
+            $('#'+name).combogrid('setValue', pr.class_id);
+            $('#'+shortName).textbox('setValue', pr.short_name);
+            $('#'+wk).combobox('setValue', pr.week);
+            $('#'+teacher).combobox('setValue', pr.teacher_id);
+            $('#'+time).timespinner('setValue', pr.time.split('-')[0]);
+            $('#'+hours).combobox('setValue', pr.minutes);
+        }
+        
+        function validate() {
             // 校验数据是否合法
             var ctrlName = $('#'+name);
             var className = ctrlName.textbox('getValue');
@@ -518,41 +542,72 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
                     return false;
                 }
             }
-            var r_Week = $('#'+wk).combobox('getValue');
-
-            var param = {week: r_Week,
-                minutes: r_minutes,
-                room_id: ctrlRoom.textbox('getValue'), room: roomText,
-                class_id: ctrlName.textbox('getValue'),
-                teacher_id: ctrlTch.textbox('getValue'), teacher: tchName,
-                time: formatTimeSpan(r_h, r_m, r_minutes), hour:r_h, m: r_m,
-                short_name: r_shortName
-            };
-            addCourse(param);
-
-
-            /*
-             // 打包数据
-             var data = [{id: 0,  row: { name: typeName}}];
-             console.log('send:', data);
-
-             // 发送数据
-             $.ajax({
-             method: 'POST',
-             url: '/dance_course_update',
-             async: true,
-             dataType: 'json',
-             contentType: "application/json;charset=UTF-8",
-             data: JSON.stringify(data)
-             }).done(function(data) {
-             $.messager.alert('提示', data.msg, 'info');
-             }).fail(function(jqXHR, textStatus, errorThrown) {
-             $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
-             });
-             */
         }
+        //--------------------------------------------------------------------------------------------------------------
     }
 
+
+    var _courseId = 100;
+    var dcCourse = {};      // {id: {time: '8:30-10:00', teacher: '李老师', room: '舞蹈1室', short_name: '17上美术'}};
+
+    /**
+     * 打开 课程表明细 窗口
+     * @param pr
+     */
+    function addCourse(pr) {
+        var w_min = (pr.minutes) ? pr.minutes : 90;
+        var w_h = 85;
+        if(w_min <= 60) w_h = 60;
+        else if (w_min > 90 && w_min <= 120) w_h = 115;
+
+        pr.p = divId;
+        pr.w = 100;
+        pr.h = w_h;
+        pr.winId = 'cid'+_courseId;
+        dcCourse[pr.winId] = {};
+
+        var idx = getRowIndex(pr.time.split('-')[0]);
+        var coord = getDgCellCoord(dg, idx,  'w'+pr.week);
+        dcCourse[pr.winId].idx = idx;
+        dcCourse[pr.winId].field = 'w'+pr.week;
+
+        pr.left = coord.pos.left + 32;
+        pr.top = coord.pos.top - WIN_TOP;
+        dcCourse[pr.winId].param = pr ;
+        var win = dcOpenCourseWin(pr.winId, pr.short_name, pr);
+        var panel = $(win).dialog('panel');
+        panel.dblclick(function (e) {
+            console.log(e);
+            courseDbClick(pr.winId);
+        });
+
+        _courseId++;
+    }
+
+    // 修改课程表明细
+    function modifyCourse(pr) {
+        var w_min = (pr.minutes) ? pr.minutes : 90;
+        var w_h = 85;
+        if(w_min <= 60) w_h = 60;
+        else if (w_min > 90 && w_min <= 120) w_h = 115;
+
+        pr.h = w_h;
+
+        var idx = getRowIndex(pr.time.split('-')[0]);
+        var coord = getDgCellCoord(dg, idx,  'w'+pr.week);
+        dcCourse[pr.winId].idx = idx;
+        dcCourse[pr.winId].field = 'w'+pr.week;
+
+        dcSetCourseContent(pr.winId, pr.time, pr.teacher, pr.room);
+        $('#'+pr.winId).window('setTitle', pr.short_name)
+            .window('resize', {width:pr.w, height:pr.h})
+            .window('move', {left: coord.pos.left + 32, top: coord.pos.top - WIN_TOP});
+    }
+
+    function courseDbClick(cid) {
+        console.log('panel db click', cid, dcCourse[cid]);
+        dcOpenDialogNewCourse('dc-modify-course', '修改课程表', 'div-'+datagridId, dcCourse[cid].param);
+    }
 
     function resizeCourse() {
         for(var win in dcCourse){
@@ -569,6 +624,42 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         //console.log('scroll');
         resizeCourse();
     });
+/*
+    contents.mouseup(function (e) {     // 添加右键菜单
+        console.log(e);
+        if(e.button == 2){ // 右键菜单
+            e.preventDefault();          //对标准DOM 中断 默认点击右键事件处理函数
+            $('#'+mmId).menu('show', {
+                left: e.pageX,
+                top: e.pageY
+            });
+
+            //document.oncontextmenu=function(e) {}
+        }
+    });
+    */
+
+    contents.contextmenu(function (e) {
+        e.preventDefault();          //对标准DOM 中断 默认点击右键事件处理函数
+        $('#'+mmId).menu('show', {
+            left: e.pageX,
+            top: e.pageY
+        });
+    });
+
+    document.getElementById(divId).addEventListener("contextmenu", myFunction);
+    function myFunction(e) {
+        /*
+        var x = document.getElementById("demo");
+        x.innerHTML = "你在 div 中点击了鼠标右键!";
+        x.style.fontSize = "30px";
+        */
+        e.preventDefault();
+        $('#'+mmId).menu('show', {
+            left: e.pageX,
+            top: e.pageY
+        });
+    }
 
 }
 
@@ -583,7 +674,7 @@ function dcOpenCourseWin(id, title, param){
     $(pId).append('<div id=' + id + '></div>');
     var name = 'courseName'+id;
 
-    var ctrls = '<div class="easyui-panel" data-options="fit:true" style="padding:2px;">';
+    var ctrls = '<div class="easyui-panel" data-options="fit:true" style="padding:2px;overflow: hidden">';
     ctrls += '<div id='+name+' ></div>';
 
     ctrls += '</div>';
@@ -601,11 +692,21 @@ function dcOpenCourseWin(id, title, param){
         }
     }).dialog('open');
 
+    /*
     $('#'+name).css({'font-size': '9px', "font-family":"宋体"})
-        .append($('<div/>').text(param.time).html())
-        .append('<br>'+(param.teacher?param.teacher:'老师:')).append('<br>'+(param.room?param.room:'教室:'));
+        .append(param.time).append('<br>'+(param.teacher?param.teacher:'老师:'))
+        .append('<br>'+(param.room?param.room:'教室:'));
+    */
+    dcSetCourseContent(id, param.time, param.teacher, param.room);
 
     return '#'+id;
+}
+
+function dcSetCourseContent(id, time, teacher, room) {
+    $('#courseName'+id).empty().css({'font-size': '9px', "font-family":"宋体"})
+        .append(time).append('<br>'+(teacher?teacher:'老师:'))
+        .append('<br>'+(room?room:'教室:'));
+
 }
 
 // 返回时间（字符串格式：hh:mm 12:30）所在的 dg 表格 行索引（从0开始）
@@ -776,7 +877,7 @@ function dcOpenDialogCourse(id, title, dgId, uuid, icon){
         label:'结束时间：', editable:false,labelAlign:'right',labelWidth:90,width:'98%'
     });
 
-    function ajaxRequest(){ // 发送数据
+    function ajaxRequest(){
         $.ajax({
             method: 'POST',
             url: '/dance_course_single_get',
