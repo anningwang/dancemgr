@@ -1116,14 +1116,14 @@ def dance_course_modify():
 
     """ 修改 课程表明细"""
     if 'item' in obj:
-        data = obj['edu']
+        data = obj['item']
         records = DanceCourseItem.query.filter_by(course_id=rid).all()
         old_ids = []
         for rec in records:
             old_ids.append({'id': rec.id})
         change = dc_records_changed(old_ids, data, 'id')
         for i in change['add']:
-            data[i]['teacher_id'] = rid
+            data[i]['course_id'] = rid
             nr = DanceCourseItem(data[i])
             db.session.add(nr)
         for i in change['upd']:
@@ -1146,9 +1146,7 @@ def dance_course_add(obj):
         }]
     :return:
     """
-
-    tch = obj['row']
-    nr = DanceCourse(tch)
+    nr = DanceCourse(obj['row'])
     db.session.add(nr)
     nr = DanceCourse.query.filter_by(company_id=g.user.company_id, code=nr.code).first()
     if nr is None:

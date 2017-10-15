@@ -1793,6 +1793,14 @@ class DanceTeacher(db.Model):
             no_id_dict[r.teacher_no] = r.id
         return no_id_dict
 
+    @staticmethod
+    def id_to_name():
+        records = DanceTeacher.query.filter_by(company_id=g.user.company_id).all()
+        teacher_dict = {}
+        for r in records:
+            teacher_dict[r.id] = r.name
+        return teacher_dict
+
     def create_no(self):
         r = DanceTeacher.query.filter_by(company_id=g.user.company_id).order_by(DanceTeacher.id.desc()).first()
         number = 1 if r is None else int(r.teacher_no.rsplit('-', 1)[1]) + 1

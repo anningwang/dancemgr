@@ -1437,7 +1437,32 @@ def dance_course_get():
         tm['m'] = 30 if tm['m'] == 0 else 0
         tm['h'] += 1 if tm['m'] == 0 else 0
 
-    return jsonify({'total': len(course), 'rows': course, 'errorCode': 0, 'msg': 'ok'})
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    dcq = DanceCourse.query.filter_by(company_id=g.user.company_id, valid=1)\
+        .filter(DanceCourse.school_id.in_(school_ids)).order_by(DanceCourse.id.desc()).first()
+
+    course_item = []
+    if dcq is not None:
+        rec = dcq
+        row = {'id': rec.id, "code": rec.code, 'recorder': rec.recorder,
+               'last_u': rec.last_u, 'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d'),
+               'last_t': datetime.datetime.strftime(rec.last_t, '%Y-%m-%d %H:%M:%S'),
+               'begin': datetime.datetime.strftime(rec.begin, '%Y-%m-%d'),
+               'end': datetime.datetime.strftime(rec.end, '%Y-%m-%d') if rec.end is not None else None,
+               'valid': rec.valid, 'valid_text': u'否' if rec.valid == 1 else u'是',
+               'name': rec.name, 'school_id': rec.school_id}
+        teacher_dict = DanceTeacher.id_to_name()
+        records = DanceCourseItem.query.filter_by(course_id=rec.id).all()
+        for r in records:
+            course_item.append({'id': r.id, 'short_name': r.short_name, 'week': r.week, 'time': r.time,
+                                'minutes': r.minutes, 'room_id': r.room_id, 'class_id': r.class_id,
+                                'teacher_id': r.teacher_id,
+                                'teacher': teacher_dict.get(r.teacher_id, '')})
+    else:
+        row = {}
+
+    return jsonify({'total': len(course), 'rows': course, 'errorCode': 0, 'msg': 'ok',
+                    'info': row, 'item': course_item})
 
 
 @app.route('/dance_course_list_get', methods=['POST'])
@@ -2452,3 +2477,34 @@ def api_dance_class_get():
         return jsonify({'errorCode': 0, 'msg': 'ok', 'rows': classes, 'total': len(classes)})
     else:
         return jsonify(classes)
+
+
+@app.route('/api/dance_teacher_get', methods=['POST'])
+@login_required
+def api_dance_teacher_get():
+    """
+    查询任教老师
+    :return:
+    [{
+            id:     id
+            no:     编号
+            name:   名称
+    }]
+    """
+    dcq = DanceTeacher.query.filter_by(company_id=g.user.company_id, has_class=1)
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(DanceTeacher.school_id.in_(school_id_intersection))
+
+    dcq = dcq.all()
+    teacher = []
+    for r in dcq:
+        teacher.append({'id': r.id, 'name': r.name, 'no': r.teacher_no})
+
+    return jsonify(teacher)

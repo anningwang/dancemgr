@@ -62,6 +62,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
     var sbId = 'sb' + datagridId;
     var dg = $('#' + datagridId);       // datagrid ID
     var divId = 'dcDiv' + datagridId;
+    var bcId = 'courseName' + datagridId;
 
     var dance_condition = '';               // 主datagrid表查询条件
     var WIN_TOP = 25;   // 表头高度
@@ -100,7 +101,8 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
                     options.addEditFunc(options.page, url, cond, row[0].id);
                 }
             }},
-            {iconCls:'icon-remove', text:"删除",  handler:doDel}, '-',
+            {iconCls:'icon-remove', text:"删除",  handler:doDel},
+            {iconCls:'icon-save', text:"保存",  handler:doSave},'-',
             {text: options.queryText + '<input id=' + ccId + '>'},
             {iconCls: 'icon-search', text:"查询", handler: function () {
                 var cond = {};
@@ -108,7 +110,8 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
                 cond['name'] = dance_condition;
                 $(dg).datagrid('load', cond);
             }}, '-',
-            {text: '<input id=' + sbId + '>'}
+            {text: '<input id=' + sbId + '>'},
+            {id: bcId}
         ],
         columns: options.columns,
         onDblClickCell: function (index) {
@@ -117,7 +120,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             var cond = $(dg).datagrid('options').queryParams;
             options.addEditFunc(options.page, url, cond, row.id);
         },
-        onLoadSuccess:function () {
+        onLoadSuccess:function (data) {
             var coord = getDgCellCoord(dg, 0, 'time');
             console.log('(0,时间)坐标:', coord);
             //getDgCellCoord(dg, 0, 'w1');
@@ -125,6 +128,24 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             WIN_TOP = coord.pos.top;
             $('#'+divId).css('top', (60+coord.top+2)+'px')       // 60 == Tab头高度 30，dg表Toolbar高度 30
                 .height($(pager).position().top - 30 - WIN_TOP - 2);    // Tab头高度 30
+
+            $('#'+bcId).linkbutton({
+                text: data['info'] ? data['info']['name'] : '无记录'
+            });
+            for(var i=0; i<data['item'].length; i++){
+                addCourse(data['item'][i]);
+            }
+
+            /*
+            var panel =  $(dg).datagrid('getPanel');
+            panel = $('#'+divId);
+            panel.mousedown(function (event) {      // panel 鼠标按下事件
+                console.log(event, 'id:', event.target.id);
+                if (event.target.className === 'datagrid-body') { // datagrid-toolbar, datagrid-header-inner
+                    //endEditing();
+                }
+            });
+            */
         },
         onResize:function (width, height) {
             var pos = $(pager).position();
@@ -149,7 +170,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         onChange:autoComplete
     });
 
-    autoComplete(dance_condition,'');
+    //autoComplete(dance_condition,'');
     function autoComplete (newValue) {  // ,oldValue
         //console.log('newValue=' + newValue + ' oldValue=' + oldValue);
         dance_condition = $.trim(newValue);
@@ -249,12 +270,73 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         }
     }
 
+    function doSave() {
+        var old = dg.datagrid('getData');
+        // 打包数据
+        var data = {
+            row: {id: old['info'] ? old['info']['id'] : 0,
+                school_id: old['info'] ? old['info']['school_id'] : 0},
+            item:[]
+        };
+        if(data.row.id <=0){
+            data.row.begin = danceGetDate();
+            data.row.name = '未命名';
+        }
+
+        for(var win in dcCourse){
+            if(!dcCourse.hasOwnProperty(win))
+                continue;
+            data.item.push(dcCourse[win].param);
+        }
+        console.log('send:', data);
+
+        // 发送数据
+        $.ajax({
+            method: 'POST',
+            url: '/dance_course_modify',
+            async: true,
+            dataType: 'json',
+            contentType: "application/json;charset=UTF-8",
+            data: JSON.stringify(data)
+        }).done(function(data) {
+            $.messager.alert('提示', data.msg, 'info');
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
+        });
+    }
+
     var _courseId = 100;
-    var dcCourse = {};
-    // {id: {time: '8:30-10:00', teacher: '李老师', room: '舞蹈1室', className: '17上美术',
-    // class_id:
-    // school_id:
-    // }};
+    var dcCourse = {};      // {id: {time: '8:30-10:00', teacher: '李老师', room: '舞蹈1室', short_name: '17上美术'}};
+
+    function addCourse(pr) {
+        var w_min = (pr.minutes) ? pr.minutes : 90;
+        var w_h = 85;
+        if(w_min <= 60) w_h = 60;
+        else if (w_min > 90 && w_min <= 120) w_h = 115;
+
+        pr.p = divId;
+        pr.w = 100;
+        pr.h = w_h;
+        pr.winId = 'cid'+_courseId;
+        dcCourse[pr.winId] = {};
+
+        var idx = getRowIndex(pr.time.split('-')[0]);
+        var coord = getDgCellCoord(dg, idx,  'w'+pr.week);
+        dcCourse[pr.winId].idx = idx;
+        dcCourse[pr.winId].field = 'w'+pr.week;
+
+        pr.left = coord.pos.left + 32;
+        pr.top = coord.pos.top - WIN_TOP;
+        dcCourse[pr.winId].param = pr ;
+        var win = dcOpenCourseWin(pr.winId, pr.short_name, pr);
+        var panel = $(win).dialog('panel');
+        panel.dblclick(function () {
+            console.log('panel', pr.winId);
+        });
+
+        _courseId++;
+    }
+
 
     /**
      * 打开 新增 课程表 单项 窗口
@@ -316,7 +398,10 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             columns:[[
                 {field:'no',title:'班级编号',width:80},
                 {field:'name',title:'班级名称',width:120}
-            ]]
+            ]],
+            onSelect:function (index, row) {
+                $('#'+shortName).textbox('setValue', row.name);
+            }
         });
 
         $('#'+shortName).textbox({
@@ -336,11 +421,12 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
                 {"id":7, "text":"天"}]
         });
 
-        $('#'+teacher).textbox({
-            label:'任课老师：',labelAlign:'right',labelWidth:100,width:'98%'
+        $('#'+teacher).combobox({
+            label:'任课老师：',labelAlign:'right',labelWidth:100,width:'98%',
+            url:'/api/dance_teacher_get', textField:'name', valueField:'id'
         });
 
-        $('#'+room).textbox({
+        $('#'+room).combobox({
             label:'教室：',labelAlign:'right',labelWidth:100,width:'98%'
         });
 
@@ -369,6 +455,16 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
                 $.messager.alert({title:'提示', msg:'请选择班级！', icon: 'info',
                     fn:function () {
                         $(ctrlName).textbox('textbox').focus();
+                    }
+                });
+                return false;
+            }
+
+            var r_shortName = $('#'+shortName).textbox('getText');
+            if(!r_shortName || r_shortName.length > 6){
+                $.messager.alert({title:'提示', msg:'班级简称不能超过6个汉字!', icon: 'info',
+                    fn:function () {
+                        $('#'+shortName).textbox('textbox').focus();
                     }
                 });
                 return false;
@@ -422,32 +518,17 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
                     return false;
                 }
             }
-
             var r_Week = $('#'+wk).combobox('getValue');
 
-            var win_h = 85;
-            if(r_minutes <= 60)
-                win_h = 60;
-            else if (r_minutes > 90 && r_minutes <= 120)
-                win_h = 115;
-
-
-            var param = {p: divId, w: 100, h: win_h, teacher:tchName, room: roomText,  // parent
-                time: formatTimeSpan(r_h, r_m, r_minutes)
+            var param = {week: r_Week,
+                minutes: r_minutes,
+                room_id: ctrlRoom.textbox('getValue'), room: roomText,
+                class_id: ctrlName.textbox('getValue'),
+                teacher_id: ctrlTch.textbox('getValue'), teacher: tchName,
+                time: formatTimeSpan(r_h, r_m, r_minutes), hour:r_h, m: r_m,
+                short_name: r_shortName
             };
-            var winId = 'cid'+_courseId;
-            var win = dcOpenCourseWin(winId, ctrlName.combogrid('getText'), param);
-            _courseId++;
-            dcCourse[winId] = {};
-            dcCourse[winId].param = param ;
-
-            var idx = getRowIndexByHM(r_h, r_m);
-            var coord = getDgCellCoord(dg, idx,  'w'+r_Week);
-            dcCourse[winId].idx = idx;
-            dcCourse[winId].field = 'w'+r_Week;
-            dcCourse[winId].mintues = r_minutes;
-
-            $(win).dialog('move',{left:coord.pos.left + 32, top:coord.pos.top - WIN_TOP});
+            addCourse(param);
 
 
             /*
@@ -493,9 +574,9 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
 
 
 
-function dcOpenCourseWin(id, _title, param){
+function dcOpenCourseWin(id, title, param){
     if (document.getElementById(id)) {
-        $.messager.alert('提示', '[' + _title + ']窗口已打开！', 'info');
+        $.messager.alert('提示', '[' + title + ']窗口已打开！', 'info');
         return;
     }
     var pId = param.p ? '#'+ param.p : 'body';
@@ -508,21 +589,21 @@ function dcOpenCourseWin(id, _title, param){
     ctrls += '</div>';
 
     $("#"+id).dialog({
-        title:_title,width: param.w ? param.w : 140,
-        height: param.h ? param.h : 80, shadow:true,
+        title:title,width: param.w ? param.w : 140,
+        height: param.h ? param.h : 80, shadow:true,closable:false,
         cache:false, content:ctrls,modal:false,closed:true,
         collapsible: false, minimizable:false,maximizable: false, resizable: false,
         cls: param.cls ? param.cls : 'c6',
+        left: param.left, top: param.top,
         border:'thin', inline:true,
         onBeforeClose: function () { $("#"+id).dialog('destroy'); },
         onMove:function (left, top) {
-            
         }
     }).dialog('open');
 
     $('#'+name).css({'font-size': '9px', "font-family":"宋体"})
         .append($('<div/>').text(param.time).html())
-        .append('<br>'+param.teacher).append('<br>'+param.room);
+        .append('<br>'+(param.teacher?param.teacher:'老师:')).append('<br>'+(param.room?param.room:'教室:'));
 
     return '#'+id;
 }
