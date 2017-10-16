@@ -67,7 +67,7 @@ def dance_tree_school(school_ids, school_map):
             {"id": 20, "text": "课程表", "children": [
                 {"id": 2001, "text": "课程表列表", 'attributes': {'showList': 1}}
             ]},
-            {"id": 30, "text": "教室列表"}
+            {"id": 30, "text": "教室列表", 'attributes': {'school_id': 'all'}}
             ]
 
     if len(school_ids) == 1:
@@ -75,7 +75,7 @@ def dance_tree_school(school_ids, school_map):
               {'text': '全部班级', 'attributes': {'school_id': 'all'}}]
         tree[0]['children'] = t1
     elif len(school_ids) > 1:
-        t1 = []
+        t1, t2 = [], []
         for i in range(len(school_ids)):
             name = school_map[school_ids[i]]
             sid = school_ids[i]
@@ -85,8 +85,12 @@ def dance_tree_school(school_ids, school_map):
             t1.append({'text': name, 'state': 'closed', 'children': t11,
                        'attributes': {'school_id': sid, 'is_ended': 0}})
 
-            tree[0]['children'] = t1
-        # tree[0]['state'] = 'closed'
+            t2.append({'text': name,  'attributes': {'school_id': sid}})
+        """对顶层菜单增加子菜单"""
+        tree[0]['children'] = t1
+        tree[2]['children'] = t2
+
+        tree[2]['state'] = 'closed'
 
     return tree
 

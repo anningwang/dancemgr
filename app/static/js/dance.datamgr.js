@@ -511,3 +511,68 @@ function danceAddTabInfoSrc(title, tableId) {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 教室信息
+var danceClassRoomCallFunc = undefined;
+
+/**
+ * 打开 [ 教室信息 ] tab标签
+ * @param title     Tab的标题
+ * @param tableId   Datagrid id,创建在 table 上
+ * @param condition    查询条件
+ */
+function danceAddTabRoom(title, tableId, condition) {
+    var parentDiv = $('#danceTabs');
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+        if(danceClassRoomCallFunc)
+            danceClassRoomCallFunc(condition);
+    } else {
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
+        $(parentDiv).tabs('add', {
+            title: title,
+            content: content,
+            closable: true
+        });
+        var module = 'dance_class_room';
+        var optsFeeMode = {
+            defaultSelField: 'name',
+            fieldValidate: {name: checkNotEmpty},
+            queryText: '教室：',
+            queryPrompt: '名称或拼音首字母查找',
+            who: module,     // 删除数据时，表明身份
+            danceModuleName: module,   // 传递给 导入、导出 模块的身份标识
+            danceModuleTitle: title,          // 导入、导出 窗口 title
+            condition: condition,
+            columns: [[
+                {field: 'ck', checkbox:true },   // checkbox
+                {field: 'school_id', title: '分校名称', width: 140, halign:'center', align: 'left',
+                    formatter:function(value,row){
+                        return row.school_name;
+                    },
+                    editor: {
+                        type: 'combobox',
+                        options:{
+                            url:'/dance_school_list_get',
+                            valueField:'school_id',
+                            textField:'school_name',
+                            editable:false,
+                            panelHeight:'auto'
+                        }
+                    }},
+                {field: 'code', title: '教室编号', width: 140, halign:'center', align: 'left'},
+                {field: 'name', title: '教室名称', width: 140, halign:'center', align: 'left', editor: 'textbox'},
+                {field: 'area', title: '面积(平米)', width: 80, align: 'center', editor: 'textbox'},
+                {field: 'pnum', title: '容纳人数', width: 80, align: 'center', editor: 'textbox'},
+                {field: 'contact_p', title: '联系人', width: 100, align: 'center', editor: 'textbox'},
+                {field: 'contact_tel', title: '联系电话', width: 100, align: 'center', editor: 'textbox'},
+                {field: 'create_at', title: '创建时间', width: 100, align: 'center'},
+                {field: 'last_t', title: '最后更新日期', width: 100, align: 'center'},
+                {field: 'last_u', title: '最后更新人', width: 80, align: 'center'},
+                {field: 'recorder', title: '录入员', width: 80, align: 'center'}
+            ]]
+        };
+
+        danceClassRoomCallFunc = danceCreateEditedDatagrid(tableId, '/'+module, optsFeeMode);
+    }
+}

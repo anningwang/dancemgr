@@ -4,7 +4,7 @@ import xlwt
 from app import db
 from app.models import DanceStudent, DanceClass, DanceStudentClass, DanceSchool, DanceReceipt, DanceUserSchool,\
     DcFeeItem, DanceOtherFee, DanceClassReceipt, DcTeachingMaterial, DanceTeaching, DcClassType, DanceTeacher,\
-    DanceTeacherEdu, DanceTeacherWork, DcCommon
+    DanceTeacherEdu, DanceTeacherWork, DcCommon, DanceClassRoom
 from flask import g
 from dcglobal import *
 
@@ -744,6 +744,79 @@ def dc_common_table(workbook, sh_name, columns, cols_cn, cols_need, ty, is_asc):
         if has is None:
             parm['type'] = ty
             dt = DcCommon(parm)
+            db.session.add(dt)
+            num_right += 1
+        else:
+            num_wrong += 1  # 重复数据
+        # -----------------------------------------------------------------------------------------
+
+        value = int((num_wrong+num_right)*100.0/(cnt-1))
+        progressbar[str(g.user.id)]['value'] = value + 1 if value == 0 else value
+
+    progressbar[str(g.user.id)]['value'] = 100
+    msg = u'[%s]页%s' % (sh.name, '' if num_right + num_wrong != 0 else u' 无数据！')
+    msg += '' if num_right == 0 else (u"导入 %d 条！" % num_right)
+    msg += '' if num_wrong == 0 else (u'忽略重复 %d 条。' % num_wrong)
+
+    db.session.commit()
+    return {'errorCode': 0, 'msg': msg}
+
+
+def import_class_room(fn, is_asc=False):
+    """
+    :param fn:          文件名，需要导入数据的Excel文件名
+    :param is_asc       是否 顺序导入。True 顺序导入， False 逆序导入
+    :return:     errorCode     0 成功， 非0 错误
+                  msg           信息: 'ok' -- 正确，其他错误,
+    """
+    sheet_pages = [u'教室信息']
+    global progressbar
+    progressbar[str(g.user.id)] = {'value': 1, 'sheet': sheet_pages[0]}
+
+    columns = ['code', 'school_id', 'name', 'rem_code', 'recorder',
+               'address', 'area', 'pnum', 'contact_p', 'contact_tel']
+    cols_cn = [u'教室编号', u'分校名称', u'教室名称', u'助记码', u'录入员',
+               u'地址', u'面积㎡', u'容纳人数', u'联系人', u'联系电话']
+    cols_need = [u'分校名称', u'教室名称']
+    workbook = xlrd.open_workbook(fn)
+    worksheets = workbook.sheet_names()
+
+    for page in sheet_pages:
+        if page not in worksheets:
+            return {'errorCode': 880, 'msg': u'未找到页面[%s]' % page}
+
+    sh = workbook.sheet_by_name(sheet_pages[0])
+    cnt = sh.nrows
+    if cnt <= 1:
+        return {'errorCode': 2000, 'msg': u"无有效数据！"}
+
+    ck = dc_check_col(sh.row_values(0), cols_cn, cols_need)
+    if ck['errorCode'] != 0:
+        return ck
+    cols_num = list(ck['excel_idx'])
+    col_idx = list(ck['col_idx'])
+
+    num_right = 0
+    num_wrong = 0
+    school_ids = DanceSchool.name_to_id()
+    # 逆序遍历。第一行为表头需要过滤掉
+    for row in (range(1, cnt) if is_asc else range(cnt - 1, 0, -1)):
+        r = sh.row_values(row)
+        if r[0] == u'合计':
+            continue
+
+        parm = {}
+        for i in range(len(cols_num)):
+            parm[columns[col_idx[i]]] = r[cols_num[i]]
+
+        # 特殊列的处理
+        parm['school_id'] = school_ids.get(parm['school_id'])
+
+        # -----------------------------------------------------------------------------------------
+        # 重复校验
+        has = DanceClassRoom.query.filter_by(company_id=g.user.company_id, name=parm['name']).first()
+        if has is None:
+            dt = DanceClassRoom(parm)
             db.session.add(dt)
             num_right += 1
         else:

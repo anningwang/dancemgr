@@ -48,21 +48,15 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         nowrap: true,   // True to display data in one line. Set to true can improve loading performance.
         pageList: [20, 30, 40, 50, 100],   //每页显示条数供选项
         rownumbers: true,   // True to show a row number column.
-        toolbar: [{
-            text:"增加行", iconCls:'icon-add',id:btnAdd,disabled:true, handler:onAdd
-        }, {
-            text:"编辑表格", iconCls:'icon-edit_line', id:btnEdit, handler:onEdit
-        }, {
-            text:"撤销编辑", iconCls:'icon-undo', id:btnUndo, handler:onUndo
-        }, {
-            text:"删除", iconCls:'icon-remove', id:btnDel, handler: onDel
-        }, {
-            text:"保存", iconCls:'icon-save', disabled:true, id:btnSave, handler: onSave
-        }, '-',{
-            text: options.queryText + '<input id=' + ccId + '>'
-        },{
-            iconCls: 'icon-search', text:"查询", id:btnSearch, handler: onSearch
-        }],
+        toolbar: [
+            {text:"增加行", iconCls:'icon-add',id:btnAdd,disabled:true, handler:onAdd},
+            {text:"编辑表格", iconCls:'icon-edit_line', id:btnEdit, handler:onEdit},
+            {text:"撤销编辑", iconCls:'icon-undo', id:btnUndo, handler:onUndo},
+            {text:"删除", iconCls:'icon-remove', id:btnDel, handler: onDel},
+            {text:"保存", iconCls:'icon-save', disabled:true, id:btnSave, handler: onSave}, '-',
+            {text: options.queryText + '<input id=' + ccId + '>'},
+            {iconCls: 'icon-search', text:"查询", id:btnSearch, handler: onSearch}
+        ],
         columns: options.columns,
         onLoadSuccess: function () {
             $(dg).datagrid("fixRownumber");
@@ -99,7 +93,6 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
 
     $('#'+ccId).combobox({     // 姓名 搜索框 combo box
         //url: url + '_query',
-        //method:'post',
         prompt: options.queryPrompt,
         valueField: 'value',
         textField: 'text',
@@ -173,33 +166,6 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             }
         }]
     });
-
-    doAjaxGetData();        /// 开始打开页面，需要查询数据
-
-    // 先通过ajax获取数据，然后再传给datagrid
-    function doAjaxGetData () {
-        $.ajax({
-            method: 'POST',
-            url: url + '_get',
-            async: true,
-            dataType: 'json',
-            data: {'rows': _pageSize, 'page': _pageNo, 'condition': dance_condition}
-        }).done(function(data) {
-            console.log('edit table receive:', data);
-            if (data.errorCode == 0) {
-                // 注意此处从数据库传来的data数据有记录总行数的total列和 rows
-                dg.datagrid('loadData', data);
-                _total = data.total;
-            } else {
-                $.messager.alert('提示', data.msg, 'info');
-            }
-        }).fail(function(jqXHR, textStatus, errorThrown) {
-            var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
-            $.messager.alert('提示', msg, 'info');
-        }).always(function () {
-            dg.datagrid('loaded');
-        });
-    }
 
 
     /// 增加行
@@ -508,4 +474,44 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             console.log('Unknown action:' + action );
         }
     }
+
+
+    // 先通过ajax获取数据，然后再传给datagrid
+    var doAjaxGetData = function (cond) {
+        var queryCondition = {};
+        if (cond) {
+            $.extend(queryCondition, cond);
+            queryCondition.rows = _pageSize;
+            _pageNo = 1;
+            queryCondition.page = _pageNo;
+        } else {
+            queryCondition.rows = _pageSize;
+            queryCondition.page = _pageNo;
+            queryCondition.condition = dance_condition
+        }
+
+        $.ajax({
+            method: 'POST',
+            url: url + '_get',
+            async: true,
+            dataType: 'json',
+            data: queryCondition
+        }).done(function(data) {
+            console.log('edit table receive:', data);
+            if (data.errorCode == 0) {
+                // 注意此处从数据库传来的data数据有记录总行数的total列和 rows
+                dg.datagrid('loadData', data);
+                _total = data.total;
+            } else {
+                $.messager.alert('提示', data.msg, 'info');
+            }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
+            $.messager.alert('提示', msg, 'info');
+        }).always(function () {
+            dg.datagrid('loaded');
+        });
+    };
+    doAjaxGetData();
+    return doAjaxGetData;        /// 开始打开页面，需要查询数据
 }

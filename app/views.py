@@ -8,7 +8,7 @@ from forms import EditForm, SearchForm, DanceLoginForm, DanceRegistrationForm
 from models import User, ROLE_USER, ROLE_ADMIN, Post, DanceStudent, DanceClass, DanceSchool, DanceUser,\
     DanceStudentClass, DanceCompany, DanceUserSchool, DcShowDetailFee, DcCommFeeMode, DcShowRecpt, DcFeeItem,\
     DanceOtherFee, DanceReceipt, DanceClassReceipt, DanceTeaching, DcClassType, DanceTeacher, DanceTeacherEdu,\
-    DanceTeacherWork, DcCommon, DanceCourse, DanceCourseItem
+    DanceTeacherWork, DcCommon, DanceCourse, DanceCourseItem, DanceClassRoom
 from datetime import datetime
 from emails import follower_notification
 from translate import microsoft_translate
@@ -329,7 +329,8 @@ def dance_del_data():
                 'dc_comm_fee_mode': {'func': dc_del_fee_mode},
                 'dc_class_type': {'func': dc_del_class_type},
                 'dance_teacher': {'func': dc_del_teacher},
-                'dc_common_job_title': {'func': dc_del_common}
+                'dc_common_job_title': {'func': dc_del_common},
+                'dance_class_room': {'func': dc_del_class_room}
                 }
 
     if who == 'DanceClass':
@@ -570,6 +571,36 @@ def dc_del_course(ids):
         DanceCourseItem.query.filter_by(course_id=i).delete()
 
     DanceCourse.query.filter(DanceCourse.id.in_(ids)).delete(synchronize_session=False)
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
+
+
+def dc_del_class_room(ids):
+    """
+    删除 教室： 若教室被占用（课程表中使用），则不能删除。
+    :param ids:     记录 id list
+    :return: {
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   删除成功！
+            821                 教室已使用，不能删除！
+    }
+    """
+    for i in ids:
+        r = DanceClassRoom.query.get(i)
+        if r is None:
+            continue
+        """检查是否占用"""
+        dup = DanceCourseItem.query.filter_by(company_id=g.user.company_id, room_id=i).first()
+        if dup is not None:
+            return jsonify({'errorCode': 821, 'msg': u'教室已使用，不能删除！'})
+        """删除课程表明细"""
+        DanceCourseItem.query.filter_by(course_id=i).delete()
+
+    DanceClassRoom.query.filter(DanceClassRoom.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 

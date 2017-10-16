@@ -2116,4 +2116,80 @@ class DanceCourseItem(db.Model):
         return '<CourseItem %r>' % self.id
 
 
+class DanceClassRoom(db.Model):
+    """教室信息表"""
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(25, collation='NOCASE'), index=True)  # 编号
+    name = db.Column(db.String(20, collation='NOCASE'))
+    rem_code = db.Column(db.String(20, collation='NOCASE'))
+    school_id = db.Column(db.Integer, index=True)
+    address = db.Column(db.String(20))
+    area = db.Column(db.Float)
+    pnum = db.Column(db.SmallInteger)
+    contact_p = db.Column(db.String(20, collation='NOCASE'))
+    contact_tel = db.Column(db.String(20))
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    create_at = db.Column(db.DateTime, nullable=False)
+    last_t = db.Column(db.DateTime, nullable=False)
+    last_u = db.Column(db.String(20, collation='NOCASE'))
+    company_id = db.Column(db.Integer, index=True)
+
+    def __init__(self, param):
+        if 'name' in param:
+            self.name = param['name']
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        self.code = param['code'] if 'code' in param else self.create_no()
+        if 'rem_code' in param:
+            self.rem_code = param['rem_code']
+        if 'address' in param:
+            self.address = param['address']
+        if 'area' in param and param['area'] != '':
+            self.area = param['area']
+        if 'pnum' in param:
+            self.pnum = param['pnum']
+        if 'contact_p' in param:
+            self.contact_p = param['contact_p']
+        if 'contact_tel' in param:
+            self.contact_tel = param['contact_tel']
+        if 'recorder' in param:
+            self.recorder = param['recorder']
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
+        self.create_at = datetime.datetime.today()
+        self.last_t = datetime.datetime.today()
+        self.last_u = g.user.name
+
+    def update(self, param):
+        if 'name' in param:
+            self.name = param['name']
+        if 'rem_code' in param:
+            self.rem_code = param['rem_code']
+        if 'address' in param:
+            self.address = param['address']
+        if 'area' in param:
+            self.area = param['area'] if param['area'] != '' else None
+        if 'pnum' in param:
+            self.pnum = param['pnum']
+        if 'contact_p' in param:
+            self.contact_p = param['contact_p']
+        if 'contact_tel' in param:
+            self.contact_tel = param['contact_tel']
+        if 'recorder' in param:
+            self.recorder = param['recorder']
+        self.last_t = datetime.datetime.today()
+        self.last_u = g.user.name
+
+    def create_no(self):
+        if self.school_id is None:
+            raise Exception('Please input school_id first!')
+        school_no = DanceSchool.get_no(self.school_id)
+        if school_no == -1:
+            raise Exception('school id [%s] error.' % self.school_id)
+        search_sno = dc_gen_code(school_no, 'JS')
+        r = DanceClassRoom.query.filter(DanceClassRoom.code.like('%' + search_sno + '%'))\
+            .order_by(DanceClassRoom.id.desc()).first()
+        number = 1 if r is None else int(r.code.rsplit('-', 1)[1]) + 1
+        self.code = search_sno + ('%03d' % number)
+        return self.code
+
 whooshalchemy.whoosh_index(app, Post)

@@ -9,7 +9,7 @@ import base64
 import time
 from excel import import_student, import_class, import_receipt, import_teaching_material, import_teacher, \
     import_common_degree, import_common_job_title, import_common_intention, import_common_info_src,\
-    import_common_consult_mode, \
+    import_common_consult_mode, import_class_room, \
     export_student
 from tools import get_filename
 
@@ -106,6 +106,7 @@ def dispatch_import_file(fn, m_name):
         'dc_common_degree':         {'func': import_common_degree, 'asc': True},
         'dc_common_job_title':      {'func': import_common_job_title, 'asc': True},
         'dance_teaching_material':  {'func': import_teaching_material, 'asc': True},
+        'dance_class_room':         {'func': import_class_room, 'asc': True}
     }
     if m_name == 'DanceStudent':
         return import_student(fn)

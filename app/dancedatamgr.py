@@ -5,7 +5,7 @@ from app import app, db
 from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent, DcTeachingMaterial,\
     DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass, DanceStudentClass, DcShowRecpt, DcCommFeeMode,\
     DcShow, DcShowFeeCfg, DcShowDetailFee, DcClassType, DanceTeacher, DanceTeacherEdu, DanceTeacherWork, DcCommon,\
-    DanceCourse, DanceCourseItem
+    DanceCourse, DanceCourseItem, DanceClassRoom
 from views import dance_student_query
 import json
 import datetime
@@ -1528,6 +1528,53 @@ def dance_course_list_query():
     for sc in schools:
         ret.append({'value': sc.school_name, 'text': sc.school_name})
     return jsonify(ret)
+
+
+@app.route('/dance_class_room_get', methods=['POST'])
+@login_required
+def dance_class_room_get():
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    if page_no <= 0:    # 补丁
+        page_no = 1
+
+    dcq = DanceClassRoom.query
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(DanceClassRoom.school_id.in_(school_id_intersection))
+
+    if 'name' in request.form and request.form['name'] != '':
+        name = request.form['name']
+        if name.encode('UTF-8').isalpha():
+            dcq = dcq.filter(DanceClassRoom.rem_code.like('%' + name + '%'))
+        else:
+            dcq = dcq.filter(DanceClassRoom.name.like('%' + name + '%'))
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.join(DanceSchool, DanceSchool.id == DanceClassRoom.school_id)\
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no)\
+        .order_by(DanceClassRoom.id).limit(page_size).offset(offset).all()
+    i = offset + 1
+    rows = []
+    for dcr in records:
+        rec = dcr[0]
+        rows.append({'no': i, 'id': rec.id, "code": rec.code, 'recorder': rec.recorder,
+                     'last_t': datetime.datetime.strftime(rec.last_t, '%Y-%m-%d %H:%M'),
+                     'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d'),
+                     'address': rec.address, 'area': rec.area, 'pnum': rec.pnum, 'name': rec.name,
+                     'contact_p': rec.contact_p, 'contact_tel': rec.contact_tel, 'last_u': rec.last_u,
+                     'school_id': rec.school_id,
+                     'school_name': dcr[1], 'school_no': dcr[2]
+                     })
+        i += 1
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
 
 
 @app.route('/dc_comm_fee_mode_update', methods=['POST'])
