@@ -151,7 +151,7 @@ def dance_tree_asset():
 
 def dance_tree_finance():
     tree = [
-        {"id": 1, "text": "退费单（学费）列表" },
-        {"id": 2, "text": "房租" }
+        {"id": 1, "text": "退费单（学费）列表"},
+        {"id": 2, "text": "房租"}
     ]
     return tree

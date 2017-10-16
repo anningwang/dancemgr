@@ -15,6 +15,7 @@ function danceAddTabCourse(title, tableId, condition) {
         $('#'+tableId).datagrid('load', condition);
     } else {
         var content = '<div id=div-'+tableId+' style="min-width:1024px;width:100%;height:100%">';
+        // content += '<div id=courseMM' + tableId + '></div>';
         content += '<div id=dcDiv' + tableId + ' style="top:87px;height:700px;width:100%;position:absolute;overflow:hidden"></div>';
         content += '<table id=' + tableId + '></table> </div>';
         content +=  '<style> #div-'+tableId+' .datagrid-btable tr{height:30px;}</style>';
@@ -63,7 +64,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
     var dg = $('#' + datagridId);       // datagrid ID
     var divId = 'dcDiv' + datagridId;
     var bcId = 'courseName' + datagridId;
-    var mmId = 'courseMM'+datagridId;
+    var mmId = 'dc-course-mm';
 
     var dance_condition = '';               // 主datagrid表查询条件
     var WIN_TOP = 25;   // 表头高度
@@ -124,17 +125,11 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         onLoadSuccess:function (data) {
             var coord = getDgCellCoord(dg, 0, 'time');
             console.log('(row 0,时间)坐标:', coord);
-
             WIN_TOP = coord.pos.top;
             $('#'+divId).css('top', (60+coord.top+2)+'px')       // 60 == Tab头高度 30，dg表Toolbar高度 30
                 .height($(pager).position().top - 30 - WIN_TOP - 2);    // Tab头高度 30
-
-            $('#'+bcId).linkbutton({
-                text: data['info'] ? data['info']['name'] : '无记录'
-            });
-            for(var i=0; i<data['item'].length; i++){
-                addCourse(data['item'][i]);
-            }
+            $('#'+bcId).linkbutton({text: data['info'] ? data['info']['name'] : '无记录'});
+            setTimeout(function () {putCourse();}, 0);
         },
         onResize:function (width, height) {
             var pos = $(pager).position();
@@ -144,11 +139,16 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
                 $(dcDiv).height(pos.top - 30 - WIN_TOP - 2);
             }
             console.log('div h:', $(dcDiv).height(), 'div top:', $(dcDiv).position().top);
-
             resizeCourse();
         }
     });
 
+    function putCourse() {
+        var data = $(dg).datagrid('getData');
+        for(var i=0; i<data['item'].length; i++){
+            addCourse(data['item'][i]);
+        }
+    }
 
     $('#'+ccId).combobox({     // 搜索框 combo box
         prompt: options.queryPrompt,
@@ -296,9 +296,12 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         });
     }
 
+    // 创建右键菜单
     function createMenu(mmId) {
-        $('body').append('<div id='+mmId+'></div>');
+        // $('body').append('<div id='+mmId+'></div>');
+        $('#'+divId).append('<div id='+mmId+'></div>');
         $('#'+mmId).menu({
+            hideOnUnhover:false,
             onClick:function(item){
                 //console.log(item);
             }
@@ -316,7 +319,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         }).menu('appendItem', {  // append a menu separator
             separator: true
         }).menu('appendItem', {  // append a top menu item
-            text: '新建',
+            text: '增加 课程表',
             iconCls: 'icon-add',
             id: 'm-course-new',
             onclick: function(){
@@ -359,7 +362,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         var hours = 'courseHours'+id;
 
         if (document.getElementById(id)) {
-            if(pr && pr.id > 0)
+            if(pr)
                 setData(pr);
             else
                 $.messager.alert('提示', '[' + title + ']窗口已打开！', 'info');
@@ -406,7 +409,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
                 time: formatTimeSpan(r_h, r_m, r_minutes), hour:r_h, m: r_m,
                 short_name: $('#'+shortName).textbox('getText')
             };
-            if(pr && pr.id && pr.id > 0) {
+            if(pr) {
                 $.extend(pr, param);
                 modifyCourse(pr);
             }else
@@ -428,6 +431,13 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
                     {field:'no',title:'班级编号',width:80},
                     {field:'name',title:'班级名称',width:120}
                 ]],
+                iconWidth:22,
+                icons:[{
+                    iconCls:'icon-add',
+                    handler: function () {
+                        dcOpenDialogNewClass('dcCourse-NewClass', '新增 班级');
+                    }
+                }],
                 onSelect:function (index, row) {
                     $('#'+shortName).textbox('setValue', row.name);
                 }
@@ -550,7 +560,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
                 }
 
                 r_minutes =  $(ctrlMinutes).combobox('getText');
-                if(isNaN(str(r_minutes))) {
+                if(isNaN(r_minutes)) {
                     $.messager.alert({title:'提示', msg:'请输入分钟数。', icon: 'info',
                         fn:function () {
                             $(ctrlMinutes).textbox('textbox').focus();
@@ -585,13 +595,12 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         pr.winId = 'cid'+_courseId;
         _dcCourse[pr.winId] = {};
 
-        var idx = getRowIndex(pr.time.split('-')[0]);
-        var coord = getDgCellCoord(dg, idx,  'w'+pr.week);
-        _dcCourse[pr.winId].idx = idx;
+        _dcCourse[pr.winId].idx = getRowIndex(pr.time.split('-')[0]);
         _dcCourse[pr.winId].field = 'w'+pr.week;
+        var co = getCourseLeftTop(_dcCourse[pr.winId].idx, _dcCourse[pr.winId].field);
 
-        pr.left = coord.pos.left + 32;
-        pr.top = coord.pos.top - WIN_TOP;
+        pr.left = co.left;
+        pr.top = co.top;
         _dcCourse[pr.winId].param = pr ;
         var win = dcOpenCourseWin(pr.winId, pr.short_name, pr);
         var panel = $(win).dialog('panel');
@@ -624,28 +633,36 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
 
         pr.h = w_h;
 
-        var idx = getRowIndex(pr.time.split('-')[0]);
-        var coord = getDgCellCoord(dg, idx,  'w'+pr.week);
-        _dcCourse[pr.winId].idx = idx;
+        _dcCourse[pr.winId].idx = getRowIndex(pr.time.split('-')[0]);
         _dcCourse[pr.winId].field = 'w'+pr.week;
+        var co = getCourseLeftTop(_dcCourse[pr.winId].idx, _dcCourse[pr.winId].field);
 
         dcSetCourseContent(pr.winId, pr.time, pr.teacher, pr.room);
         $('#'+pr.winId).window('setTitle', pr.short_name)
             .window('resize', {width:pr.w, height:pr.h})
-            .window('move', {left: coord.pos.left + 32, top: coord.pos.top - WIN_TOP});
+            .window('move', co);
     }
 
+    // 双击课程表明细事件，调出修改窗口
     function courseDbClick(cid) {
         console.log('panel db click', cid, _dcCourse[cid]);
         dcOpenDialogNewCourse('dc-modify-course', '修改课程表', 'div-'+datagridId, _dcCourse[cid].param);
     }
 
+    // 获取课程表明细坐标
+    function getCourseLeftTop(idx, field) {
+        var coord = getDgCellCoord(dg, idx,  field);
+        return {left: coord.offset.left - 231 + 32,      // coord.pos.left + 32
+            top: coord.pos.top - WIN_TOP};
+    }
+
+    // 调整课程表明细坐标
     function resizeCourse() {
         for(var win in _dcCourse){
             if(!_dcCourse.hasOwnProperty(win))
                 continue;
-            var coord = getDgCellCoord(dg, _dcCourse[win].idx, _dcCourse[win].field);
-            $('#'+win).window('move', {left: coord.pos.left + 32, top: coord.pos.top - WIN_TOP});
+            var co = getCourseLeftTop(_dcCourse[win].idx, _dcCourse[win].field);
+            $('#'+win).window('move',co);
         }
     }
 
@@ -655,6 +672,14 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         //console.log('scroll');
         resizeCourse();
     });
+
+
+    // 横向滚动条联动
+    var scrollH = $('#div-'+datagridId).parent();    // $('#dgId div.datagrid-view2 div.datagrid-header');
+    scrollH.scroll(function () {
+       resizeCourse();
+    });
+
 /*
     contents.mouseup(function (e) {     // 添加右键菜单
         console.log(e);

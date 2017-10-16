@@ -70,7 +70,7 @@ def dance_school_update():
 
     new_id = 0
     for i in range(len(obj_data)):
-        if obj_data[i]['id'] <= 0:
+        if int(obj_data[i]['id']) <= 0:
             # add record
             if new_id == 0:
                 rec = DanceSchool.query.filter_by(company_id=g.user.company_id).order_by(
@@ -164,7 +164,7 @@ def dance_user_update():
 
     new_id = 0
     for i in range(len(obj_data)):
-        if obj_data[i]['id'] <= 0:
+        if int(obj_data[i]['id']) <= 0:
             # add record 新增用户
             if new_id == 0:
                 rec = DanceUser.query.filter_by(company_id=g.user.company_id).order_by(DanceUser.user_no.desc()).first()
@@ -300,7 +300,7 @@ def dance_fee_item_update():
                                 'msg': u'输入类型错误!合法值[1~3]，输入值[%s]' % fee['row']['type']})
         else:
             fee_type = 1
-        if 'id' not in fee or fee['id'] <= 0:
+        if 'id' not in fee or int(fee['id']) <= 0:
             fee_item = fee['row']['fee_item']
             # 收费名称不能重复，查询是否有重复记录
             dup = DcFeeItem.query.filter_by(company_id=g.user.company_id)\
@@ -610,7 +610,7 @@ def dance_receipt_study_modify():
     obj = json.loads(json_str)
     if 'row' not in obj or 'class_receipt' not in obj or 'teach_receipt' not in obj or 'other_fee' not in obj:
         return jsonify({'errorCode': 202, 'msg': u'参数错误！'})
-    if 'id' not in obj['row'] or obj['row']['id'] <= 0:
+    if 'id' not in obj['row'] or int(obj['row']['id']) <= 0:
         return dance_receipt_study_add(obj)     # 新增记录
 
     # 修改记录
@@ -974,7 +974,7 @@ def dance_receipt_show_modify():
     obj = json.loads(json_str)
     if 'row' not in obj or 'showDetail' not in obj:
         return jsonify({'errorCode': 202, 'msg': u'参数错误！'})
-    if 'id' not in obj['row'] or obj['row']['id'] <= 0:
+    if 'id' not in obj['row'] or int(obj['row']['id']) <= 0:
         return dance_receipt_show_add(obj)  # 新增记录
 
     # 修改记录
@@ -1342,7 +1342,7 @@ def dance_teacher_modify():
         obj = json.loads(json_str)
     if 'row' not in obj or 'edu' not in obj or 'work' not in obj:
         return jsonify({'errorCode': 202, 'msg': u'参数错误！'})
-    if 'id' not in obj['row'] or obj['row']['id'] <= 0:
+    if 'id' not in obj['row'] or int(obj['row']['id']) <= 0:
         return dance_teacher_add(obj)  # 新增记录
 
     """ 修改 员工与老师 基本情况 """
@@ -1612,7 +1612,7 @@ def dc_comm_fee_mode_update():
             rate = -1 if rate == '' else float(rate)
             if rate < 0 or rate > 100:
                 return jsonify({'errorCode': 802, 'msg': u'费率应在0~100之间!'})
-        if 'id' not in fee or fee['id'] <= 0:
+        if 'id' not in fee or int(fee['id']) <= 0:
             if 'disc_rate' not in row:
                 return jsonify({'errorCode': 803, 'msg': u'请输入费率!'})
             fee_mode = row['fee_mode']
@@ -1763,7 +1763,7 @@ def dc_common_degree_update():
     obj = json.loads(json_str)
     for info in obj:
         row = info['row']
-        if 'id' not in info or info['id'] <= 0:
+        if 'id' not in info or int(info['id']) <= 0:
             if 'scope' not in row:
                 return jsonify({'errorCode': 903, 'msg': u'请输入适用范围!'})
             if 'name' not in row:
@@ -1956,7 +1956,7 @@ def dc_common_update(ty, obj_in):
     obj = json.loads(json_str)
     for info in obj:
         row = info['row']
-        if 'id' not in info or info['id'] <= 0:
+        if 'id' not in info or int(info['id']) <= 0:
             if 'name' not in row:
                 return jsonify({'errorCode': 904, 'msg': u'请输入名称!'})
             # 查询是否有重复记录
@@ -2056,7 +2056,7 @@ def dc_class_type_update():
     obj = request.json if request.json is not None else json.loads(request.form['data'])
     for rr in obj:
         row = rr['row']
-        if 'id' not in rr or rr['id'] <= 0:
+        if 'id' not in rr or int(rr['id']) <= 0:
             # 收费名称不能重复，查询是否有重复记录
             dup = DcClassType.query.filter_by(company_id=g.user.company_id).filter_by(name=row['name']).first()
             if dup is not None:

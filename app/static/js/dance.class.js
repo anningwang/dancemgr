@@ -311,7 +311,7 @@ function dcOpenDialogNewClass(id, title, dgId, uuid, icon){
             }
         },
         onBeforeClose: function () {
-            if (document.getElementById(dgId)) {
+            if (dgId && document.getElementById(dgId)) {
                 $('#'+dgId).datagrid('load');
             }
             $("#"+id).dialog('destroy');
@@ -336,11 +336,11 @@ function dcOpenDialogNewClass(id, title, dgId, uuid, icon){
             var data = $(this).combobox('getData');
             if(data.length){
                 $('#'+schoolName).combobox('setValue', data[0].school_id);
-                $('#'+schoolNo).textbox('setValue', data[0].school_no);
+                $('#'+schoolNo).textbox('setValue', data[0]['school_no']);
             }
         },
         onSelect:function (record) {
-            $('#'+schoolNo).textbox('setValue', record.school_no);
+            $('#'+schoolNo).textbox('setValue', record['school_no']);
         }
     });
 
@@ -430,22 +430,22 @@ function dcOpenDialogNewClass(id, title, dgId, uuid, icon){
             console.log('ajaxRequest', data);
             if(data.errorCode == 0)
             {
-                $('#'+classNo).textbox('setValue', data.row.cno);
+                $('#'+classNo).textbox('setValue', data.row['cno']);
                 $('#'+className).textbox('setValue', data.row.class_name);
                 $('#'+schoolName).combobox('setText', data.row.school_name)
                     .combobox('setValue', data.row.school_id).combobox('disable');
-                $('#'+schoolNo).textbox('setValue', data.row.school_no);
-                $('#'+classType).textbox('setText', data.row.class_type).combobox('setValue', data.row.class_type_id);
-                $('#'+classStyle).combobox('setValue', data.row.class_style_value);
+                $('#'+schoolNo).textbox('setValue', data.row['school_no']);
+                $('#'+classType).textbox('setText', data.row.class_type).combobox('setValue', data.row['class_type_id']);
+                $('#'+classStyle).combobox('setValue', data.row['class_style_value']);
                 $('#'+teacher).textbox('setValue', data.row.teacher);
                 $('#'+beginYear).textbox('setValue', data.row.begin_year);
-                $('#'+costMode).combobox('setValue', data.row.cost_mode_value)
+                $('#'+costMode).combobox('setValue', data.row['cost_mode_value'])
                     .combobox(data.row.cur_students ? 'disable' : 'enable');
                 $('#'+classCost).textbox('setValue', data.row.cost);
                 $('#'+planStudents).textbox('setValue', data.row.plan_students);
                 $('#'+curStudents).textbox('setValue', data.row.cur_students);
                 $('#'+isEnd).combobox('setValue', data.row.is_ended);
-                $('#'+recorder).textbox('setValue', data.row.recorder);
+                $('#'+recorder).textbox('setValue', data.row['recorder']);
                 $('#'+remark).textbox('setValue', data.row.remark);
 
                 $('#'+uid).val(data.row.id);

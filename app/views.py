@@ -594,11 +594,9 @@ def dc_del_class_room(ids):
         if r is None:
             continue
         """检查是否占用"""
-        dup = DanceCourseItem.query.filter_by(company_id=g.user.company_id, room_id=i).first()
+        dup = DanceClassRoom.query.filter_by(company_id=g.user.company_id, room_id=i).first()
         if dup is not None:
             return jsonify({'errorCode': 821, 'msg': u'教室已使用，不能删除！'})
-        """删除课程表明细"""
-        DanceCourseItem.query.filter_by(course_id=i).delete()
 
     DanceClassRoom.query.filter(DanceClassRoom.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
@@ -1076,9 +1074,9 @@ def dance_class_modify():
         }
     """
     obj = request.json
-    if 'id' not in obj or obj['id'] <= 0:
+    if 'id' not in obj or int(obj['id']) <= 0:
         """ 判断是否有重名班级 """
-        cls = DanceClass.query.filter_by(school_id=obj['school_id']).filter_by(class_name=obj['class_name']).first
+        cls = DanceClass.query.filter_by(school_id=obj['school_id']).filter_by(class_name=obj['class_name']).first()
         if cls is not None:
             return jsonify({'errorCode': 302, 'msg': u'班级名称重复！'})
 

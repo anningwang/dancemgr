@@ -43,6 +43,29 @@ function danceOpenTab(title, url) {
 }
 
 
+// 关闭Tab页前的处理
+function dcBeforeCloseTab(title, index){
+    if(title === '课程表'){
+        $('#dc-course-mm').menu('destroy');
+        /*
+        var target = this;
+        $.messager.confirm('确认','是否要关闭页面 '+title,function(r){
+            if (r){
+                var opts = $(target).tabs('options');
+                var bc = opts.onBeforeClose;
+                opts.onBeforeClose = function(){};  // allowed to close now
+                $(target).tabs('close',index);
+                opts.onBeforeClose = bc;  // restore the event function
+            }
+        });
+        return false;	// prevent from closing
+        */
+        return true;
+    }else
+        return true;
+}
+
+
 /**
  * 将 value 转换为 保留小数点后4位的字符串 和 百分百字符串。
  * @param value
