@@ -14,7 +14,7 @@ function danceAddTabCourse(title, tableId, condition) {
         $(parentDiv).tabs('select', title);
         $('#'+tableId).datagrid('load', condition);
     } else {
-        var content = '<div id=div-'+tableId+' style="min-width:1024px;width:100%;height:100%">';
+        var content = '<div id=div-'+tableId+' style="min-width:1440px;width:100%;height:100%">';
         // content += '<div id=courseMM' + tableId + '></div>';
         content += '<div id=dcDiv' + tableId + ' style="top:87px;height:700px;width:100%;position:absolute;overflow:hidden"></div>';
         content += '<table id=' + tableId + '></table> </div>';
@@ -34,14 +34,14 @@ function danceAddTabCourse(title, tableId, condition) {
             'addEditFunc': danceTeacherDetailInfo,
             'page': '/static/html/_teacher_details.html',     // 上述函数的参数
             'columns': [[
-                {field: 'time', title: '时间', width: 80, align: 'center'},
-                {field: 'w1', title: '周一', width: 150, align: 'center'},
-                {field: 'w2', title: '周二', width: 150, align: 'center'},
-                {field: 'w3', title: '周三', width: 150, align: 'center'},
-                {field: 'w4', title: '周四', width: 150, align: 'center'},
-                {field: 'w5', title: '周五', width: 150, align: 'center'},
-                {field: 'w6', title: '周六', width: 150, align: 'center'},
-                {field: 'w7', title: '周天', width: 150, align: 'center'}
+                {field: 'time', title: '时间', width: 50, align: 'center', fixed:true},
+                {field: 'w1', title: '周一', width: 95, align: 'center'},
+                {field: 'w2', title: '周二', width: 95, align: 'center'},
+                {field: 'w3', title: '周三', width: 95, align: 'center'},
+                {field: 'w4', title: '周四', width: 95, align: 'center'},
+                {field: 'w5', title: '周五', width: 95, align: 'center'},
+                {field: 'w6', title: '周六', width: 95, align: 'center'},
+                {field: 'w7', title: '周天', width: 95, align: 'center'}
             ]]
         };
 
@@ -68,6 +68,8 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
 
     var dance_condition = '';               // 主datagrid表查询条件
     var WIN_TOP = 25;   // 表头高度
+    var WIN_LEFT = 231; // 左侧偏移
+    var COURSE_WIN_WIDTH = 90;      // 课程表窗口宽度
 
     $(dg).datagrid({
         // title: '学员列表',
@@ -124,31 +126,27 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         },
         onLoadSuccess:function (data) {
             var coord = getDgCellCoord(dg, 0, 'time');
-            console.log('(row 0,时间)坐标:', coord);
+            console.log('(r,c 0,0):', coord);
             WIN_TOP = coord.pos.top;
+            WIN_LEFT = coord.offset.left;
             $('#'+divId).css('top', (60+coord.top+2)+'px')       // 60 == Tab头高度 30，dg表Toolbar高度 30
                 .height($(pager).position().top - 30 - WIN_TOP - 2);    // Tab头高度 30
             $('#'+bcId).linkbutton({text: data['info'] ? data['info']['name'] : '无记录'});
             setTimeout(function () {putCourse();}, 0);
         },
         onResize:function (width, height) {
+            var coord = getDgCellCoord(dg, 0, 'time');
+            console.log('(r,c 0,0):', coord);
+            if(coord.offset)  WIN_LEFT = coord.offset.left;
             var pos = $(pager).position();
             console.log('resize,w=', width,'h=', height, 'pos', pos);
             var dcDiv = $('#'+divId);
-            if(pos) {
-                $(dcDiv).height(pos.top - 30 - WIN_TOP - 2);
-            }
+            if(pos) $(dcDiv).height(pos.top - 30 - WIN_TOP - 2);
             console.log('div h:', $(dcDiv).height(), 'div top:', $(dcDiv).position().top);
             resizeCourse();
         }
     });
 
-    function putCourse() {
-        var data = $(dg).datagrid('getData');
-        for(var i=0; i<data['item'].length; i++){
-            addCourse(data['item'][i]);
-        }
-    }
 
     $('#'+ccId).combobox({     // 搜索框 combo box
         prompt: options.queryPrompt,
@@ -332,6 +330,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             onclick: function(){
                 if(!_curCourseId) return;
                 $('#'+ _curCourseId).dialog('close');
+                delete _dcCourse[_curCourseId];
             }
         }).menu('appendItem', {  // append a top menu item
             text: '修改',
@@ -578,6 +577,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
     var _courseId = 100;
     var _dcCourse = {};      // {id: {time: '8:30-10:00', teacher: '李老师', room: '舞蹈1室', short_name: '17上美术'}};
     var _curCourseId = undefined;
+    var _dcCoord = {w1: {}, w2:{}, w3:{}, w4:{}, w5:{}, w6:{}, w7:{}};
 
     /**
      * 打开 课程表明细 窗口
@@ -590,7 +590,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         else if (w_min > 90 && w_min <= 120) w_h = 115;
 
         pr.p = divId;
-        pr.w = 100;
+        pr.w = COURSE_WIN_WIDTH;
         pr.h = w_h;
         pr.winId = 'cid'+_courseId;
         _dcCourse[pr.winId] = {};
@@ -598,10 +598,11 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         _dcCourse[pr.winId].idx = getRowIndex(pr.time.split('-')[0]);
         _dcCourse[pr.winId].field = 'w'+pr.week;
         var co = getCourseLeftTop(_dcCourse[pr.winId].idx, _dcCourse[pr.winId].field);
-
         pr.left = co.left;
         pr.top = co.top;
         _dcCourse[pr.winId].param = pr ;
+
+        dcAddCourseCoord(pr.winId);
         var win = dcOpenCourseWin(pr.winId, pr.short_name, pr);
         var panel = $(win).dialog('panel');
         panel.dblclick(function (e) {
@@ -630,17 +631,20 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         var w_h = 85;
         if(w_min <= 60) w_h = 60;
         else if (w_min > 90 && w_min <= 120) w_h = 115;
-
         pr.h = w_h;
 
+        var oldWk = _dcCourse[pr.winId].field;
         _dcCourse[pr.winId].idx = getRowIndex(pr.time.split('-')[0]);
         _dcCourse[pr.winId].field = 'w'+pr.week;
         var co = getCourseLeftTop(_dcCourse[pr.winId].idx, _dcCourse[pr.winId].field);
+        pr.left = co.left;
+        pr.top = co.top;
+        dcAddCourseCoord(pr.winId, oldWk);
 
         dcSetCourseContent(pr.winId, pr.time, pr.teacher, pr.room);
         $('#'+pr.winId).window('setTitle', pr.short_name)
             .window('resize', {width:pr.w, height:pr.h})
-            .window('move', co);
+            .window('move', {left:pr.left, top: pr.top});
     }
 
     // 双击课程表明细事件，调出修改窗口
@@ -652,17 +656,39 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
     // 获取课程表明细坐标
     function getCourseLeftTop(idx, field) {
         var coord = getDgCellCoord(dg, idx,  field);
-        return {left: coord.offset.left - 231 + 32,      // coord.pos.left + 32
+        return {left: coord.offset.left - WIN_LEFT + 32,      // coord.pos.left + 32
             top: coord.pos.top - WIN_TOP};
     }
 
     // 调整课程表明细坐标
     function resizeCourse() {
+        _dcCoord = {w1: {}, w2:{}, w3:{}, w4:{}, w5:{}, w6:{}, w7:{}};
+
         for(var win in _dcCourse){
             if(!_dcCourse.hasOwnProperty(win))
                 continue;
             var co = getCourseLeftTop(_dcCourse[win].idx, _dcCourse[win].field);
-            $('#'+win).window('move',co);
+            _dcCourse[win].param.left = co.left;
+            _dcCourse[win].param.top = co.top;
+            dcAddCourseCoord(_dcCourse[win].param.winId, _dcCourse[win].field);
+            $('#'+win).window('move',{left: _dcCourse[win].param.left,
+                top: _dcCourse[win].param.top});
+        }
+    }
+
+    function putCourse() {
+        // 删除原有课程表窗口
+        for(var win in _dcCourse) {
+            if (!_dcCourse.hasOwnProperty(win))
+                continue;
+            $('#'+win).window('close');
+        }
+        _dcCourse = {};
+        _dcCoord = {w1: {}, w2:{}, w3:{}, w4:{}, w5:{}, w6:{}, w7:{}};
+
+        var data = $(dg).datagrid('getData');
+        for(var i=0; i<data['item'].length; i++){
+            addCourse(data['item'][i]);
         }
     }
 
@@ -680,20 +706,6 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
        resizeCourse();
     });
 
-/*
-    contents.mouseup(function (e) {     // 添加右键菜单
-        console.log(e);
-        if(e.button == 2){ // 右键菜单
-            e.preventDefault();          //对标准DOM 中断 默认点击右键事件处理函数
-            $('#'+mmId).menu('show', {
-                left: e.pageX,
-                top: e.pageY
-            });
-
-            //document.oncontextmenu=function(e) {}
-        }
-    });
-    */
 
     contents.contextmenu(function (e) {
         e.preventDefault();          //对标准DOM 中断 默认点击右键事件处理函数
@@ -706,25 +718,29 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             .menu('disableItem',  $('#m-course-modify')[0]);
     });
 
-    // 以下增加右键菜单，没问题，但是不好确认点击的 窗口。用坐标判断比较麻烦。故将
-    // 右键菜单移到具体窗口上去捕获
-    //document.getElementById(divId).addEventListener("contextmenu", myFunction);
-    //function myFunction(e) {
-        /*
-        var x = document.getElementById("demo");
-        x.innerHTML = "你在 div 中点击了鼠标右键!";
-        x.style.fontSize = "30px";
-        */
-    //    console.log('右键菜单',e.target.id);
-    //    e.preventDefault();
-    //    $('#'+mmId).menu('show', {
-    //        left: e.pageX,
-    //        top: e.pageY
-    //    }).menu('enableItem',  $('#m-course-copy')[0])
-    //        .menu('enableItem',  $('#m-course-del')[0])
-    //        .menu('enableItem',  $('#m-course-modify')[0]);
-    //}
+    // 对重叠的课程表，改变其位置（left）。
+    function dcAddCourseCoord(idx, oldWk) {
+        var pr =_dcCourse[idx].param;
+        var r = {l: pr.left, t: pr.top, h: pr.h, w: pr.w};
+        var wk = _dcCoord[_dcCourse[idx].field];
+        var inter = false;
+        do {
+            inter = false;
+            for(var r1 in wk){
+                if (!wk.hasOwnProperty(r1))
+                    continue;
+                if(isIntersection(r, wk[r1])){
+                    r.l += COURSE_WIN_WIDTH+1;
+                    inter = true;
+                    break;
+                }
+            }
+        }while(inter);
+        if(oldWk) delete _dcCoord[oldWk][idx];
+        _dcCoord[_dcCourse[idx].field][idx] = r;
 
+        _dcCourse[idx].param.left = r.l;
+    }
 
 }
 
@@ -741,7 +757,6 @@ function dcOpenCourseWin(id, title, param){
 
     var ctrls = '<div class="easyui-panel" data-options="fit:true" style="padding:2px;overflow: hidden">';
     ctrls += '<div id='+name+' ></div>';
-
     ctrls += '</div>';
 
     $("#"+id).dialog({
@@ -756,14 +771,7 @@ function dcOpenCourseWin(id, title, param){
         onMove:function (left, top) {
         }
     }).dialog('open');
-
-    /*
-    $('#'+name).css({'font-size': '9px', "font-family":"宋体"})
-        .append(param.time).append('<br>'+(param.teacher?param.teacher:'老师:'))
-        .append('<br>'+(param.room?param.room:'教室:'));
-    */
     dcSetCourseContent(id, param.time, param.teacher, param.room);
-
     return '#'+id;
 }
 
@@ -795,6 +803,13 @@ function formatTimeSpan(h, m, minutesDiff) {
         h++;
     }
     return tmStr + '-' + (h<10?'0'+h:h) + ':' + (m<10?'0'+m:m);
+}
+
+// 简单判断矩形相交。
+function isIntersection(r1, r2) {
+    return (r1.l===r2.l
+        && ((r1.t>=r2.t && r1.t<=r2.t+r2.h)
+            || r2.t>=r1.t && r2.t<=r1.t+r1.h));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
