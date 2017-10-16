@@ -198,6 +198,7 @@
 
 })(jQuery);
 
+
 // 页面加载等待特效 ----------------------------------------------------------------------------------------------------
 var maskWidth = $(window).width();
 var maskHeight = $(window).height();
@@ -216,12 +217,13 @@ function CloseMask() {
 }
 var loadComplete;
 $.parser.onComplete = function () {
-    // console.log('complete');
+    //console.log('complete');
     if (loadComplete)
         clearTimeout(loadComplete);
-    loadComplete = setTimeout(CloseMask, 500);
+    loadComplete = setTimeout(CloseMask, 300);
 };
 // 页面加载等待特效 end ------------------------------------------------------------------------------------------------
+
 
 String.prototype.format = function(args) {
     var _dic = typeof args === "object" ? args : arguments;

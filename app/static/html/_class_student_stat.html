@@ -11,73 +11,48 @@
 <body>
 
 <div class="easyui-panel" style="width:100%;padding:2px;"  data-options="fit:true, border:false">
-
-<div class="easyui-layout" data-options="fit:true">
-    <div data-options="region:'west',split:true,hideCollapsedContent:false, border:true" title="班级信息" style="width:40%;">
-        <table id="danceClassStudentStat" class="easyui-datagrid"
-               data-options="border:false,singleSelect:true,fit:true,
-               fitColumns:true,rownumbers:true,striped:true,emptyMsg:'无数据',
-               pagination:true,pageSize:100,pageNumber:1,pageList: [50,100],
-               onSelect:onSelect,
-               onLoadSuccess: onLoadSuccess
-               ">
-            <thead>
-            <tr>
-                <th data-options="field:'id',hidden:true" width="80">Item ID</th>
-                <th data-options="field:'school_name'" width="70">分校名称</th>
-                <th data-options="field:'cno',align:'center'" width="100">班级编号</th>
-                <th data-options="field:'class_name',align:'center'" width="120">班级名称</th>
-                <th data-options="field:'begin_year'" width="60">开班年份</th>
-                <th data-options="field:'teacher',align:'center'" width="60">授课老师</th>
-            </tr>
-            </thead>
-        </table>
-    </div>
-    <div data-options="region:'center',border:true">
-        <table id="danceStudentStat" class="easyui-datagrid"
-               data-options="border:false,singleSelect:true,fit:true,title:'学员信息',iconCls:'icon-ok',
+    <div class="easyui-layout" data-options="fit:true">
+        <div data-options="region:'west',split:true,hideCollapsedContent:false, border:true" title="班级信息" style="width:40%;">
+            <table id="danceClassStudentStat" class="easyui-datagrid"
+                   data-options="border:false,singleSelect:true,fit:true,
                fitColumns:true,rownumbers:true,striped:true,emptyMsg:'无数据',
                pagination:true,pageSize:100,pageNumber:1,pageList: [50,100]
                ">
-            <thead>
-            <tr>
-                <th data-options="field:'id',hidden:true" width="80">Item ID</th>
-                <th data-options="field:'sno'" width="70">学号</th>
-                <th data-options="field:'name',align:'center'" width="50">姓名</th>
-                <th data-options="field:'gender',align:'center'" width="20">性别</th>
-                <th data-options="field:'register_day'" width="60">登记日期</th>
-                <th data-options="field:'mother_phone',align:'center'" width="50">妈妈手机</th>
-                <th data-options="field:'father_phone',align:'center'" width="50">爸爸手机</th>
-            </tr>
-            </thead>
-        </table>
+                <thead>
+                <tr>
+                    <th data-options="field:'id',hidden:true" width="80">Item ID</th>
+                    <th data-options="field:'school_name'" width="70">分校名称</th>
+                    <th data-options="field:'cno',align:'center'" width="100">班级编号</th>
+                    <th data-options="field:'class_name',align:'center'" width="120">班级名称</th>
+                    <th data-options="field:'begin_year'" width="60">开班年份</th>
+                    <th data-options="field:'teacher',align:'center'" width="60">授课老师</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
+        <div data-options="region:'center',border:true">
+            <table id="danceStudentNum" class="easyui-datagrid"
+                   data-options="border:false,singleSelect:true,fit:true,title:'学员信息',iconCls:'icon-ok',
+               fitColumns:true,rownumbers:true,striped:true,emptyMsg:'无数据',
+               pagination:true,pageSize:100,pageNumber:1,pageList: [50,100]
+               ">
+                <thead>
+                <tr>
+                    <th data-options="field:'id',hidden:true" width="80">Item ID</th>
+                    <th data-options="field:'sno'" width="70">学号</th>
+                    <th data-options="field:'name',align:'center'" width="50">姓名</th>
+                    <th data-options="field:'gender',align:'center'" width="20">性别</th>
+                    <th data-options="field:'register_day'" width="60">登记日期</th>
+                    <th data-options="field:'mother_phone',align:'center'" width="50">妈妈手机</th>
+                    <th data-options="field:'father_phone',align:'center'" width="50">爸爸手机</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
     </div>
-</div>
 
 </div>
 
-<script type="text/javascript">
-    function onSelect(index,row) {
-        var dg = $('#danceStudentStat');
-        $(dg).datagrid({
-            title: '学员信息 [' + row['class_name']  + ']',
-            url: '/dance_class_student_get',
-            queryParams: {'class_no': row['cno']}
-        });
-    }
-
-    function onLoadSuccess (data) {
-        var dg = $('#danceClassStudentStat');
-        //console.log(data);
-        if (data.rows.length) {
-            $(dg).datagrid('selectRow', 0);
-        } else {
-            console.log('no student data');
-            var dgStu = $('#danceStudentStat');
-            $(dgStu).datagrid({title: '学员信息', url: null}).datagrid('loadData', []);
-        }
-    }
-</script>
 
 </body>
 </html>

@@ -88,28 +88,61 @@ function danceAddTabClassStudentStat(title, condition) {
     //console.log(condition);
     //condition.page = 1;
     //condition.rows = 100;
+    var dg = '#danceClassStudentStat';
+    var dgStu = '#danceStudentNum';
     var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
-
-        var dgClass = $('#danceClassStudentStat');
-        dgClass.datagrid({
-            url: 'dance_class_get',
-            queryParams: condition
-        });
+        $(dg).datagrid('load', condition);
     } else {
         $(parentDiv).tabs('add', {
             title: title,
             href: '/static/html/_class_student_stat.html',
             closable: true,
             onLoad: function () {
-                var dgClass = $('#danceClassStudentStat');
-                dgClass.datagrid({
+                $(dg).datagrid({
                     url: 'dance_class_get',
-                    queryParams: condition
+                    queryParams: condition,
+                    onLoadSuccess: dgClassLoadSuccess,
+                    //onClickRow: getDgStuNum
+                    onSelect : getDgStuNum
                 });
             }
         });
+    }
+
+    function dgClassLoadSuccess (data) {
+        if (data.rows.length) {
+            $(dg).datagrid('selectRow', 0);
+        } else {
+            $(dgStu).datagrid({title: '学员信息'});
+        }
+    }
+    
+    function getDgStuNum(index, row) {
+        $.ajax({
+            method: 'POST',
+            url: '/dance_class_student_get',
+            dataType: 'json',
+            data: {class_no: row['cno']}
+        }).done(function(data) {
+            if (data.errorCode === 0) {
+                $(dgStu).datagrid('loadData', data);
+            } else {
+                $.messager.alert('错误', data.msg, 'error');
+            }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
+            $.messager.alert('提示', msg, 'info');
+        });
+
+        var gridPanel = $(dgStu).datagrid("getPanel");
+        gridPanel.panel('setTitle', '学员信息 [' + row['class_name']  + ']');
+
+        var opts = $(dgStu).datagrid('options');
+        opts.url = '/dance_class_student_get';
+        opts.queryParams = {class_no: row['cno']};
+        // $(dgStu).datagrid('load', {class_no: row['cno']});
     }
 }
 
