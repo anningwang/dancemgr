@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>舞管家</title>
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/icon.css">
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+</head>
+<body>
+
+<div class="easyui-panel" id="upgPanel" style="width:100%;height:100%;padding:2px;" data-options="footer:'#upgFooter',fit:true, border:false">
+    <div style="min-width: 1024px">
+        <!-- 开始区域，学号，姓名，... -->
+        <table cellspacing="0" cellpadding="3" style="width: 100%">
+            <tr><td colspan="3" style="text-align:center;font-weight:bold; font-size: 24px;font-family:华文楷体;color:#1d76db; ">集体续班</td></tr>
+            <tr>
+                <td width="33%" align="center">
+                    <input class="easyui-textbox" id="upgNo"  data-options="labelAlign:'right', label:'续班编号：',
+                    editable:false,prompt:'自动生成',labelWidth:90,width:'90%',labelPosition:'before'" >
+                </td>
+                <td width="34%" align="center">
+                    <input class="easyui-datebox" id="upgDate" data-options="labelAlign:'right',label:'*续班日期：',
+                    labelWidth:90,width:'90%',labelPosition:'before'">
+                </td>
+                <td width="33%" align="center">
+                    <input class="easyui-combobox" id="upgSchoolName"  data-options="labelAlign:'right', label:'分校名称：',
+                    editable:false,labelWidth:90,width:'90%',labelPosition:'before',valueField: 'school_id',
+                        textField: 'school_name',panelHeight:'auto' " >
+                </td>
+            </tr>  <!-- 1 end -->
+
+            <tr>
+                <td td width="33%" align="center">
+                    <input class="easyui-textbox" id="upgOldClassNo"  data-options="labelAlign:'right', label:'原班级编号：',
+                    editable:false,labelWidth:90,width:'90%',labelPosition:'before',prompt:'关联原班级名称'" >
+                </td>
+                <td td width="34%" align="center">
+                    <input class="easyui-combobox" id="upgOldClassName" data-options="labelAlign:'right',label:'*原班级名称：',
+                    labelWidth:90,width:'90%',labelPosition:'before',valueField: 'class_id',textField: 'class_name',
+                    panelHeight:'auto',editable:false">
+                </td>
+                <td td width="33%" align="center">
+                    <input class="easyui-textbox" id="upgSchoolNo"  data-options="labelAlign:'right', label:'分校编号：',
+                    editable:false,prompt:'关联分校名称',labelWidth:90,width:'90%',labelPosition:'before'" >
+                </td>
+            </tr>  <!-- 2 end -->
+
+            <tr>
+                <td td width="33%" align="center">
+                    <input class="easyui-textbox" id="upgNewClassNo"  data-options="labelAlign:'right', label:'新班级编号：',
+                    editable:false,labelWidth:90,width:'90%',labelPosition:'before',prompt:'关联新班级名称'" >
+                </td>
+                <td td width="34%" align="center">
+                    <input class="easyui-combobox" id="upgNewClassName" data-options="labelAlign:'right',label:'*新班级名称：',
+                    labelWidth:90,width:'90%',labelPosition:'before',valueField: 'class_id',textField: 'class_name',
+                    panelHeight:'auto',editable:false">
+                </td>
+                <td td width="33%" align="center">
+                    <input class="easyui-textbox" id="upgRecorder"  data-options="labelAlign:'right', label:'录入员：',
+                    editable:false,prompt:'自动生成',labelWidth:90,width:'90%',labelPosition:'before'" >
+                </td>
+            </tr>  <!-- 3 end -->
+
+        </table>
+
+        <!-- 班级学员续班操作  -->
+        <table id="upgDgStu" class="easyui-datagrid" title="班级学员" style="width:100%;" data-options="checkbox:true,
+        rownumbers:true,fitColumns:true,singleSelect:true,collapsible:true">
+
+            <thead>
+            <tr>
+                <th data-options="field:'ck',checkbox:true"></th>
+                <th data-options="field:'sno',width:140,align:'center'">学号</th>
+                <th data-options="field:'stu_id',width:80,align:'center',
+                formatter:function(value,row){
+                    return row.student_name;
+                }">姓名</th>
+                <th data-options="field:'class_id',width:200,align:'center',editor:'textbox', editor: {
+                    type:'combobox',
+                    options: {
+                        editable:false,
+					    panelHeight:'auto',
+						valueField: 'class_id',
+                        textField: 'class_name'
+                    }
+                }">新班级名称*</th>
+                <th data-options="field:'is_up',width:60,align:'center',editor:'textbox',
+                formatter:function(value,row){
+                    return row.is_up_text;
+                },
+                editor: {
+                    type:'combobox',
+                    options: {
+                        editable:false,
+					    panelHeight:'auto',
+						valueField: 'label',
+                        textField: 'value',
+                        data: [{
+                            label: '1',
+                            value: '是'
+                        },{
+                            label: '0',
+                            value: '否'
+                        }]
+                    }
+                }">是否续班*</th>
+                <th data-options="field:'remark',width:400,align:'center',editor:'textbox'">备注</th>
+            </tr>
+            </thead>
+        </table>
+
+    </div>
+</div>
+
+<div id="upgFooter">
+    <div id="upgPager" class="easyui-pagination"></div>
+</div>
+
+</body>
+</html>

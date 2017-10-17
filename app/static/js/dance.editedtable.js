@@ -77,7 +77,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
                 $.extend(dataOriginal[index], row);
             }
         },
-        onEndEdit : function onEndEdit(index, row){
+        onEndEdit : function (index, row){
             var eds = $(dg).datagrid('getEditors', index);
             for(var i=0; i< eds.length; i++){
                 if (eds[i].type === 'combobox'){

@@ -43,29 +43,6 @@ function danceOpenTab(title, url) {
 }
 
 
-// 关闭Tab页前的处理
-function dcBeforeCloseTab(title, index){
-    if(title === '课程表'){
-        $('#dc-course-mm').menu('destroy');
-        /*
-        var target = this;
-        $.messager.confirm('确认','是否要关闭页面 '+title,function(r){
-            if (r){
-                var opts = $(target).tabs('options');
-                var bc = opts.onBeforeClose;
-                opts.onBeforeClose = function(){};  // allowed to close now
-                $(target).tabs('close',index);
-                opts.onBeforeClose = bc;  // restore the event function
-            }
-        });
-        return false;	// prevent from closing
-        */
-        return true;
-    }else
-        return true;
-}
-
-
 /**
  * 将 value 转换为 保留小数点后4位的字符串 和 百分百字符串。
  * @param value
@@ -148,14 +125,13 @@ function danceAddTabClassStudentStat(title, condition) {
 
 
 /**
- * danceAddTabStudentDatagrid 添加或者打开 学员列表 Tab页
- * @param divId             父节点Tabs对象ID
+ * 添加或者打开 学员列表 Tab页
  * @param title             新打开/创建 的 Tab页标题
  * @param tableId           Tab页内的Datagrid表格ID
  * @param condition         查询条件
  */
-function danceAddTabStudentDatagrid(divId, title, tableId, condition) {
-    var parentDiv = $('#'+divId);
+function danceAddTabStudentDatagrid(title, tableId, condition) {
+    var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
         $('#'+tableId).datagrid('load', condition);
@@ -420,7 +396,7 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
                     total: 0, pageSize: 1,
                     beforePageText: '第', afterPageText: '条，总 {pages} 条',
                     showPageList: false, showPageInfo: false,
-                    onSelectPage:function(pageNumber, pageSize){
+                    onSelectPage:function(pageNumber){  // , pageSize
                         if (uid> 0) {
                             no = pageNumber;
                             doAjaxStuDetail();
@@ -632,29 +608,18 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
             url: '/dance_student_details_extras',
             async: true,
             dataType: 'json',
-            data: {'student_id': uid, 'school_id': condition.school_id},
-            success: function (data) {
-                if(data.errorCode === 0) {
-                    classlist = data['classlist'];
-                    schoollist = data['schoollist'];
-                    setSchoolName(schoollist);
-                } else {
-                    $.messager.alert('错误',data.msg,'error');
-                }
+            data: {'student_id': uid, 'school_id': condition.school_id}
+        }).done(function (data) {
+            if(data.errorCode === 0) {
+                classlist = data['classlist'];
+                schoollist = data['schoollist'];
+                danceSetSchoolName(schoollist, stu_school_name);
+            } else {
+                $.messager.alert('错误',data.msg,'error');
             }
         });
     }
-
-    /**
-     * 设置分校名称/id
-     * @param schoollist        分校id,名称 列表
-     */
-    function setSchoolName(schoollist) {
-        if (schoollist.length) {
-            $('#'+stu_school_name).combobox('loadData', schoollist)
-                .combobox('setValue', schoollist[0].school_id);
-        }
-    }
+    
 
     function endEditingClass(){
         if (editIndexClass !== undefined){
@@ -2182,13 +2147,12 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
 
 /**
  * 添加或者打开 收费单（学费） Tab页
- * @param divId             父节点Tabs对象ID
  * @param title             新打开/创建 的 Tab页标题
  * @param tableId           Tab页内的Datagrid表格ID
  * @param condition         查询条件
  */
-function danceAddTabFeeStudyDatagrid(divId, title, tableId, condition) {
-    var parentDiv = $('#'+divId);
+function danceAddTabFeeStudyDatagrid(title, tableId, condition) {
+    var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
         $('#'+tableId).datagrid('load', condition);

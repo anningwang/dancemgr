@@ -2,6 +2,8 @@
  * Created by Administrator on 2017/10/9.
  */
 
+'use strict';
+
 /**
  * 添加或者打开  员工与老师 Tab页
  * @param title             新打开/创建 的 Tab页标题
@@ -59,7 +61,7 @@ function danceAddTabTeacher(title, tableId, condition) {
  * @param url           查询信息所用url
  * @param condition     查询条件：
  *      school_id     分校id，取值范围： all  or 具体分校id
- * @param uid           学员id，新增时，可以不传递此参数。
+ * @param uid           记录id，新增时，可以不传递此参数。
  */
 function danceTeacherDetailInfo( page, url, condition, uid) {
     var title = '员工与老师详细信息';
@@ -218,14 +220,6 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
             $.messager.alert('提示', msg, 'info');
         });
     }
-    
-    function dgLoadData(dgId, data) {
-        var len = data.length;
-        for(var i = 0; i< 3 - len; i++){ 
-            data.push({});
-        }
-        $('#'+dgId).datagrid('loadData', data);
-    }
 
     function newTeacher() {
         dgLoadData(dgWork, []);
@@ -326,25 +320,14 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
             if(data.errorCode === 0) {
                 classlist = data['classlist'];
                 schoollist = data['schoollist'];
-                setSchoolName(schoollist);
+                danceSetSchoolName(schoollist, tch_schoolName);
             } else {
                 $.messager.alert('错误',data.msg,'error');
             }
         });
 
     }
-
-    /**
-     * 设置分校名称/id
-     * @param schoollist        分校id,名称 列表
-     */
-    function setSchoolName(schoollist) {
-        if (schoollist.length) {
-            $('#'+tch_schoolName).combobox('loadData', schoollist)
-                .combobox('setValue', schoollist[0].school_id);
-        }
-    }
-
+    
     function endEditWork(){
         if (edIdxWork !== undefined){
             $('#'+dgWork).datagrid('endEdit', edIdxWork);
@@ -621,4 +604,3 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
         $('#'+tch_remark).textbox('resize', parent.width() - 26);   // 硬编码 需要改进
     }
 }
-

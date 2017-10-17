@@ -561,6 +561,64 @@ function danceParser(s){
     }
 }
 
+// datagrid methods
+///////////////////////-------------------------------------------------------------------------------------------------
+function dgLoadData(dgId, data) {
+    var len = data.length;
+    for(var i = 0; i< 3 - len; i++){
+        data.push({});
+    }
+    $('#'+dgId).datagrid('loadData', data);
+}
+///////////////////////-------------------------------------------------------------------------------------------------
+
+// combobox methods
+/**
+ * 设置分校名称/id
+ * @param schoolList        分校id,名称 列表 [{school_id: id, school_name: name, school_no: no}, ...]
+ * @param cbId              combobox 组件 id
+ * @param tbId              textbox 组件 id，设置分校名称，关联设置 分校编号
+ */
+function danceSetSchoolName(schoolList, cbId, tbId) {
+    if (schoolList.length) {
+        $('#'+cbId).combobox('loadData', schoolList)
+            .combobox('setValue', schoolList[0].school_id);
+        if(tbId) $('#'+tbId).textbox('setValue', schoolList[0]['school_no']);
+    }
+}
+
+/**
+ * combobox formatter 格式化班级名称和编号
+ * @param row       row 必须含有 {class_name: name, class_no: no}
+ * @returns {string}
+ */
+function danceFormatterClass(row){
+    return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
+        '<span style="color:#888">' + row['class_no'] + '</span>';
+}
+
+
+/**
+ * 根据分校编号过滤班级。 新增记录时，选择分校后，只能选择选定分校的班级。
+ * @param classList     班级列表。可能属于多个分校。  [{class_no: no, ...}, ...]
+ *      必须存在 class_no 属性。
+ * @param school_no     分校编号
+ * @returns {*}
+ */
+function danceFilterClassByNo(classList, school_no) {
+    var classNoFilter = school_no + '-BJ-';
+    var rows = [];
+    for (var i = 0; i < classList.length; i++) {
+        if(classList[i].class_no.indexOf(classNoFilter) === 0){
+            rows.push(classList[i]);
+        }
+    }
+    return rows;
+}
+
+///////////////////////-------------------------------------------------------------------------------------------------
+
+
 // 窗口操作 begin //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**

@@ -2,6 +2,8 @@
  * Created by Administrator on 2017/10/13.
  */
 
+'use strict';
+
 /**
  * 添加或者打开  课程表 Tab页
  * @param title             新打开/创建 的 Tab页标题
@@ -64,7 +66,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
     var dg = $('#' + datagridId);       // datagrid ID
     var divId = 'dcDiv' + datagridId;
     var bcId = 'courseName' + datagridId;
-    var mmId = 'dc-course-mm';
+    var mmId = 'dance-course-mm';
 
     var dance_condition = '';               // 主datagrid表查询条件
     var WIN_TOP = 25;   // 表头高度
@@ -139,7 +141,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             setTimeout(function () {putCourse();}, 0);
         },
         onResize:function () {  // width, height
-            var panel = $('#dc-main-layout').layout('panel', 'center');
+            var panel = $('#dance-main-layout').layout('panel', 'center');
             var opts = panel.panel('options');
             //console.log('panel center left',opts.left);
             WIN_LEFT = opts.left;

@@ -674,7 +674,10 @@ def dance_student_get():
 def dance_class_student_get():
     """
     统计 班级内 学员 名单。
-    :return:
+    输入： {
+        class_no:           班级编号。    因为 DanceStudentClass 用的班级编号，没有使用班级id
+    }
+    返回值: { total: number, rows: [{ ... }] record, errorCode: , msg: error massage }
     """
     cno = request.form['class_no']
 
@@ -843,6 +846,25 @@ def dance_student_details_extras():
     学员详细信息页面，查询学员的附加信息：1. 包括学员所在分校的可报班级（班级编号 和 班级名称）
         2. 分校id, 分校名称 列表
     :return:
+    {
+        classlist: [{       班级列表
+            class_id:       编号  -- 准备修改为真正的id ***
+            class_name:
+            class_type:     班级类型
+            class_no:       编号
+        }]
+        schoollist: [{      分校列表
+            school_id:
+            school_name:
+            school_no:
+        }}
+        errorCode:          错误码
+        msg:                错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   'ok'
+    }
     """
     dcq = DanceClass.query.filter(DanceClass.is_ended == 0)
 
@@ -864,12 +886,14 @@ def dance_student_details_extras():
 
     classes = []
     for cls in records:
-        classes.append({'class_id': cls.cno, 'class_name': cls.class_name, 'class_type': cls.class_type})
+        classes.append({'class_id': cls.cno, 'class_name': cls.class_name, 'class_type': cls.class_type,
+                        'class_no': cls.cno})
 
     schoollist = []
     school_rec = DanceSchool.query.filter(DanceSchool.id.in_(school_id_intersection)).all()
     for sc in school_rec:
-        schoollist.append({'school_id': sc.id, 'school_name': sc.school_name})
+        schoollist.append({'school_id': sc.id, 'school_name': sc.school_name,
+                           'school_no': sc.school_no})
 
     return jsonify({'classlist': classes, 'schoollist': schoollist, 'errorCode': 0, 'msg': 'ok'})
 

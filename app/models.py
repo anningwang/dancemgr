@@ -571,6 +571,14 @@ class DanceClass(db.Model):
             ret[rec.cno] = rec
         return ret
 
+    @staticmethod
+    def id_records(school_ids):
+        records = DanceClass.query.filter(DanceClass.school_id.in_(school_ids)).all()
+        ret = {}
+        for rec in records:
+            ret[rec.id] = rec
+        return ret
+
     def create_no(self):
         if self.school_id is None:
             raise Exception('Please input school_id first!')
@@ -2191,5 +2199,103 @@ class DanceClassRoom(db.Model):
         number = 1 if r is None else int(r.code.rsplit('-', 1)[1]) + 1
         self.code = search_sno + ('%03d' % number)
         return self.code
+
+    def __repr__(self):
+        return '<ClassRoom %r>' % self.id
+
+
+class UpgradeClass(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(25, collation='NOCASE'), index=True)
+    school_id = db.Column(db.Integer, index=True)
+    upg_date = db.Column(db.DateTime, nullable=False)
+    old_clsid = db.Column(db.Integer, nullable=False)
+    new_clsid = db.Column(db.Integer, nullable=False)
+
+    company_id = db.Column(db.Integer, index=True,  nullable=False)
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    create_at = db.Column(db.DateTime, nullable=False)
+    last_t = db.Column(db.DateTime, nullable=False)
+    last_u = db.Column(db.String(20, collation='NOCASE'))
+
+    def __init__(self, param):
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        self.code = param.get('code', self.create_no())
+        if 'upg_date' in param:
+            if param['upg_date'] != '':
+                self.upg_date = datetime.datetime.strptime(param['upg_date'], '%Y-%m-%d')
+        if 'old_clsid' in param:
+            self.old_clsid = param['old_clsid']
+        if 'new_clsid' in param:
+            self.new_clsid = param['new_clsid']
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
+        self.recorder = param.get('recorder', g.user.name)
+        self.create_at = datetime.datetime.today()
+        self.last_t = self.create_at
+        self.last_u = g.user.name
+
+    def update(self, param):
+        if 'upg_date' in param:
+            if param['upg_date'] != '':
+                self.upg_date = datetime.datetime.strptime(param['upg_date'], '%Y-%m-%d')
+        if 'old_clsid' in param:
+            self.old_clsid = param['old_clsid']
+        if 'new_clsid' in param:
+            self.new_clsid = param['new_clsid']
+        self.last_t = self.create_at
+        self.last_u = g.user.name
+
+    def create_no(self):
+        if self.school_id is None:
+            raise Exception('Please input school_id first!')
+        school_no = DanceSchool.get_no(self.school_id)
+        if school_no == -1:
+            raise Exception('school id [%s] error.' % self.school_id)
+        search_sno = dc_gen_code(school_no, 'XB')
+        r = UpgradeClass.query.filter(UpgradeClass.code.like('%' + search_sno + '%'))\
+            .order_by(UpgradeClass.id.desc()).first()
+        number = 1 if r is None else int(r.code.rsplit('-', 1)[1]) + 1
+        self.code = search_sno + ('%03d' % number)
+        return self.code
+
+    def __repr__(self):
+        return '<UpgradeClass %r>' % self.id
+
+
+class UpgClassItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    upg_id = db.Column(db.Integer, index=True)
+    stu_id = db.Column(db.Integer, nullable=False)
+    class_id = db.Column(db.Integer, nullable=False)
+    is_up = db.Column(db.SmallInteger, nullable=False)
+    remark = db.Column(db.String(40))
+    company_id = db.Column(db.Integer, index=True, nullable=False)
+
+    def __init__(self, param):
+        if 'upg_id' in param:
+            self.upg_id = param['upg_id']
+        if 'stu_id' in param:
+            self.stu_id = param['stu_id']
+        if 'class_id' in param:
+            self.class_id = param['class_id']
+        if 'is_up' in param:
+            self.is_up = param['is_up']
+        if 'remark' in param:
+            self.remark = param['remark']
+        self.company_id = g.user.company_id
+
+    def update(self, param):
+        if 'class_id' in param:
+            self.class_id = param['class_id']
+        if 'stu_id' in param:
+            self.stu_id = param['stu_id']
+        if 'is_up' in param:
+            self.is_up = param['is_up']
+        if 'remark' in param:
+            self.remark = param['remark']
+
+    def __repr__(self):
+        return '<UpgradeClass %r>' % self.id
 
 whooshalchemy.whoosh_index(app, Post)

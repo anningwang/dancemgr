@@ -5,7 +5,7 @@ from app import app, db
 from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent, DcTeachingMaterial,\
     DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass, DanceStudentClass, DcShowRecpt, DcCommFeeMode,\
     DcShow, DcShowFeeCfg, DcShowDetailFee, DcClassType, DanceTeacher, DanceTeacherEdu, DanceTeacherWork, DcCommon,\
-    DanceCourse, DanceCourseItem, DanceClassRoom
+    DanceCourse, DanceCourseItem, DanceClassRoom, UpgradeClass, UpgClassItem
 from views import dance_student_query
 import json
 import datetime
@@ -2097,6 +2097,62 @@ def dc_class_type_query():
         ret.append({'value': rec.name, 'text': rec.name})
 
     return jsonify(ret)
+
+
+@app.route('/dance_upgrade_class_get', methods=['POST'])
+@login_required
+def dance_upgrade_class_get():
+    """
+    查询集体续班信息
+    :return:
+    """
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    if page_no <= 0:    # 补丁
+        page_no = 1
+
+    dcq = UpgradeClass.query
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(UpgradeClass.school_id.in_(school_id_intersection))
+
+    dcq = dcq.join(UpgClassItem, UpgClassItem.upg_id == UpgradeClass.id)\
+        .join(DanceStudent, DanceStudent.id == UpgClassItem.stu_id)
+    if 'name' in request.form and request.form['name'] != '':
+        name = request.form['name']
+        if name.encode('UTF-8').isalpha():
+            dcq = dcq.filter(DanceStudent.rem_code.like('%' + name + '%'))
+        else:
+            dcq = dcq.filter(DanceStudent.name.like('%' + name + '%'))
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.join(DanceSchool, DanceSchool.id == UpgradeClass.school_id)\
+        .add_columns(DanceSchool.school_name, DanceStudent.sno, DanceStudent.name)\
+        .order_by(UpgradeClass.id.desc()).limit(page_size).offset(offset).all()
+    i = offset + 1
+    rows = []
+    class_dict = DanceClass.id_records(school_id_intersection)
+    for dcr in records:
+        rec = dcr[0]
+        rows.append({'no': i, 'id': rec.id, "code": rec.code, 'recorder': rec.recorder,
+                     'upg_date': datetime.datetime.strftime(rec.upg_date, '%Y-%m-%d'),
+                     'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d'),
+                     'last_t': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d %H:%M'),
+                     'last_u': rec.last_u, 'remark': rec.remark,
+                     'is_up': u'是' if rec.is_up == 1 else u'否',
+                     'old_clsid': rec.old_clsid, 'oldClassName': class_dict.get(rec.old_clsid).class_name,
+                     'newClassId': rec.class_id, 'newClassName': class_dict.get(rec.class_id).class_name,
+                     'school_name': dcr[1], 'student_no': dcr[2], 'student_name': dcr[3]
+                     })
+        i += 1
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
 
 
 @app.route('/dance_progressbar', methods=['POST'])

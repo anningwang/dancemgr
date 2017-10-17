@@ -192,7 +192,7 @@
 								valueField:'class_id',
 								textField:'class_name',
 								panelWidth: 260,
-								formatter: formatItem,
+								formatter: danceFormatterClass,
 								groupField:'class_type'
 							}
 						}">班级名称</th>
@@ -233,14 +233,6 @@
     <div id="pagerStudent" class="easyui-pagination"></div>
 </div>
 
-<script type="text/javascript">
-
-    function formatItem(row){
-        return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
-                '<span style="color:#888">' + row['class_id'] + '</span>';
-    }
-
-</script>
 
 </body>
 </html>

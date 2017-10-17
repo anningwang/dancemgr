@@ -2,17 +2,17 @@
  * 实现 收费单——演出 和 普通 功能。
  *  @author Anningwang
  */
+
 'use strict';
 
 /**
  * 添加或者打开 收费单（演出） Tab页
- * @param divId             父节点Tabs对象ID
  * @param title             新打开/创建 的 Tab页标题
  * @param tableId           Tab页内的Datagrid表格ID
  * @param condition         查询条件
  */
-function danceAddTabFeeShowDatagrid(divId, title, tableId, condition) {
-    var parentDiv = $('#'+divId);
+function danceAddTabFeeShowDatagrid(title, tableId, condition) {
+    var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
         $('#'+tableId).datagrid('load', condition);
@@ -109,7 +109,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                 total: 0, pageSize: 1,
                 beforePageText: '第', afterPageText: '条，总 {pages} 条',
                 showPageList: false, showPageInfo: false,
-                onSelectPage:function(pageNumber, pageSize){
+                onSelectPage:function(pageNumber){  // , pageSize
                     if (uid> 0) {
                         no = pageNumber;
                         doAjaxReceiptDetail();
@@ -288,7 +288,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                 $(edname.target).combobox({ // 学员姓名
                     valueField: 'name', textField: 'name', hasDownArrow: false,
                     panelHeight:'auto',
-                    onChange: function autoComplete (newValue,oldValue) {
+                    onChange: function autoComplete (newValue) {    // ,oldValue
                         //console.log('newValue=' + newValue + ' oldValue=' + oldValue);
                         var cond = $.trim(newValue);
                         var dcCond = {'name': cond, 'is_training': '是', 'school_id': condition.school_id };
@@ -376,7 +376,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
             dgEndEditing(dgShow);
             $(dg).datagrid('selectRow', index).datagrid('beginEdit', index);
             var row = $(dg).datagrid("getSelected");
-            var editors = dg.datagrid('getEditors', index);
+            //var editors = dg.datagrid('getEditors', index);
 
             // 演出名称
             var edx =  $(dg).datagrid('getEditor', {index:index,field:'show_name'});
@@ -417,7 +417,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
         row.is_rcv_text = $(ed.target).combobox('getText');
     }
 
-    function dgShowAfterEdit(index,row,changes) {
+    function dgShowAfterEdit() {    // index,row,changes
         var dg = $('#'+dgShow);
         console.log('dgShowAfterEdit', dgParam[dgShow].mergeCell);
         if(dgParam[dgShow].mergeCell)
@@ -885,13 +885,12 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
 
 /**
  * 添加或者打开 收费单（普通） Tab页
- * @param divId             父节点Tabs对象ID
  * @param title             新打开/创建 的 Tab页标题
  * @param tableId           Tab页内的Datagrid表格ID
  * @param condition         查询条件
  */
-function danceAddTabFeeOtherDatagrid(divId, title, tableId, condition) {
-    var parentDiv = $('#'+divId);
+function danceAddTabFeeOtherDatagrid(title, tableId, condition) {
+    var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
         $('#'+tableId).datagrid('load', condition);
