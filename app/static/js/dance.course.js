@@ -131,7 +131,6 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             if(dcOriCoord === undefined){
                 dcOriCoord = coord;
                 WIN_TOP = coord.pos.top;
-                //WIN_LEFT = coord.offset.left;
             }
 
             $('#'+divId).css('top', (60+coord.top+2)+'px')       // 60 == Tab头高度 30，dg表Toolbar高度 30
@@ -142,18 +141,12 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
         onResize:function () {  // width, height
             var panel = $('#dc-main-layout').layout('panel', 'center');
             var opts = panel.panel('options');
-            console.log('panel center left',opts.left);
+            //console.log('panel center left',opts.left);
             WIN_LEFT = opts.left;
 
-            var coord = getDgCellCoord(dg, 0, 'time');
-            console.log('resize(0,0):', coord);
-            if(!coord.left) return;
-            //if(coord.offset)  WIN_LEFT = coord.offset.left; // + panel.left - 200;
             var pos = $(pager).position();
-            //console.log('resize,w=', width,'h=', height, 'pos', pos);
-            var dcDiv = $('#'+divId);
-            if(pos) $(dcDiv).height(pos.top - 30 - WIN_TOP - 2);
-            //console.log('div h:', $(dcDiv).height(), 'div top:', $(dcDiv).position().top);
+            if(!pos) return;
+            $('#'+divId).height(pos.top - 30 - WIN_TOP - 2);
             resizeCourse();
         }
     });
@@ -620,7 +613,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             console.log(e);
             courseDbClick(pr.winId);
         });
-/*
+
         panel.contextmenu(function (e) {
             // console.log('right click:',pr.winId);
             _curCourseId = pr.winId;
@@ -632,7 +625,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
                 .menu('enableItem',  $('#m-course-del')[0])
                 .menu('enableItem',  $('#m-course-modify')[0]);
         });
-*/
+
         _courseId++;
     }
 
@@ -668,7 +661,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
     // 获取课程表明细坐标 -------------------=======================---------------------------=========================
     function getCourseLeftTop(idx, field) {
         var coord = getDgCellCoord(dg, idx,  field);
-        return {left: coord.offset.left - WIN_LEFT,  // +32
+        return {left: coord.offset.left - WIN_LEFT,
             top: coord.pos.top - WIN_TOP};
     }
 
@@ -718,7 +711,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
        resizeCourse();
     });
 
-/*
+
     contents.contextmenu(function (e) {
         e.preventDefault();          //对标准DOM 中断 默认点击右键事件处理函数
         _curCourseId = undefined;
@@ -729,7 +722,7 @@ function danceCreateCourseDatagrid(datagridId, url, condition, options) {
             .menu('disableItem',  $('#m-course-del')[0])
             .menu('disableItem',  $('#m-course-modify')[0]);
     });
-    */
+
 
     // 对重叠的课程表，改变其位置（left）。
     function dcAddCourseCoord(idx, oldWk) {
