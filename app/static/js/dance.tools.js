@@ -383,7 +383,8 @@ function getDgCellCoord(dg, rowIndex, fieldName) {
     var panel =  $(dg).datagrid('getPanel');
     var tr = panel.find('div.datagrid-body tr[id$="-2-' + rowIndex + '"]');
     var td = $(tr).children('td[field=' + fieldName + ']');
-    var coord = {wOuter: $(td).outerWidth(), hOuter: $(td).outerHeight(), w: $(td).width(), h: $(td).height(),
+    var coord = {wOuter: $(td).outerWidth(), hOuter: $(td).outerHeight(),
+        w: $(td).width(), h: $(td).height(),
         pos: $(td).position(), offset: $(td).offset()};
     //console.log('coord', coord);
     return coord;
