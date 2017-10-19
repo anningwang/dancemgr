@@ -862,7 +862,7 @@ def dance_student_details_get():
         # 查询 学员 的报班信息
         classes = DanceStudentClass.query.filter_by(student_id=r.id).filter_by(company_id=g.user.company_id)\
             .join(DanceClass, DanceClass.id == DanceStudentClass.class_id)\
-            .add_columns(DanceClass.class_name, DanceClass.cno).all()
+            .add_columns(DanceClass.class_name, DanceClass.cno).order_by(DanceStudentClass.join_date.desc()).all()
         for cls in classes:
             class_info.append({'join_date': datetime.strftime(cls[0].join_date, '%Y-%m-%d'),
                                'status': cls[0].status, 'remark': cls[0].remark, 'class_id': cls[0].class_id,

@@ -63,8 +63,6 @@ function dcCalcDiscountRate(value) {
  */
 function danceAddTabClassStudentStat(title, condition) {
     //console.log(condition);
-    //condition.page = 1;
-    //condition.rows = 100;
     var dg = '#danceClassStudentStat';
     var dgStu = '#danceStudentNum';
     var parentDiv = $('#danceTabs');
@@ -83,6 +81,12 @@ function danceAddTabClassStudentStat(title, condition) {
                     onLoadSuccess: dgClassLoadSuccess,
                     //onClickRow: getDgStuNum
                     onSelect : getDgStuNum
+                });
+
+                $(dgStu).datagrid({
+                    onDblClickRow:function (index,row) {    // 双击打开 学员详细信息页
+                        danceAddStudentDetailInfo('/static/html/_student.html', '/dance_student', {}, row.id);
+                    }
                 });
             }
         });
@@ -122,6 +126,7 @@ function danceAddTabClassStudentStat(title, condition) {
         // $(dgStu).datagrid('load', {class_no: row['cno']});
     }
 }
+//----------------------------------------------------------------------------------------------------------------------
 
 
 /**

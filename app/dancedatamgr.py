@@ -2225,20 +2225,46 @@ def dance_upgrade_class_modify():
     for i in change['upd']:
         nr = UpgClassItem.query.get(data[i]['id'])
 
-        """ 判断 所在原班级是否存在，存在则需要将状态 改为  已续班 """
-        old_r = DanceStudentClass.query.filter_by(company_id=g.user.company_id) \
-            .filter_by(student_id=data['stu_id'], class_id=nr.class_id, status=STU_CLASS_STATUS_NORMAL).first()
-        if old_r is not None:
-            old_r.status = STU_CLASS_STATUS_UPG
-            db.session.add(old_r)
+        if int(data[i]['is_up']) == 1:
+            """ 判断 所在原班级是否存在，存在则需要将状态 改为  已续班 """
+            old_r = DanceStudentClass.query.filter_by(company_id=g.user.company_id) \
+                .filter_by(student_id=int(data[i]['stu_id']), class_id=int(upg['old_clsid']),
+                           status=STU_CLASS_STATUS_NORMAL).first()
+            if old_r is not None:
+                old_r.status = STU_CLASS_STATUS_UPG
+                db.session.add(old_r)
+            """判断是否 续班后的班级 发生 变化"""
+            if nr.class_id == data[i]['class_id']:
+                continue
 
-        """ 将学员加入新班级"""
-        dup = DanceStudentClass.query.filter_by(company_id=g.user.company_id, student_id=data['stu_id']) \
-            .filter_by(class_id=data['class_id'], status=STU_CLASS_STATUS_NORMAL).first()
-        if dup is None:
-            new_r = DanceStudentClass({'student_id': data['stu_id'], 'class_id': data['class_id'],
-                                       'join_date': upg['upg_date'], 'status': STU_CLASS_STATUS_NORMAL})
-            db.session.add(new_r)
+            """ 判断 所在班级是否存在，存在则需要将状态 改为  已续班 """
+            old_r = DanceStudentClass.query.filter_by(company_id=g.user.company_id) \
+                .filter_by(student_id=int(data[i]['stu_id']), class_id=int(nr.class_id),
+                           status=STU_CLASS_STATUS_NORMAL).first()
+            if old_r is not None:
+                old_r.status = STU_CLASS_STATUS_UPG
+                db.session.add(old_r)
+
+            """ 将学员加入新班级"""
+            dup = DanceStudentClass.query.filter_by(company_id=g.user.company_id, student_id=data[i]['stu_id']) \
+                .filter_by(class_id=data[i]['class_id'], status=STU_CLASS_STATUS_NORMAL).first()
+            if dup is None:
+                new_r = DanceStudentClass({'student_id': data[i]['stu_id'], 'class_id': data[i]['class_id'],
+                                           'join_date': upg['upg_date'], 'status': STU_CLASS_STATUS_NORMAL})
+                db.session.add(new_r)
+        else:
+            """ 判断 所在原班级是否存在，存在则需要将状态改变  已续班-->正常 """
+            old_r = DanceStudentClass.query.filter_by(company_id=g.user.company_id) \
+                .filter_by(student_id=data[i]['stu_id'], class_id=upg['old_clsid'], status=STU_CLASS_STATUS_UPG).first()
+            if old_r is not None:
+                old_r.status = STU_CLASS_STATUS_NORMAL
+                db.session.add(old_r)
+
+            """ 判断 所在新班级是否存在，存在则需要删除 """
+            old_r = DanceStudentClass.query.filter_by(company_id=g.user.company_id) \
+                .filter_by(student_id=data[i]['stu_id'], class_id=nr.class_id, status=STU_CLASS_STATUS_NORMAL).first()
+            if old_r is not None:
+                db.session.delete(old_r)
 
         nr.update(data[i])
         db.session.add(nr)
