@@ -869,12 +869,12 @@ class DanceUser(db.Model, UserMixin):
 
 class DanceStudentClass(db.Model):
     # 学生报班信息表 多 对 多。 同时可以看到 某个班级 有多少学生。
-    id = db.Column(db.Integer, primary_key=True)  # id
-    student_id = db.Column(db.String(30, collation='NOCASE'), nullable=False, index=True)
-    class_id = db.Column(db.String(20, collation='NOCASE'), nullable=False, index=True)
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, nullable=False, index=True)
+    class_id = db.Column(db.Integer, nullable=False, index=True)
     company_id = db.Column(db.Integer, nullable=False, index=True)
     join_date = db.Column(db.DateTime)       # 报班日期
-    status = db.Column(db.String(10))        # 报班状态 正常、退班、结束、续班
+    status = db.Column(db.String(10))        # 报班状态 正常、退班、结束、已续班
     remark = db.Column(db.String(140))
 
     def __init__(self, param):

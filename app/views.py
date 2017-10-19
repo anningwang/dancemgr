@@ -703,16 +703,16 @@ def dance_class_student_get():
     """
     统计 班级内 学员 名单。
     输入： {
-        class_no:           班级编号。    因为 DanceStudentClass 用的班级编号，没有使用班级id
+        class_id:           班级编号。    因为 DanceStudentClass 用的班级编号，没有使用班级id
     }
     返回值: { total: number, rows: [{ ... }] record, errorCode: , msg: error massage }
     """
-    cno = request.form['class_no']
+    class_id = request.form['class_id']
 
     rows = []
     records = DanceStudent.query\
-        .join(DanceStudentClass, DanceStudentClass.student_id == DanceStudent.sno)\
-        .filter(DanceStudentClass.class_id == cno, DanceStudentClass.status == u'正常',
+        .join(DanceStudentClass, DanceStudentClass.student_id == DanceStudent.id)\
+        .filter(DanceStudentClass.class_id == class_id, DanceStudentClass.status == u'正常',
                 DanceStudentClass.company_id == g.user.company_id)\
         .join(DanceSchool, DanceSchool.id == DanceStudent.school_id)\
         .add_columns(DanceSchool.school_name, DanceSchool.school_no)\
@@ -860,14 +860,14 @@ def dance_student_details_get():
     class_info = []
     if len(rows) > 0:
         # 查询 学员 的报班信息
-        classes = DanceStudentClass.query.filter_by(student_id=rows['sno']).filter_by(company_id=g.user.company_id)\
-            .join(DanceClass, DanceClass.cno == DanceStudentClass.class_id)\
-            .add_columns(DanceClass.class_name).all()
+        classes = DanceStudentClass.query.filter_by(student_id=r.id).filter_by(company_id=g.user.company_id)\
+            .join(DanceClass, DanceClass.id == DanceStudentClass.class_id)\
+            .add_columns(DanceClass.class_name, DanceClass.cno).all()
         for cls in classes:
             class_info.append({'join_date': datetime.strftime(cls[0].join_date, '%Y-%m-%d'),
                                'status': cls[0].status, 'remark': cls[0].remark, 'class_id': cls[0].class_id,
                                'id': cls[0].id,
-                               'class_name': cls[1]})
+                               'class_name': cls[1], 'class_no': cls[2]})
 
     return jsonify({"total": total, "rows": rows, 'class_info': class_info, 'errorCode': 0, 'msg': 'ok'})
 
@@ -919,7 +919,7 @@ def dance_student_details_extras():
 
     classes = []
     for cls in records:
-        classes.append({'class_id': cls.cno, 'class_name': cls.class_name, 'class_type': cls.class_type,
+        classes.append({'class_id': cls.id, 'class_name': cls.class_name, 'class_type': cls.class_type,
                         'class_no': cls.cno})
 
     schoollist = []

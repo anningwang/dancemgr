@@ -1078,6 +1078,12 @@ def dc_import_student_class(worksheet):
 
     num_right = 0
     num_wrong = 0
+
+    school_ids = DanceSchool.name_to_id()
+    sid = list(school_ids.values())
+    students = DanceStudent.get_records(sid)
+    classes = DanceClass.get_records(sid)
+
     # 逆序遍历。第一行为表头需要过滤掉
     cnt = worksheet.nrows
     for row in range(cnt - 1, 0, -1):
@@ -1090,9 +1096,11 @@ def dc_import_student_class(worksheet):
             parm[columns[col_idx[i]]] = r[cols_num[i]]
 
         # 特殊列的处理
+        parm['student_id'] = students.get(parm['student_id']).id
+        parm['class_id'] = classes.get(parm['class_id']).id
 
         # -----------------------------------------------------------------------------------------
-        # （学号+班级ID）不能重复
+        # （学员id+班级id）不能重复
         has = DanceStudentClass.query.filter_by(company_id=g.user.company_id).filter_by(
             student_id=parm['student_id'], class_id=parm['class_id']).first()
         if has is None:

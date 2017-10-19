@@ -180,44 +180,48 @@
             <tr>
                 <th data-options="field:'ck',checkbox:true"></th>
                 <th data-options="field:'join_date',width:100,align:'center', editor: {
-                            type:'datebox',
-                            options: {
-                                editable:false
-                            }
-                        }">报班日期</th>
-                <th data-options="field:'class_id',width:140,align:'center'">班级编号</th>
-                <th data-options="field:'class_name',width:200,align:'center',editor:{
-							type:'combobox',
-							options:{
-								valueField:'class_id',
-								textField:'class_name',
-								panelWidth: 260,
-								formatter: danceFormatterClass,
-								groupField:'class_type'
-							}
-						}">班级名称</th>
+                    type:'datebox',
+                    options: {
+                        editable:false
+                    }
+                }">报班日期</th>
+                <th data-options="field:'class_no',width:140,align:'center'">班级编号</th>
+                <th data-options="field:'class_id',width:200,align:'center',
+                formatter:function(value,row){
+                    return row.class_name;
+                },
+                editor:{
+                    type:'combobox',
+                    options:{
+                        valueField:'class_id',
+                        textField:'class_name',
+                        panelWidth: 260,
+                        formatter: danceFormatterClass,
+                        groupField:'class_type'
+                    }
+                }">班级名称</th>
                 <th data-options="field:'status',width:140,align:'center',editor:{
-                        type:'combobox',
-                        options:{
-                            valueField:'status',
-							textField:'status',
-							editable:false,
-							panelHeight:'auto',
-							data: [{
-			                    status_id:'正常',
-			                    status:'正常'
-		                    },{
-			                    status_id:'退班',
-			                    status: '退班'
-		                    },{
-			                    status_id:'结束',
-			                    status:'结束'
-		                    },{
-			                    status_id:'续班',
-			                    status:'续班'
-		                    }]
-                        }
-                    }">状态</th>
+                    type:'combobox',
+                    options:{
+                        valueField:'status',
+                        textField:'status',
+                        editable:false,
+                        panelHeight:'auto',
+                        data: [{
+                            status_id:'正常',
+                            status:'正常'
+                        },{
+                            status_id:'退班',
+                            status: '退班'
+                        },{
+                            status_id:'结束',
+                            status:'结束'
+                        },{
+                            status_id:'续班',
+                            status:'续班'
+                        }]
+                    }
+                }">状态</th>
                 <th data-options="field:'remark',width:400,align:'center',editor:'textbox'">备注</th>
                 <th data-options="field:'id',hidden:true">6</th>
 

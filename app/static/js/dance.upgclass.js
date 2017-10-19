@@ -120,12 +120,13 @@ function danceUpgClassDetailInfo( page, url, condition, uid) {
                 schoolList = data['school'];
                 $('#'+upgNo).textbox('setValue', data.row.code);
                 $('#'+upgDate).datebox('setValue', data.row.upg_date);
-                $('#'+upgSchoolName).combobox('loadData', schoolList).combobox('setValue', data.row.school_id);
+                $('#'+upgSchoolName).combobox('loadData', schoolList).combobox('setValue', data.row.school_id)
+                    .textbox('disable');
                 $('#'+upgSchoolNo).textbox('setValue', data.row.school_no);
                 $('#'+upgOldClassNo).textbox('setValue', data.row.oldClassNo);
                 $('#'+upgNewClassNo).textbox('setValue', data.row.newClassNo);
                 $('#'+upgOldClassName).combobox('loadData', danceFilterClassByNo(classList, data.row.school_no))
-                    .combobox('setValue', data.row.old_clsid);
+                    .combobox('setValue', data.row.old_clsid).textbox('disable');
                 $('#'+upgNewClassName).combobox('loadData', danceFilterClassByNo(classList, data.row.school_no))
                     .combobox('setValue', data.row.new_clsid);
                 $('#'+upgRecorder).textbox('setValue', data.row['recorder']);
@@ -187,7 +188,6 @@ function danceUpgClassDetailInfo( page, url, condition, uid) {
                     $('#'+btnAdd).linkbutton('enable');
                     uid = data.id;
                 }
-
                 getDetail();
                 $.messager.alert('提示', data.msg, 'info');
             } else {
@@ -353,6 +353,7 @@ function danceUpgClassDetailInfo( page, url, condition, uid) {
      */
     function packageMsg() {
         var msg = {row: {}, upgItem: []};
+        msg.row.id = uid;
         msg.row.school_id = $('#'+upgSchoolName).combobox('getValue');
         msg.row.school_no = $('#'+upgSchoolNo).textbox('getValue');
         msg.row.upg_date = $('#'+upgDate).datebox('getValue');

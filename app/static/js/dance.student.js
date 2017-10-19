@@ -101,7 +101,7 @@ function danceAddTabClassStudentStat(title, condition) {
             method: 'POST',
             url: '/dance_class_student_get',
             dataType: 'json',
-            data: {class_no: row['cno']}
+            data: {class_id: row['id']}
         }).done(function(data) {
             if (data.errorCode === 0) {
                 $(dgStu).datagrid('loadData', data);
@@ -118,7 +118,7 @@ function danceAddTabClassStudentStat(title, condition) {
 
         var opts = $(dgStu).datagrid('options');
         opts.url = '/dance_class_student_get';
-        opts.queryParams = {class_no: row['cno']};
+        opts.queryParams = {class_id: row['id']};
         // $(dgStu).datagrid('load', {class_no: row['cno']});
     }
 }
@@ -442,7 +442,7 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
                     onEndEdit : function onEndEdit(index, row){
                         var ed = $(this).datagrid('getEditor', {
                             index: index,
-                            field: 'class_name'
+                            field: 'class_id'
                         });
                         row.class_name = $(ed.target).combobox('getText');
                     },
@@ -570,7 +570,7 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
             }
             $(dg).datagrid('selectRow', index).datagrid('beginEdit', index);
 
-            var classEd =  $(dg).datagrid('getEditor', {index:index,field:'class_name'});
+            var classEd =  $(dg).datagrid('getEditor', {index:index,field:'class_id'});
             if (classEd){
                 $(classEd.target).combobox('loadData' , classlist);
                 $(classEd.target).combobox({
@@ -641,6 +641,7 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
         var row = $(dg).datagrid("getSelected");
         if (row) {
             row['class_id'] =  record['class_id'];
+            row.class_no = record.class_no;
             row['class_name'] = record['class_name'];
             //row['status'] = '正常';
             //row['join_date'] = new Date();

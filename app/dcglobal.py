@@ -41,6 +41,7 @@ COMM_TYPE_INTENTION = 6         # 意向程度
 STU_CLASS_STATUS_NORMAL = u'正常'
 STU_CLASS_STATUS_UPG = u'已续班'
 STU_CLASS_STATUS_END = u'结束'
+STU_CLASS_STATUS_STOP = u'退班'
 
 
 def get_feename(val):

@@ -2203,16 +2203,17 @@ def dance_upgrade_class_modify():
         return dance_upgrade_class_add(obj)  # 新增记录
 
     """ 修改 集体续班 基本情况 """
-    rid = obj['row']['id']
+    upg = obj['row']
+    rid = upg['id']
     rec = UpgradeClass.query.get(rid)
     if rec is None:
         return jsonify({'errorCode': 301, 'msg': u'记录[id=%d]不存在！' % rid})
-    rec.update(obj['row'])
+    rec.update(upg)
     db.session.add(rec)
 
     """ 修改 集体续班明细 """
-    data = obj['edu']
-    records = UpgClassItem.query.filter_by(teacher_id=rid).all()
+    data = obj['upgItem']
+    records = UpgClassItem.query.filter_by(upg_id=rid).all()
     old_ids = []
     for rec in records:
         old_ids.append({'id': rec.id})
@@ -2223,6 +2224,22 @@ def dance_upgrade_class_modify():
         db.session.add(nr)
     for i in change['upd']:
         nr = UpgClassItem.query.get(data[i]['id'])
+
+        """ 判断 所在原班级是否存在，存在则需要将状态 改为  已续班 """
+        old_r = DanceStudentClass.query.filter_by(company_id=g.user.company_id) \
+            .filter_by(student_id=data['stu_id'], class_id=nr.class_id, status=STU_CLASS_STATUS_NORMAL).first()
+        if old_r is not None:
+            old_r.status = STU_CLASS_STATUS_UPG
+            db.session.add(old_r)
+
+        """ 将学员加入新班级"""
+        dup = DanceStudentClass.query.filter_by(company_id=g.user.company_id, student_id=data['stu_id']) \
+            .filter_by(class_id=data['class_id'], status=STU_CLASS_STATUS_NORMAL).first()
+        if dup is None:
+            new_r = DanceStudentClass({'student_id': data['stu_id'], 'class_id': data['class_id'],
+                                       'join_date': upg['upg_date'], 'status': STU_CLASS_STATUS_NORMAL})
+            db.session.add(new_r)
+
         nr.update(data[i])
         db.session.add(nr)
     for i in change['del']:
@@ -2259,7 +2276,7 @@ def dance_upgrade_class_add(obj):
     for dt in obj['upgItem']:
         """ 判断 所在原班级是否存在，存在则需要将状态 改为  已续班 """
         old_r = DanceStudentClass.query.filter_by(company_id=g.user.company_id)\
-            .filter_by(student_id=dt['sno'], class_id=upg['oldClassNo'], status=STU_CLASS_STATUS_NORMAL).first()
+            .filter_by(student_id=dt['stu_id'], class_id=upg['old_clsid'], status=STU_CLASS_STATUS_NORMAL).first()
         if old_r is not None:
             old_r.status = STU_CLASS_STATUS_UPG
             db.session.add(old_r)
@@ -2267,10 +2284,10 @@ def dance_upgrade_class_add(obj):
             return jsonify({'errorCode': 1003,
                             'msg': u'[%s]不在原班级[%s]中。' % (dt['student_name'], upg['oldClassName'])})
         """ 将学员加入新班级"""
-        dup = DanceStudentClass.query.filter_by(company_id=g.user.company_id, student_id=dt['sno'])\
-            .filter_by(class_id=dt['class_no'], status=STU_CLASS_STATUS_NORMAL).first()
+        dup = DanceStudentClass.query.filter_by(company_id=g.user.company_id, student_id=dt['stu_id'])\
+            .filter_by(class_id=dt['class_id'], status=STU_CLASS_STATUS_NORMAL).first()
         if dup is None:
-            new_r = DanceStudentClass({'student_id': dt['sno'], 'class_id': dt['class_no'],
+            new_r = DanceStudentClass({'student_id': dt['stu_id'], 'class_id': dt['class_id'],
                                        'join_date': upg['upg_date'], 'status': STU_CLASS_STATUS_NORMAL})
             db.session.add(new_r)
         """ 增加续班 基本信息 """
@@ -2308,9 +2325,9 @@ def dance_upgrade_class_details_get():
         class:      班级列表
     """
     if request.json is None:
-        obj = request.form
-    else:
-        obj = request.json
+        return jsonify({'errorCode': 601, 'msg': u'输入参数错误！'})
+
+    obj = request.json
     page_size = int(obj['rows'])
     page_no = int(obj['page'])
 
@@ -2320,7 +2337,8 @@ def dance_upgrade_class_details_get():
     if 'school_id' not in obj or obj['school_id'] == 'all':
         school_id_intersection = school_ids
     else:
-        school_id_intersection = list(set(school_ids).intersection(set(map(int, obj['school_id']))))
+        sid = obj['school_id']
+        school_id_intersection = [sid] if sid in school_ids else []
     if len(school_id_intersection) == 0:
         return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
     dcq = dcq.filter(UpgradeClass.school_id.in_(school_id_intersection))
