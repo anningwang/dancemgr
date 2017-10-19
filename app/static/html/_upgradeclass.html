@@ -77,13 +77,17 @@
                 formatter:function(value,row){
                     return row.student_name;
                 }">姓名</th>
-                <th data-options="field:'class_id',width:200,align:'center',editor:'textbox', editor: {
+                <th data-options="field:'class_id',width:200,align:'center',editor:'textbox',
+                formatter:function(value,row){
+                    return row.class_name;
+                },
+                editor: {
                     type:'combobox',
                     options: {
-                        editable:false,
-					    panelHeight:'auto',
-						valueField: 'class_id',
-                        textField: 'class_name'
+                    editable:false,
+				    panelHeight:'auto',
+					valueField: 'class_id',
+                    textField: 'class_name'
                     }
                 }">新班级名称*</th>
                 <th data-options="field:'is_up',width:60,align:'center',editor:'textbox',

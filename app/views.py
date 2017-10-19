@@ -8,7 +8,7 @@ from forms import EditForm, SearchForm, DanceLoginForm, DanceRegistrationForm
 from models import User, ROLE_USER, ROLE_ADMIN, Post, DanceStudent, DanceClass, DanceSchool, DanceUser,\
     DanceStudentClass, DanceCompany, DanceUserSchool, DcShowDetailFee, DcCommFeeMode, DcShowRecpt, DcFeeItem,\
     DanceOtherFee, DanceReceipt, DanceClassReceipt, DanceTeaching, DcClassType, DanceTeacher, DanceTeacherEdu,\
-    DanceTeacherWork, DcCommon, DanceCourse, DanceCourseItem, DanceClassRoom
+    DanceTeacherWork, DcCommon, DanceCourse, DanceCourseItem, DanceClassRoom, UpgradeClass, UpgClassItem
 from datetime import datetime
 from emails import follower_notification
 from translate import microsoft_translate
@@ -330,7 +330,8 @@ def dance_del_data():
                 'dc_class_type': {'func': dc_del_class_type},
                 'dance_teacher': {'func': dc_del_teacher},
                 'dc_common_job_title': {'func': dc_del_common},
-                'dance_class_room': {'func': dc_del_class_room}
+                'dance_class_room': {'func': dc_del_class_room},
+                'dance_upgrade_class': {'func': dc_del_upgrade_class}
                 }
 
     if who == 'DanceClass':
@@ -603,6 +604,33 @@ def dc_del_class_room(ids):
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 
 
+def dc_del_upgrade_class(ids):
+    """
+    删除 集体续班： 直接删除相同编号的 集体续班数据，不做关联判断。
+    :param ids:     记录 id list
+    :return: {
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   删除成功！
+            821                 教室已使用，不能删除！
+    }
+    """
+    n = 0
+    for i in ids:
+        r = UpgradeClass.query.get(i)
+        if r is None:
+            continue
+        """删除 集体续班 明细表"""
+        n += UpgClassItem.query.filter_by(upg_id=i).delete()
+
+    m = UpgradeClass.query.filter(UpgradeClass.id.in_(ids)).delete(synchronize_session=False)
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！集体续费单[%d]条，学员续费明细[%d]条。" % (m, n)})
+
+
 @app.route('/dance_student_get', methods=['POST', 'GET'])
 @login_required
 def dance_student_get():
@@ -720,7 +748,12 @@ def dance_class_student_get():
 def dance_student_query():
     """
     学员界面根据学员 姓名 combo box 自动完整功能。根据 姓名 模糊查询 所有匹配条件的 姓名列表，供操作员选择。
-    :return:
+    输入：
+        name:           查询条件，必选参数。
+        school_id       分校id， 可选，具体id 或者 all
+    返回值：
+        value:          学员姓名
+        text:           学员姓名
     """
     school_ids = DanceUserSchool.get_school_ids_by_uid()
     if len(school_ids) == 0:

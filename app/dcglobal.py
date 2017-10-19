@@ -38,6 +38,10 @@ COMM_TYPE_INFO_SRC = 4          # 信息来源
 COMM_TYPE_CONSULT_MODE = 5      # 咨询方式
 COMM_TYPE_INTENTION = 6         # 意向程度
 
+STU_CLASS_STATUS_NORMAL = u'正常'
+STU_CLASS_STATUS_UPG = u'已续班'
+STU_CLASS_STATUS_END = u'结束'
+
 
 def get_feename(val):
     """ 收费项目类别 """

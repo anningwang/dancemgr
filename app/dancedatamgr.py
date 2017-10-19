@@ -557,24 +557,37 @@ def dance_receipt_study_details_extras():
                         'school_no': '分校编号'}]
                 }
     """
-    dcq = DanceClass.query.filter(DanceClass.is_ended == 0)
-
-    """
-    if 'student_id' in request.form:
-        stu = DanceStudent.query.get(request.form['student_id'])
-        if stu is not None:
-            dcq = dcq.filter(DanceClass.school_id == stu.school_id)
-    """
-
     school_ids = DanceUserSchool.get_school_ids_by_uid()
     if 'school_id' not in request.form or request.form['school_id'] == 'all':
         school_id_intersection = school_ids
     else:
         school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
-
     if len(school_id_intersection) == 0:
         return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
-    dcq = dcq.filter(DanceClass.school_id.in_(school_id_intersection))
+
+    return jsonify(get_school_and_class(school_id_intersection))
+
+
+def get_school_and_class(school_id):
+    """
+    查询分校列表 和 班级列表：
+        1. 包括学员所在分校的可报班级（班级编号、班级名称、班级类别、收费模式、收费标准）
+        2. 分校id, 分校名称 列表
+        输入参数：
+            school_id       分校id， all 或者 具体 id
+    返回值：:  {'classlist' : [{'class_no':  '班级编号',
+                        'class_name':  '班级名称',
+                        'class_type': '班级类别',   舞蹈，跆拳道，美术，...
+                        'cost_mode': '收费模式',    1-按课次  2-按课时
+                        'cost': '收费标准'
+                        'class_id': 班级id
+                        }],
+                'schoollist': [{'school_id': '分校id',
+                        'school_name': '分校名称',
+                        'school_no': '分校编号'}]
+                }
+    """
+    dcq = DanceClass.query.filter_by(is_ended=0).filter(DanceClass.school_id.in_(school_id))
     records = dcq.order_by(DanceClass.id.desc()).all()
 
     classes = []
@@ -583,11 +596,11 @@ def dance_receipt_study_details_extras():
                         'cost_mode': cls.cost_mode, 'cost': cls.cost, 'class_id': cls.id})
 
     schoollist = []
-    school_rec = DanceSchool.query.filter(DanceSchool.id.in_(school_id_intersection)).all()
+    school_rec = DanceSchool.query.filter(DanceSchool.id.in_(school_id)).all()
     for sc in school_rec:
         schoollist.append({'school_id': sc.id, 'school_name': sc.school_name, 'school_no': sc.school_no})
 
-    return jsonify({'classlist': classes, 'schoollist': schoollist, 'errorCode': 0, 'msg': 'ok'})
+    return {'classlist': classes, 'schoollist': schoollist, 'errorCode': 0, 'msg': 'ok'}
 
 
 @app.route('/dance_receipt_study_modify', methods=['POST'])
@@ -2134,7 +2147,8 @@ def dance_upgrade_class_get():
     total = dcq.count()
     offset = (page_no - 1) * page_size
     records = dcq.join(DanceSchool, DanceSchool.id == UpgradeClass.school_id)\
-        .add_columns(DanceSchool.school_name, DanceStudent.sno, DanceStudent.name)\
+        .add_columns(DanceSchool.school_name, DanceStudent.sno, DanceStudent.name,
+                     UpgClassItem.class_id, UpgClassItem.is_up, UpgClassItem.remark)\
         .order_by(UpgradeClass.id.desc()).limit(page_size).offset(offset).all()
     i = offset + 1
     rows = []
@@ -2145,14 +2159,256 @@ def dance_upgrade_class_get():
                      'upg_date': datetime.datetime.strftime(rec.upg_date, '%Y-%m-%d'),
                      'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d'),
                      'last_t': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d %H:%M'),
-                     'last_u': rec.last_u, 'remark': rec.remark,
-                     'is_up': u'是' if rec.is_up == 1 else u'否',
+                     'last_u': rec.last_u, 'remark': dcr[6],
+                     'is_up': u'是' if dcr[5] == 1 else u'否',
                      'old_clsid': rec.old_clsid, 'oldClassName': class_dict.get(rec.old_clsid).class_name,
-                     'newClassId': rec.class_id, 'newClassName': class_dict.get(rec.class_id).class_name,
+                     'newClassId': dcr[4], 'newClassName': class_dict.get(dcr[4]).class_name,
                      'school_name': dcr[1], 'student_no': dcr[2], 'student_name': dcr[3]
                      })
         i += 1
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_upgrade_class_modify', methods=['POST'])
+@login_required
+def dance_upgrade_class_modify():
+    """
+    新增/更新 集体续班含明细。
+    输入参数：
+        {row: {},               集体续班 基本信息
+        upgItem: [{             续班明细
+        }]
+    :return:
+    {
+        errorCode:          错误码
+        msg:                错误信息
+        ----------------    ----------------------------------------------
+        errorCode           msg
+        ----------------    ----------------------------------------------
+        0                   更新成功！
+        202                 参数错误！
+        301                 记录[id=%d]不存在！
+    }
+    """
+    if request.json is not None:
+        obj = request.json
+    else:
+        if 'data' not in request.form:
+            return jsonify({'errorCode': 600, 'msg': 'Parameter error. [data] required.'})
+        json_str = request.form['data']
+        obj = json.loads(json_str)
+    if 'row' not in obj or 'upgItem' not in obj:
+        return jsonify({'errorCode': 202, 'msg': u'参数错误！'})
+    if 'id' not in obj['row'] or int(obj['row']['id']) <= 0:
+        return dance_upgrade_class_add(obj)  # 新增记录
+
+    """ 修改 集体续班 基本情况 """
+    rid = obj['row']['id']
+    rec = UpgradeClass.query.get(rid)
+    if rec is None:
+        return jsonify({'errorCode': 301, 'msg': u'记录[id=%d]不存在！' % rid})
+    rec.update(obj['row'])
+    db.session.add(rec)
+
+    """ 修改 集体续班明细 """
+    data = obj['edu']
+    records = UpgClassItem.query.filter_by(teacher_id=rid).all()
+    old_ids = []
+    for rec in records:
+        old_ids.append({'id': rec.id})
+    change = dc_records_changed(old_ids, data, 'id')
+    for i in change['add']:
+        data[i]['upg_id'] = rid
+        nr = UpgClassItem(data[i])
+        db.session.add(nr)
+    for i in change['upd']:
+        nr = UpgClassItem.query.get(data[i]['id'])
+        nr.update(data[i])
+        db.session.add(nr)
+    for i in change['del']:
+        UpgClassItem.query.filter_by(id=old_ids[i]['id']).delete()
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
+
+
+def dance_upgrade_class_add(obj):
+    """
+    新增 集体续班 明细。
+    :param obj:
+        {row: {                 集体续班 基本信息, 字段定义同 UpgradeClass 表
+        },
+        upgItem: [{             续班明细，字段定义同 UpgClassItem 表
+            class_no:           班级编号
+            class_id:
+            class_name:
+            sno:                学号
+            student_name:
+            student_id
+        }]
+    :return:
+    """
+    """判断是否有重名"""
+    upg = obj['row']
+    nr = UpgradeClass(upg)
+    db.session.add(nr)
+    nr = UpgradeClass.query.filter_by(company_id=g.user.company_id, code=nr.code, school_id=upg['school_id']).first()
+    if nr is None:
+        return jsonify({'errorCode': 1002, 'msg': u'新增记录失败。'})
+    """ 新增 续班明细"""
+    for dt in obj['upgItem']:
+        """ 判断 所在原班级是否存在，存在则需要将状态 改为  已续班 """
+        old_r = DanceStudentClass.query.filter_by(company_id=g.user.company_id)\
+            .filter_by(student_id=dt['sno'], class_id=upg['oldClassNo'], status=STU_CLASS_STATUS_NORMAL).first()
+        if old_r is not None:
+            old_r.status = STU_CLASS_STATUS_UPG
+            db.session.add(old_r)
+        else:
+            return jsonify({'errorCode': 1003,
+                            'msg': u'[%s]不在原班级[%s]中。' % (dt['student_name'], upg['oldClassName'])})
+        """ 将学员加入新班级"""
+        dup = DanceStudentClass.query.filter_by(company_id=g.user.company_id, student_id=dt['sno'])\
+            .filter_by(class_id=dt['class_no'], status=STU_CLASS_STATUS_NORMAL).first()
+        if dup is None:
+            new_r = DanceStudentClass({'student_id': dt['sno'], 'class_id': dt['class_no'],
+                                       'join_date': upg['upg_date'], 'status': STU_CLASS_STATUS_NORMAL})
+            db.session.add(new_r)
+        """ 增加续班 基本信息 """
+        dt['upg_id'] = nr.id
+        db.session.add(UpgClassItem(dt))
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'新增成功！'})
+
+
+@app.route('/dance_upgrade_class_details_get', methods=['POST'])
+@login_required
+def dance_upgrade_class_details_get():
+    """
+    查询 集体续班 详细信息
+        查询条件：
+            rows          每页显示的条数
+            page          页码，第几页，从1开始
+                          特殊值 -2，表示根据 receipt_id 查询，并求出该 收费单 的序号
+            id            记录id, optional, 当 page==-2,必填
+            school_id     分校ID
+            name          学员姓名过滤条件
+    返回值:    集体续班详细信息，包括班级——每个需要的续班清空
+        errorCode     错误码
+        msg           错误信息
+        row           收费单基本信息
+        total         收费单记录条数 == 1
+        upgItem       集体续班明细
+            {class_id:
+            class_no:
+            class_name:
+            stu_id:
+            sno: }
+        school:     分校列表
+        class:      班级列表
+    """
+    if request.json is None:
+        obj = request.form
+    else:
+        obj = request.json
+    page_size = int(obj['rows'])
+    page_no = int(obj['page'])
+
+    dcq = UpgradeClass.query
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in obj or obj['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, obj['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(UpgradeClass.school_id.in_(school_id_intersection))
+
+    total = dcq.count()
+
+    if page_no <= -2:
+        # 根据 id 获取 集体续班 详细信息，并求出其序号。
+        rid = int(obj['id'])
+        r = UpgradeClass.query.get(rid)
+        if r is None:
+            return jsonify({'errorCode': 400, 'msg': u'不存在id为[%s]的集体续费单！' % rid})
+        rec_no = dcq.filter(UpgradeClass.id >= r.id).count()
+    else:
+        if page_no <= 0:  # 容错处理
+            page_no = 1
+        offset = (page_no - 1) * page_size
+        r = dcq.order_by(UpgradeClass.id.desc()).limit(page_size).offset(offset).first()
+        if r is None:
+            return jsonify({'errorCode': 400, 'msg': u'不存在序号为[%s]的集体续费单！' % page_size})
+        rec_no = offset + 1
+
+    sch = DanceSchool.query.get(r.school_id)
+    class_dict = DanceClass.id_records_by([r.old_clsid, r.new_clsid])
+    row = {'id': r.id, 'code': r.code,  'school_id': r.school_id, 'old_clsid': r.old_clsid,
+           'no': rec_no, 'new_clsid': r.new_clsid, 'create_at': datetime.datetime.strftime(r.create_at, '%Y-%m-%d'),
+           'recorder': r.recorder, 'upg_date': datetime.datetime.strftime(r.upg_date, '%Y-%m-%d'),
+           'last_u': r.last_u, 'last_t': datetime.datetime.strftime(r.last_t, '%Y-%m-%d %H:%m'),
+           'oldClassNo': class_dict.get(r.old_clsid).cno, 'oldClassName': class_dict.get(r.old_clsid).class_name,
+           'newClassNo': class_dict.get(r.new_clsid).cno, 'newClassName': class_dict.get(r.new_clsid).class_name,
+           'school_name': sch.school_name, 'school_no': sch.school_no}
+
+    """查询集体续费明细"""
+    records = UpgClassItem.query.filter_by(upg_id=r.id).join(DanceStudent, DanceStudent.id == UpgClassItem.stu_id)\
+        .join(DanceClass, DanceClass.id == UpgClassItem.class_id)\
+        .add_columns(DanceStudent.name, DanceStudent.sno, DanceClass.class_name, DanceClass.cno)\
+        .all()
+    upg = []
+    for dcr in records:
+        rec = dcr[0]
+        upg.append({'id': rec.id, 'upg_id': rec.upg_id, 'stu_id': rec.stu_id, 'class_id': rec.class_id,
+                   'is_up': rec.is_up, 'remark': rec.remark,
+                    'is_up_text': u'是' if rec.is_up == 1 else u'否',
+                    'student_name': dcr[1], 'sno': dcr[2], 'class_name': dcr[3], 'class_no': dcr[4]
+                    })
+    """查询集体续班 扩展信息：分校列表和班级列表"""
+    extras = get_school_and_class(school_id_intersection)
+    return jsonify({"total": total, "row": row, 'errorCode': 0, 'msg': 'ok', 'upgItem': upg,
+                    'school': extras['schoollist'], 'class': extras['classlist']})
+
+
+@app.route('/dance_upgrade_class_details_extras', methods=['POST'])
+@login_required
+def dance_upgrade_class_details_extras():
+    """
+    收费单（学费） 详细信息页面，查询附加信息：
+        1. 包括学员所在分校的可报班级（班级编号、班级名称、班级类别、收费模式、收费标准）
+        2. 分校id, 分校名称 列表
+        输入参数：
+            student_id      学员id --- 未使用
+            school_id       分校id， all 或者 具体 id
+    :return:  {'classlist' : [{'class_no':  '班级编号',
+                        'class_name':  '班级名称',
+                        'class_type': '班级类别',   舞蹈，跆拳道，美术，...
+                        'cost_mode': '收费模式',    1-按课次  2-按课时
+                        'cost': '收费标准'
+                        'class_id': 班级id
+                        }],
+                'schoollist': [{'school_id': '分校id',
+                        'school_name': '分校名称',
+                        'school_no': '分校编号'}]
+                }
+    """
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+
+    return jsonify(get_school_and_class(school_id_intersection))
+
+
+@app.route('/dance_upgrade_class_query', methods=['POST'])
+@login_required
+def dance_upgrade_class_query():
+    return dance_student_query()
 
 
 @app.route('/dance_progressbar', methods=['POST'])

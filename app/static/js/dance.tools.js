@@ -323,7 +323,7 @@ function getTextField(valField) {
     } else{
         textField += '_text'
     }
-    console.log('getTextField: textField=', textField, ' valField=', valField);
+    //console.log('getTextField: textField=', textField, ' valField=', valField);
     return textField
 }
 
@@ -357,6 +357,17 @@ function setDgCellTextEx(dg, rowIndex, fieldName, text) {
     }
 }
 
+// 向 datagrid 某单元格设置文字，并对内部的row data赋值。
+function danceSetDgWithRowData(dg, rowIndex, fieldName, text) {
+    var rows = $(dg).datagrid('getRows');
+    if (rowIndex < 0 || rowIndex >= rows.length ){
+        return;
+    }
+    rows[rowIndex][fieldName] = text;
+
+    setDgCellTextEx(dg, rowIndex, fieldName, text);
+}
+
 /**
  * 向 datagrid的 rowIndex行，字段 fieldName 对应的单元格，设置文字
  * @param dg            datagrid 对象
@@ -371,13 +382,13 @@ function setDgCellText(dg, rowIndex, fieldName, text) {
     td.children("div").text(text);
 }
 
-
+/*
 function setDgCellHtml(dg, rowIndex, fieldName, mark) {
     var panel =  $(dg).datagrid('getPanel');
     var tr = panel.find('div.datagrid-body tr[id$="-2-' + rowIndex + '"]');
     var td = $(tr).children('td[field=' + fieldName + ']');
     td.children("div").append(mark);
-}
+}*/
 
 function getDgCellCoord(dg, rowIndex, fieldName) {
     var panel =  $(dg).datagrid('getPanel');
@@ -392,16 +403,16 @@ function getDgCellCoord(dg, rowIndex, fieldName) {
 
 
 // 设置表格 tr 高度，当表格有tr时才起作用。 但是 样式会被修改掉
-function setDgCellHeight(dg, h) {
+/*function setDgCellHeight(dg, h) {
     var panel =  $(dg).datagrid('getPanel');
     var tr = panel.find('div.datagrid-body tr');
     tr.css('height', h+'px');
-}
-
+}*/
+/*
 function setDgCellHbyStyle(dgId, h) {
     var style = '<style>#'+dgId+' .datagrid-btable tr{height:'+h+'px;}</style>';
     $(body).append(style);
-}
+}*/
 
 /**
  * 取表格中某个单元个的值。使用官方API
@@ -503,11 +514,11 @@ function dcTrimZero(value) {
     var str = Number(value).toFixed(2);
     return dcTrimStringZero(str);
 }
-
+/*
 function dcPrecision(value) {
     var str = Number(value).toFixed(2);
     return parseFloat(str);
-}
+}*/
 
 /**
  * 删除浮点数字符串小数点最后多余的0.若为整数，同时删除小数点。
@@ -593,8 +604,10 @@ function danceSetSchoolName(schoolList, cbId, tbId) {
  * @returns {string}
  */
 function danceFormatterClass(row){
-    return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
-        '<span style="color:#888">' + row['class_no'] + '</span>';
+    //return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
+    //    '<span style="color:#888">' + row['class_no'] + '</span>';
+    return '<span style="color:#888">' + row['class_no'] + '</span>&nbsp;' +
+        '<span style="font-weight:bold">' + row['class_name'] + '</span>';
 }
 
 

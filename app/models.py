@@ -579,6 +579,14 @@ class DanceClass(db.Model):
             ret[rec.id] = rec
         return ret
 
+    @staticmethod
+    def id_records_by(class_ids):
+        records = DanceClass.query.filter(DanceClass.id.in_(class_ids)).all()
+        ret = {}
+        for rec in records:
+            ret[rec.id] = rec
+        return ret
+
     def create_no(self):
         if self.school_id is None:
             raise Exception('Please input school_id first!')
