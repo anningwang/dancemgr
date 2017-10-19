@@ -2278,7 +2278,7 @@ def dance_upgrade_class_modify():
 def dance_upgrade_class_add(obj):
     """
     新增 集体续班 明细。
-    :param obj:
+    输入参数 obj:
         {row: {                 集体续班 基本信息, 字段定义同 UpgradeClass 表
         },
         upgItem: [{             续班明细，字段定义同 UpgClassItem 表
@@ -2289,7 +2289,10 @@ def dance_upgrade_class_add(obj):
             student_name:
             student_id
         }]
-    :return:
+    返回值:
+        errorCode:
+        msg:
+        id:         记录 id
     """
     """判断是否有重名"""
     upg = obj['row']
@@ -2321,7 +2324,7 @@ def dance_upgrade_class_add(obj):
         db.session.add(UpgClassItem(dt))
 
     db.session.commit()
-    return jsonify({'errorCode': 0, 'msg': u'新增成功！'})
+    return jsonify({'errorCode': 0, 'msg': u'新增成功！', 'id': nr.id})
 
 
 @app.route('/dance_upgrade_class_details_get', methods=['POST'])

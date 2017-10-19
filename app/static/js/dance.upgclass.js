@@ -104,7 +104,7 @@ function danceUpgClassDetailInfo( page, url, condition, uid) {
     }
 
     function getDetail() {      // 获取 集体续班 详细信息
-        var cond = {'id': uid, 'page': no, 'rows': 1};
+        var cond = {id: uid, page: no, rows: 1};
         $.extend(cond, condition);
 
         $.ajax({
@@ -262,7 +262,7 @@ function danceUpgClassDetailInfo( page, url, condition, uid) {
         $('#'+upgOldClassName).combobox({   // 原班级名称
             formatter: danceFormatterClass,
             onClick:function (record) {
-                getStudent(record.class_no);
+                getStudent(record.class_id);
                 $('#'+upgOldClassNo).textbox('setValue', record.class_no);
             }
         });
@@ -282,13 +282,13 @@ function danceUpgClassDetailInfo( page, url, condition, uid) {
         });
     }
 
-    function getStudent(classNo) {
+    function getStudent(classId) {
         $.ajax({
             method: 'POST',
             url: '/dance_class_student_get',
             async: true,
             dataType: 'json',
-            data: {class_no: classNo}
+            data: {class_id: classId}
         }).done(function (data) {
             if(data.errorCode === 0) {
                 var arr = [];
