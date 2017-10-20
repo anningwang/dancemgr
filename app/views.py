@@ -1074,7 +1074,7 @@ def dance_class_get():
                      'cost': rec.cost, 'plan_students': rec.plan_students,
                      'cur_students': rec.cur_students, 'is_ended': rec.is_ended, 'remark': rec.remark,
                      'recorder': rec.recorder, 'no': i, 'school_id': rec.school_id,
-                     'stuNum': cnt_dict.get(rec.id, 0)
+                     'stuNum': cnt_dict.get(rec.id, '-')
                      })
         i += 1
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
