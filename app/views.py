@@ -15,6 +15,7 @@ from translate import microsoft_translate
 from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY_TIMEOUT
 from dcglobal import *
 from tools.tools import dc_records_changed
+from sqlalchemy import func
 
 
 @lm.user_loader
@@ -712,7 +713,7 @@ def dance_class_student_get():
     rows = []
     records = DanceStudent.query\
         .join(DanceStudentClass, DanceStudentClass.student_id == DanceStudent.id)\
-        .filter(DanceStudentClass.class_id == class_id, DanceStudentClass.status == u'正常',
+        .filter(DanceStudentClass.class_id == class_id, DanceStudentClass.status == STU_CLASS_STATUS_NORMAL,
                 DanceStudentClass.company_id == g.user.company_id)\
         .join(DanceSchool, DanceSchool.id == DanceStudent.school_id)\
         .add_columns(DanceSchool.school_name, DanceSchool.school_no)\
@@ -1050,9 +1051,20 @@ def dance_class_get():
         .order_by(DanceClass.school_id, DanceClass.id.desc())\
         .limit(page_size).offset(offset).all()
     i = offset + 1
+
+    """ SQL Alchemy 的方法"""
+    cnt = db.session.query(DanceStudentClass.class_id, func.count('class_id')).select_from(DanceStudentClass)\
+        .filter(DanceStudentClass.company_id == g.user.company_id,
+                DanceStudentClass.status == STU_CLASS_STATUS_NORMAL).group_by(DanceStudentClass.class_id).all()
+    cnt_dict = {}
+    for a in cnt:
+        cnt_dict[a[0]] = a[1]
+
     rows = []
     for recs in records:
         rec = recs[0]
+        """查询班级学员数量，暂时不知道如何通过一个SQL查询出来。"""
+        # stu_num = DanceStudentClass.query.filter_by(class_id=rec.id, status=STU_CLASS_STATUS_NORMAL).count()
         rows.append({"id": rec.id, "cno": rec.cno, "school_no": recs[2], "school_name": recs[1],
                      "class_name": rec.class_name, "rem_code": rec.rem_code, "begin_year": rec.begin_year,
                      'class_type': recs[3], 'class_type_id': rec.class_style,
@@ -1061,7 +1073,8 @@ def dance_class_get():
                      'cost_mode': get_class_mode(rec.cost_mode), 'cost_mode_value': rec.cost_mode,
                      'cost': rec.cost, 'plan_students': rec.plan_students,
                      'cur_students': rec.cur_students, 'is_ended': rec.is_ended, 'remark': rec.remark,
-                     'recorder': rec.recorder, 'no': i, 'school_id': rec.school_id
+                     'recorder': rec.recorder, 'no': i, 'school_id': rec.school_id,
+                     'stuNum': cnt_dict.get(rec.id, 0)
                      })
         i += 1
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
