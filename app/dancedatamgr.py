@@ -2294,8 +2294,13 @@ def dance_upgrade_class_add(obj):
         msg:
         id:         记录 id
     """
-    """判断是否有重名"""
     upg = obj['row']
+    if 'old_clsid' not in upg or upg['old_clsid'] == '':
+        return jsonify({'errorCode': 1004, 'msg': u'参数错误！请输入原班级。'})
+    if 'new_clsid' not in upg or upg['new_clsid'] == '':
+        return jsonify({'errorCode': 1004, 'msg': u'参数错误！请输入新班级。'})
+    if 'upgItem' not in upg or len(upg['upgItem']) == 0:
+        return jsonify({'errorCode': 1004, 'msg': u'原班级学员为空，不需要续班！'})
     nr = UpgradeClass(upg)
     db.session.add(nr)
     nr = UpgradeClass.query.filter_by(company_id=g.user.company_id, code=nr.code, school_id=upg['school_id']).first()
