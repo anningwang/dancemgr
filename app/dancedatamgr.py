@@ -2244,6 +2244,7 @@ def dance_upgrade_class_modify():
             if old_r is not None:
                 old_r.status = STU_CLASS_STATUS_UPG
                 db.session.add(old_r)
+                dc_update_stu_num(nr.class_id)
 
             """ 将学员加入新班级"""
             dup = DanceStudentClass.query.filter_by(company_id=g.user.company_id, student_id=data[i]['stu_id']) \
@@ -2252,6 +2253,7 @@ def dance_upgrade_class_modify():
                 new_r = DanceStudentClass({'student_id': data[i]['stu_id'], 'class_id': data[i]['class_id'],
                                            'join_date': upg['upg_date'], 'status': STU_CLASS_STATUS_NORMAL})
                 db.session.add(new_r)
+                dc_update_stu_num(data[i]['class_id'])
         else:
             """ 判断 所在原班级是否存在，存在则需要将状态改变  已续班-->正常 """
             old_r = DanceStudentClass.query.filter_by(company_id=g.user.company_id) \
@@ -2265,12 +2267,14 @@ def dance_upgrade_class_modify():
                 .filter_by(student_id=data[i]['stu_id'], class_id=nr.class_id, status=STU_CLASS_STATUS_NORMAL).first()
             if old_r is not None:
                 db.session.delete(old_r)
+                dc_update_stu_num(nr.class_id)
 
         nr.update(data[i])
         db.session.add(nr)
     for i in change['del']:
         UpgClassItem.query.filter_by(id=old_ids[i]['id']).delete()
 
+    dc_update_stu_num(upg['old_clsid'])
     db.session.commit()
     return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
 
@@ -2324,12 +2328,27 @@ def dance_upgrade_class_add(obj):
             new_r = DanceStudentClass({'student_id': dt['stu_id'], 'class_id': dt['class_id'],
                                        'join_date': upg['upg_date'], 'status': STU_CLASS_STATUS_NORMAL})
             db.session.add(new_r)
+            """更新新班级学员名单"""
+            dc_update_stu_num(dt['class_id'])
         """ 增加续班 基本信息 """
         dt['upg_id'] = nr.id
         db.session.add(UpgClassItem(dt))
+    """更新原班级人数"""
+    dc_update_stu_num(upg['old_clsid'])
 
     db.session.commit()
     return jsonify({'errorCode': 0, 'msg': u'新增成功！', 'id': nr.id})
+
+
+def dc_update_stu_num(class_id):
+    """更新班级学员名单"""
+    cls = DanceClass.query.get(class_id)
+    if cls is None:
+        return -1
+    num = DanceStudentClass.query.filter_by(class_id=class_id, status=STU_CLASS_STATUS_NORMAL).count()
+    cls.cur_students = num
+    db.session.add(cls)
+    return num
 
 
 @app.route('/dance_upgrade_class_details_get', methods=['POST'])

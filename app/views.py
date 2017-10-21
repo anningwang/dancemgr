@@ -830,11 +830,11 @@ def dance_student_modify():
 def dance_class_get():
     """
     查询班级列表
-    :return:
+    返回值:
     """
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
-    print 'dance_class_get: page_size=', page_size, ' page_no=', page_no
+    # print 'dance_class_get: page_size=', page_size, ' page_no=', page_no
     if page_no <= 0:    # 补丁
         page_no = 1
 

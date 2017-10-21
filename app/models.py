@@ -45,7 +45,6 @@ class DanceStudent(db.Model):
     """
     学员表 -- Anningwang
     """
-    # __bind_key__ = 'dance_student'
     id = db.Column(db.Integer, primary_key=True)            # 自动编号，主键  唯一///
     sno = db.Column(db.String(30))             # 学号，一个培训中心内唯一
     name = db.Column(db.String(40, collation='NOCASE'))  # 姓名
@@ -423,8 +422,9 @@ class DanceClass(db.Model):
             self.cost = param['cost']  # 收费标准            12
         if 'plan_students' in param:
             self.plan_students = param['plan_students']  # 计划招收人数        13
-        if 'cur_students' in param:
-            self.cur_students = param['cur_students']  # 当前人数            14
+        # if 'cur_students' in param:
+        #     self.cur_students = param['cur_students']  # 当前人数            14
+        self.refresh_stu_num()
         if 'is_ended' in param:
             self.is_ended = param['is_ended']  # 是否结束      1 -- 结束； 0 -- 未结束       15
         if 'remark' in param:
@@ -480,6 +480,22 @@ class DanceClass(db.Model):
         number = 1 if r is None else int(r.cno.rsplit('-', 1)[1]) + 1
         self.cno = search_sno + ('%03d' % number)
         return self.cno
+
+    def refresh_stu_num(self):
+        """更新班级学员名单"""
+        self.cur_students = DanceStudentClass.query.filter_by(class_id=self.id, status=STU_CLASS_STATUS_NORMAL).count()
+        return self.cur_students
+
+    @staticmethod
+    def dc_update_stu_num(class_id):
+        """更新班级学员名单"""
+        cls = DanceClass.query.get(class_id)
+        if cls is None:
+            return -1
+        num = DanceStudentClass.query.filter_by(class_id=class_id, status=STU_CLASS_STATUS_NORMAL).count()
+        cls.cur_students = num
+        db.session.add(cls)
+        return num
 
     def __repr__(self):
         return '<DanceClass %r>' % self.cno
@@ -2186,3 +2202,221 @@ class UpgClassItem(db.Model):
 
     def __repr__(self):
         return '<UpgradeClass %r>' % self.id
+
+
+class DanceCheckIn(db.Model):
+    """班级考勤表"""
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(25, collation='NOCASE'), index=True, nullable=False)
+    school_id = db.Column(db.Integer, index=True, nullable=False)
+    class_id = db.Column(db.Integer, nullable=False)
+    teacher_id = db.Column(db.Integer, nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+    time = db.Column(db.String(15))
+    total = db.Column(db.SmallInteger)
+    come = db.Column(db.SmallInteger)
+    absent = db.Column(db.SmallInteger)
+    rate = db.Column(db.Float)
+    class_hours = db.Column(db.Float)
+    remark = db.Column(db.String(40))
+    company_id = db.Column(db.Integer, index=True,  nullable=False)
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    create_at = db.Column(db.DateTime, nullable=False)
+    last_t = db.Column(db.DateTime, nullable=False)
+    last_u = db.Column(db.String(20, collation='NOCASE'))
+
+    def __init__(self, param):
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        self.code = param['code'] if 'code' in param else self.create_no()
+        if 'class_id' in param:
+            self.class_id = param['class_id']
+        if 'teacher_id' in param:
+            self.teacher_id = param['teacher_id']
+        if 'date' in param and param['date'] != '':
+            self.date = datetime.datetime.strptime(param['date'], '%Y-%m-%d')
+        if 'time' in param:
+            self.time = param['time']
+        if 'total' in param and param['total'] != '':
+            self.total = param['total']
+        if 'come' in param and param['come'] != '':
+            self.come = param['come']
+        if 'absent' in param and param['absent'] != '':
+            self.absent = param['absent']
+        if 'rate' in param and param['rate'] != '':
+            self.rate = param['rate']
+        if 'class_hours' in param and param['class_hours'] != '':
+            self.class_hours = param['class_hours']
+        if 'remark' in param:
+            self.remark = param['remark']
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
+        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
+        self.create_at = datetime.datetime.today()
+        self.last_t = self.create_at
+        self.last_u = g.user.name
+
+    def update(self, param):
+        if 'teacher_id' in param:
+            self.teacher_id = param['teacher_id']
+        if 'date' in param and param['date'] != '':
+            self.date = datetime.datetime.strptime(param['date'], '%Y-%m-%d')
+        if 'time' in param:
+            self.time = param['time']
+        if 'total' in param:
+            self.total = param['total'] if param['total'] != '' else None
+        if 'come' in param:
+            self.come = param['come'] if param['come'] != '' else None
+        if 'absent' in param:
+            self.absent = param['absent'] if param['absent'] != '' else None
+        if 'rate' in param:
+            self.rate = param['rate'] if param['rate'] != '' else None
+        if 'class_hours' in param:
+            self.class_hours = param['class_hours'] if param['class_hours'] != '' else None
+        if 'remark' in param:
+            self.remark = param['remark']
+        self.last_t = datetime.datetime.today()
+        self.last_u = g.user.name
+
+    def create_no(self):
+        if self.school_id is None:
+            raise Exception('Please input school_id first!')
+        school_no = DanceSchool.get_no(self.school_id)
+        if school_no == -1:
+            raise Exception('school id [%s] error.' % self.school_id)
+        search_no = dc_gen_code(school_no, 'KQ')
+        r = DanceCheckIn.query.filter(DanceCheckIn.code.like('%' + search_no + '%'))\
+            .order_by(DanceCheckIn.id.desc()).first()
+        number = 1 if r is None else int(r.code.rsplit('-', 1)[1]) + 1
+        self.code = search_no + ('%03d' % number)
+        return self.code
+
+    def __repr__(self):
+        return '<CheckIn %r>' % self.id
+
+
+class DanceCheckInItem(db.Model):
+    """班级考勤明细表——考勤本班学员"""
+    id = db.Column(db.Integer, primary_key=True)
+    chk_id = db.Column(db.Integer, index=True, nullable=False)
+    student_id = db.Column(db.Integer, nullable=False)
+    is_attend = db.Column(db.SmallInteger, nullable=False)  # 是否出勤
+    is_usefee = db.Column(db.SmallInteger, nullable=False)  # 是否扣除课时费
+    chk_time = db.Column(db.DateTime)   # 考勤时间
+    fee = db.Column(db.Float)   # 学员课时/次费
+    rest_fee = db.Column(db.Float)  # 剩余课次
+    reason = db.Column(db.String(20, collation='NOCASE'))   # 缺勤原因
+    is_fill = db.Column(db.SmallInteger)  # 是否已补课
+    fill_date = db.Column(db.DateTime)  # 补课日期
+    company_id = db.Column(db.Integer, index=True,  nullable=False)
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    remark = db.Column(db.String(20, collation='NOCASE'))
+    rest_times = db.Column(db.SmallInteger)  # 剩余课次
+
+    def __init__(self, param):
+        self.chk_id = param['chk_id']
+        self.student_id = param['student_id']
+        self.is_attend = param['is_attend']
+        self.is_usefee = param['is_usefee']
+        if 'chk_time' in param and param['chk_time'] != '':
+            self.chk_time = datetime.datetime.strptime(param['chk_time'], '%Y-%m-%d %H:%M')
+        if 'fee' in param:
+            self.fee = param['fee']
+        if 'rest_fee' in param:
+            self.rest_fee = param['rest_fee']
+        if 'reason' in param:
+            self.reason = param['reason']
+        if 'is_fill' in param:
+            self.is_fill = param['is_fill']
+        if 'fill_date' in param and param['fill_date'] != '':
+            self.fill_date = datetime.datetime.strptime(param['fill_date'], '%Y-%m-%d')
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
+        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
+        if 'remark' in param:
+            self.remark = param['remark']
+        if 'rest_times' in param and param['rest_times'] != '':
+            self.rest_times = param['rest_times']
+
+    def update(self, param):
+        self.student_id = param['student_id']
+        self.is_attend = param['is_attend']
+        self.is_usefee = param['is_usefee']
+        if 'chk_time' in param:
+            if param['chk_time'] != '':
+                self.chk_time = datetime.datetime.strptime(param['chk_time'], '%Y-%m-%d %H:%M')
+            else:
+                self.chk_time = None
+        if 'fee' in param:
+            self.fee = param['fee']
+        if 'rest_fee' in param:
+            self.rest_fee = param['rest_fee']
+        if 'reason' in param:
+            self.reason = param['reason']
+        if 'is_fill' in param:
+            self.is_fill = param['is_fill']
+        if 'fill_date' in param:
+            if param['fill_date'] != '':
+                self.fill_date = datetime.datetime.strptime(param['fill_date'], '%Y-%m-%d')
+            else:
+                self.fill_date = None
+        if 'remark' in param:
+            self.remark = param['remark']
+        if 'rest_times' in param and param['rest_times'] != '':
+            self.rest_times = param['rest_times']
+
+    def __repr__(self):
+        return '<CheckInItem %r>' % self.id
+
+
+class DanceCheckInOth(db.Model):
+    """班级考勤明细表——考勤其他班学员"""
+    id = db.Column(db.Integer, primary_key=True)
+    chk_id = db.Column(db.Integer, index=True, nullable=False)
+    student_id = db.Column(db.Integer, nullable=False)
+    is_attend = db.Column(db.SmallInteger, nullable=False)  # 是否出勤
+    is_usefee = db.Column(db.SmallInteger, nullable=False)  # 是否扣除课时费
+    chk_time = db.Column(db.DateTime)   # 考勤时间
+    fee = db.Column(db.Float)   # 学员课时/次费
+    rest_fee = db.Column(db.Float)  # 剩余课次
+    company_id = db.Column(db.Integer, index=True,  nullable=False)
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    remark = db.Column(db.String(20, collation='NOCASE'))
+    rest_times = db.Column(db.SmallInteger)  # 剩余课次
+
+    def __init__(self, param):
+        self.chk_id = param['chk_id']
+        self.student_id = param['student_id']
+        self.is_attend = param['is_attend']
+        self.is_usefee = param['is_usefee']
+        if 'chk_time' in param and param['chk_time'] != '':
+            self.chk_time = datetime.datetime.strptime(param['chk_time'], '%Y-%m-%d %H:%M')
+        if 'fee' in param:
+            self.fee = param['fee']
+        if 'rest_fee' in param:
+            self.rest_fee = param['rest_fee']
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
+        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
+        if 'remark' in param:
+            self.remark = param['remark']
+        if 'rest_times' in param and param['rest_times'] != '':
+            self.rest_times = param['rest_times']
+
+    def update(self, param):
+        self.student_id = param['student_id']
+        self.is_attend = param['is_attend']
+        self.is_usefee = param['is_usefee']
+        if 'chk_time' in param:
+            if param['chk_time'] != '':
+                self.chk_time = datetime.datetime.strptime(param['chk_time'], '%Y-%m-%d %H:%M')
+            else:
+                self.chk_time = None
+        if 'fee' in param:
+            self.fee = param['fee']
+        if 'rest_fee' in param:
+            self.rest_fee = param['rest_fee']
+        if 'remark' in param:
+            self.remark = param['remark']
+        if 'rest_times' in param and param['rest_times'] != '':
+            self.rest_times = param['rest_times']
+
+    def __repr__(self):
+        return '<CheckInOth %r>' % self.id

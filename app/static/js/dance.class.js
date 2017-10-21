@@ -129,12 +129,13 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
             {field: 'cno', title: '班级编号', width: 140, align: 'center'},
             {field: 'school_name', title: '分校名称', width: 140, align: 'center'},
             {field: 'class_name', title: '班级名称', width: 160, align: 'center'},
-            {field: 'begin_year', title: '开班年份', width: 70, align: 'center'},
-            {field: 'class_type', title: '班级类型', width: 70, align: 'center'},
-            {field: 'class_style', title: '班级形式', width: 100, align: 'center'},
+            {field: 'begin_year', title: '开班年份', width: 60, align: 'center'},
+            {field: 'cur_students', title: '人数', width: 50, align: 'center'},
+            {field: 'class_type', title: '班级类型', width: 60, align: 'center'},
+            {field: 'class_style', title: '班级形式', width: 60, align: 'center'},
             {field: 'teacher', title: '授课老师姓名', width: 100, align: 'center'},
-            {field: 'cost_mode', title: '收费模式', width: 100, align: 'center'},
-            {field: 'cost', title: '收费标准', width: 70, align: 'center'},
+            {field: 'cost_mode', title: '收费模式', width: 60, align: 'center'},
+            {field: 'cost', title: '收费标准', width: 60, align: 'center'},
             {field: 'recorder', title: '记录员', width: 70, align: 'center'}
         ]],
         onLoadSuccess: function () {
@@ -312,7 +313,7 @@ function dcOpenDialogNewClass(id, title, dgId, uuid, icon){
         },
         onBeforeClose: function () {
             if (dgId && document.getElementById(dgId)) {
-                $('#'+dgId).datagrid('load');
+                $('#'+dgId).datagrid('reload');
             }
             $("#"+id).dialog('destroy');
         }
