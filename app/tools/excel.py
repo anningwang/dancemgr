@@ -6,7 +6,7 @@ from app.models import DanceStudent, DanceClass, DanceStudentClass, DanceSchool,
     DcFeeItem, DanceOtherFee, DanceClassReceipt, DcTeachingMaterial, DanceTeaching, DcClassType, DanceTeacher,\
     DanceTeacherEdu, DanceTeacherWork, DcCommon, DanceClassRoom
 from flask import g
-from dcglobal import *
+from app.dcglobal import *
 
 progressbar = {}         # 进度条的值  用户id(key) = {value: 60, sheet: u'收费单'}
 
