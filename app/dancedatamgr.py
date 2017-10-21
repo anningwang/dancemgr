@@ -5,7 +5,7 @@ from app import app, db
 from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent, DcTeachingMaterial,\
     DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass, DanceStudentClass, DcShowRecpt, DcCommFeeMode,\
     DcShow, DcShowFeeCfg, DcShowDetailFee, DcClassType, DanceTeacher, DanceTeacherEdu, DanceTeacherWork, DcCommon,\
-    DanceCourse, DanceCourseItem, DanceClassRoom, UpgradeClass, UpgClassItem
+    DanceCourse, DanceCourseItem, DanceClassRoom, UpgradeClass, UpgClassItem, DanceCheckIn
 from views import dance_student_query
 import json
 import datetime
@@ -2480,6 +2480,66 @@ def dance_upgrade_class_details_extras():
 @login_required
 def dance_upgrade_class_query():
     return dance_student_query()
+
+
+@app.route('/dance_class_check_in_get', methods=['POST'])
+@login_required
+def dance_class_check_in_get():
+    """
+    查询 班级考勤 列表
+    :return:
+    """
+    page_size = int(request.form['rows'])
+    page_no = int(request.form['page'])
+    if page_no <= 0:    # 补丁
+        page_no = 1
+
+    dcq = DanceCheckIn.query
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(DanceCheckIn.school_id.in_(school_id_intersection))
+
+    dcq = dcq.join(DanceTeacher, DanceTeacher.id == DanceCheckIn.teacher_id)
+    if 'name' in request.form and request.form['name'] != '':
+        name = request.form['name']
+        if name.encode('UTF-8').isalpha():
+            dcq = dcq.filter(DanceTeacher.rem_code.like('%' + name + '%'))
+        else:
+            dcq = dcq.filter(DanceTeacher.name.like('%' + name + '%'))
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.join(DanceSchool, DanceSchool.id == DanceCheckIn.school_id)\
+        .join(DanceClass, DanceClass.id == DanceCheckIn.class_id)\
+        .add_columns(DanceSchool.school_name, DanceTeacher.name, DanceClass.class_name)\
+        .order_by(DanceCheckIn.id.desc()).limit(page_size).offset(offset).all()
+    i = offset + 1
+    rows = []
+    for dcr in records:
+        rec = dcr[0]
+        rows.append({'no': i, 'id': rec.id, "code": rec.code, 'recorder': rec.recorder,
+                     'date': datetime.datetime.strftime(rec.date, '%Y-%m-%d'),
+                     'create_at': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d'),
+                     'last_t': datetime.datetime.strftime(rec.create_at, '%Y-%m-%d %H:%M'),
+                     'last_u': rec.last_u, 'remark': rec.remark, 'time': rec.time,
+                     'total': rec.total, 'come': rec.come, 'absent': rec.absent, 'rate': rec.rate,
+                     'class_hours': rec.class_hours,
+                     'school_name': dcr[1], 'teacher_name': dcr[2], 'class_name': dcr[3]
+                     })
+        i += 1
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_class_check_in_query', methods=['POST'])
+@login_required
+def dance_class_check_in_query():
+    return dance_teacher_query()
 
 
 @app.route('/dance_progressbar', methods=['POST'])

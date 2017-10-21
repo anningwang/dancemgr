@@ -7,7 +7,6 @@
 var danceModuleName = 'danceStudent';       // 所在模块
 var danceModuleTitle = '';                  // 导入、导出 窗口标题
 
-//(function($){
 
 /**
  * danceAddTab       增加tab标签
@@ -2171,13 +2170,13 @@ function danceAddTabFeeStudyDatagrid(title, tableId, condition) {
         });
 
         var opts = {
-            'queryText': '姓名：',
-            'queryPrompt': '姓名拼音首字母查找',
-            'who': 'DanceReceipt',
-            'danceModuleName': 'DanceReceipt',
-            'addEditFunc': danceAddReceiptStudyDetailInfo,
-            'page': '/static/html/_receipt_study.html',     // 上述函数的参数
-            'columns': [[
+            queryText: '姓名：',
+            queryPrompt: '姓名拼音首字母查找',
+            who: 'DanceReceipt',
+            danceModuleName: 'DanceReceipt',
+            addEditFunc: danceAddReceiptStudyDetailInfo,
+            page: '/static/html/_receipt_study.html',     // 上述函数的参数
+            columns: [[
                 {field: 'ck', checkbox:true },
                 //{field: 'id', hidden:true },
                 {field: 'receipt_no', title: '收费单号', width: 140, align: 'center'},
@@ -2220,7 +2219,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
 
     $(dg).datagrid({
         // title: '学员列表',
-        iconCls: 'icon-a_detail',
+        // iconCls: 'icon-a_detail',
         fit: true,
         url: url + '_get',
         fitColumns: true,
@@ -2256,7 +2255,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
             {iconCls: 'icon-search', text:"查询", handler: function () {
                 var cond = {};
                 $.extend(cond, $(dg).datagrid('options').queryParams);
-                cond['name'] = dance_condition;
+                cond.name = dance_condition;
                 $(dg).datagrid('load', cond);
             }}, '-',
             {text: '<input id=' + sbId + '>'}
@@ -2280,12 +2279,12 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
     });
 
     autoComplete(dance_condition,'');
-    function autoComplete (newValue,oldValue) {
+    function autoComplete (newValue) {  // ,oldValue
         //console.log('newValue=' + newValue + ' oldValue=' + oldValue);
         dance_condition = $.trim(newValue);
         var queryCondition = {};
         $.extend(queryCondition, $(dg).datagrid('options').queryParams);
-        queryCondition['name'] = dance_condition;
+        queryCondition.name = dance_condition;
         $.post(url+'_query',queryCondition, function(data){
             $('#'+ccId).combobox('loadData', data);
         },'json');
@@ -2374,4 +2373,6 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
     }
 }
 
-//}(jQuery));
+// ---------------------------------------------------------------------------------------------------------------------
+// danceOpenCommonDg(tableId, opts);
+// ---------------------------------------------------------------------------------------------------------------------

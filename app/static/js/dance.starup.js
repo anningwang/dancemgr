@@ -15,7 +15,8 @@ $(function() {
                 30: {fn: danceAddTabFeeStudyDatagrid},
                 40: {fn: danceAddTabFeeShowDatagrid},
                 50: {fn: danceAddTabFeeOtherDatagrid},
-                70: {fn: danceAddTabUpgClass}
+                70: {fn: danceAddTabUpgClass},
+                80: {fn: danceAddTabClassCheckIn}
             };
 
             if(root.id in entrance){

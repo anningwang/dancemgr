@@ -29,13 +29,13 @@ function danceAddTabCourse(title, tableId, condition) {
 
         var module = 'dance_course';
         var opts = {
-            'queryText': '姓名：',
-            'queryPrompt': '姓名拼音首字母查找',
-            'who': module,
-            'danceModuleName':module,
-            'addEditFunc': danceTeacherDetailInfo,
-            'page': '/static/html/_teacher_details.html',     // 上述函数的参数
-            'columns': [[
+            queryText: '姓名：',
+            queryPrompt: '姓名拼音首字母查找',
+            who: module,
+            danceModuleName:module,
+            addEditFunc: danceTeacherDetailInfo,
+            page: '/static/html/_teacher_details.html',     // 上述函数的参数
+            columns: [[
                 {field: 'time', title: '时间', width: 50, align: 'center', fixed:true},
                 {field: 'w1', title: '周一', width: 95, align: 'center'},
                 {field: 'w2', title: '周二', width: 95, align: 'center'},
@@ -866,7 +866,7 @@ function danceAddTabCourseList(title, tableId, condition) {
             ]]
         };
 
-        danceOpenCommonDg(tableId, opts)
+        danceOpenCommonDg(tableId, opts);
     }
     
 }

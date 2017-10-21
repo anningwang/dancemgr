@@ -622,3 +622,69 @@ function dcOpenDialogNewClassType(id, _title, _width, _height, _icon){
         });
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------------------------------------------------
+
+/**
+ * 添加或者打开 班级考勤 Tab页
+ * @param title             新打开/创建 的 Tab页标题
+ * @param tableId           Tab页内的Datagrid表格ID
+ * @param condition         查询条件
+ */
+function danceAddTabClassCheckIn(title, tableId, condition) {
+    var parentDiv = $('#danceTabs');
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+        $('#'+tableId).datagrid('load', condition);
+    } else {
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
+        $(parentDiv).tabs('add', {
+            title: title,
+            content: content,
+            closable: true
+        });
+
+        var module = 'dance_class_check_in';
+        var opts = {
+            queryText: '姓名：',
+            queryPrompt: '姓名拼音首字母查找',
+            who: module,
+            danceModuleName: module,
+            url: '/'+module,        // 从服务器获取数据的url
+            cond: condition,        // 表格数据查询参数
+            addEditFunc: danceClassCheckInInfo,
+            page: '/static/html/_xxx.html',     // 上述函数的参数
+            funcOpts: {
+                title: title
+            },
+            columns: [[
+                {field: 'ck', checkbox:true },
+                {field: 'code', title: '考勤编号', width: 140, align: 'center'},
+                {field: 'school_name', title: '分校名称', width: 110, align: 'center'},
+                {field: 'date', title: '上课日期', width: 140, align: 'center'},
+                {field: 'class_name', title: '班级名称', width: 80, align: 'center'},
+                {field: 'teacher_name', title: '老师名称', width: 90, align: 'center'},
+                {field: 'time', title: '上课时间', width: 80, align: 'center'},
+                {field: 'total', title: '班级总人数', width: 80, align: 'center'},
+                {field: 'come', title: '出勤人数', width: 80, align: 'center'},
+                {field: 'absent', title: '缺勤人数', width: 80, align: 'center'},
+                {field: 'rate', title: '出勤率', width: 80, align: 'center'},
+                {field: 'class_hours', title: '上课时长', width: 80, align: 'center'},
+                {field: 'remark', title: '备注', width: 90, align: 'center'},
+                {field: 'recorder', title: '录入员', width: 90, align: 'center'}
+            ]]
+        };
+
+        danceOpenCommonDg(tableId, opts);
+    }
+}
+
+function danceClassCheckInInfo(param) {
+    var wId = 'dcClassCheckInWindow';
+    if(param.uuid > 0) {
+        dcOpenDialogCourse(wId+'-Modify', '编辑/查看 '+param.title, param.dgId, param.uuid, 'icon-save');
+    } else{
+        dcOpenDialogCourse(wId+'-New', '增加 '+param.title, param.dgId, 0, 'icon-save');
+    }
+}
