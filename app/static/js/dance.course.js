@@ -1150,6 +1150,7 @@ function danceOpenCommonDg(datagridId, options) {
             text:'导入', iconCls: 'icon-page_excel',
             handler:function(){
                 danceModuleName = options.danceModuleName;
+                danceModuleTitle = options.danceModuleTitle;
                 $(document.body).append('<div id="danceCommWin"></div>');
                 $('#danceCommWin').panel({
                     href:'/static/html/_import_win.html',
@@ -1162,6 +1163,7 @@ function danceOpenCommonDg(datagridId, options) {
             text:'导出', iconCls:' icon-page_white_excel ',
             handler:function(){
                 danceModuleName = options.danceModuleName;
+                danceModuleTitle = options.danceModuleTitle;
                 $(document.body).append('<div id="danceCommWin"></div>');
                 $('#danceCommWin').panel({
                     href:'/static/html/_export_win.html'

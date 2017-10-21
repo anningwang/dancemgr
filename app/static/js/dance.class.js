@@ -651,6 +651,7 @@ function danceAddTabClassCheckIn(title, tableId, condition) {
             queryPrompt: '姓名拼音首字母查找',
             who: module,
             danceModuleName: module,
+            danceModuleTitle: title,          // 导入、导出 窗口 title
             url: '/'+module,        // 从服务器获取数据的url
             cond: condition,        // 表格数据查询参数
             addEditFunc: danceClassCheckInInfo,

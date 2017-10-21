@@ -213,8 +213,8 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
 
             $('#'+pager).pagination({total: data.total, pageNumber:no===-2?data.row.no:no });
 
-            dgLoadData(dgEdu, data['edu']);
-            dgLoadData(dgWork, data['work']);
+            DancedgLoadData(dgEdu, data['edu']);
+            DancedgLoadData(dgWork, data['work']);
         }).fail(function(jqXHR, textStatus, errorThrown) {
             var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
             $.messager.alert('提示', msg, 'info');
@@ -222,8 +222,8 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
     }
 
     function newTeacher() {
-        dgLoadData(dgWork, []);
-        dgLoadData(dgEdu, []);
+        DancedgLoadData(dgWork, []);
+        DancedgLoadData(dgEdu, []);
 
         // 设置时间
         var curr_time = new Date();
