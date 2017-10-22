@@ -167,7 +167,7 @@ def dance_del_data():
             if who == 'DanceUser' and rec.is_creator == 1:
                 return jsonify({'errorCode': 500, 'msg': u'账号[%s]为初始管理员，不能删除！' % rec.name})
             elif who == 'DanceStudent':
-                del_student_class(rec.sno)      # 删除学员的报班信息
+                del_student_class(rec.id)      # 删除学员的报班信息
             db.session.delete(rec)
 
     db.session.commit()
@@ -190,13 +190,13 @@ def dc_del_receipt(ids):
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 
 
-def del_student_class(sno):
+def del_student_class(student_id):
     """
     根据学员编号，删除该学员的所有报班信息。 用于删除学员的 关联删除。 未做最后的数据库提交 commit
-    :param sno:         学员编号
+    :param student_id:         学员id
     :return:
     """
-    records = DanceStudentClass.query.filter_by(company_id=g.user.company_id).filter_by(student_id=sno).all()
+    records = DanceStudentClass.query.filter_by(company_id=g.user.company_id).filter_by(student_id=student_id).all()
     for rec in records:
         db.session.delete(rec)
 
@@ -812,7 +812,8 @@ def dance_student_modify():
                     db.session.add(rec)
         else:
             # 新增
-            stucls = DanceStudentClass.query.filter_by(company_id=g.user.company_id).filter_by(student_id=stu.sno)\
+            stucls = DanceStudentClass.query.filter_by(company_id=g.user.company_id)\
+                .filter_by(student_id=student['id'])\
                 .filter_by(class_id=cls['class_id']).first()
             if stucls is None:
                 stucls = DanceStudentClass(cls)
