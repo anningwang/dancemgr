@@ -1822,7 +1822,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
 
         var oth = $('#'+dgOtherFee).datagrid('getRows');
         for(i = 0; i < oth.length; i++){
-            if (oth[i].tm_name){
+            if (oth[i].fee_item){
                 recpt.other_fee.push(oth[i]);
             }
         }

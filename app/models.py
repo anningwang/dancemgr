@@ -431,7 +431,6 @@ class DanceClass(db.Model):
             self.remark = param['remark']  # 备注         16
         if 'school_id' in param:
             self.school_id = int(param['school_id'])
-        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
 
     @staticmethod
     def get_class_id_map():
@@ -541,8 +540,6 @@ class DanceSchool(db.Model):
         self.company_id = int(param['company_id']) if 'company_id' in param else g.user.company_id
 
     def update_data(self, param):
-        if 'school_no' in param:
-            self.school_no = param['school_no']         # 分校编号
         if 'school_name' in param:
             self.school_name = param['school_name']      # 分校名称
         if 'address' in param:
@@ -559,10 +556,6 @@ class DanceSchool(db.Model):
             self.manager_phone = param['manager_phone']  # 负责人手机
         if 'remark' in param:
             self.remark = param['remark']  # 备注
-        if 'recorder' in param:
-            self.recorder = param['recorder']  # 录入员
-        if 'company_id' in param:
-            self.company_id = int(param['company_id'])
 
     def create_no(self):
         r = DanceSchool.query.filter_by(company_id=g.user.company_id).order_by(DanceSchool.id.desc()).first()
@@ -704,8 +697,6 @@ class DanceUser(db.Model, UserMixin):
             self.phone = param['phone']      # 联系电话 05
         if 'role' in param:
             self.role_id = param['role_id']        # 所属角色 06
-        if 'recorder' in param:
-            self.recorder = param['recorder']    # 录入员 08
         self.is_logged = 0 if 'is_logged' not in param else param['is_logged']
 
     def check_logged(self):
@@ -904,7 +895,6 @@ class DanceReceipt(db.Model):
             self.counselor = param['counselor']
         if 'remark' in param:
             self.remark = param['remark']
-        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
         if 'fee_mode' in param:
             self.fee_mode = param['fee_mode']
         if 'paper_receipt' in param:
@@ -1107,6 +1097,18 @@ class DanceOtherFee(db.Model):
         if 'remark' in param:
             self.remark = param['remark']
 
+    def update(self, param):
+        if 'class_id' in param:
+            self.class_id = param['class_id']
+        if 'fee_item_id' in param:
+            self.fee_item_id = param['fee_item_id']
+        if 'summary' in param:
+            self.summary = param['summary']
+        if 'real_fee' in param:
+            self.real_fee = param['real_fee']
+        if 'remark' in param:
+            self.remark = param['remark']
+
     def __repr__(self):
         return '<DanceOtherFee %r>' % self.id
 
@@ -1201,7 +1203,6 @@ class DcTeachingMaterial(db.Model):
             self.is_use = param['is_use']
         if 'remark' in param:
             self.remark = param['remark']
-        self.recorder = g.user.name if 'recorder' not in param else param['recorder']
         if 'tm_type' in param:
             self.tm_type = param['tm_type']
 
