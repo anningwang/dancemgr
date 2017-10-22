@@ -366,9 +366,7 @@ function danceAddStudentDetailInfo( page, url, condition, uid) {
     }
 
     function newStudent() {
-        for(var i = 0; i < 3; i++ ) {
-            $('#'+dgStu_class).datagrid('appendRow', {});
-        }
+        danceDgLoadData(dgStu_class, []);
 
         //设置时间
         var curr_time = new Date();

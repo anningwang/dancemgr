@@ -695,9 +695,10 @@ def dance_student_details_extras():
     :return:
     {
         classlist: [{       班级列表
-            class_id:       编号  -- 准备修改为真正的id ***
+            class_id:       id
             class_name:
-            class_type:     班级类型
+            class_type:     班级类型 value
+            class_type_text:        班级类型名称
             class_no:       编号
         }]
         schoollist: [{      分校列表
@@ -729,12 +730,14 @@ def dance_student_details_extras():
     if len(school_id_intersection) == 0:
         return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
     dcq = dcq.filter(DanceClass.school_id.in_(school_id_intersection))
-    records = dcq.order_by(DanceClass.id.desc()).all()
+    records = dcq.join(DcClassType, DcClassType.id == DanceClass.class_type).add_columns(DcClassType.name)\
+        .order_by(DanceClass.class_type).all()
 
     classes = []
-    for cls in records:
+    for rec in records:
+        cls = rec[0]
         classes.append({'class_id': cls.id, 'class_name': cls.class_name, 'class_type': cls.class_type,
-                        'class_no': cls.cno})
+                        'class_no': cls.cno, 'class_type_text': rec[1]})
 
     schoollist = []
     school_rec = DanceSchool.query.filter(DanceSchool.id.in_(school_id_intersection)).all()
@@ -817,7 +820,7 @@ def dance_student_modify():
                 .filter_by(class_id=cls['class_id']).first()
             if stucls is None:
                 stucls = DanceStudentClass(cls)
-                stucls.student_id = stu.sno
+                stucls.student_id = stu.id
             else:
                 stucls.update(cls)
             db.session.add(stucls)
