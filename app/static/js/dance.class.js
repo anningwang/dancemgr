@@ -503,7 +503,7 @@ function dcOpenDialogNewClass(id, title, dgId, uuid, icon){
         }
 
         var c_cost = $('#'+classCost).textbox('getValue');
-        if(!c_cost || isNaN(c_cost)) {
+        if(!c_cost || isNaN(parseFloat(c_cost))) {
             $.messager.alert({title:'提示', msg:'请输入学费收费标准！请输入数值。', icon: 'info',
                 fn:function () {
                     $('#'+classType).textbox('textbox').focus();

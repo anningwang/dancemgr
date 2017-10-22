@@ -935,7 +935,7 @@ function dcOpenDialogCourse(id, title, dgId, uuid, icon){
         },
         onBeforeClose: function () {
             if (document.getElementById(dgId)) {
-                $('#'+dgId).datagrid('load');
+                $('#'+dgId).datagrid('reload');
             }
             $("#"+id).dialog('destroy');
         }
@@ -1077,6 +1077,7 @@ function danceOpenCommonDg(datagridId, options) {
             handler:function(){
                 var cond = $(dg).datagrid('options').queryParams;
                 var param = {page: options.page, url: url, cond: cond, dgId: datagridId, uuid: 0};
+                if(options.funcOpts){$.extend(param, options.funcOpts);}
                 options.addEditFunc(param);
             }}, {iconCls:'icon-edit', text:"编辑/查看",  ///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             handler:function(){
@@ -1087,6 +1088,7 @@ function danceOpenCommonDg(datagridId, options) {
                 } else {
                     var cond = $(dg).datagrid('options').queryParams;
                     var param = {page: options.page, url: url, cond: cond, dgId: datagridId, uuid: row[0].id};
+                    if(options.funcOpts){$.extend(param, options.funcOpts);}
                     options.addEditFunc(param);
                 }
             }},
@@ -1103,9 +1105,9 @@ function danceOpenCommonDg(datagridId, options) {
         columns: options.columns,
         onDblClickCell: function (index) {
             var rows = $(dg).datagrid('getRows');
-            var row = rows[index];
-            var cond = $(dg).datagrid('options').queryParams;
-            var param = {page: options.page, url: url, cond: cond, dgId: datagridId, uuid: row.id};
+            var param = {page: options.page, url: url, cond: $(dg).datagrid('options').queryParams,
+                dgId: datagridId, uuid: rows[index].id};
+            if(options.funcOpts){$.extend(param, options.funcOpts);}
             options.addEditFunc(param);
         }
     });

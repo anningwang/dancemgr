@@ -1590,6 +1590,26 @@ def dance_class_room_get():
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
 
 
+@app.route('/dance_class_room_query', methods=['POST'])
+@login_required
+def dance_class_room_query():
+    dcq = DanceClassRoom.query.filter_by(company_id=g.user.company_id)
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    dcq = dcq.filter(DanceClassRoom.school_id.in_(school_ids))
+    if 'condition' in request.form and request.form['condition'] != '':
+        name = request.form['condition']
+        if name.encode('UTF-8').isalpha():
+            dcq = dcq.filter(DanceClassRoom.rem_code.like('%' + name + '%'))
+        else:
+            dcq = dcq.filter(DanceClassRoom.name.like('%' + name + '%'))
+
+    records = dcq.all()
+    ret = []
+    for r in records:
+        ret.append({'value': r.name, 'text': r.name})
+    return jsonify(ret)
+
+
 @app.route('/dc_comm_fee_mode_update', methods=['POST'])
 @login_required
 def dc_comm_fee_mode_update():

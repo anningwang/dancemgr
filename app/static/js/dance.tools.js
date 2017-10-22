@@ -574,7 +574,7 @@ function danceParser(s){
 
 // datagrid methods
 ///////////////////////-------------------------------------------------------------------------------------------------
-function DancedgLoadData(dgId, data, num) {
+function DanceDgLoadData(dgId, data, num) {
     num = num || 3;
     var len = data.length;
     for(var i = 0; i< num - len; i++){

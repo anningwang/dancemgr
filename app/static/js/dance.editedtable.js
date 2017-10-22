@@ -24,18 +24,13 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
     var btnUndo = 'undo' + datagridId;      // Undo button ID
     var btnAdd = 'add' + datagridId;        // Add button ID
     var btnSearch = 'search' + datagridId;  // Search button ID
-
-    //var defaultSelField = 'school_name';     // 编辑表格时，默认选择的列
-    //var fieldValidate = {'school_name': checkNotEmpty};     // 需要验证的字段
-    var fieldValidate = options.fieldValidate;
+    var fieldValidate = options.fieldValidate;  // 需要验证的字段
 
     var BTN_STATUS = {  EDIT: 1,  UNDO: 2,  SAVE: 3 };      // 状态机 EDIT<-> UNDO
     var dance_condition = '';               // 主datagrid表查询条件
 
 
     $(dg).datagrid({
-        // title: '分校信息',
-        // iconCls: 'icon-a_detail',
         fit: true,
         fitColumns: true,
         pagination: true,   // True to show a pagination toolbar on datagrid bottom.
@@ -116,8 +111,6 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
 
     var pager = dg.datagrid('getPager');
     $(pager).pagination({
-        //pageSize: _pageSize,//每页显示的记录条数，默认为10
-        //pageList: [20, 30, 40, 50],//可以设置每页记录条数的列表
         beforePageText: '第',//页数文本框前显示的汉字
         afterPageText: '页, 共 {pages} 页',
         displayMsg: '当前记录 {from} - {to} , 共 {total} 条记录',
@@ -125,9 +118,6 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
             $(dg).datagrid('loading');  // 打开等待div
             console.log('pageNo=' + pageNumber + " pageSize=" + pageSize);
             // 改变opts.pageNumber和opts.pageSize的参数值，用于下次查询传给数据层查询指定页码的数据
-            //var gridOpts = $(dg).datagrid('options');
-            //gridOpts.pageNumber = pageNumber;
-            //gridOpts.pageSize = pageSize;
             var pagerOpts = $(pager).pagination('options');
             pagerOpts.pageNumber = pageNumber;
             pagerOpts.pageSize = pageSize;

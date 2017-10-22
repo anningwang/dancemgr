@@ -25,13 +25,14 @@ function danceAddTabTeacher(title, tableId, condition) {
 
         var module = 'dance_teacher';
         var opts = {
-            'queryText': '姓名：',
-            'queryPrompt': '姓名拼音首字母查找',
-            'who': module,
-            'danceModuleName':module,
-            'addEditFunc': danceTeacherDetailInfo,
-            'page': '/static/html/_teacher_details.html',     // 上述函数的参数
-            'columns': [[
+            queryText: '姓名：',
+            queryPrompt: '姓名拼音首字母查找',
+            who: module,
+            danceModuleName:module,
+            danceModuleTitle: title,          // 导入、导出 窗口 title
+            addEditFunc: danceTeacherDetailInfo,
+            page: '/static/html/_teacher_details.html',     // 上述函数的参数
+            columns: [[
                 {field: 'ck', checkbox:true },
                 {field: 'school_name', title: '分校名称', width: 110, align: 'center'},
                 {field: 'teacher_no', title: '员工与老师编号', width: 140, align: 'center'},
@@ -213,8 +214,8 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
 
             $('#'+pager).pagination({total: data.total, pageNumber:no===-2?data.row.no:no });
 
-            DancedgLoadData(dgEdu, data['edu']);
-            DancedgLoadData(dgWork, data['work']);
+            DanceDgLoadData(dgEdu, data['edu']);
+            DanceDgLoadData(dgWork, data['work']);
         }).fail(function(jqXHR, textStatus, errorThrown) {
             var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
             $.messager.alert('提示', msg, 'info');
@@ -222,8 +223,8 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
     }
 
     function newTeacher() {
-        DancedgLoadData(dgWork, []);
-        DancedgLoadData(dgEdu, []);
+        DanceDgLoadData(dgWork, []);
+        DanceDgLoadData(dgEdu, []);
 
         // 设置时间
         var curr_time = new Date();
