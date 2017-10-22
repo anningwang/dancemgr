@@ -794,7 +794,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                         }
                     }
                     var nd = {class_name: item.class_name, class_no: item.class_no, class_id:item.class_id,
-                        cost_mode: item.cost_mode, cost:item.cost};
+                        cost_mode: item.cost_mode, cost:item.cost, cost_mode_text: getClassCostMode(item.cost_mode)};
                     if (idx !== null) {
                         dgStudyFeeEndEditing();
                         dg.datagrid('updateRow', {index:idx, row:nd});
@@ -1697,9 +1697,10 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
         row['class_name'] = record['class_name'];
         row.class_id = record.class_id;
         row.cost_mode = record.cost_mode;
+        row.cost_mode_text = getClassCostMode(row.cost_mode);
         row.cost = record.cost;
 
-        setDgCellText(dg, edIndexStudyFee, 'cost_mode', row.cost_mode);
+        setDgCellText(dg, edIndexStudyFee, 'cost_mode', row.cost_mode_text);
         setDgCellText(dg, edIndexStudyFee, 'cost', row.cost);
 
         var ed = dg.datagrid('getEditor', {index:edIndexStudyFee,field:'term'});
@@ -1983,3 +1984,6 @@ function danceAddTabFeeStudyDatagrid(title, tableId, condition) {
     }
 }
 
+function getClassCostMode(val) {
+    return  val === 1 ? '按课次' : '按课时';
+}

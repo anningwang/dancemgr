@@ -482,6 +482,7 @@ def dance_receipt_study_details_get():
                               'real_fee': c.real_fee, 'arrearage': c.arrearage, 'remark': c.remark,
                               'class_no': cf[1], 'class_id': cf[5],
                               'discRateText': str(c.discount_rate*100)+'%' if c.discount_rate is not None else '',
+                              'cost_mode_text': get_class_mode(cf[3])
                               })
     """ 查询 教材费 """
     teachfee = DanceTeaching.query.filter_by(receipt_id=r.id)\
@@ -505,8 +506,8 @@ def dance_receipt_study_details_get():
                       'tm_unit': tf[3], 'tm_price_sell': tf[4]})
 
     """ 查询 其他费 """
-    othfee = DanceOtherFee.query.filter_by(receipt_id=r.id).join(DcFeeItem, DcFeeItem.id == DanceOtherFee.fee_item_id).\
-        add_columns(DcFeeItem.fee_item).all()
+    othfee = DanceOtherFee.query.filter_by(receipt_id=r.id).join(DcFeeItem, DcFeeItem.id == DanceOtherFee.fee_item_id)\
+        .add_columns(DcFeeItem.fee_item).all()
     other_fee = []
     for of in othfee:
         o = of[0]
@@ -529,7 +530,7 @@ def dance_receipt_study_details_get():
     cls = []
     for rec in records:
         cls.append({'class_id': rec[1], 'class_no': rec[2], 'class_name': rec[3],
-                    'cost_mode': rec[4], 'cost': rec[5]})
+                    'cost_mode': rec[4], 'cost': rec[5], 'cost_mode_text': get_class_mode(rec[4])})
 
     return jsonify({"total": total, "row": row, 'errorCode': 0, 'msg': 'ok', 'class_receipt': class_receipt,
                     'teach_receipt': teach, 'other_fee': other_fee, 'cls': cls})

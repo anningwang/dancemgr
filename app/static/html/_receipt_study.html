@@ -99,7 +99,11 @@
 					    }
 				    }
 			        ">班级名称</th>
-                <th data-options="field:'cost_mode',width:70,align:'center'">收费模式</th>
+                <th data-options="field:'cost_mode',width:70,align:'center',
+                formatter:function(value,row){
+                    return row.cost_mode_text;
+                }
+                ">收费模式</th>
                 <th data-options="field:'cost',width:70,align:'center'">收费标准</th>
                 <th data-options="field:'term',width:70,align:'center',editor: {
                         type:'numberbox',
