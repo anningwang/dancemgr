@@ -90,12 +90,12 @@
 				        type:'combobox',
 						options:{
 						    editable:false,
-						    // panelHeight:'auto',
+						    panelHeight:'auto',
 							valueField:'class_no',
 							textField:'class_name',
 							panelWidth: 260,
-							formatter: formatItem,
-							groupField:'class_type'
+							formatter: danceFormatterClass,
+							groupField:'class_type_text'
 					    }
 				    }
 			        ">班级名称</th>
@@ -239,11 +239,6 @@
 <div id="mmOth" class="easyui-menu"></div>
 
 <script type="text/javascript">
-
-    function formatItem(row){
-        return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
-                '<span style="color:#888">' + row['class_no'] + '</span>';
-    }
 
     function cellStyler(value,row,index){
         if (value >= 0 && index === 3){

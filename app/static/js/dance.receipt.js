@@ -25,13 +25,14 @@ function danceAddTabFeeShowDatagrid(title, tableId, condition) {
         });
 
         var opts = {
-            'queryText': '姓名：',
-            'queryPrompt': '姓名拼音首字母查找',
-            'who': 'DcShowRecpt',
-            'danceModuleName': 'DcShowRecpt',
-            'addEditFunc': danceAddReceiptShowDetailInfo,
-            'page': '/static/html/_receipt_show.html',     // 上述函数的参数
-            'columns': [[
+            queryText:'姓名：',
+            queryPrompt: '姓名拼音首字母查找',
+            who: 'DcShowRecpt',
+            danceModuleName: 'DcShowRecpt',
+            danceModuleTitle: title,          // 导入、导出 窗口 title
+            addEditFunc: danceAddReceiptShowDetailInfo,
+            page: '/static/html/_receipt_show.html',     // 上述函数的参数
+            columns: [[
                 {field: 'ck', checkbox:true },
                 {field: 'show_recpt_no', title: '演出收费单编号', width: 160, align: 'center'},
                 {field: 'show_name', title: '演出名称', width: 180, align: 'center'},
@@ -220,13 +221,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
      */
     function newReceipt() {
         var num = 3;
-        var i;
-
-        $('#'+dgShow).datagrid('loadData', []);
-        for(i = 0; i <num; i++ ) {
-            $('#'+dgShow).datagrid('appendRow', {});
-        }
-
+        danceDgLoadData(dgShow, [], num);
         // 更新 收费单（演出）基本信息
         $('#'+dgRecptComm).datagrid('updateRow',{ index: 0,
             row: {c2: '[自动生成]',
@@ -311,7 +306,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                             url: '/api/dance_class_by_student',
                             async: true,
                             dataType: 'json',
-                            data: {student_no: record.code }
+                            data: {student_id: record.id }
                         }).done(function(data) {
                             if (data.errorCode == 0) {
 
@@ -498,30 +493,6 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
         }
     }
 
-    /**
-     * 根据分校id（内部使用分校编号）过滤班级。 新增记录时，选择分校后，只能选择选定分校的班级。
-     * @param classList     班级列表。可能属于多个分校。
-     * @returns {*}
-     */
-    function filterClassBySchool(classList) {
-        var school_id = apiGetDgCellText('#'+dgRecptComm, 0, 'school_id');
-
-        var class_no_filter = null;
-        for(var m = 0; m < schoollist.length; m++){
-            if(school_id === schoollist[m].school_id){
-                class_no_filter = schoollist[m]['school_no'] + '-BJ-';
-                break;
-            }
-        }
-
-        var rows = [];
-        for (var i = 0; i < classList.length; i++) {
-            if(classList[i].class_no.indexOf(class_no_filter) === 0){
-                rows.push(classList[i]);
-            }
-        }
-        return rows;
-    }
 
     /**
      * 根据分校id过滤分校信息。用于修改记录时，只保留学员所在的分校。即，学员报名后，不能修改学员的分校。

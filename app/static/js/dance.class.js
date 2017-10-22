@@ -654,8 +654,8 @@ function danceAddTabClassCheckIn(title, tableId, condition) {
             danceModuleTitle: title,          // 导入、导出 窗口 title
             url: '/'+module,        // 从服务器获取数据的url
             cond: condition,        // 表格数据查询参数
-            addEditFunc: danceClassCheckInInfo,
-            page: '/static/html/_xxx.html',     // 上述函数的参数
+            addEditFunc: danceClassCheckIn,
+            page: '/static/html/_class_check_in.html',     // 上述函数的参数
             funcOpts: {
                 title: title
             },
@@ -680,12 +680,257 @@ function danceAddTabClassCheckIn(title, tableId, condition) {
         danceOpenCommonDg(tableId, opts);
     }
 }
-
+/*
 function danceClassCheckInInfo(param) {
     var wId = 'dcClassCheckInWindow';
     if(param.uuid > 0) {
         dcOpenDialogCourse(wId+'-Modify', '编辑/查看 '+param.title, param.dgId, param.uuid, 'icon-save');
     } else{
         dcOpenDialogCourse(wId+'-New', '增加 '+param.title, param.dgId, 0, 'icon-save');
+    }
+}
+*/
+function danceClassCheckIn(opts) {
+    var title = opts.title + (opts.uuid > 0 ? '信息': '[新增]');
+    var no = -2;    // 记录所在数据库中的序号，方便翻页。传递 -2 则根据 uid 查询该记录的序号
+    var pager = 'chkPager';     // 以下id从 html文件获取，故需要使用js修改id
+    var panel = 'chkPanel';
+    var footer = 'chkFooter';
+    var dgStu = 'chkDgStu';
+    var dgOth = 'chkDgOth';
+
+    var chkNo = 'no';
+    var chkDate = 'date';
+    var chkSchoolNo = 'schoolNo';
+    var chkClassNo = 'classNo';
+    var chkClassName = 'className';
+    var chkSchoolName = 'schoolName';
+    var chkClassType = 'class_type';
+    var chk_teacher = 'teacher_id';
+    var chk_recorder = 'recorder';
+    var chk_rate = 'rate';
+    var chk_total = 'total';
+    var chk_come = 'come';
+    var chk_absent = 'absent';
+    var chk_class_hours = 'class_hours';
+    var chk_remark = 'remark';
+    var edIdxStu = undefined;
+    var classList = [];
+    var schoolList = [];
+    var btnAdd = 'add'+danceGetId(opts.uuid);
+
+    var parentDiv = $('#danceTabs');
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+        changeVarId(opts.uuid);
+    } else {
+        $(parentDiv).tabs('add', {
+            title: title, closable: true, loadingMessage: '加载中...', href: opts.page,
+            onLoad: function () {
+                changeId(opts.uuid);
+                setCtrlEvent();
+
+                if (opts.uuid > 0) { getDetail();}
+                else { doNew();}
+            }
+        });
+    }
+
+    function getDetail() {
+
+    }
+
+    function doNew() {
+        danceDgLoadData(dgStu, []);
+        danceDgLoadData(dgOth, []);
+        $('#'+chkDate).datebox('setValue', danceGetDate());
+        getExtras();
+        $('#'+btnAdd).linkbutton('disable');
+    }
+
+    function getExtras() {
+        $.ajax({
+            method: 'POST',
+            url: opts.url+ '_details_extras',
+            async: true,
+            dataType: 'json',
+            data: {'school_id': opts.cond.school_id}
+        }).done(function (data) {
+            if(data.errorCode === 0) {
+                classList = data['classlist'];
+                schoolList = data['schoollist'];
+                danceSetSchoolName(schoolList, chkSchoolName, chkSchoolNo);
+                var school_no = $('#'+chkSchoolNo).textbox('getValue');
+                $('#'+chkClassName).combobox('loadData', danceFilterClassByNo(classList, school_no));
+            } else {
+                $.messager.alert('错误',data.msg,'error');
+            }
+        });
+    }
+
+    function doSave() {
+
+    }
+
+    function doAdd() {
+
+    }
+
+    function setCtrlEvent() {
+        $('#'+pager).pagination({
+            showRefresh: opts.uuid > 0, total: 0, pageSize: 1, showPageList: false, showPageInfo: false,
+            buttons: [{text: '保存', iconCls: 'icon-save', handler: doSave},
+                { text:'新增', iconCls:'icon-add', id:btnAdd,  handler:doAdd}],
+            beforePageText: '第', afterPageText: '条，总 {pages} 条',
+            onSelectPage: function (pageNumber) {
+                if (opts.uuid > 0) {
+                    no = pageNumber;
+                    getDetail();
+                }
+            }
+        });
+        $('#'+dgStu).datagrid({
+            onClickCell: dgStuClickCell,
+            //onBeginEdit: dgStuBeginEdit,
+            onEndEdit: function (index, row){
+                var dg = $('#'+dgStu);
+                var eds = $(dg).datagrid('getEditors', index);
+                for(var i=0; i< eds.length; i++){
+                    if (eds[i].type === 'combobox'){
+                        var textField = getTextField(eds[i].field);
+                        row[textField] = $(eds[i].target).combobox('getText');
+                    }
+                }
+            },
+            toolbar: [
+                {iconCls: 'icon-add', text: '增加行', disabled:true, handler: function () {
+                    $('#'+dgStu).datagrid('appendRow', {});}},
+                {iconCls: 'icon-remove', text: '删除行',disabled:true, handler: function () { danceDelRow(dgStu);}}
+            ]
+        });
+        $('#'+panel).mousedown(function (event) {      // panel 鼠标按下事件
+            if (event.target.id === panel || event.target.className === 'datagrid-toolbar') {
+                event.stopPropagation(); // 禁止冒泡执行事件
+                endEditingStu();
+            }
+        });
+        $('#'+chkSchoolName).combobox({     // 分校名称
+            onClick:function (record) {
+                $('#'+chkSchoolNo).textbox('setValue', record['school_no']);
+                $('#'+chkClassName).combobox('loadData', danceFilterClassByNo(classList, record['school_no']));
+            }
+        });
+
+        $('#'+chkClassName).combobox({   // 班级名称
+            formatter: danceFormatterClass,
+            onClick:function (record) {
+                getStudent(record.class_id);
+                $('#'+chkClassNo).textbox('setValue', record.class_no);
+                $('#'+chkClassType).textbox('setText', record['class_type_text']);
+            }
+        });
+    }
+
+    function getStudent(classId) {
+        $.ajax({
+            method: 'POST',
+            url: '/dance_class_student_get',
+            async: true,
+            dataType: 'json',
+            data: {class_id: classId}
+        }).done(function (data) {
+            if(data.errorCode === 0) {
+                var arr = [];
+                for(var i=0; i< data.rows.length; i++){
+                    arr.push({sno: data.rows[i].sno, stu_id: data.rows[i].id, student_name: data.rows[i].name,
+                        is_attend: 1, is_attend_text:'√', is_usefee: 1, is_usefee_text:'是',
+                        fee: 70
+                    });
+                }
+                danceDgLoadData(dgStu, {rows: arr, total: arr.length});
+                $('#'+chk_total).textbox('setValue', data.rows.length);
+            } else {
+                $.messager.alert('错误',data.msg,'error');
+            }
+        });
+    }
+
+    function dgStuClickCell(index,field) {
+        if (edIdxStu != index){
+            var dg = $('#'+dgStu);
+            endEditingStu();
+            $(dg).datagrid('selectRow', index).datagrid('beginEdit', index);
+            var ed = $(dg).datagrid('getEditor', {index:index,field:field});
+            if (ed){
+                ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
+            }
+            edIdxStu = index;
+        }
+    }
+
+    function danceDelRow(dgId) {
+
+    }
+
+
+    function endEditingStu(){
+        if (edIdxStu !== undefined){
+            $('#'+dgStu).datagrid('endEdit', edIdxStu);
+            edIdxStu = undefined;
+        }
+    }
+
+    function changeId(uid) {
+        $('#'+pager).attr('id', pager += danceGetId(uid));
+        $('#'+panel).attr('id', panel += danceGetId(uid));
+        $('#'+footer).attr('id', footer += danceGetId(uid));
+        $('#'+dgStu).attr('id', dgStu += danceGetId(uid));
+        $('#'+dgOth).attr('id', dgOth += danceGetId(uid));
+
+        $('#'+chkNo).attr('id', chkNo += danceGetId(uid)).textbox('disable');
+        $('#'+chkDate).attr('id', chkDate += danceGetId(uid));
+        $('#'+chkSchoolNo).attr('id', chkSchoolNo += danceGetId(uid)).textbox('disable');
+        $('#'+chkClassNo).attr('id', chkClassNo += danceGetId(uid)).textbox('disable');
+        $('#'+chkClassName).attr('id', chkClassName += danceGetId(uid));
+        $('#'+chkSchoolName).attr('id', chkSchoolName += danceGetId(uid));
+        $('#'+chkClassType).attr('id', chkClassType += danceGetId(uid)).textbox('disable');
+        $('#'+chk_teacher).attr('id', chk_teacher += danceGetId(uid));
+        $('#'+chk_recorder).attr('id', chk_recorder += danceGetId(uid)).textbox('disable');
+
+        $('#'+chk_rate).attr('id', chk_rate += danceGetId(uid)).textbox('disable');
+        $('#'+chk_total).attr('id', chk_total += danceGetId(uid)).textbox('disable');
+        $('#'+chk_come).attr('id', chk_come += danceGetId(uid)).textbox('disable');
+        $('#'+chk_absent).attr('id', chk_absent += danceGetId(uid)).textbox('disable');
+        $('#'+chk_class_hours).attr('id', chk_class_hours += danceGetId(uid)).textbox('disable');
+        $('#'+chk_remark).attr('id', chk_remark += danceGetId(uid));
+    }
+
+    function changeVarId(uid) {
+        pager += danceGetId(uid);
+        panel += danceGetId(uid);
+        footer += danceGetId(uid);
+        dgStu += danceGetId(uid);
+        dgOth += danceGetId(uid);
+
+        chkNo += danceGetId(uid);
+        chkDate += danceGetId(uid);
+        chkSchoolNo += danceGetId(uid);
+        chkClassNo += danceGetId(uid);
+        chkClassName += danceGetId(uid);
+        chkSchoolName += danceGetId(uid);
+        chkClassType += danceGetId(uid);
+        chk_teacher += danceGetId(uid);
+        chk_recorder += danceGetId(uid);
+
+        chk_rate += danceGetId(uid);
+        chk_total += danceGetId(uid);
+        chk_come += danceGetId(uid);
+        chk_absent += danceGetId(uid);
+        chk_class_hours += danceGetId(uid);
+        chk_remark += danceGetId(uid);
+    }
+
+    function danceGetId(id) {
+        return 'ClassChkIn' + (id > 0 ? '-Modify': '-New');
     }
 }

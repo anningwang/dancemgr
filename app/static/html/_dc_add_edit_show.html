@@ -69,9 +69,7 @@
                                     iconWidth:22,
                                     icons:[{
                                         iconCls:'icon-add',
-                                        handler: function () {
-                                            dcNewWindowEx('dcFeeItemNewWin', '/static/html/_add_fee_item.html','新增收费项目', 'fee_item');
-                                        }
+                                        handler: dcNewFeeItem
                                     }],
                                     label: '收费项目:',
                                     labelPosition: 'top'
@@ -239,6 +237,10 @@
                 }
             });
         }
+    }
+
+    function dcNewFeeItem() {
+        dcNewWindowEx('dcFeeItemNewWin', '/static/html/_add_fee_item.html','新增收费项目', 'fee_item');
     }
 
 </script>

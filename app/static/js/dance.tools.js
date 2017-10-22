@@ -160,7 +160,7 @@
 
 
     /** @author  Anningwang
-     * @requires jQuery,EasyUI
+     * @requires jQuery
      * 防止panel/window/dialog组件超出浏览器边界，将代码放到easyui.min.js后
      * @param left
      * @param top
@@ -574,7 +574,7 @@ function danceParser(s){
 
 // datagrid methods
 ///////////////////////-------------------------------------------------------------------------------------------------
-function DanceDgLoadData(dgId, data, num) {
+function danceDgLoadData(dgId, data, num) {
     num = num || 3;
     var len = data.length;
     for(var i = 0; i< num - len; i++){
@@ -632,7 +632,6 @@ function danceFilterClassByNo(classList, school_no) {
 
 ///////////////////////-------------------------------------------------------------------------------------------------
 
-
 // 窗口操作 begin //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
@@ -670,7 +669,7 @@ function dcNewWindow(dgId, panelId, winId, url, idx, field, title) {
 
 // 父窗口要刷新的combobox(id: ccId)。 panel id 在 winId的基础上加上 '-Panel'
 function dcNewWindowEx(winId, url, title, ccId) {
-    var panelId = winId + '-Panel';
+    var panelId = dcGetPanelId(winId);
     if(!document.getElementById(panelId)){
         $(document.body).append('<div id=' + panelId +  '></div>');
     }
@@ -724,45 +723,33 @@ function dcGetPanelId(winId) {
  */
 function createModalDialog(id, _url, _title, _width, _height, _icon){
     $('body').append('<div id=' + id + ' style="padding:10px"></div>');
-    if (_width == null)
-        _width = 800;
-    if (_height == null)
-        _height = 500;
+    if (_width == null) _width = 800;
+    if (_height == null) _height = 500;
 
     $("#"+id).dialog({
         title: _title,
-        width: _width,
-        height: _height,
+        width: _width, height: _height,
         cache: false,
         iconCls: _icon,
         href: _url,
         collapsible: false,
-        minimizable:false,
-        maximizable: true,
-        resizable: false,
+        minimizable:false, maximizable: true, resizable: false,
         modal: false,
         closed: true,
         buttons: [{
-            text:'Ok',
-            iconCls:'icon-ok',
-            handler:function(){
+            text:'Ok', iconCls:'icon-ok', handler:function(){
                 alert('ok');
             }
         },{
-            text:'Cancel',
-            handler:function(){
-                alert('cancel');
+            text:'关闭', handler:function(){
+                $("#"+id).dialog('close');
             }
         }],
-        //buttons: '#dlg-buttons',
         onBeforeClose: function () {
             $("#"+id).dialog('destroy');
         }
     }).dialog('open');
 }
-
-// 创建窗口
-//createModalDialog("editForm","/static/html/_test.html","测试界面", 800, 600, 'icon-save');
 
 // 窗口操作 end ////////////////////////////////////////////////////////////////////////////////////////////////////////
 

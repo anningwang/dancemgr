@@ -131,7 +131,7 @@ function danceUpgClassDetailInfo( page, url, condition, uid) {
                 $('#'+upgNewClassName).combobox('loadData', danceFilterClassByNo(classList, data.row.school_no))
                     .combobox('setValue', data.row.new_clsid);
                 $('#'+upgRecorder).textbox('setValue', data.row['recorder']);
-                DanceDgLoadData(dgStu, data.upgItem);
+                danceDgLoadData(dgStu, data.upgItem);
                 $('#'+pager).pagination({total: data.total, pageNumber:no===-2?data.row.no:no });
             } else {
                 $.messager.alert('提示', data.msg, 'info');
@@ -143,7 +143,7 @@ function danceUpgClassDetailInfo( page, url, condition, uid) {
     }
 
     function doNew() {
-        DanceDgLoadData(dgStu, []);
+        danceDgLoadData(dgStu, []);
         $('#' + upgDate).datebox('setValue', danceGetDate());
         getExtras();
         $('#'+btnAdd).linkbutton('disable');
@@ -297,7 +297,7 @@ function danceUpgClassDetailInfo( page, url, condition, uid) {
                     arr.push({sno: data.rows[i].sno, stu_id: data.rows[i].id, student_name: data.rows[i].name,
                         is_up: 1, is_up_text: '是'});
                 }
-                DanceDgLoadData(dgStu, {rows: arr, total: arr.length});
+                danceDgLoadData(dgStu, {rows: arr, total: arr.length});
             } else {
                 $.messager.alert('错误',data.msg,'error');
             }

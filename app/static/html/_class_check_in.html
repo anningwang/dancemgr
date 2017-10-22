@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>舞管家</title>
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../lib/jquery-easyui-1.5.2/themes/icon.css">
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery-easyui-1.5.2/jquery.easyui.min.js"></script>
+</head>
+<body>
+
+<div class="easyui-panel" id="chkPanel" style="width:100%;height:100%;padding:2px;" data-options="footer:'#chkFooter',fit:true, border:false">
+    <div style="min-width: 1024px">
+        <!-- 开始区域，学号，姓名，... -->
+        <table cellspacing="0" cellpadding="1" style="width: 100%">
+            <tr><td colspan="3" style="text-align:center;font-weight:bold; font-size: 24px;font-family:华文楷体;color:#1d76db; ">班级考勤</td></tr>
+            <tr>
+                <td width="33%" align="center">
+                    <input class="easyui-textbox" id="no"  data-options="labelAlign:'right', label:'考勤编号：',
+                    editable:false,prompt:'自动生成',labelWidth:90,width:'90%',labelPosition:'before'" >
+                </td>
+                <td width="34%" align="center">
+                    <input class="easyui-datebox" id="date" data-options="labelAlign:'right',label:'*上课日期：',
+                    labelWidth:90,width:'90%',labelPosition:'before'">
+                </td>
+                <td width="33%" align="center">
+                    <input class="easyui-combobox" id="schoolName"  data-options="labelAlign:'right', label:'分校名称：',
+                    editable:false,labelWidth:90,width:'90%',labelPosition:'before',valueField: 'school_id',
+                        textField: 'school_name',panelHeight:'auto' " >
+                </td>
+            </tr>  <!-- 1 end -->
+
+            <tr>
+                <td width="33%" align="center">
+                    <input class="easyui-textbox" id="classNo"  data-options="labelAlign:'right', label:'班级编号：',
+                    editable:false,labelWidth:90,width:'90%',labelPosition:'before',prompt:'关联班级名称'" >
+                </td>
+                <td width="34%" align="center">
+                    <input class="easyui-combobox" id="className" data-options="labelAlign:'right',label:'*班级名称：',
+                    labelWidth:90,width:'90%',labelPosition:'before',valueField: 'class_id',textField: 'class_name',
+                    panelHeight:'auto',editable:false">
+                </td>
+                <td width="33%" align="center">
+                    <input class="easyui-textbox" id="schoolNo"  data-options="labelAlign:'right', label:'分校编号：',
+                    editable:false,prompt:'关联分校名称',labelWidth:90,width:'90%',labelPosition:'before'" >
+                </td>
+            </tr>  <!-- 2 end -->
+
+            <tr>
+                <td width="33%" align="center">
+                    <input class="easyui-textbox" id="class_type"  data-options="labelAlign:'right', label:'班级类型：',
+                    editable:false,labelWidth:90,width:'90%',labelPosition:'before'" >
+                </td>
+                <td width="34%" align="center">
+                    <input class="easyui-combobox" id="teacher_id" data-options="labelAlign:'right',label:'*授课老师：',
+                    labelWidth:90,width:'90%',labelPosition:'before',valueField: 'class_id',textField: 'class_name',
+                    panelHeight:'auto',editable:false">
+                </td>
+                <td width="33%" align="center">
+                    <input class="easyui-textbox" id="rate"  data-options="labelAlign:'right', label:'出勤率：',
+                    editable:false,prompt:'自动生成',labelWidth:90,width:'90%',labelPosition:'before'" >
+                </td>
+            </tr>  <!-- 3 end -->
+
+            <tr>
+                <td width="33%" align="center">
+                    <input class="easyui-textbox" id="total"  data-options="labelAlign:'right', label:'班级总人数：',
+                    editable:false,labelWidth:90,width:'90%',labelPosition:'before'" >
+                </td>
+                <td width="34%" align="center">
+                    <input class="easyui-textbox" id="come" data-options="labelAlign:'right',label:'出勤人数：',
+                    labelWidth:90,width:'90%',labelPosition:'before',editable:false">
+                </td>
+                <td width="33%" align="center">
+                    <input class="easyui-textbox" id="absent"  data-options="labelAlign:'right', label:'缺勤人数：',
+                    editable:false,prompt:'自动生成',labelWidth:90,width:'90%',labelPosition:'before'" >
+                </td>
+            </tr>  <!-- 4 end -->
+
+            <tr>
+                <td width="33%" align="center">
+                    <input class="easyui-textbox" id="class_hours"  data-options="labelAlign:'right', label:'课时数：',
+                    editable:false,labelWidth:90,width:'90%',labelPosition:'before'" >
+                </td>
+                <td width="34%" align="center">
+                    <input class="easyui-textbox" id="remark" data-options="labelAlign:'right',label:'备注：',
+                    labelWidth:90,width:'90%',labelPosition:'before'">
+                </td>
+                <td width="33%" align="center">
+                    <input class="easyui-textbox" id="recorder"  data-options="labelAlign:'right', label:'录入员：',
+                    editable:false,prompt:'自动生成',labelWidth:90,width:'90%',labelPosition:'before'" >
+                </td>
+            </tr>  <!-- 5 end -->
+
+        </table>
+
+        <!-- 考勤本班学员  -->
+        <table id="chkDgStu" class="easyui-datagrid" title="考勤——本班学员" style="width:100%;" data-options="checkbox:true,
+        rownumbers:true,fitColumns:true,singleSelect:true,collapsible:true">
+
+            <thead>
+            <tr>
+                <th data-options="field:'ck',checkbox:true"></th>
+                <th data-options="field:'sno',width:120,align:'center',fixed:true">学号</th>
+                <th data-options="field:'student_id',width:70,align:'center',fixed:true,
+                formatter:function(value,row){
+                    return row.student_name;
+                }">姓名</th>
+                <th data-options="field:'is_attend',width:60,align:'center',fixed:true,
+                formatter:function(value,row){
+                    return row.is_attend_text;
+                },
+                editor:{
+                    type:'combobox',
+                    options: {
+                        editable:false,
+                        panelHeight:'auto',
+                        valueField: 'label',
+                        textField: 'value',
+                        data: [{
+                                label: 1,
+                                value: '√'
+                            },{
+                                label: 0,
+                                value: '×'
+                            }]
+                    }
+                }
+                ">是否出勤</th>
+                <th data-options="field:'is_usefee',width:60,align:'center',fixed:true,
+                formatter:function(value,row){
+                    return row.is_usefee_text;
+                },
+                editor:{
+                    type:'combobox',
+                    options: {
+                        editable:false,
+                        panelHeight:'auto',
+                        valueField: 'value',
+                        textField: 'text',
+                        data: [{
+                                value: 1,
+                                text: '是'
+                            },{
+                                value: 0,
+                                text: '否'
+                            }]
+                    }
+                }
+                ">是否扣费</th>
+                <th data-options="field:'chk_time',width:140,align:'center',editor:'datetimebox',fixed:true">考勤时间</th>
+                <th data-options="field:'fee',width:80,align:'center',fixed:true">学员课时费</th>
+                <th data-options="field:'rest_fee',width:80,align:'center',fixed:true">剩余课时费</th>
+                <th data-options="field:'rest_times',width:80,align:'center',fixed:true">剩余课次</th>
+                <th data-options="field:'reason',width:140,align:'center'">缺勤原因</th>
+                <th data-options="field:'is_fill',width:140,align:'center',
+                editor:{
+                    type:'combobox',
+                    options: {
+                        editable:false,
+                        panelHeight:'auto',
+                        valueField: 'label',
+                        textField: 'value',
+                        data: [{
+                            label: 1,
+                            value: '是'
+                        },{
+                            label: 2,
+                            value: '否'
+                        }]
+                    }
+                }
+                ">是否已补课</th>
+                <th data-options="field:'fill_date',width:140,align:'center', editor:'datebox'">补课日期</th>
+                <th data-options="field:'remark',width:400,align:'center',editor:'textbox'">备注</th>
+            </tr>
+            </thead>
+        </table>
+
+        <div style="height: 2px"></div>
+
+        <!-- 考勤其他班学员  -->
+        <table id="chkDgOth" class="easyui-datagrid" title="考勤——其他班学员" style="width:100%;" data-options="checkbox:true,
+        rownumbers:true,fitColumns:true,singleSelect:true,collapsible:true">
+
+            <thead>
+            <tr>
+                <th data-options="field:'ck',checkbox:true"></th>
+                <th data-options="field:'sno',width:120,align:'center',fixed:true">学号</th>
+                <th data-options="field:'student_id',width:70,align:'center',fixed:true,
+                formatter:function(value,row){
+                    return row.student_name;
+                }">姓名</th>
+                <th data-options="field:'is_attend',width:60,align:'center',fixed:true,
+                editor:{
+                    type:'combobox',
+                    options: {
+                        editable:false,
+                        panelHeight:'auto',
+                        valueField: 'label',
+                        textField: 'value',
+                        data: [{
+                                label: 1,
+                                value: '√'
+                            },{
+                                label: 0,
+                                value: '×'
+                            }]
+                    }
+                }
+                ">是否出勤</th>
+                <th data-options="field:'is_usefee',width:60,align:'center',fixed:true,
+                editor:{
+                    type:'combobox',
+                    options: {
+                        editable:false,
+                        panelHeight:'auto',
+                        valueField: 'label',
+                        textField: 'value',
+                        data: [{
+                                label: 1,
+                                value: '是'
+                            },{
+                                label: 0,
+                                value: '否'
+                            }]
+                    }
+                }
+                ">是否扣费</th>
+                <th data-options="field:'chk_time',width:140,align:'center',editor:'datetimebox',fixed:true">考勤时间</th>
+                <th data-options="field:'fee',width:80,align:'center',fixed:true">学员课时费</th>
+                <th data-options="field:'rest_fee',width:80,align:'center',fixed:true">剩余课时费</th>
+                <th data-options="field:'rest_times',width:80,align:'center',fixed:true">剩余课次</th>
+                <th data-options="field:'class_no',width:140,align:'center'">班级编号</th>
+                <th data-options="field:'class_id',width:140,align:'center',
+                formatter:function(value,row){
+                    return row.class_name;
+                },
+                editor:{
+                    type:'combobox',
+                    options: {
+                        editable:false,
+                        panelHeight:'auto',
+                        valueField: 'class_id',
+                        textField: 'class_name'
+                    }
+                }
+                ">班级名称</th>
+                <th data-options="field:'remark',width:400,align:'center',editor:'textbox'">备注</th>
+            </tr>
+            </thead>
+        </table>
+
+    </div>
+</div>
+
+<div id="chkFooter">
+    <div id="chkPager" class="easyui-pagination"></div>
+</div>
+
+</body>
+</html>
