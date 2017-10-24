@@ -1615,6 +1615,36 @@ def dance_class_room_query():
     return jsonify(ret)
 
 
+@app.route('/dance_student_fee_history_get', methods=['POST'])
+@login_required
+def dance_student_fee_history_get():
+    student_id = request.form['student_id']
+    dcq = DanceClassReceipt.query.join(DanceReceipt, DanceReceipt.id == DanceClassReceipt.receipt_id)\
+        .filter(DanceReceipt.student_id == student_id)
+
+    dcq = dcq.join(DanceStudent, DanceStudent.id == DanceReceipt.student_id)\
+        .join(DanceClass, DanceClass.id == DanceClassReceipt.class_id)\
+        .join(DanceSchool, DanceSchool.id == DanceReceipt.school_id)\
+        .add_columns(DanceStudent.name, DanceStudent.sno,
+                     DanceReceipt.id, DanceReceipt.receipt_no, DanceReceipt.deal_date,
+                     DanceClass.class_name, DanceClass.cno, DanceClass.cost_mode, DanceClass.cost,
+                     DanceSchool.school_name, DanceSchool.school_no,
+                     DanceReceipt.recorder)
+
+    records = dcq.all()
+    ret = []
+    for dcr in records:
+        rec = dcr[0]
+        ret.append({'class_id': rec.class_id, 'term': rec.term, 'total': rec.total, 'real_fee': rec.real_fee,
+                    'arrearage': rec.arrearage,
+                    'student_name': dcr[1], 'student_no': dcr[2],
+                    'id': dcr[3], 'receipt_no': dcr[4], 'deal_date': datetime.datetime.strftime(dcr[5], '%Y-%m-%d'),
+                    'class_name': dcr[6], 'class_no': dcr[7], 'cost_mode': get_class_mode(dcr[8]), 'cost': dcr[9],
+                    'school_name': dcr[10], 'school_no': dcr[11],
+                    'recorder': dcr[12]})
+    return jsonify({'errorCode': 0, 'msg': 'ok', 'rows': ret, 'total': len(ret)})
+
+
 @app.route('/dc_comm_fee_mode_update', methods=['POST'])
 @login_required
 def dc_comm_fee_mode_update():

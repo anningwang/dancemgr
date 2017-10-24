@@ -170,6 +170,7 @@ function danceMenuStudent(item, param) {
     switch (item.id) {
         case 'dance-m-student-fee':
             // $.messager.alert('提示', id, 'info');
+            danceAddTabFeeHistory(param);
             break;
         case 'dance-m-student-detail':
             danceAddStudentDetailInfo(param);
@@ -2017,4 +2018,65 @@ function danceAddTabFeeStudyDatagrid(title, tableId, condition) {
 
 function getClassCostMode(val) {
     return  val === 1 ? '按课次' : '按课时';
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function danceAddTabFeeHistory(opts) {
+    var title = '学费交费记录';
+    var tableId = opts.dgId + '-FeeHistory';
+    var condition = {student_id: opts.uuid};
+
+    var parentDiv = $('#danceTabs');
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+        $('#'+tableId).datagrid('load', condition);
+    } else {
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
+        $(parentDiv).tabs('add', {
+            title: title,
+            content: content,
+            closable: true
+        });
+
+        var dg = $('#' + tableId);       // datagrid ID
+        dg.datagrid({
+            fit: true,
+            url: '/dance_student_fee_history_get',
+            fitColumns: true,
+            pagination: true,   // True to show a pagination toolbar on datagrid bottom.
+            singleSelect: true, // True to allow selecting only one row.
+            loadMsg: '正在加载数据...',
+            border: false,
+            striped: true,
+            pageNumber: 1,
+            pageSize: 30,     //每页显示条数
+            nowrap: true,   // True to display data in one line. Set to true can improve loading performance.
+            pageList: [20, 30, 40, 50, 100],   //每页显示条数供选项
+            rownumbers: true,   // True to show a row number column.
+            queryParams: condition,
+            columns: [[
+                //{field: 'ck', checkbox:true },
+                {field: 'receipt_no', title: '收费单号', width: 140, align: 'center',fixed:true},
+                {field: 'school_name', title: '分校名称', width: 110, align: 'center',fixed:true},
+                {field: 'student_no', title: '学号', width: 140, align: 'center',fixed:true},
+                {field: 'student_name', title: '学员姓名', width: 80, align: 'center',fixed:true},
+                {field: 'deal_date', title: '收费日期', width: 90, align: 'center', fixed:true},
+                {field: 'class_no', title: '班级编号', width: 90, align: 'center', fixed:true},
+                {field: 'class_name', title: '班级名称', width: 140, align: 'center', fixed:true},
+                {field: 'cost_mode', title: '收费模式', width: 70, align: 'center', fixed:true},
+                {field: 'term', title: '学期长度', width: 70, align: 'center', fixed:true},
+                {field: 'cost', title: '收费标准', width: 70, align: 'center', fixed:true},
+                {field: 'real_fee', title: '实收费', width: 70, align: 'center', fixed:true},
+                {field: 'arrearage', title: '学费欠费', width: 70, align: 'center', fixed:true},
+                {field: 'recorder', title: '录入员', width: 90, align: 'center'}
+            ]]
+        });
+
+        var pager = dg.datagrid('getPager');
+        $(pager).pagination({
+            beforePageText: '第',
+            afterPageText: '页, 共 {pages} 页',
+            displayMsg: '当前记录 {from} - {to} , 共 {total} 条记录'
+        });
+    }
 }
