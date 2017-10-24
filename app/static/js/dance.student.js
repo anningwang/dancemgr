@@ -135,13 +135,19 @@ function danceAddTabStudentDatagrid(title, tableId, condition) {
             who: 'DanceStudent',
             danceModuleName: 'DanceStudent',
             danceModuleTitle: title,          // 导入、导出 窗口 title
+            url: '/'+module,        // 从服务器获取数据的url
+            cond: condition,        // 表格数据查询参数
             addEditFunc: danceAddStudentDetailInfo,
             page: '/static/html/_student.html',     // 上述函数的参数
+            funcOpts: {
+                title: title,
+                mmStudent: {mmFunc: danceMenuStudent}
+            },
             columns: [[
                 {field: 'ck', checkbox:true },   // checkbox
                 {field: 'school_name', title: '所属分校',  width: 46, align: 'center' },
                 {field: 'sno', title: '学号', width: 70, align: 'center'},
-                {field: 'name', title: '姓名', width: 50, align: 'center'},
+                {field: 'name', title: '姓名', width: 50, align: 'center',formatter:formatStudent},
                 {field: 'gender', title: '性别', width: 20, align: 'center'},
                 {field: 'mother_phone', title: '妈妈手机', width: 50, align: 'center'},
                 {field: 'father_phone', title: '爸爸手机', width: 50, align: 'center'},
@@ -150,20 +156,47 @@ function danceAddTabStudentDatagrid(title, tableId, condition) {
             ]]
         };
 
-        danceCreateCommDatagrid(tableId, '/'+module, condition, opts);
+        danceOpenCommonDg(tableId, opts)
+    }
+
+    function formatStudent(value,row) { // ,index
+        return '<a class="danceui-menu-student" style="color:#0094ff" id='+ "student-" + row.id + '>'+value+'</a>';
+    }
+}
+
+
+function danceMenuStudent(item, param) {
+    // console.log(item, id);
+    switch (item.id) {
+        case 'dance-m-student-fee':
+            // $.messager.alert('提示', id, 'info');
+            break;
+        case 'dance-m-student-detail':
+            danceAddStudentDetailInfo(param);
+            break;
+        default:
+            break;
     }
 }
 
 
 /**
  * 查看/新增 学员 详细信息
- * @param page          学员详细信息页面
- * @param url           查询信息所用url
- * @param condition     查询条件：
- *      school_id     分校id，取值范围： all  or 具体分校id
- * @param uid           学员id，新增时，可以不传递此参数。
+ * @param opts:         输入参数，内容如下：
+ * {
+ *      page:       学员详细信息页面, 从服务器获取
+ *      url:        查询信息所用url
+ *      cond: {     查询条件：
+ *          school_id     分校id，取值范围： all  or 具体分校id
+ *       }
+ *      uuid        学员id，新增时，可以不传递此参数。
+ * }
  */
-function danceAddStudentDetailInfo( page, url, condition, uid) {
+function danceAddStudentDetailInfo(opts) {
+    var page = opts.page;
+    var url = opts.url;
+    var condition = opts.cond;
+    var uid = opts.uuid;
     var title = '学员详细信息';
     uid = uid || 0;     // 第一次进入 学生详细信息页面 uid 有效，上下翻页时，无法提前获取上下记录的uid
     if (uid <= 0) {

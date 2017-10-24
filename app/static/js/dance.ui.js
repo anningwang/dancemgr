@@ -65,6 +65,22 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
             var row = rows[index];
             var cond = $(dg).datagrid('options').queryParams;
             options.addEditFunc(options.page, url, cond, row.id);
+        },
+        onLoadSuccess: function () {
+            $(".danceui-menu-student").menubutton({
+                //plain:false,
+                menu: '#dance-menu-student'
+            });
+            $('#dance-menu-student').menu({
+                hideOnUnhover:false,
+                onClick:function(item){
+                    if(options.funcOpts){
+                        var mmOpts = $('#dance-menu-student').menu('options');
+                        var btn = mmOpts.alignTo;      // alignTo 是 未公开属性 wxg
+                        options.funcOpts.mmFunc(item, btn.attr('id'));
+                    }
+                }
+            });
         }
     });
 
@@ -247,6 +263,16 @@ function danceOpenCommonDg(datagridId, options) {
                 dgId: datagridId, uuid: rows[index].id};
             if(options.funcOpts){$.extend(param, options.funcOpts);}
             options.addEditFunc(param);
+        },
+        onLoadSuccess: function () {
+            if (options.funcOpts && options.funcOpts.mmStudent) {
+                danceCreateMenuStudent();
+                $(".danceui-menu-student").menubutton({
+                    //plain:false,
+                    menu: '#dance-menu-student'
+                });
+                dg.datagrid('resize');
+            }
         }
     });
 
@@ -354,4 +380,36 @@ function danceOpenCommonDg(datagridId, options) {
             });
         }
     }
+
+    function danceCreateMenuStudent() {
+        var mmId = 'dance-menu-student';
+        if(!document.getElementById(mmId)){
+            $(document.body).append('<div id=' + mmId +  '></div>');
+
+            $('#'+mmId).menu({
+                hideOnUnhover:false,
+                onClick:function(item){
+                    if(options.funcOpts && options.funcOpts.mmStudent){
+                        var mmOpts = $('#'+mmId).menu('options');
+                        var btn = mmOpts.alignTo;      // alignTo 是 未公开属性 wxg
+                        var cond = $(dg).datagrid('options').queryParams;
+                        var uuid = btn.attr('id').split('-')[1];
+                        var param = {page: options.page, url: url, cond: cond, dgId: datagridId, uuid: uuid};
+                        options.funcOpts.mmStudent.mmFunc(item, param);
+                    }
+                }
+            }).menu('appendItem', {
+                text: '缴费记录',
+                iconCls: 'icon-ok',
+                id: 'dance-m-student-fee'
+            }).menu('appendItem', {
+                separator: true
+            }).menu('appendItem', {
+                text: '详细信息',
+                iconCls: 'icon-ok',
+                id: 'dance-m-student-detail'
+            });
+        }
+    }
+    
 }

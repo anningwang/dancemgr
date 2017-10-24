@@ -514,11 +514,6 @@ function dcTrimZero(value) {
     var str = Number(value).toFixed(2);
     return dcTrimStringZero(str);
 }
-/*
-function dcPrecision(value) {
-    var str = Number(value).toFixed(2);
-    return parseFloat(str);
-}*/
 
 /**
  * 删除浮点数字符串小数点最后多余的0.若为整数，同时删除小数点。
@@ -554,24 +549,6 @@ function danceGetDate() {
     return danceFormatter(new Date());
 }
 
-/**
- * 将日期字符串（格式：yyyy-mm-dd）转换为 日期 Date 对象。
- * @param s
- * @returns {Date}
- */
-function danceParser(s){
-    if (!s) return new Date();
-    var ss = (s.split('-'));
-    var y = parseInt(ss[0],10);
-    var m = parseInt(ss[1],10);
-    var d = parseInt(ss[2],10);
-    if (!isNaN(y) && !isNaN(m) && !isNaN(d)){
-        return new Date(y,m-1,d);
-    } else {
-        return new Date();
-    }
-}
-
 // datagrid methods
 ///////////////////////-------------------------------------------------------------------------------------------------
 function danceDgLoadData(dgId, data, num) {
@@ -605,8 +582,6 @@ function danceSetSchoolName(schoolList, cbId, tbId) {
  * @returns {string}
  */
 function danceFormatterClass(row){
-    //return '<span style="font-weight:bold">' + row['class_name'] + '</span>&nbsp;&nbsp;' +
-    //    '<span style="color:#888">' + row['class_no'] + '</span>';
     return '<span style="color:#888">' + row['class_no'] + '</span>&nbsp;' +
         '<span style="font-weight:bold">' + row['class_name'] + '</span>';
 }
