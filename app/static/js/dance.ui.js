@@ -65,22 +65,6 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
             var row = rows[index];
             var cond = $(dg).datagrid('options').queryParams;
             options.addEditFunc(options.page, url, cond, row.id);
-        },
-        onLoadSuccess: function () {
-            $(".danceui-menu-student").menubutton({
-                //plain:false,
-                menu: '#dance-menu-student'
-            });
-            $('#dance-menu-student').menu({
-                hideOnUnhover:false,
-                onClick:function(item){
-                    if(options.funcOpts){
-                        var mmOpts = $('#dance-menu-student').menu('options');
-                        var btn = mmOpts.alignTo;      // alignTo 是 未公开属性 wxg
-                        options.funcOpts.mmFunc(item, btn.attr('id'));
-                    }
-                }
-            });
         }
     });
 
@@ -241,7 +225,8 @@ function danceOpenCommonDg(datagridId, options) {
                     return false;
                 } else {
                     var cond = $(dg).datagrid('options').queryParams;
-                    var param = {page: options.page, url: url, cond: cond, dgId: datagridId, uuid: row[0].id};
+                    var param = {page: options.page, url: url, cond: cond, dgId: datagridId, uuid: row[0].id,
+                        no: row[0].no};
                     if(options.funcOpts){$.extend(param, options.funcOpts);}
                     options.addEditFunc(param);
                 }
@@ -260,7 +245,7 @@ function danceOpenCommonDg(datagridId, options) {
         onDblClickCell: function (index) {
             var rows = $(dg).datagrid('getRows');
             var param = {page: options.page, url: url, cond: $(dg).datagrid('options').queryParams,
-                dgId: datagridId, uuid: rows[index].id};
+                dgId: datagridId, uuid: rows[index].id, no:rows[index].no};
             if(options.funcOpts){$.extend(param, options.funcOpts);}
             options.addEditFunc(param);
         },
@@ -381,6 +366,9 @@ function danceOpenCommonDg(datagridId, options) {
         }
     }
 
+    /**
+     * 创建 学员 菜单。
+     */
     function danceCreateMenuStudent() {
         var mmId = 'dance-menu-student';
         if(!document.getElementById(mmId)){

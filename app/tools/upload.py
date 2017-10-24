@@ -108,7 +108,7 @@ def dispatch_import_file(fn, m_name):
         'dance_teaching_material':  {'func': import_teaching_material, 'asc': True},
         'dance_class_room':         {'func': import_class_room, 'asc': True}
     }
-    if m_name == 'DanceStudent':
+    if m_name == 'dance_student':
         return import_student(fn)
     elif m_name == 'DanceClass':
         return import_class(fn)

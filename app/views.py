@@ -145,13 +145,12 @@ def dance_del_data():
                 'dance_teacher': {'func': dc_del_teacher},
                 'dc_common_job_title': {'func': dc_del_common},
                 'dance_class_room': {'func': dc_del_class_room},
-                'dance_upgrade_class': {'func': dc_del_upgrade_class}
+                'dance_upgrade_class': {'func': dc_del_upgrade_class},
+                'dance_student': {'func': dc_del_student}
                 }
 
     if who == 'DanceClass':
         dcq = DanceClass.query
-    elif who == 'DanceStudent':
-        dcq = DanceStudent.query
     elif who == 'DanceSchool':
         dcq = DanceSchool.query
     elif who == 'DanceUser':
@@ -166,10 +165,19 @@ def dance_del_data():
         if rec is not None:
             if who == 'DanceUser' and rec.is_creator == 1:
                 return jsonify({'errorCode': 500, 'msg': u'账号[%s]为初始管理员，不能删除！' % rec.name})
-            elif who == 'DanceStudent':
-                del_student_class(rec.id)      # 删除学员的报班信息
             db.session.delete(rec)
 
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
+
+
+def dc_del_student(ids):
+    for i in ids:
+        # 删除学员的报班信息
+        DanceStudentClass.query.filter_by(student_id=i).delete()
+
+    # 删除学员信息
+    DanceStudent.query.filter(DanceStudent.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 
@@ -188,17 +196,6 @@ def dc_del_receipt(ids):
     DanceReceipt.query.filter(DanceReceipt.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
-
-
-def del_student_class(student_id):
-    """
-    根据学员编号，删除该学员的所有报班信息。 用于删除学员的 关联删除。 未做最后的数据库提交 commit
-    :param student_id:         学员id
-    :return:
-    """
-    records = DanceStudentClass.query.filter_by(company_id=g.user.company_id).filter_by(student_id=student_id).all()
-    for rec in records:
-        db.session.delete(rec)
 
 
 def dc_del_fee_item(ids):
@@ -771,15 +768,15 @@ def dance_student_add():
                             'msg': u'学员[%s]已经存在！勾选[允许重名]可添加重名学员。' % student['name']})
 
     new_stu = DanceStudent(student)
+    db.session.add(new_stu)
+    new_stu = DanceStudent.query.filter_by(company_id=g.user.company_id, sno=new_stu.sno).first()
 
     for cls in classes:
-        cls['student_id'] = new_stu.sno
+        cls['student_id'] = new_stu.id
         dcstucls = DanceStudentClass(cls)
         db.session.add(dcstucls)
 
-    db.session.add(new_stu)
     db.session.commit()
-
     return jsonify({'errorCode': 0, 'msg': u'成功添加学员[%s](%s)' % (new_stu.name, new_stu.sno)})
 
 

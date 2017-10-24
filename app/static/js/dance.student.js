@@ -132,11 +132,11 @@ function danceAddTabStudentDatagrid(title, tableId, condition) {
         var opts = {
             queryText: '姓名：',
             queryPrompt: '姓名拼音首字母查找',
-            who: 'DanceStudent',
-            danceModuleName: 'DanceStudent',
-            danceModuleTitle: title,          // 导入、导出 窗口 title
-            url: '/'+module,        // 从服务器获取数据的url
-            cond: condition,        // 表格数据查询参数
+            who: module,                // 删除数据时，判断模块
+            danceModuleName: module,    // 导入、导出时，判断模块
+            danceModuleTitle: title,    // 导入、导出 窗口 title
+            url: '/'+module,            // 从服务器获取数据的url
+            cond: condition,            // 表格数据查询参数
             addEditFunc: danceAddStudentDetailInfo,
             page: '/static/html/_student.html',     // 上述函数的参数
             funcOpts: {
@@ -198,12 +198,10 @@ function danceAddStudentDetailInfo(opts) {
     var condition = opts.cond;
     var uid = opts.uuid;
     var title = '学员详细信息';
-    uid = uid || 0;     // 第一次进入 学生详细信息页面 uid 有效，上下翻页时，无法提前获取上下记录的uid
     if (uid <= 0) {
         title +='[新增]'
     }
-
-    var no = -2;    // 学员所在数据库中的序号，方便翻页。传递 -2 则根据 uid 查询该学员的序号
+    var no = opts.no;
 
     var pagerStu = 'pagerStudent';
     var panelStu = 'panelStudent';
@@ -352,7 +350,7 @@ function danceAddStudentDetailInfo(opts) {
             $('#'+stu_remark).textbox('setText',data.rows['remark']);
 
             // 更新翻页控件 页码
-            $('#'+pagerStu).pagination({total: data.total, pageNumber:no===-2?data.rows.no:no });
+            $('#'+pagerStu).pagination({total: data.total, pageNumber:data.rows.no});
 
             // 更新联系方式 table
             $('#'+dgReceiptComm).datagrid('updateRow',{
