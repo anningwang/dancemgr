@@ -201,7 +201,7 @@ function danceAddStudentDetailInfo(opts) {
     if (uid <= 0) {
         title +='[新增]'
     }
-    var no = opts.no;
+    var no = opts.no ? opts.no : -2;
 
     var pagerStu = 'pagerStudent';
     var panelStu = 'panelStudent';
