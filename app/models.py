@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from tools.tools import dc_gen_code, gen_code
 from flask import g
 from dcglobal import *
+from sqlalchemy import func
 
 ROLE_USER = 0
 ROLE_ADMIN = 1
@@ -796,6 +797,20 @@ class DanceStudentClass(db.Model):
             self.status = param['status']
         if 'remark' in param:
             self.remark = param['remark']
+
+    @staticmethod
+    def get_class_stu_num(class_id=None):
+        """ SQL Alchemy 的方法"""
+        dcq = db.session.query(DanceStudentClass.class_id, func.count('class_id')).select_from(DanceStudentClass) \
+            .filter(DanceStudentClass.company_id == g.user.company_id,
+                    DanceStudentClass.status == STU_CLASS_STATUS_NORMAL)
+        if class_id is not None:
+            dcq = dcq.filter(DanceStudentClass.class_id == class_id)
+        cnt = dcq.group_by(DanceStudentClass.class_id).all()
+        cnt_dict = {}
+        for a in cnt:
+            cnt_dict[a[0]] = a[1]
+        return cnt_dict
 
     def __repr__(self):
         return '<DanceStudentClass %r,%r>' % (self.student_id, self.class_id)

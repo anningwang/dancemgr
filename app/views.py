@@ -514,7 +514,7 @@ def dance_class_student_get():
     """
     统计 班级内 学员 名单。
     输入： {
-        class_id:           班级编号。    因为 DanceStudentClass 用的班级编号，没有使用班级id
+        class_id:           班级id
     }
     返回值: { total: number, rows: [{ ... }] record, errorCode: , msg: error massage }
     """
@@ -915,6 +915,8 @@ def dance_class_detail_get():
         return jsonify({"row": {}, 'errorCode': 120, 'msg': u'班级信息[id=%d]不存在！' % obj['id']})
 
     rec = recs[0]
+    """查询班级实际人数"""
+    class_dict = DanceStudentClass.get_class_stu_num(rec.id)
     row = {"id": rec.id, "cno": rec.cno, "school_no": recs[2], "school_name": recs[1],
            "class_name": rec.class_name, "rem_code": rec.rem_code, "begin_year": rec.begin_year,
            'class_type': recs[3], 'class_type_id': rec.class_style,
@@ -923,7 +925,8 @@ def dance_class_detail_get():
            'cost_mode': get_class_mode(rec.cost_mode), 'cost_mode_value': rec.cost_mode,
            'cost': rec.cost, 'plan_students': rec.plan_students,
            'cur_students': rec.cur_students, 'is_ended': rec.is_ended, 'remark': rec.remark,
-           'recorder': rec.recorder, 'school_id': rec.school_id
+           'recorder': rec.recorder, 'school_id': rec.school_id,
+           'stuNum': class_dict.get(rec.id, None)
            }
 
     return jsonify({"row": row, 'errorCode': 0, 'msg': 'ok'})

@@ -387,7 +387,7 @@ function danceOpenCommonDg(datagridId, options) {
                     }
                 }
             }).menu('appendItem', {
-                text: '缴费记录',
+                text: '学费交费记录',
                 iconCls: 'icon-ok',
                 id: 'dance-m-student-fee'
             }).menu('appendItem', {

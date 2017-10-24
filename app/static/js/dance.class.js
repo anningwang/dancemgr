@@ -130,7 +130,7 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
             {field: 'school_name', title: '分校名称', width: 140, align: 'center'},
             {field: 'class_name', title: '班级名称', width: 160, align: 'center'},
             {field: 'begin_year', title: '开班年份', width: 60, align: 'center'},
-            {field: 'cur_students', title: '人数', width: 50, align: 'center'},
+            {field: 'stuNum', title: '人数', width: 50, align: 'center'},   // stuNum   cur_students
             {field: 'class_type', title: '班级类型', width: 60, align: 'center'},
             {field: 'class_style', title: '班级形式', width: 60, align: 'center'},
             {field: 'teacher', title: '授课老师姓名', width: 100, align: 'center'},
@@ -444,7 +444,7 @@ function dcOpenDialogNewClass(id, title, dgId, uuid, icon){
                     .combobox(data.row.cur_students ? 'disable' : 'enable');
                 $('#'+classCost).textbox('setValue', data.row.cost);
                 $('#'+planStudents).textbox('setValue', data.row.plan_students);
-                $('#'+curStudents).textbox('setValue', data.row.cur_students);
+                $('#'+curStudents).textbox('setValue', data.row['stuNum']);      // cur_students
                 $('#'+isEnd).combobox('setValue', data.row.is_ended);
                 $('#'+recorder).textbox('setValue', data.row['recorder']);
                 $('#'+remark).textbox('setValue', data.row.remark);
