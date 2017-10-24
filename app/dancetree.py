@@ -139,7 +139,8 @@ def dance_tree_db():
                 {"id": 57, "text": "意向程度"},
                 {"id": 58, "text": "信息来源"},
                 {"id": 59, "text": "咨询方式"},
-                {"id": 510, "text": "表格测试"}
+                {"id": 510, "text": "表格测试"},
+                {"id": 511, "text": "表格行内菜单"}
             ]}
             ]
     return tree
@@ -159,3 +160,12 @@ def dance_tree_finance():
         {"id": 2, "text": "房租"}
     ]
     return tree
+
+
+@app.route('/xxx_get', methods=['POST', 'GET'])
+@login_required
+def xxx_get():
+    data = []
+    for i in range(2):
+        data.append({'name': 'row'+str(i), 'oper': 'oper'+str(i), 'mm': 'mm'})
+    return jsonify({'rows': data, 'total': len(data), 'errorCode': 0, 'msg': 'ok'})

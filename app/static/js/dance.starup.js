@@ -100,7 +100,8 @@ $(function() {
                 58: {fn: danceAddTabInfoSrc},
                 59: {fn: danceAddTabConsultMode},
                 3:  {fn: danceAddTabSchool},
-                4:  {fn: danceAddTabUsers}
+                4:  {fn: danceAddTabUsers},
+                511:{fn: danceAddTabTestButtons}
             };
 
             if (node.text == '数据库备份') {
@@ -122,7 +123,7 @@ $(function() {
         fit:true,border:false,plain:false,
         onBeforeClose: dcBeforeCloseTab
     }).tabs('add',{
-        title:'主页',
+        title:'主页', iconCls: 'icon-dc-home',
         content:'<div style="background:url(/static/img/hill-water.jpg) no-repeat fixed center; width: 100%; height: 100%"></div>',
         closable:false
     });

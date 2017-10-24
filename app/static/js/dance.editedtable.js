@@ -63,6 +63,17 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
                     endEditing();
                 }
             });
+
+            $(".dance_button").linkbutton({});
+            $(".dance_menu").splitbutton({
+                text:'菜单测试', plain:false,
+                iconCls: 'icon-ok',
+                menu: '#mm'
+            });
+
+            $('#mm').menu({
+                hideOnUnhover:false
+            });
         },
         onClickCell: onClickCell,
         onAfterEdit: getChangedData,

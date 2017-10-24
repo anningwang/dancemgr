@@ -576,3 +576,54 @@ function danceAddTabRoom(title, tableId, condition) {
         danceClassRoomCallFunc = danceCreateEditedDatagrid(tableId, '/'+module, optsFeeMode);
     }
 }
+
+
+/**
+ * 打开 [ 测试行内按钮 ] tab标签
+ * @param title     Tab的标题
+ * @param tableId   Datagrid id,创建在 table 上
+ */
+function danceAddTabTestButtons(title, tableId) {
+    var parentDiv = $('#danceTabs');
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+    } else {
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
+        $(parentDiv).tabs('add', {
+            title: title,
+            content: content,
+            closable: true
+        });
+        var module = 'xxx';
+        var optsFeeMode = {
+            defaultSelField: 'name',
+            fieldValidate: {name: checkNotEmpty},
+            queryText: '信息来源：',
+            queryPrompt: '名称或拼音首字母查找',
+            who: module,     // 删除数据时，表明身份
+            danceModuleName: module,   // 传递给 导入、导出 模块的身份标识
+            danceModuleTitle: title,          // 导入、导出 窗口 title
+            columns: [[
+                {field: 'ck', checkbox:true },   // checkbox
+                {field: 'name', title: '测试', width: 140, halign:'center', align: 'left'},
+                {field: 'oper', title: '操作', width: 100, align: 'center',formatter:formatOper},
+                {field: 'mm', title: '菜单测试', width: 100, align: 'center',formatter:formatMM}
+            ]],
+            data: [
+                {name: '1234', 'oper': 'ABC'}
+            ]
+        };
+
+        danceCreateEditedDatagrid(tableId, '/'+module, optsFeeMode);
+    }
+
+    function formatOper(){  // value,row,index
+        //return '<a href="#" onclick="alert('+index+')">修改</a>';
+        return '<a href="#" class="dance_button" data-options="'+ "iconCls:'icon-search'" +'">easyui</a>';
+    }
+    
+    function formatMM() {
+        return '<a class="dance_menu"></a>';
+    }
+    
+}
