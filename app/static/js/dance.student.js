@@ -2056,18 +2056,19 @@ function danceAddTabFeeHistory(opts) {
             queryParams: condition,
             columns: [[
                 //{field: 'ck', checkbox:true },
-                {field: 'receipt_no', title: '收费单号', width: 140, align: 'center',fixed:true},
-                {field: 'school_name', title: '分校名称', width: 110, align: 'center',fixed:true},
-                {field: 'student_no', title: '学号', width: 140, align: 'center',fixed:true},
-                {field: 'student_name', title: '学员姓名', width: 80, align: 'center',fixed:true},
                 {field: 'deal_date', title: '收费日期', width: 90, align: 'center', fixed:true},
-                {field: 'class_no', title: '班级编号', width: 90, align: 'center', fixed:true},
+                {field: 'student_name', title: '学员姓名', width: 80, align: 'center',fixed:true},
                 {field: 'class_name', title: '班级名称', width: 140, align: 'center', fixed:true},
                 {field: 'cost_mode', title: '收费模式', width: 70, align: 'center', fixed:true},
                 {field: 'term', title: '学期长度', width: 70, align: 'center', fixed:true},
                 {field: 'cost', title: '收费标准', width: 70, align: 'center', fixed:true},
                 {field: 'real_fee', title: '实收费', width: 70, align: 'center', fixed:true},
                 {field: 'arrearage', title: '学费欠费', width: 70, align: 'center', fixed:true},
+
+                {field: 'receipt_no', title: '收费单号', width: 140, align: 'center',fixed:true},
+                {field: 'school_name', title: '分校名称', width: 110, align: 'center',fixed:true},
+                {field: 'student_no', title: '学号', width: 140, align: 'center',fixed:true},
+                {field: 'class_no', title: '班级编号', width: 110, align: 'center', fixed:true},
                 {field: 'recorder', title: '录入员', width: 90, align: 'center'}
             ]]
         });

@@ -321,6 +321,17 @@ class DanceStudent(db.Model):
             self.mother_wechat = param['mother_wechat']
         if 'father_wechat' in param:
             self.father_wechat = param['father_wechat']
+        self.refresh_is_training()
+
+    def refresh_is_training(self):
+        has = DanceStudentClass.query.filter_by(student_id=self.id).first()
+        if has is not None:
+            training = DanceStudentClass.query.filter_by(student_id=self.id, status=STU_CLASS_STATUS_NORMAL).first()
+            """有过报班记录，如果有正在读的班，认为在读，否则，不在读"""
+            self.is_training = DC_NO if training is None else DC_YES
+        else:
+            self.is_training = DC_YES       # 还从未报过班的，认为是 在读。
+        return self.is_training
 
     def create_no(self):
         if self.school_id is None:

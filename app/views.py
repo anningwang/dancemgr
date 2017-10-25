@@ -634,7 +634,7 @@ def dance_student_details_get():
     total = dcq.count()
 
     dcq = dcq.join(DanceSchool, DanceSchool.id == DanceStudent.school_id) \
-        .add_columns(DanceSchool.school_name, DanceSchool.school_no,) \
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no) \
         .order_by(DanceStudent.school_id, DanceStudent.id.desc())
 
     if page_no <= -2:
@@ -644,7 +644,11 @@ def dance_student_details_get():
         if r is None:
             return jsonify({'errorCode': 400, 'msg': u'不存在学号为[%s]的学员！' % student_id})
         i = dcq.filter(DanceStudent.id >= r.id).count()
-        dcq = dcq.filter(DanceStudent.id == student_id)
+        if i == 0:
+            i = 1
+        dcq = DanceStudent.query.filter(DanceStudent.id == student_id)\
+            .join(DanceSchool, DanceSchool.id == DanceStudent.school_id) \
+            .add_columns(DanceSchool.school_name, DanceSchool.school_no)
     else:
         if page_no <= 0:  # 容错处理
             page_no = 1
@@ -797,8 +801,6 @@ def dance_student_modify():
     stu = DanceStudent.query.get(student['id'])
     if stu.school_id not in school_ids:
         return jsonify({'errorCode': 1000, 'msg': u'你没有修改该分校学员的权限！'})
-    stu.update(student)
-    db.session.add(stu)
 
     # 更新学员报班信息
     for cls in classes:
@@ -821,6 +823,9 @@ def dance_student_modify():
             else:
                 stucls.update(cls)
             db.session.add(stucls)
+    """更新学员基本信息"""
+    stu.update(student)
+    db.session.add(stu)
 
     db.session.commit()
     return jsonify({'errorCode': 0, 'msg': u'更新成功！'})

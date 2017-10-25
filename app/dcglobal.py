@@ -13,6 +13,12 @@ class FeeItemType(Enum):
 CLASS_IS_END = 1                # 已结束
 CLASS_IS_ON = 0                 # 未结束
 
+DC_YES = u'是'
+DC_NO = u'否'
+
+DC_YES_VAL = 1
+DC_NO_VAL = 0
+
 # 班级授课形式
 CLASS_STYLE_GROUP = 1           # 集体课
 CLASS_STYLE_ONE_FOR_ONE = 2     # 1对1
