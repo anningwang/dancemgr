@@ -20,3 +20,5 @@ pyExcelerator==0.6.4.1
 flask-uploads==0.2.1
 Werkzeug==0.12.2
 sqlalchemy
+Flask-Session
+Redis

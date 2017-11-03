@@ -6,13 +6,7 @@ CSRF_ENABLED = True
 SECRET_KEY = 'you-will-never-guess-A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 APP_NAME = 'dancemgr'
 
-OPENID_PROVIDERS = [
-    {'name': 'Google', 'url': 'https://www.google.com/accounts/o8/id'},
-    {'name': 'Yahoo', 'url': 'https://me.yahoo.com'},
-    {'name': 'AOL', 'url': 'http://openid.aol.com/<username>'},
-    {'name': 'Flickr', 'url': 'http://www.flickr.com/<username>'},
-    {'name': 'MyOpenID', 'url': 'https://www.myopenid.com'}]
-    
+
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
 SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
 SQLALCHEMY_RECORD_QUERIES = True
@@ -50,3 +44,9 @@ POSTS_PER_PAGE = 10
 MAX_SEARCH_RESULTS = 50
 
 SQLALCHEMY_TRACK_MODIFICATIONS = True
+
+# initialize Flask-Session
+SESSION_TYPE = 'redis'
+SESSION_USE_SIGNER = True
+SESSION_PERMANENT = True
+PERMANENT_SESSION_LIFETIME = 60 * 5    # unit:(s, second)

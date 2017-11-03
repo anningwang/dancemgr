@@ -1,7 +1,8 @@
 # -*- coding:utf-8 -*-
 
 import os
-from flask import Flask
+from flask import Flask, session
+from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_openid import OpenID
@@ -9,6 +10,8 @@ from flask_mail import Mail
 from flask_babel import Babel, lazy_gettext
 from config import basedir, ADMINS, MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, FILENAME_APP_LOG
 from momentjs import momentjs
+from datetime import timedelta
+
 
 # Set this variable to "threading", "eventlet" or "gevent" to test the
 # different async modes, or leave it set to None for the application to choose
@@ -20,9 +23,14 @@ app.config.from_object('config')
 
 db = SQLAlchemy(app)
 lm = LoginManager()
-lm.init_app(app)
 lm.login_view = 'login'
 lm.login_message = lazy_gettext(u'请登录！')
+lm.session_protection = 'strong'
+lm.remember_cookie_duration = timedelta(days=1)
+lm.init_app(app)
+
+# app.permanent_session_lifetime = timedelta(minutes=5)
+
 oid = OpenID(app, os.path.join(basedir, 'tmp'))
 mail = Mail(app)
 babel = Babel(app)
@@ -49,6 +57,22 @@ if not app.debug:
     app.logger.info('dancemgr startup')
 
 app.jinja_env.globals['momentjs'] = momentjs
+
+
+sess = Session()
+sess.init_app(app)
+
+
+@app.route('/set/')
+def session_set():
+    session['key'] = 'value'
+    return 'ok'
+
+
+@app.route('/get/')
+def session_get():
+    return session.get('key', 'not set')
+
 
 from app import views, models, dancedatamgr, dancetree
 from tools.upload import *

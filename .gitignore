@@ -93,5 +93,3 @@ ENV/
 search.db/
 app.db
 app/uploads/
-
-db_repository/versions/

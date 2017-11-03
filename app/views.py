@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from flask import render_template, flash, redirect, url_for, request, g, jsonify, json
+from flask import render_template, flash, redirect, url_for, request, g, jsonify, json, session
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_sqlalchemy import get_debug_queries
 from app import app, db, lm, babel
@@ -58,6 +58,8 @@ def internal_error(error):
 @app.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
+    if 'username' in session:
+        print session['username']
     return render_template('index.html',
                            title='Home')
 
@@ -71,12 +73,16 @@ def login():
     user_dc = DanceUser.query.filter_by(name=form.username.data).first()
     if form.validate_on_submit():
         if user_dc is not None and user_dc.check_password(form.password.data):
+            login_user(user_dc, remember=form.remember_me.data)
+            '''
             if user_dc.check_logged():
                 flash(u'用户[%s]已经登录!' % user_dc.name)
             else:
                 user_dc.login()
                 login_user(user_dc, remember=form.remember_me.data)
                 return redirect(request.args.get('next') or url_for('index'))
+            '''
+            return redirect(request.args.get('next') or url_for('index'))
         else:
             flash(u'用户名或者密码错误！')
 

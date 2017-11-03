@@ -44,7 +44,7 @@
                     {% endfor %}<br>
                 </div>
                 <div style="margin-bottom:20px">
-                    <input class="easyui-textbox" name="password" type="password" style="width:100%;height:40px;padding:12px" data-options="prompt:'请输入密码',iconCls:'icon-lock',iconWidth:38,required:true">
+                    <input class="easyui-passwordbox" name="password" style="width:100%;height:40px;padding:12px" data-options="prompt:'请输入密码',iconCls:'icon-lock',iconWidth:38,required:true">
                     {% for error in form.errors.password %}
                     <span style="color: red;">[{{error}}]</span>
                     {% endfor %}<br>
