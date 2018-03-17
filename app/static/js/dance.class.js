@@ -252,7 +252,7 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
 }
 
 /**
- * 打开 新增班级 窗口
+ * 打开 新增班级 窗口, 编辑/查看 班级
  * @param id
  * @param title
  * @param dgId      本窗口 关闭后，要更新的 表格 id。
@@ -307,6 +307,105 @@ function dcOpenDialogNewClass(id, title, dgId, uuid, icon){
             {text:'关闭',iconCls:'icon-cancel',width:80,height:30,handler:function(){ $("#"+id).dialog('close'); }}],
         onOpen:function () {
             console.log('onOpen');
+            $('#'+classNo).textbox({
+                label:'班级编号：',labelAlign:'right',labelWidth:100,prompt:'自动生成',disabled:true,width:'48%'
+            });
+            $('#'+schoolNo).textbox({
+                label:'分校编号：',labelAlign:'right',labelWidth:100,prompt:'关联分校名称',disabled:true,width:'48%'
+            });
+
+            $('#'+className).textbox({
+                label:'*班级名称：',labelAlign:'right',labelWidth:100,width:'48%'
+            }).textbox('textbox').focus();
+            $('#'+schoolName).combobox({
+                label:'*分校名称：',labelAlign:'right',labelWidth:100,
+                valueField:'school_id', textField:'school_name',editable:false,panelHeight:'auto',width:'48%',
+                url: '/api/dance_school_get',
+                onLoadSuccess: function () {
+                    var data = $(this).combobox('getData');
+                    if(data.length){
+                        $('#'+schoolName).combobox('setValue', data[0].school_id);
+                        $('#'+schoolNo).textbox('setValue', data[0]['school_no']);
+                    }
+                },
+                onSelect:function (record) {
+                    $('#'+schoolNo).textbox('setValue', record['school_no']);
+                }
+            });
+
+            $('#'+classType).combobox({
+                label:'*班级类型：',labelAlign:'right',labelWidth:100,
+                valueField:'ct_id', textField:'ct_name',editable:false,panelHeight:'auto',width:'48%',
+                url: '/api/dance_class_type_get',
+                iconWidth:22,
+                icons:[{
+                    iconCls:'icon-add',
+                    handler: function () {
+                        dcOpenDialogNewClassType('dcClassTypeNewWin', '新增班级类型');
+                    }
+                }]
+            });
+            $('#'+classStyle).combobox({
+                label:'授课形式：',labelAlign:'right',labelWidth:100,
+                valueField:'type', textField:'type_text',editable:false,panelHeight:'auto',
+                data:[{
+                    type: 1,
+                    type_text: '集体课'
+                },{
+                    type: 2,
+                    type_text: '1对1'
+                }],width:'48%'
+            }).combobox('setValue', 1);
+
+            $('#'+teacher).combobox({
+                label:'授课老师：',labelAlign:'right',labelWidth:100,
+                valueField:'type', textField:'type_text',editable:false,panelHeight:'auto',width:'48%'
+            });
+            $('#'+beginYear).textbox({
+                label:'开班年份：',labelAlign:'right',labelWidth:100,width:'48%'
+            }).textbox('setValue', (new Date().getFullYear()));
+
+            $('#'+costMode).combobox({
+                label:'*学费收费模式：',labelAlign:'right',labelWidth:100,
+                valueField:'type', textField:'type_text',editable:false,panelHeight:'auto',
+                data:[{
+                    type: 1,
+                    type_text: '按课次'
+                },{
+                    type: 2,
+                    type_text: '按课时'
+                }],width:'48%'
+            }).combobox('setValue', 1);
+            $('#'+classCost).textbox({
+                label:'*学费收费标准：',labelAlign:'right',labelWidth:100,width:'48%'
+            });
+
+            $('#'+planStudents).textbox({
+                label:'计划招生人数：',labelAlign:'right',labelWidth:100,width:'48%'
+            });
+            $('#'+curStudents).textbox({
+                label:'当前人数：',labelAlign:'right',labelWidth:100,prompt:'根据报班学员计算',disabled:true,width:'48%'
+            });
+
+            $('#'+isEnd).combobox({
+                label:'*是否结束：',labelAlign:'right',labelWidth:100,
+                valueField:'is_ended', textField:'is_ended_text',editable:false,panelHeight:'auto',
+                data:[{
+                    is_ended: 1,
+                    is_ended_text: '是'
+                },{
+                    is_ended: 0,
+                    is_ended_text: '否'
+                }],width:'48%'
+            }).combobox('setValue', 0);
+            $('#'+recorder).textbox({
+                label:'录入员：',prompt:'自动生成',disabled:true,labelAlign:'right',labelWidth:100,width:'48%'
+            });
+
+            $('#'+remark).textbox({
+                label:'备注：',labelAlign:'right',multiline:true,labelWidth:100,width:'96%', height:60
+            });
+            
             if(uuid > 0){
                 ajaxRequest();
             }
@@ -319,104 +418,6 @@ function dcOpenDialogNewClass(id, title, dgId, uuid, icon){
         }
     }).dialog('open');
 
-    $('#'+classNo).textbox({
-        label:'班级编号：',labelAlign:'right',labelWidth:100,prompt:'自动生成',disabled:true,width:'48%'
-    });
-    $('#'+schoolNo).textbox({
-        label:'分校编号：',labelAlign:'right',labelWidth:100,prompt:'关联分校名称',disabled:true,width:'48%'
-    });
-
-    $('#'+className).textbox({
-        label:'*班级名称：',labelAlign:'right',labelWidth:100,width:'48%'
-    }).textbox('textbox').focus();
-    $('#'+schoolName).combobox({
-        label:'*分校名称：',labelAlign:'right',labelWidth:100,
-        valueField:'school_id', textField:'school_name',editable:false,panelHeight:'auto',width:'48%',
-        url: '/api/dance_school_get',
-        onLoadSuccess: function () {
-            var data = $(this).combobox('getData');
-            if(data.length){
-                $('#'+schoolName).combobox('setValue', data[0].school_id);
-                $('#'+schoolNo).textbox('setValue', data[0]['school_no']);
-            }
-        },
-        onSelect:function (record) {
-            $('#'+schoolNo).textbox('setValue', record['school_no']);
-        }
-    });
-
-    $('#'+classType).combobox({
-        label:'*班级类型：',labelAlign:'right',labelWidth:100,
-        valueField:'ct_id', textField:'ct_name',editable:false,panelHeight:'auto',width:'48%',
-        url: '/api/dance_class_type_get',
-        iconWidth:22,
-        icons:[{
-            iconCls:'icon-add',
-            handler: function () {
-                dcOpenDialogNewClassType('dcClassTypeNewWin', '新增班级类型');
-            }
-        }]
-    });
-    $('#'+classStyle).combobox({
-        label:'授课形式：',labelAlign:'right',labelWidth:100,
-        valueField:'type', textField:'type_text',editable:false,panelHeight:'auto',
-        data:[{
-            type: 1,
-            type_text: '集体课'
-        },{
-            type: 2,
-            type_text: '1对1'
-        }],width:'48%'
-    }).combobox('setValue', 1);
-
-    $('#'+teacher).combobox({
-        label:'授课老师：',labelAlign:'right',labelWidth:100,
-        valueField:'type', textField:'type_text',editable:false,panelHeight:'auto',width:'48%'
-    });
-    $('#'+beginYear).textbox({
-        label:'开班年份：',labelAlign:'right',labelWidth:100,width:'48%'
-    }).textbox('setValue', (new Date().getFullYear()));
-
-    $('#'+costMode).combobox({
-        label:'*学费收费模式：',labelAlign:'right',labelWidth:100,
-        valueField:'type', textField:'type_text',editable:false,panelHeight:'auto',
-        data:[{
-            type: 1,
-            type_text: '按课次'
-        },{
-            type: 2,
-            type_text: '按课时'
-        }],width:'48%'
-    }).combobox('setValue', 1);
-    $('#'+classCost).textbox({
-        label:'*学费收费标准：',labelAlign:'right',labelWidth:100,width:'48%'
-    });
-
-    $('#'+planStudents).textbox({
-        label:'计划招生人数：',labelAlign:'right',labelWidth:100,width:'48%'
-    });
-    $('#'+curStudents).textbox({
-        label:'当前人数：',labelAlign:'right',labelWidth:100,prompt:'根据报班学员计算',disabled:true,width:'48%'
-    });
-
-    $('#'+isEnd).combobox({
-        label:'*是否结束：',labelAlign:'right',labelWidth:100,
-        valueField:'is_ended', textField:'is_ended_text',editable:false,panelHeight:'auto',
-        data:[{
-            is_ended: 1,
-            is_ended_text: '是'
-        },{
-            is_ended: 0,
-            is_ended_text: '否'
-        }],width:'48%'
-    }).combobox('setValue', 0);
-    $('#'+recorder).textbox({
-        label:'录入员：',prompt:'自动生成',disabled:true,labelAlign:'right',labelWidth:100,width:'48%'
-    });
-
-    $('#'+remark).textbox({
-        label:'备注：',labelAlign:'right',multiline:true,labelWidth:100,width:'96%', height:60
-    });
 
     function ajaxRequest(){
         // 发送数据
