@@ -1,5 +1,6 @@
 /**
  * Created by Administrator on 2017/10/17.
+ * 左侧功能导航树及入口函数
  */
 
 'use strict';

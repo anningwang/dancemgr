@@ -856,3 +856,36 @@ function dcLoadTree() {
         $.messager.alert('提示', msg, 'info');
     });
 }
+
+// ----------------------------------------------------------------------------
+// 业务功能 公共 函数
+// ----------------------------------------------------------------------------
+function ajaxRequest(url, options) {
+    options = options || {};
+    $.ajax({
+        method: 'POST',
+        url: url,
+        async: true,
+        dataType: 'json',
+        data: options.data
+    }).done(function(data) {
+        if (data.errorCode == undefined || data.errorCode == 0) {
+            if (options.callback) {
+                options.callback(data);
+            }
+        } else {
+            $.messager.alert('提示', data.msg, 'info');
+        }
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
+        $.messager.alert('提示', msg, 'info');
+    });
+}
+
+/**
+ * 查询收费方式：微信、支付宝、现金、信用卡、银行卡等。从服务器的数据库中查询。
+ * @param options   : object {callback -- 回调函数}
+ */
+function getFeeMode(options) {
+    ajaxRequest('/api/dance_fee_mode_get', options);
+}

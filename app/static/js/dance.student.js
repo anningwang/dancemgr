@@ -1,5 +1,8 @@
 /**
  * dancestudent.js  界面实现 --by Anningwang
+ * 功能：
+ *      学员管理
+ *      收费单（学费）
  */
 
 'use strict';
@@ -762,10 +765,15 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
             $('#'+dgReceiptComm).attr('id', dgReceiptComm+=uid).datagrid({  // 收费单（学费） ||||||||||||||||||||||
                 onClickCell: dgReceiptClickCell,
                 onEndEdit: function (index, row){
+                    var ed;
                     if (index === 0) {
-                        var ed = $(this).datagrid('getEditor', { index: index, field: 'c4' });
+                        ed = $(this).datagrid('getEditor', { index: index, field: 'c4' });
                         row.c4 = $(ed.target).combobox('getText');
                         row.school_id = parseInt($(ed.target).combobox('getValue'));
+                    } else if (index === 4) {
+                        ed = $(this).datagrid('getEditor', { index: index, field: 'c2' });
+                        row.c2 = $(ed.target).combobox('getText');
+                        row.fee_mode_id = parseInt($(ed.target).combobox('getValue'));
                     }
                 },
                 onAfterEdit: function () {  // index,row,changes
@@ -1149,14 +1157,14 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
             $(dg).datagrid('selectRow', index).datagrid('beginEdit', index);
             var row = $(dg).datagrid("getSelected");
 
-            if (index === 0){
+            if (index === 0){   // 第一行， 更新 分校名称  combobox
                 var eds = $(dg).datagrid('getEditor', {index:index,field:'c4'});
                 $(eds.target).combobox({
                     editable:false,panelHeight:'auto',
                     valueField: 'school_id',textField: 'school_name',
                     data:filterSchool(schoollist)
                 }).combobox('setValue', row.school_id);
-            }else if (index === 1) {
+            }else if (index === 1) {    // 学号、姓名 行， 更新 姓名combobox，根据 姓名拼音，自动搜索符合条件的姓名
                 var edname = $(this).datagrid('getEditor', {index:index,field:'c4'});
                 $(edname.target).combobox({
                     valueField: 'name', textField: 'name', hasDownArrow: false,
@@ -1197,6 +1205,15 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                         });
                     }
                 }).combobox('setValue', row.c4);
+            } else if (index === 4) {   // 第五行，更新 收费方式 combobox
+                getFeeMode({callback: function (data) {
+                    var edFeeMode = $(dg).datagrid('getEditor', {index:index,field:'c2'});
+                    $(edFeeMode.target).combobox({
+                        editable:false,panelHeight:'auto',
+                        valueField: 'fee_mode_id',textField: 'fee_mode',
+                        data: data
+                    }).combobox('setValue', row.fee_mode_id);
+                }});
             }
 
             var ed = $(dg).datagrid('getEditor', {index:index,field:field});
