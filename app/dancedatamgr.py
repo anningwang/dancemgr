@@ -651,10 +651,30 @@ def dance_receipt_study_modify():
         cls[i]['receipt_id'] = recpt_id
         nr = DanceClassReceipt(cls[i])
         db.session.add(nr)
+
+        ''' 增加班级学费，同时添加报班信息 2018-3-18  '''
+        # 判断该班级是否已经报名
+        has = DanceStudentClass.query.filter_by(company_id=g.user.company_id, student_id=obj['row']['student_id'],
+                                                class_id=cls[i]['class_id']).first()
+        if has is None:
+            db.session.add(DanceStudentClass({'student_id': obj['row']['student_id'],
+                                              'class_id': cls[i]['class_id'],
+                                              'status': u'正常',
+                                              'join_date': obj['row']['deal_date']}))
     for i in change['upd']:
         nr = DanceClassReceipt.query.get(cls[i]['id'])
         nr.update(cls[i])
         db.session.add(nr)
+
+        ''' 增加班级学费，同时添加报班信息 2018-3-18  '''
+        # 判断该班级是否已经报名
+        has = DanceStudentClass.query.filter_by(company_id=g.user.company_id, student_id=obj['row']['student_id'],
+                                                class_id=cls[i]['class_id']).first()
+        if has is None:
+            db.session.add(DanceStudentClass({'student_id': obj['row']['student_id'],
+                                              'class_id': cls[i]['class_id'],
+                                              'status': u'正常',
+                                              'join_date': obj['row']['deal_date']}))
     for i in change['del']:
         DanceClassReceipt.query.filter_by(id=old_ids[i]['id']).delete()
 
@@ -717,6 +737,16 @@ def dance_receipt_study_add(recpt):
         cr['receipt_id'] = r.id
         new_cr = DanceClassReceipt(cr)
         db.session.add(new_cr)
+
+        ''' 增加班级学费，同时添加报班信息 2018-3-18  '''
+        # 判断该班级是否已经报名
+        has = DanceStudentClass.query.filter_by(company_id=g.user.company_id, student_id=recpt['row']['student_id'],
+                                                class_id=cr['class_id']).first()
+        if has is None:
+            db.session.add(DanceStudentClass({'student_id': recpt['row']['student_id'],
+                                              'class_id': cr['class_id'],
+                                              'status': u'正常',
+                                              'join_date': recpt['row']['deal_date']}))
     for tr in recpt['teach_receipt']:
         tr['receipt_id'] = r.id
         new_tr = DanceTeaching(tr)
