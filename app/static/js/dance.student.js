@@ -226,6 +226,7 @@ function danceAddStudentDetailInfo(opts) {
     var dgStu_class = 'dgStudent_class';
     var footerStu = 'footerStudent';
     var tbLayout = 'tableLayout';
+    var stu_rem_code = 'rem_code';
 
     var editIndexClass = undefined;
     var edIndexContact = undefined;
@@ -262,7 +263,16 @@ function danceAddStudentDetailInfo(opts) {
                 $('#'+stu_recorder).attr('id', stu_recorder+=uid).textbox('textbox').css('background','#e4e4e4');
                 // #ccc #fff #ffee00 #6293BB e4e4e4 #99ff99
                 $('#'+stu_sno).attr('id', stu_sno+=uid).textbox('textbox').css('background','#e4e4e4');
-                $('#'+stu_name).attr('id', stu_name+=uid).textbox('textbox').focus();
+
+                var oStuName = $('#'+stu_name);
+                oStuName.attr('id', stu_name+=uid).textbox('textbox').focus();
+
+                // 绑定 学生姓名 实时 改名 助记码 的事件。
+                $("input",oStuName.next("span")).keyup(function(){
+                    var v = $('#'+stu_name).next().children().val();
+                    studentNameOnChange(v);
+                });
+
                 $('#'+stu_gender).attr('id', stu_gender+=uid);
                 $('#'+stu_register_day).attr('id', stu_register_day+=uid);
                 $('#'+stu_school_name).attr('id', stu_school_name+=uid);
@@ -271,6 +281,7 @@ function danceAddStudentDetailInfo(opts) {
                 $('#'+stu_counselor).attr('id', stu_counselor+=uid);
                 $('#'+stu_degree).attr('id', stu_degree+=uid);
                 $('#'+stu_former_name).attr('id', stu_former_name+=uid);
+                $('#'+stu_rem_code).attr('id', stu_rem_code+=uid);
                 $('#'+stu_birthday).attr('id', stu_birthday+=uid);
                 $('#'+stu_remark).attr('id', stu_remark+=uid);
                 $('#'+footerStu).attr('id', footerStu+=uid);
@@ -349,6 +360,7 @@ function danceAddStudentDetailInfo(opts) {
             $('#'+stu_degree).combobox('setText',data.rows['degree']);
 
             $('#'+stu_former_name).textbox('setText',data.rows['former_name']);
+            $('#'+stu_rem_code).textbox('setText',data.rows['rem_code']);
             $('#'+stu_recorder).textbox('setText',data.rows['recorder']);
             $('#'+stu_gender).combobox('select',data.rows['gender']);
             $('#'+stu_remark).textbox('setText',data.rows['remark']);
@@ -584,7 +596,8 @@ function danceAddStudentDetailInfo(opts) {
         stuInfo.student.degree = $('#'+stu_degree).combobox('getText');   // 文化程度
         stuInfo.student.birthday = $('#'+stu_birthday).datebox('getValue');   // 出生日期
         stuInfo.student.remark = $('#'+stu_remark).textbox('getText');   // 备注
-        // 曾用名
+        stuInfo.student.former_name = $('#'+stu_former_name).textbox('getText');    // 曾用名      *** 未使用 ***
+        stuInfo.student.rem_code = $('#'+stu_rem_code).textbox('getText'); // 助记码
 
         stuInfo.student.information_source = stuInfo.student.information_source.replace('　', '');    // 删除全角空格
         stuInfo.student.counselor = stuInfo.student.counselor.replace('　', '');
@@ -676,7 +689,19 @@ function danceAddStudentDetailInfo(opts) {
         $('#'+stu_degree).textbox('resize', wd);
         $('#'+stu_recorder).textbox('resize', wd);
 
+        $('#'+stu_rem_code).textbox('resize', wd);
+
         $('#'+stu_remark).textbox('resize', parent.width() - 202 - 16);
+    }
+
+	/**
+     * 新增、修改 学员界面，学生姓名改变事件。修改学员的助记码为 学生姓名拼音首字母
+     * @param newValue
+     */
+    function studentNameOnChange(newValue) {
+        var arrRslt = makePy(newValue);
+        var strRemCode = arrRslt.join(',');
+        $('#'+stu_rem_code).textbox('setText', strRemCode);
     }
 }
 
