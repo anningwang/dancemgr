@@ -128,7 +128,7 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
             // {field: 'id', title: 'id',  width: 30, align: 'center' },
             {field: 'cno', title: '班级编号', width: 140, align: 'center'},
             {field: 'school_name', title: '分校名称', width: 140, align: 'center'},
-            {field: 'class_name', title: '班级名称', width: 160, align: 'center'},
+            {field: 'class_name', title: '班级名称', width: 160, align: 'left'},
             {field: 'begin_year', title: '开班年份', width: 60, align: 'center'},
             {field: 'stuNum', title: '人数', width: 50, align: 'center'},   // stuNum   cur_students
             {field: 'class_type', title: '班级类型', width: 60, align: 'center'},
