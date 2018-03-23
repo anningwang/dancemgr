@@ -2789,7 +2789,8 @@ def api_dance_class_by_student():
                 class_id    班级id
                 class_no    班级编号
                 class_name  班级名称
-                cost_mode   收费模式
+                cost_mode   收费模式 数字
+                cost_mode_text  收费模式 中文     -- added by WXG 2018-3-23
                 cost        收费标准
     """
     if 'student_id' not in request.form:
@@ -2802,7 +2803,9 @@ def api_dance_class_by_student():
     cls = []
     for rec in records:
         cls.append({'class_id': rec[1], 'class_no': rec[2], 'class_name': rec[3],
-                    'cost_mode': rec[4], 'cost': rec[5]})
+                    'cost_mode': rec[4], 'cost': rec[5],
+                    'cost_mode_text': get_class_mode(rec[4])
+                    })
 
     return jsonify({'errorCode': 0, 'msg': 'ok', 'cls': cls})
 

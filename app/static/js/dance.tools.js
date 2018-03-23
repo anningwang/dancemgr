@@ -869,7 +869,7 @@ function ajaxRequest(url, options) {
         dataType: 'json',
         data: options.data
     }).done(function(data) {
-        if (data.errorCode == undefined || data.errorCode == 0) {
+        if ( !('errorCode' in data) || data.errorCode == 0) {
             if (options.callback) {
                 options.callback(data);
             }
