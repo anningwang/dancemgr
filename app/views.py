@@ -777,7 +777,9 @@ def dance_student_add():
     allow_same_name = True if 'allowSameName' in student and student['allowSameName'] == 'y'else False
 
     if not allow_same_name:
-        stu = DanceStudent.query.filter_by(name=student['name']).first()
+        ''' bug fix: 增加 分校及培训中心的过滤条件 '''
+        stu = DanceStudent.query.filter_by(company_id=g.user.company_id, school_id=student['school_id'],
+                                           name=student['name']).first()
         if stu is not None:
             return jsonify({'errorCode': 100,
                             'msg': u'学员[%s]已经存在！勾选[允许重名]可添加重名学员。' % student['name']})
