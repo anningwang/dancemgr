@@ -663,6 +663,11 @@ def dance_student_details_get():
         i = offset + 1
 
     records = dcq.first()
+
+    ''' bug fix:  按照姓名查找流失学员，再将学员修改为 在读（新增报班信息），此时查询应该为空 '''
+    if records is None:
+        return jsonify({"total": total, "rows": {}, 'class_info': [], 'errorCode': 0, 'msg': 'ok'})
+
     r = records[0]
     rows = {"id": r.id, "sno": r.sno, "school_no": records[2], "school_name": records[1], 'school_id': r.school_id,
             "consult_no": r.consult_no, "name": r.name, "rem_code": r.rem_code, 'no': i,
