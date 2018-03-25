@@ -797,7 +797,8 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                         row.school_id = parseInt($(ed.target).combobox('getValue'));
                     } else if (index === 4) {
                         ed = $(this).datagrid('getEditor', { index: index, field: 'c2' });
-                        row.c2 = $(ed.target).combobox('getText');
+                        row.c2 = $(ed.target).combobox('getText');  // 收费模式
+                        row.c2 = row.c2.replace('　', '');    // 删除全角空格
                         row.fee_mode_id = parseInt($(ed.target).combobox('getValue'));
                     }
                 },
@@ -1091,6 +1092,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                     }
                 }).datagrid('updateRow', { index: 4,
                     row: {c2: data.row['fee_mode'],
+                        fee_mode_id: data.row['fee_mode_id'],
                         c4: data.row['paper_receipt'],     // 收据号
                         c6: data.row['recorder']
                     }
@@ -1149,6 +1151,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
             }
         }).datagrid('updateRow', { index: 4,
             row: {c2: '',
+                fee_mode_id: 0,
                 c4: '',     // 收据号
                 c6: '[关联当前用户]'
             }

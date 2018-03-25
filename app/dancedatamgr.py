@@ -458,6 +458,12 @@ def dance_receipt_study_details_get():
         .join(DanceSchool, DanceStudent.school_id == DanceSchool.id)\
         .add_columns(DanceSchool.school_name, DanceSchool.school_no).first()
 
+    fee_mode_id = 0
+    if r.fee_mode != '':
+        fm = DcCommFeeMode.query.filter_by(company_id=g.user.company_id, fee_mode=r.fee_mode).first()
+        if fm is not None:
+            fee_mode_id = fm.id
+
     """ 收费单 基本信息 """
     row = {'id': r.id, 'receipt_no': r.receipt_no, 'school_id': r.school_id,
            'student_id': r.student_id, 'deal_date': datetime.datetime.strftime(r.deal_date, '%Y-%m-%d'),
@@ -466,7 +472,9 @@ def dance_receipt_study_details_get():
            'counselor': r.counselor, 'remark': r.remark, 'recorder': r.recorder,
            'no': rec_no, 'school_no': stu[2], 'school_name': stu[1],
            'student_no': stu[0].sno, 'student_name': stu[0].name,
-           'fee_mode': r.fee_mode, 'paper_receipt': r.paper_receipt, 'type': r.type}
+           'fee_mode': r.fee_mode, 'paper_receipt': r.paper_receipt, 'type': r.type,
+           'fee_mode_id': fee_mode_id
+           }
 
     """ 查询班级——学费 """
     clsfee = DanceClassReceipt.query.filter_by(receipt_id=r.id)\
@@ -2927,7 +2935,7 @@ def api_dance_fee_mode_get():
         disc_rate       损失点数
     """
     records = DcCommFeeMode.query.filter_by(company_id=g.user.company_id).all()
-    fee_mode = []
+    fee_mode = [{'fee_mode_id': 0, 'fee_mode': '　', 'disc_rate': 0}]     # 增加默认收费模式。全角 空格。
     for rec in records:
         fee_mode.append({'fee_mode_id': rec.id, 'fee_mode': rec.fee_mode, 'disc_rate': rec.disc_rate})
     return jsonify(fee_mode)
