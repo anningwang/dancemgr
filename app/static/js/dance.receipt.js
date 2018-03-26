@@ -422,6 +422,12 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
         ed = $(dg).datagrid('getEditor', { index: index, field: 'is_rcv_text' });
         row.is_rcv = parseInt($(ed.target).combobox('getValue'));
         row.is_rcv_text = $(ed.target).combobox('getText');
+
+        // bug fix: 点击 演出名称时，由于时间差的问题，导致 combobox getValue 返回 NaN。这里修正该问题。
+        if (isNaN(row.is_rcv)) {
+            row.is_rcv = 1;
+            row.is_rcv_text = '是';
+        }
     }
 
     function dgShowAfterEdit() {    // index,row,changes
