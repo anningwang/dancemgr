@@ -1477,7 +1477,7 @@ class DcShowDetailFee(db.Model):
             self.fee_item_id = param['fee_item_id']
         if 'fee' in param:
             self.fee = param['fee']
-        self.is_rcv = 0 if 'is_rcv' not in param or param['is_rcv'] == u'否' else 1
+        self.is_rcv = 0 if 'is_rcv' not in param or param['is_rcv'] != 1 else 1
         self.last_user = self.recorder = g.user.name
         self.last_upd_at = self.create_at = datetime.datetime.today()
         if 'remark' in param:
@@ -1489,7 +1489,7 @@ class DcShowDetailFee(db.Model):
         if 'fee' in param:
             self.fee = param['fee']
         if 'is_rcv' in param:
-            self.is_rcv = 0 if param['is_rcv'] == u'否' else 1
+            self.is_rcv = 0 if param['is_rcv'] != 1 else 1
         self.last_upd_at = datetime.datetime.today()
         self.last_user = g.user.name
         if 'remark' in param:

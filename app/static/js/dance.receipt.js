@@ -205,7 +205,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                         c6: data.row['recorder']
                     }
                 }).datagrid('updateRow', { index: 4,
-                    row: {c2: data.row['remark']
+                    row: {c2: ''            // 已报名班级  *** 待实现 ***
                     }
                 });
                 
@@ -394,6 +394,12 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                 onClick: dgShowOnClickShowName
             }).combobox('setValue', row['show_id']);
 
+            // 是否收取费用
+            var ed_is_rcv =  $(dg).datagrid('getEditor', {index:index,field:'is_rcv_text'});
+            $(ed_is_rcv.target).combobox({
+                onClick: dgShowOnClickIsRcv
+            }).combobox('setValue', row['is_rcv']);
+
             var ed = $(dg).datagrid('getEditor', {index:index,field:field});
             if (ed){
                 ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
@@ -402,6 +408,11 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
         }
     }
 
+    /**
+     * 收费单（演出）  “演出收费”datagrid 单元格 end edit 事件
+     * @param index
+     * @param row
+     */
     function dgShowEndEdit(index, row){
         //console.log('onEndEdit', row);
         var dg = $('#'+dgShow);
@@ -409,6 +420,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
         row.show_name = $(ed.target).combobox('getText');
 
         ed = $(dg).datagrid('getEditor', { index: index, field: 'is_rcv_text' });
+        row.is_rcv = parseInt($(ed.target).combobox('getValue'));
         row.is_rcv_text = $(ed.target).combobox('getText');
     }
 
@@ -445,7 +457,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
         var rows = $(dg).datagrid('getRows');
         var joinFee = 0, otherFee = 0, total = 0;
         for(var i=0; i< rows.length; i++){
-            if (rows[i].fee_item){
+            if (rows[i].fee_item && rows[i].is_rcv_text == '是'){
                 var val = parseFloat(rows[i].fee);
                 if(rows[i].fee_item.indexOf('报名费') >=0){
                     joinFee += val;
@@ -532,7 +544,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
     }
 
     /**
-     * 班级——学费 表选中某个班级事件
+     * 班级——演出 演出名称点击事件
      * @param record
      */
     function dgShowOnClickShowName(record) {
@@ -608,6 +620,19 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
 
         dgParam[dgShow].mergeCell = newMc;
         console.log('new:', dgParam[dgShow].mergeCell);
+    }
+
+    /**
+     * 班级——演出 "是否收取费用"单元格 点击事件
+     * @param record
+     */
+    function dgShowOnClickIsRcv(record) {
+        var dg = $('#' + dgShow);
+        var row = $(dg).datagrid("getSelected");
+
+        row.is_rcv_text = record.text;
+
+        dgShowCalcFee();
     }
 
     /**
