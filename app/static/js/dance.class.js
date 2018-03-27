@@ -59,7 +59,8 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
         toolbar: [{
             text:"增加", iconCls:'icon-add',
             handler:function(){
-                dcOpenDialogNewClass('dcNewClassWindow', '增加 班级', datagridId, 0, 'icon-save');
+                console.log(queryCondition, condition);
+                dcOpenDialogNewClass('dcNewClassWindow', '增加 班级', datagridId, 0, 'icon-save', queryCondition);
             }
         }, {
             text:"编辑/查看", iconCls:'icon-edit',
@@ -258,8 +259,9 @@ function danceCreateClassDatagrid(datagridId, url, condition) {
  * @param dgId      本窗口 关闭后，要更新的 表格 id。
  * @param uuid      记录id，新增时 可以不填或者填写 <=0 ，修改记录时，必须填写记录的 ID
  * @param icon
+ * @param options       扩展参数，目前传入 查询条件
  */
-function dcOpenDialogNewClass(id, title, dgId, uuid, icon){
+function dcOpenDialogNewClass(id, title, dgId, uuid, icon, options){
 
     var classNo = 'classNo'+id;
     var schoolNo = 'schoolNo'+id;
@@ -277,6 +279,7 @@ function dcOpenDialogNewClass(id, title, dgId, uuid, icon){
     var recorder = 'classRecorder'+id;
     var remark = 'classRemark'+id;
     var uid = 'classUUID'+id;
+    options = options || {};
 
     if (document.getElementById(id)) {
         if(uuid > 0)
@@ -324,8 +327,20 @@ function dcOpenDialogNewClass(id, title, dgId, uuid, icon){
                 onLoadSuccess: function () {
                     var data = $(this).combobox('getData');
                     if(data.length){
-                        $('#'+schoolName).combobox('setValue', data[0].school_id);
-                        $('#'+schoolNo).textbox('setValue', data[0]['school_no']);
+                        var school_id = null; var idx = 0;
+                        if ('school_id' in options) {
+                            school_id = options['school_id'];
+                        }
+                        if (school_id != 'all') {
+                            for (var m=0; m<data.length; m++) {
+                                if (data[m].school_id == school_id) {
+                                    idx = m;
+                                    break;
+                                }
+                            }
+                        }
+                        $('#'+schoolName).combobox('setValue', data[idx].school_id);
+                        $('#'+schoolNo).textbox('setValue', data[idx]['school_no']);
                     }
                 },
                 onSelect:function (record) {
