@@ -2944,7 +2944,7 @@ def api_dance_fee_mode_get():
         disc_rate       损失点数
     """
     records = DcCommFeeMode.query.filter_by(company_id=g.user.company_id).all()
-    fee_mode = [{'fee_mode_id': 0, 'fee_mode': '　', 'disc_rate': 0}]     # 增加默认收费模式。全角 空格。
+    fee_mode = []     # 增加默认收费模式。全角 空格。 {'fee_mode_id': 0, 'fee_mode': '　', 'disc_rate': 0}
     for rec in records:
         fee_mode.append({'fee_mode_id': rec.id, 'fee_mode': rec.fee_mode, 'disc_rate': rec.disc_rate})
     return jsonify(fee_mode)
