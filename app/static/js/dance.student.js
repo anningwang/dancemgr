@@ -1200,11 +1200,11 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                         //console.log('newValue=' + newValue + ' oldValue=' + oldValue);
                         var cond = $.trim(newValue);
                         var dcCond = {'name': cond, 'is_training': '是', 'school_id': condition.school_id };
-                        if (newValue.length > 1) {
+                        //if (newValue.length > 1) {    // 超过两个字符，才查询
                             $.post('/api/dance_student_query',dcCond, function(data){
                                 $(edname.target).combobox('loadData', data);
                             },'json');
-                        }
+                        //}
                     },
                     onClick:function (record) {
                         //console.log(record);
@@ -2052,6 +2052,7 @@ function danceAddTabFeeStudyDatagrid(title, tableId, condition) {
                 {field: 'arrearage', title: '学费欠费', width: 80, align: 'center'},
                 {field: 'fee_mode', title: '收费方式', width: 70, align: 'center'},
                 {field: 'counselor', title: '咨询师', width: 90, align: 'center'},
+                {field: 'paper_receipt', title: '收据号', width: 70, align: 'center'},
                 {field: 'remark', title: '备注', width: 90, align: 'center'},
                 {field: 'recorder', title: '录入员', width: 90, align: 'center'}
             ]]

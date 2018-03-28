@@ -324,6 +324,10 @@ def dance_fee_item_update():
 @app.route('/dance_fee_item_query', methods=['POST'])
 @login_required
 def dance_fee_item_query():
+    """
+
+    :return:
+    """
     name = request.form['condition']
 
     ret = []
@@ -344,6 +348,10 @@ def dance_receipt_study_query():
 @app.route('/dance_receipt_study_get', methods=['POST'])
 @login_required
 def dance_receipt_study_get():
+    """
+    查询收费单（学费） list
+    :return:
+    """
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
     if page_no <= 0:    # 补丁
@@ -388,7 +396,8 @@ def dance_receipt_study_get():
                      'counselor': rec.counselor,
                      'remark': rec.remark,
                      'fee_mode': rec.fee_mode,
-                     'school_name': dcr[1], 'student_sno': dcr[2], 'student_name': dcr[3]
+                     'school_name': dcr[1], 'student_sno': dcr[2], 'student_name': dcr[3],
+                     'paper_receipt': rec.paper_receipt
                      })
         i += 1
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})

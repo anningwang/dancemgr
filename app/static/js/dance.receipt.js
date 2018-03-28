@@ -44,6 +44,7 @@ function danceAddTabFeeShowDatagrid(title, tableId, condition) {
                 {field: 'other_fee', title: '其他费', width: 80, align: 'center'},
                 {field: 'total', title: '费用合计', width: 80, align: 'center'},
                 {field: 'fee_mode', title: '收费方式', width: 70, align: 'center'},
+                {field: 'paper_receipt', title: '收据号', width: 70, align: 'center'},
                 {field: 'remark', title: '备注', width: 90, align: 'center'},
                 {field: 'recorder', title: '录入员', width: 90, align: 'center'}
             ]]
@@ -287,11 +288,11 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                         //console.log('newValue=' + newValue + ' oldValue=' + oldValue);
                         var cond = $.trim(newValue);
                         var dcCond = {'name': cond, 'is_training': '是', 'school_id': condition.school_id };
-                        if (newValue.length > 1) {
+                        //if (newValue.length > 1) {
                             $.post('/api/dance_student_query',dcCond, function(data){
                                 $(edname.target).combobox('loadData', data);
                             },'json');
-                        }
+                        //}
                     },
                     onClick:function (record) {
                         //console.log(record);
