@@ -1203,11 +1203,11 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                         //console.log('newValue=' + newValue + ' oldValue=' + oldValue);
                         var cond = $.trim(newValue);
                         var dcCond = {'name': cond, 'is_training': '是', 'school_id': condition.school_id };
-                        //if (newValue.length > 1) {    // 超过两个字符，才查询
+                        if (newValue.length >= 1) {    // 等于或者超过 1 个字符，才查询
                             $.post('/api/dance_student_query',dcCond, function(data){
                                 $(edname.target).combobox('loadData', data);
                             },'json');
-                        //}
+                        }
                     },
                     onClick:function (record) {
                         //console.log(record);
