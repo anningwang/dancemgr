@@ -569,6 +569,7 @@ def dance_receipt_study_details_extras():
                         'cost_mode': '收费模式',    1-按课次  2-按课时
                         'cost': '收费标准'
                         'class_id': 班级id
+                        'class_type_text':  班级类型 名称
                         }],
                 'schoollist': [{'school_id': '分校id',
                         'school_name': '分校名称',
@@ -599,6 +600,7 @@ def get_school_and_class(school_id):
                         'cost_mode': '收费模式',    1-按课次  2-按课时
                         'cost': '收费标准'
                         'class_id': 班级id
+                        'class_type_text':  班级类型 名称
                         }],
                 'schoollist': [{'school_id': '分校id',
                         'school_name': '分校名称',
@@ -3078,12 +3080,16 @@ def api_dc_common(ty):
 def api_dance_class_get():
     """
     查询某分校下的班级列表
+    输入参数：
+    {
+        school_id:      分校id， 可选。不添加表示查询所有分校
+    }
     :return:
     [{
-        id:
-        name:
-        no:
-        class_type
+        id:             班级ID
+        name:           班级名称
+        no:             班级编号
+        class_type:     班级类型
     }]
     """
     dcq = DanceClass.query.filter(DanceClass.is_ended == 0)

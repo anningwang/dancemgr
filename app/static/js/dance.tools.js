@@ -889,3 +889,18 @@ function ajaxRequest(url, options) {
 function getFeeMode(options) {
     ajaxRequest('/api/dance_fee_mode_get', options);
 }
+
+
+
+/**
+ * 查询 收费单 附加信息 —— 根据分校id，查询 分校下的班级列表。 
+ *      若分校id 为 all 则，查询出所有分校信息及 分校下的班级新
+ *      callback返回 data 数据为：
+ *          data['classlist']
+ *          data['schoollist']
+ */
+function getClassList(school_id, options) {
+    options = options || {};
+    options.data =  {'school_id': school_id};
+    ajaxRequest('/dance_receipt_study_details_extras', options);
+}

@@ -304,7 +304,7 @@ function danceAddStudentDetailInfo(opts) {
                     }
                 });
                 $('#'+dgStu_class).attr('id', dgStu_class+=uid).datagrid({
-                    onClickCell: onClickCell,
+                    onClickCell: onClickClassCell,
                     onEndEdit : function onEndEdit(index, row){
                         var ed = $(this).datagrid('getEditor', {
                             index: index,
@@ -420,8 +420,13 @@ function danceAddStudentDetailInfo(opts) {
         $("#"+stu_register_day).datebox("setValue",danceFormatter(curr_time));
     }
 
-    function onClickCell(index, field) {
-        //console.log('onClickCell');
+    /**
+     * 收费单（学费）的 datagrid "班级学费" 单元格点击事件
+     * @param index
+     * @param field
+     */
+    function onClickClassCell(index, field) {
+        //console.log('onClickClassCell');
         if (editIndexClass !== index) {
             var dg = $('#'+dgStu_class);
             if (editIndexClass !== undefined) {
@@ -434,7 +439,7 @@ function danceAddStudentDetailInfo(opts) {
                 $(classEd.target).combobox('loadData' , classlist);
                 $(classEd.target).combobox({
                     //data: classlist,
-                    onClick: onClickClass
+                    onClick: onClickClassName
                 });
                 var row = $(dg).datagrid("getSelected");
                 $(classEd.target).combobox('setValue', row['class_id']);
@@ -495,7 +500,11 @@ function danceAddStudentDetailInfo(opts) {
         }
     }
 
-    function onClickClass(record) {
+    /**
+     * 班级名称 选择 事件
+     * @param record
+     */
+    function onClickClassName(record) {
         var dg = $('#'+dgStu_class);
         var row = $(dg).datagrid("getSelected");
         if (row) {
@@ -774,7 +783,8 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
             $('#'+pagerFee).pagination({
                 showRefresh: uid > 0,
                 buttons:[{ text:'保存', iconCls:'icon-save',  handler:onSave},
-                    { text:'新增', iconCls:'icon-add', id:btnAdd,  handler:onAdd}
+                    { text:'新增', iconCls:'icon-add', id:btnAdd,  handler:onAdd},
+                    { text:'刷新', iconCls:'icon-reload',  handler:onRefresh}
                 ],
                 total: 0, pageSize: 1,
                 beforePageText: '第', afterPageText: '条，总 {pages} 条',
@@ -1579,13 +1589,14 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
     /**
      * 班级——学费 表格，根据 学期长度，更新 实收学费，应收学费等单元格
      * @param index     要更新的行索引，从0开始
-     * @param value     需求长度 的当前值
+     * @param value     学期长度 的当前值
      */
     function dgStudyFeeUpdateCellByTerm(index,value) {
         var dg = $('#'+dgStudyFee);
         var rows = dg.datagrid('getRows');
         if (rows.length < index + 1) {  return; }
         var row = rows[index];
+        row.term = value;   // bug fix: 首次修改 优惠金额时， 应收、实收学费没有更新的问题。
         if (row.cost) {
             var oldWanted = row.total;
             var oldReal = row.real_fee;
@@ -1830,6 +1841,21 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
         } else {
             danceAddReceiptStudyDetailInfo('/static/html/_receipt_study.html', '/dance_receipt_study', condition);
         }
+    }
+
+    /**
+     *  收费单 学费， foot bar  刷新 按钮 处理函数
+     */
+    function onRefresh() {
+        dgEndEditing(dgReceiptComm);
+        dgStudyFeeEndEditing();
+        dgTmEndEditing();
+
+        getClassList(condition.school_id, {callback: function (data) {
+            $.messager.alert('提示', '刷新成功！', 'info');
+            classlist = data['classlist'];
+        }});
+
     }
 
     /**
