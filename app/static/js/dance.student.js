@@ -1177,8 +1177,8 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
         oldDetails = {};
         uid = 0;
 
-        _oldMenuIds = {};       // 初始化 局部变量
         updateMenu([]);
+        _oldMenuIds = {};       // 初始化 局部变量
     }
 
     /**
