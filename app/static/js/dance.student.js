@@ -1176,6 +1176,8 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
         $('#'+btnAdd).linkbutton('disable');
         oldDetails = {};
         uid = 0;
+
+        _oldMenuIds = {};       // 初始化 局部变量
         updateMenu([]);
     }
 
