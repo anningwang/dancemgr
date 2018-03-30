@@ -1881,6 +1881,12 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
             return false;
         }
 
+        var feeMode = apiGetDgCellText(dg, 4, 'c2');
+        if (feeMode == '') {
+            $.messager.alert({ title: '提示',icon:'info', msg: '请填写“收费方式”！'});
+            return false;
+        }
+
         return true;
     }
 
