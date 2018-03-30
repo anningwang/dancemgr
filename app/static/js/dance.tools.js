@@ -739,12 +739,17 @@ function createModalDialog(id, _url, _title, _width, _height, _icon){
  * @returns {*} a - b的结果，Array 类型
  */
 function setDifference(a, b) {  // 差集 a - b
-    var diff = a.slice(0);
+    var diff = [];
     for(var i = 0; i < a.length; i++){
+        var has = false;
         for(var j = 0; j < b.length; j++){
             if(a[i] === b[j]){
-                diff.splice(i, 1);
+                has = true;
+                break;
             }
+        }
+        if (!has) {
+            diff.push(a[i]);
         }
     }
     return diff;

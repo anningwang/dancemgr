@@ -1176,7 +1176,9 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
         $('#'+btnAdd).linkbutton('disable');
         oldDetails = {};
         uid = 0;
+
         updateMenu([]);
+        _oldMenuIds = {};       // 初始化 局部变量
     }
 
     /**
@@ -1315,7 +1317,6 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
         row.class_id = $(edClass.target).combobox('getValue');
     }
 
-    // 以下对菜单的代码。当原菜单和要修改后的菜单相同时，会造成 mmTm为空，mmOth多一个（多了mmTm的菜单内容）
     var _oldMenuIds = {};
     function mmAddItems(mmId, data, mbId) {       // 菜单<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         if(!_oldMenuIds.hasOwnProperty(mmId)){
@@ -1351,7 +1352,7 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
                 }
             }
         }
-        _oldMenuIds[mmId] = fa.slice(0);
+        _oldMenuIds[mmId] = fa.slice(0);        // 使用深拷贝
 
         if (change[1].length || change[2].length) {
             $(mbId).menubutton('enable');
@@ -1361,9 +1362,9 @@ function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
     }
 
     function updateMenu(data) {
-        mmAddItems('#'+mmOth, data, '#'+mbOth);
-        mmAddItems('#'+mmTm, data, '#'+mbTm);
         mmAddItems('#'+mmClass, data, '#'+mbClass);
+        mmAddItems('#'+mmTm, data, '#'+mbTm);
+        mmAddItems('#'+mmOth, data, '#'+mbOth);
     }
 
     /**
