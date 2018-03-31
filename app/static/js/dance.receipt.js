@@ -404,6 +404,16 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                 onClick: dgShowOnClickIsRcv
             }).combobox('setValue', row['is_rcv']);
 
+            // 费用
+            var ed_fee = $(dg).datagrid('getEditor', {index:index,field:'fee'});    // 收费金额
+            $(ed_fee.target).textbox('textbox').bind("input propertychange",function(){
+                row.fee =  $(this).val();
+                if (isNaN(row.fee)) {
+                    row.fee = 0;
+                }
+                dgShowCalcFee();
+            });
+
             var ed = $(dg).datagrid('getEditor', {index:index,field:field});
             if (ed){
                 ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
