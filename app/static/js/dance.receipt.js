@@ -358,7 +358,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
     }
 
     /**
-     * 班级——演出,, 单元格点击事件。
+     * 班级——演出, 单元格点击事件。
      * @param index
      * @param field
      */
@@ -383,8 +383,11 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
                 icons: [{
                     iconCls:'icon-add',
                     handler: function(){
+                        // 关闭 新增 演出 窗口，重新加载 演出combobox中的演出名称。
                         dcNewWindow(dgShow, 'danceShowWindow', 'dcShowWinNew',
-                            '/static/html/_dc_add_edit_show.html', index, field, '新增演出')
+                            '/static/html/_dc_add_edit_show.html', index, field, '新增演出', function callback() {
+                                getShowConfig();    // 重新读取演出配置
+                            })
                     }
                 },{
                     iconCls:'icon-edit',
@@ -573,10 +576,10 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
 
         var idx = dgParam[dgShow].idx;
         var k = idx;
-        for(var i=0; i< dcShowCfg['shows'][j].cfg.length; i++){
-            var addRow = {fee: dcShowCfg['shows'][j].cfg[i].cost,
-                fee_item: dcShowCfg['shows'][j].cfg[i].fee_item,
-                fee_item_id: dcShowCfg['shows'][j].cfg[i].fee_item_id,
+        for(var i=0; i< dcShowCfg['shows'][j]['cfg'].length; i++){
+            var addRow = {fee: dcShowCfg['shows'][j]['cfg'][i].cost,
+                fee_item: dcShowCfg['shows'][j]['cfg'][i].fee_item,
+                fee_item_id: dcShowCfg['shows'][j]['cfg'][i].fee_item_id,
                 is_rcv: 1,
                 is_rcv_text: '是',
                 show_id: row.show_id,
@@ -584,8 +587,9 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
             if(idx === k){
                 var tmpRow = {};
                 $.extend(tmpRow, addRow);
+                const CUR_ROW = tmpRow;
                 setTimeout(function () {
-                    $(dg).datagrid('updateRow', { index: k, row: tmpRow});
+                    $(dg).datagrid('updateRow', { index: k, row: CUR_ROW});
                     dgParam[dgShow].idx = undefined;
                     $(dg).datagrid('beginEdit', k).datagrid('endEdit', k);  // 在结束编辑里面更新合并单元格。
                     dgShowCalcFee();
@@ -604,7 +608,7 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
         if(dgParam[dgShow].mergeCell === undefined){
             dgParam[dgShow].mergeCell = {};
         }
-        var curNum = dcShowCfg['shows'][j].cfg.length;
+        var curNum = dcShowCfg['shows'][j]['cfg'].length;
         var oldNum = dgParam[dgShow].mergeCell[k] ? dgParam[dgShow].mergeCell[k].span : 1;
         dgParam[dgShow].mergeCell[k] = {index: k, span: curNum};
 

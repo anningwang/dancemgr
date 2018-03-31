@@ -618,8 +618,9 @@ function danceFilterClassByNo(classList, school_no) {
  * @param idx       dgId中要重新加载数据的combobox所在 行
  * @param field     dgId中要重新加载数据的combobox所在 字段
  * @param title     窗口标题，用于提示重复打开窗口
+ * @param callback  回调函数，当 本窗口被关闭后的回调函数。父窗口存在的情况下，调用 callback
  */
-function dcNewWindow(dgId, panelId, winId, url, idx, field, title) {
+function dcNewWindow(dgId, panelId, winId, url, idx, field, title, callback) {
     if(!document.getElementById(panelId)){
         console.log('dcNewWindow append:', panelId);
         $(document.body).append('<div id=' + panelId +  '></div>');
@@ -636,6 +637,9 @@ function dcNewWindow(dgId, panelId, winId, url, idx, field, title) {
                 var ed = $(dg).datagrid('getEditor', {index:idx,field:field});
                 if(ed) {
                     $(ed.target).combobox('reload');
+                }
+                if (callback) {
+                    callback();
                 }
             }
         }
