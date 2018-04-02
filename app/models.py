@@ -2447,3 +2447,41 @@ class DanceCheckInOth(db.Model):
 
     def __repr__(self):
         return '<CheckInOth %r>' % self.id
+
+
+class Notepad(db.Model):
+    """ 记事本 """
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(40, collation='NOCASE'), index=True, nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+    content = db.Column(db.String(400, collation='NOCASE'), index=True)
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    school_id = db.Column(db.Integer, index=True, nullable=False)
+    company_id = db.Column(db.Integer, index=True, nullable=False)
+    create_at = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, param):
+        if 'title' in param:
+            self.title = param['title']
+        if 'date' in param and param['date'] != '':
+            self.date = datetime.datetime.strptime(param['date'], '%Y-%m-%d')
+        else:
+            self.date = datetime.datetime.today()
+        if 'content' in param:
+            self.content = param['content']
+        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
+        self.create_at = datetime.datetime.today()
+
+    def update(self, param):
+        if 'title' in param:
+            self.title = param['title']
+        if 'date' in param and param['date'] != '':
+            self.date = datetime.datetime.strptime(param['date'], '%Y-%m-%d')
+        if 'content' in param:
+            self.content = param['content']
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id

@@ -48,7 +48,7 @@ function danceAddTabCourse(title, tableId, condition) {
             ]]
         };
 
-        danceCreateCourseDatagrid(tableId, '/'+module, condition, opts)
+        danceCreateCourseDatagrid(tableId, '/'+module, condition, opts);
     }
 }
 

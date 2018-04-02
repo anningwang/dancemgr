@@ -61,7 +61,7 @@ function danceAddTabTeacher(title, tableId, condition) {
  * @param page          员工与老师详细信息页面
  * @param url           查询信息所用url
  * @param condition     查询条件：
- *      school_id     分校id，取值范围： all  or 具体分校id
+ *         school_id     分校id，取值范围： all  or 具体分校id
  * @param uid           记录id，新增时，可以不传递此参数。
  */
 function danceTeacherDetailInfo( page, url, condition, uid) {

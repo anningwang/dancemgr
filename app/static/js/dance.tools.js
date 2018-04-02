@@ -549,6 +549,26 @@ function danceGetDate() {
     return danceFormatter(new Date());
 }
 
+/**
+ * 将日期字符串（格式：yyyy-mm-dd）转换为 日期 Date 对象。
+ * @param s
+ * @returns {Date}
+ *
+ * 员工与老师详细信息 html 页面使用了该函数。  _teacher_details.html
+ */
+function danceParser(s){
+    if (!s) return new Date();
+    var ss = (s.split('-'));
+    var y = parseInt(ss[0],10);
+    var m = parseInt(ss[1],10);
+    var d = parseInt(ss[2],10);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d)){
+        return new Date(y,m-1,d);
+    } else {
+        return new Date();
+    }
+}
+
 // datagrid methods
 ///////////////////////-------------------------------------------------------------------------------------------------
 function danceDgLoadData(dgId, data, num) {

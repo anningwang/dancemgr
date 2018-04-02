@@ -5,7 +5,8 @@ from app import app, db
 from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceReceipt, DanceStudent, DcTeachingMaterial,\
     DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass, DanceStudentClass, DcShowRecpt, DcCommFeeMode,\
     DcShow, DcShowFeeCfg, DcShowDetailFee, DcClassType, DanceTeacher, DanceTeacherEdu, DanceTeacherWork, DcCommon,\
-    DanceCourse, DanceCourseItem, DanceClassRoom, UpgradeClass, UpgClassItem, DanceCheckIn
+    DanceCourse, DanceCourseItem, DanceClassRoom, UpgradeClass, UpgClassItem, DanceCheckIn,\
+    Notepad
 from views import dance_student_query
 import json
 import datetime
@@ -3144,3 +3145,184 @@ def api_dance_teacher_get():
 
     return jsonify(teacher)
 
+
+@app.route('/notepad_get', methods=['POST'])
+@login_required
+def notepad_get():
+    """
+    查询 记事本
+    输入参数：
+    {
+        school_id:      分校 id。 'all' 为所有分校。     可选参数，不填表示 all
+        name:           查询条件，title 或者 content 中的内容字符串。      可选参数，不填表示不做过滤条件
+        rows:           每页记录数
+        page:           页码，从 1 开始
+    }
+    :return:
+    {
+        errorCode:          错误码
+        msg:                错误信息
+
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   查询成功！
+            600                 您没有管理分校的权限！
+
+        total:              符合条件的记录总数
+        rows:[{
+            id:         记事本记录ID
+            title:      记事本标题
+            content:    记事本内容
+            date:       记录时间
+            recorder:   记录员
+            no:         记录序号
+            school_id:  分校id
+            school_name:    分校名称
+            school_no:      分校编号
+        }]
+    }
+    """
+
+    if request.json is not None:
+        obj = request.json
+    else:
+        obj = request.form
+
+    page_size = int(obj['rows'])
+    page_no = int(obj['page'])
+    if page_no <= 0:  # 容错处理
+        page_no = 1
+
+    dcq = Notepad.query.filter_by(company_id=g.user.company_id)
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in obj or obj['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, obj['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(Notepad.school_id.in_(school_id_intersection))
+
+    if 'name' in obj and obj['name'] != '':
+        name = obj['name']
+        dcq = dcq.filter((Notepad.title.like('%' + name + '%')) | (Notepad.content.like('%' + name + '%')))
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.join(DanceSchool, DanceSchool.id == Notepad.school_id) \
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no) \
+        .order_by(Notepad.school_id, Notepad.date.desc()) \
+        .limit(page_size).offset(offset).all()
+
+    i = offset + 1
+    rows = []
+    for rec in records:
+        r = rec[0]
+        rows.append({'id': r.id, 'title': r.title, 'content': r.content,
+                     'date': datetime.datetime.strftime(r.date, '%Y-%m-%d'), 'recorder': r.recorder,
+                     'school_id': r.school_id, 'no': i,
+                     'school_name': rec[1], 'school_no': rec[2]})
+        i += 1
+
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': u'查询成功！'})
+
+
+@app.route('/notepad_query', methods=['POST'])
+@login_required
+def notepad_query():
+    return jsonify({"total": 0, "rows": [], 'errorCode': 0, 'msg': u'查询成功！'})
+
+
+@app.route('/notepad_modify', methods=['POST'])
+@login_required
+def notepad_modify():
+    """
+    新增/更新 记事本。
+    输入参数：
+    {
+        id:             id, > 0 修改记录。 <= 0 新增
+        title:
+        date:
+        content:
+        school_id:
+    }
+    :return:
+    {
+        errorCode :     错误码
+        msg:            错误信息
+            --------------      -------------------------------------------
+            0                   更新成功！ / 新增成功！
+            301                 记事本id[%s]不存在！
+    }
+    """
+    obj = request.json
+    if 'id' not in obj or int(obj['id']) <= 0:
+        """ 判断是否有重名班级 """
+
+        new_rec = Notepad(obj)
+        db.session.add(new_rec)
+        msg = u'新增成功！'
+    else:
+        # 修改记录
+        rec = Notepad.query.get(obj['id'])
+        if rec is None:
+            return jsonify({'errorCode': 301, 'msg': u'记事本id[%s]不存在！' % obj['id']})
+
+        rec.update(obj)
+        db.session.add(rec)
+        msg = u'更新成功！'
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': msg})
+
+
+@app.route('/notepad_detail_get', methods=['POST'])
+@login_required
+def notepad_detail_get():
+    """
+    查询 记事本 详细信息
+    输入信息
+    {
+        id:     记录ID
+    }
+    :return:
+    {
+        errorCode :     错误码
+        msg:            错误信息
+            --------------      -------------------------------------------
+            0                   ok
+            120                 记事本信息[id=%d]不存在！
+        row: {
+            id:
+            title:
+            date:
+            content:
+            recorder:
+            school_id:
+            school_name:
+            school_no:
+            create_at:
+        }
+        total:          记录条数，总是为1
+    }
+    """
+    obj = request.json
+
+    rec = Notepad.query.filter(Notepad.id == obj['id'])\
+        .join(DanceSchool, DanceSchool.id == Notepad.school_id)\
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no).first()
+    if rec is None:
+        return jsonify({"row": {}, 'errorCode': 120, 'msg': u'记事本信息[id=%d]不存在！' % obj['id']})
+
+    r = rec[0]
+    row = {"id": r.id, "title": r.title, "content": r.content, "recorder": r.recorder,
+           "school_id": r.school_id,
+           'date': datetime.datetime.strftime(r.date, '%Y-%m-%d'),
+           'create_at': datetime.datetime.strftime(r.create_at, '%Y-%m-%d'),
+           'school_id': r.school_id,
+           'school_name': rec[1], 'school_no': rec[2]
+           }
+
+    return jsonify({"row": row, 'errorCode': 0, 'msg': 'ok', 'total': 1})

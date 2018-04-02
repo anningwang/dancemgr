@@ -950,3 +950,264 @@ function danceClassCheckIn(opts) {
         return 'ClassChkIn' + (id > 0 ? '-Modify': '-New');
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// 记事本 begin    notepad notepad notepad
+
+/**
+ * 添加或者打开  记事本 Tab页
+ * @param title             新打开/创建 的 Tab页标题
+ * @param tableId           Tab页内的Datagrid表格ID
+ * @param condition         查询条件
+ */
+function danceAddTabNotepad(title, tableId, condition) {
+    var parentDiv = $('#danceTabs');
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+        $('#'+tableId).datagrid('load', condition);
+    } else {
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
+        $(parentDiv).tabs('add', {
+            title: title,
+            content: content,
+            closable: true
+        });
+
+        var module = 'notepad';
+        var opts = {
+            queryText: '查询条件：',
+            queryPrompt: '标题或者内容查找',
+            who: module,
+            danceModuleName:module,
+            danceModuleTitle: title,          // 导入、导出 窗口 title
+            addEditFunc: addEditNotepad,
+            page: '/static/html/_new_notepad.html',     // 上述函数的参数
+            tableId: tableId,
+            columns: [[
+                {field: 'ck', checkbox:true },   // checkbox
+                {field: 'school_no', title: '分校编号', width: 50, align: 'center'},
+                {field: 'school_name', title: '分校名称', width: 95, align: 'center'},
+                {field: 'date', title: '日期', width: 60, align: 'center'},
+                {field: 'title', title: '标题', width: 200, align: 'center'},
+                {field: 'content', title: '内容', width: 300, align: 'center'},
+                {field: 'recorder', title: '记录员', width: 70, align: 'center'}
+            ]]
+        };
+
+        danceCreateCommDatagrid(tableId, '/'+module, condition, opts);
+    }
+}
+
+
+/**
+ * 查看/新增  记事本
+ * @param page          记事本所需页面
+ * @param url           查询信息所用url
+ * @param condition     查询条件：
+ *         school_id     分校id，取值范围： all  or 具体分校id
+ * @param uid           记录id，新增时，可以不传递此参数。
+ * @param options       可选参数
+ *      {
+ *          tableId:    表格id，新增/修改记事本后，需要更新的表格
+ *      }
+ */
+function addEditNotepad( page, url, condition, uid, options) {
+    var title = '编辑/查看 记事本';
+    uid = uid || 0;     // 第一次进入 详细信息页面 uid 有效，上下翻页时，无法提前获取上下记录的 id(uid)
+    if (uid <= 0) {
+        title = '新增 记事本'
+    }
+
+    if (uid <=0) {
+        dcOpenDialogNewNotepad('dlg-id-new-notepad', title, options.tableId, 0, 'icon-save', condition);
+    }else {
+        dcOpenDialogNewNotepad('dlg-id-chg-notepad', title, options.tableId, uid, 'icon-save', condition);
+    }
+}
+
+
+/**
+ * 打开 新增 或者 编辑/查看 记事本窗口
+ * @param id
+ * @param title
+ * @param dgId      本窗口 关闭后，要更新的 表格 id。
+ * @param uuid      记录id，新增时 可以不填或者填写 <=0 ，修改记录时，必须填写记录的 ID
+ * @param icon
+ * @param options       扩展参数，目前传入 查询条件
+ */
+function dcOpenDialogNewNotepad(id, title, dgId, uuid, icon, options){
+
+    var d_title = 'd_title'+id;
+    var d_date = 'd_date'+id;
+    var d_recorder = 'd_recorder'+id;
+    var d_school_no = 'd_school_no'+id;
+    var d_school_name = 'd_school_name'+id;
+    var d_content = 'd_content'+id;
+    var uid = 'notepadUUID'+id;
+    options = options || {};
+
+    if (document.getElementById(id)) {
+        if(uuid > 0)
+            ajaxRequest();
+        else
+            $.messager.alert('提示', '[' + title + ']窗口已打开！', 'info');
+        return;
+    }
+    $('body').append('<div id=' + id + ' style="padding:5px"></div>');
+
+    var ctrls = '<div class="easyui-panel" data-options="fit:true" style="padding:10px;">';
+    ctrls += '<input id='+d_title+'>';
+    ctrls += '<div style="height:3px"></div><input id='+d_date+'><input id='+d_recorder+'>';
+    ctrls += '<div style="height:3px"></div><input id='+d_school_no+'><input id='+d_school_name+'>';
+    ctrls += '<div style="height:3px"></div><input id='+d_content+'>';
+
+    ctrls += '<input id=' + uid + ' type="hidden" value="0" />';
+    ctrls += '</div>';
+
+    $("#"+id).dialog({
+        title:title,width:600,height:360,cache: false,iconCls:icon,content:ctrls,
+        collapsible: false, minimizable:false,maximizable: true, resizable: false,modal:false,closed:true,
+        buttons: [{text:'保存',iconCls:'icon-ok',width:80,height:30,handler:save },
+            {text:'关闭',iconCls:'icon-cancel',width:80,height:30,handler:function(){ $("#"+id).dialog('close'); }}],
+        onOpen:function () {
+            console.log('onOpen');
+            $('#'+d_title).textbox({
+                label:'标题：',labelAlign:'right',labelWidth:100,width:'96%'
+            }).textbox('textbox').focus();
+
+            $('#'+d_date).datebox({
+                label:'日期：',labelAlign:'right',labelWidth:100,width:'48%'
+            }).datebox('setValue', danceGetDate());
+            $('#'+d_recorder).textbox({
+                label:'*记录员：',labelAlign:'right',labelWidth:100,width:'48%',prompt:'自动生成',disabled:true
+            });
+
+            $('#'+d_school_no).textbox({
+                label:'分校编号：',labelAlign:'right',labelWidth:100,prompt:'关联分校名称',disabled:true,width:'48%'
+            });
+            $('#'+d_school_name).combobox({
+                label:'*分校名称：',labelAlign:'right',labelWidth:100,
+                valueField:'school_id', textField:'school_name',editable:false,panelHeight:'auto',width:'48%',
+                url: '/api/dance_school_get',
+                onLoadSuccess: function () {
+                    var data = $(this).combobox('getData');
+                    if(data.length){
+                        var school_id = null; var idx = 0;
+                        if ('school_id' in options) {
+                            school_id = options['school_id'];
+                        }
+                        if (school_id != 'all') {
+                            for (var m=0; m<data.length; m++) {
+                                if (data[m].school_id == school_id) {
+                                    idx = m;
+                                    break;
+                                }
+                            }
+                        }
+                        $('#'+d_school_name).combobox('setValue', data[idx].school_id);
+                        $('#'+d_school_no).textbox('setValue', data[idx]['school_no']);
+                    }
+                },
+                onSelect:function (record) {
+                    $('#'+d_school_no).textbox('setValue', record['school_no']);
+                }
+            });
+
+            $('#'+d_content).textbox({
+                label:'内容：',labelAlign:'right',multiline:true,labelWidth:100,width:'96%', height:165
+            });
+
+            if(uuid > 0){
+                ajaxRequest();
+            }
+        },
+        onBeforeClose: function () {
+            if (dgId && document.getElementById(dgId)) {
+                $('#'+dgId).datagrid('reload');
+            }
+            $("#"+id).dialog('destroy');
+        }
+    }).dialog('open');
+
+
+    function ajaxRequest(){
+        // 发送数据
+        $.ajax({
+            method: 'POST',
+            url: '/notepad_detail_get',
+            async: true,
+            dataType: 'json',
+            contentType: "application/json;charset=UTF-8",
+            data: JSON.stringify({id: uuid })
+        }).done(function(data) {
+            console.log('ajaxRequest', data);
+            if(data.errorCode == 0)
+            {
+                $('#'+d_title).textbox('setValue', data.row['title']);
+                $('#'+d_school_name).combobox('setText', data.row.school_name)
+                    .combobox('setValue', data.row.school_id).combobox('disable');
+                $('#'+d_school_no).textbox('setValue', data.row['school_no']);
+                $('#'+d_date).datebox('setValue', data.row['date']);
+                $('#'+d_content).textbox('setValue', data.row.content);
+                $('#'+d_recorder).textbox('setValue', data.row['recorder']);
+
+                $('#'+uid).val(data.row.id);
+            }else {
+                $.messager.alert('提示', data.msg, 'info');
+            }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
+        });
+    }
+
+    function save() {
+
+        // 校验数据是否合法
+        var title = $('#'+d_title).textbox('getValue');
+        if(!title || title.length > 40) {
+            $.messager.alert({title:'提示', msg:'标题不能为空，且不能大于40字符！', icon: 'info',
+                fn:function () {
+                    $('#'+d_title).textbox('textbox').focus();
+                }
+            });
+            return false;
+        }
+
+        var content = $('#'+d_content).textbox('getValue');
+        if(content.length > 400) {
+            $.messager.alert({title:'提示', msg:'记事本内容不能大于400字符！', icon: 'info',
+                fn:function () {
+                    $('#'+d_content).textbox('textbox').focus();
+                }
+            });
+            return false;
+        }
+
+        // 打包数据
+        var data = {id: $('#'+uid).val(),
+            title: title,
+            date: $('#'+d_date).datebox('getValue'),
+            content:content,
+            school_id:$('#'+d_school_name).combobox('getValue')
+        };
+        console.log('send:', data);
+
+        // 发送数据
+        $.ajax({
+            method: 'POST',
+            url: 'notepad_modify',
+            async: true,
+            dataType: 'json',
+            contentType: "application/json;charset=UTF-8",
+            data: JSON.stringify(data)
+        }).done(function(data) {
+            $.messager.alert('提示', data.msg, 'info');
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
+        });
+    }
+}
+
+// 记事本 end      notepad notepad notepad
+///////////////////////////////////////////////////////////////////////////////

@@ -51,8 +51,9 @@ $(function() {
             var root = getRootNode(this, node);
             var entrance = {
                 10: {fn: danceAddTabClassDatagrid},     // 班级信息
-                20: {fn: danceAddTabCourse},
-                30: {fn: danceAddTabRoom},
+                20: {fn: danceAddTabCourse},            // 课程表
+                30: {fn: danceAddTabRoom},              // 教室列表
+                40: {fn: danceAddTabNotepad},           // 记事本
                 2001:   {fn: danceAddTabCourseList}
             };
 
