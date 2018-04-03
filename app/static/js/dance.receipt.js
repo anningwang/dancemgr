@@ -24,6 +24,7 @@ function danceAddTabFeeShowDatagrid(title, tableId, condition) {
             closable: true
         });
 
+        var url = '/dance_receipt_show';
         var opts = {
             queryText:'姓名：',
             queryPrompt: '姓名拼音首字母查找',
@@ -32,6 +33,7 @@ function danceAddTabFeeShowDatagrid(title, tableId, condition) {
             danceModuleTitle: title,          // 导入、导出 窗口 title
             addEditFunc: danceAddReceiptShowDetailInfo,
             page: '/static/html/_receipt_show.html',     // 上述函数的参数
+            url: url,
             columns: [[
                 {field: 'ck', checkbox:true },
                 {field: 'show_recpt_no', title: '演出收费单编号', width: 160, align: 'center'},
@@ -50,7 +52,7 @@ function danceAddTabFeeShowDatagrid(title, tableId, condition) {
             ]]
         };
 
-        danceCreateCommDatagrid(tableId, '/dance_receipt_show', condition, opts)
+        danceCreateCommDatagrid(tableId, url, condition, opts)
     }
 }
 
@@ -58,13 +60,17 @@ function danceAddTabFeeShowDatagrid(title, tableId, condition) {
 ////////////////// 收费单（演出）详细信息 begin ////////////////////////////////////////////////////////////////////////
 /**
  * 查看/新增 收费单（学费） 详细信息
- * @param page          学员详细信息页面
- * @param url           查询信息所用url
  * @param condition     查询条件。
  *      school_id     分校id，取回范围： all  or 具体分校id
  * @param uid           单据id（收费单id），新增时，可以不传递此参数。
+ * @param options       可选参数
+ *      {
+ *          tableId:    表格id，新增/修改 记录后，需要更新的表格
+ *          page:       详细信息页面
+ *          url:        查询信息所用url
+ *      }
  */
-function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
+function danceAddReceiptShowDetailInfo(condition, uid, options) {
     var title = '收费单（演出）详细信息';
     uid = uid || 0;     // 第一次进入 学生详细信息页面 uid 有效，上下翻页时，无法提前获取上下记录的uid
     if (uid <= 0) {
@@ -72,6 +78,8 @@ function danceAddReceiptShowDetailInfo( page, url, condition, uid) {
     }
 
     var no = -2;    // 收费单序号，方便翻页。传递 -2 则根据 uid 查询序号
+    var page = options.page;
+    var url = options.url;
 
     var dgRecptComm = 'dgRecptShowComm';   // 收费单（演出）基本信息
     var dgShow = 'dgShowFee';      // 演出费
@@ -919,6 +927,7 @@ function danceAddTabFeeOtherDatagrid(title, tableId, condition) {
             closable: true
         });
 
+        var url = '/dance_receipt_study';
         var opts = {
             'queryText': '姓名：',
             'queryPrompt': '姓名拼音首字母查找',
@@ -926,6 +935,7 @@ function danceAddTabFeeOtherDatagrid(title, tableId, condition) {
             'danceModuleName': 'DanceReceipt',
             'addEditFunc': danceAddReceiptStudyDetailInfo,
             'page': '/static/html/_receipt_study.html',     // 上述函数的参数
+            url: url,
             'columns': [[
                 {field: 'ck', checkbox:true },
                 {field: 'show_recpt_no', title: '演出收费单编号', width: 140, align: 'center'},
@@ -943,6 +953,6 @@ function danceAddTabFeeOtherDatagrid(title, tableId, condition) {
             ]]
         };
 
-        danceCreateCommDatagrid(tableId, '/dance_receipt_study', condition, opts)
+        danceCreateCommDatagrid(tableId, url, condition, opts)
     }
 }

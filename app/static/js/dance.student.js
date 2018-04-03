@@ -719,18 +719,25 @@ function danceAddStudentDetailInfo(opts) {
 ////////////////// 收费单（学费）详细信息 begin ////////////////////////////////////////////////////////////////////////
 /**
  * 查看/新增 收费单（学费） 详细信息
- * @param page          学员详细信息页面
- * @param url           查询信息所用url
  * @param condition     查询条件。
  *      school_id     分校id，取回范围： all  or 具体分校id
  * @param uid           单据id（收费单id），新增时，可以不传递此参数。
+ * @param options       可选参数
+ *      {
+ *          tableId:    表格id，新增/修改 记录后，需要更新的表格
+ *          page:       学员详细信息页面
+ *          url:        查询信息所用url
+ *      }
  */
-function danceAddReceiptStudyDetailInfo( page, url, condition, uid) {
+function danceAddReceiptStudyDetailInfo(condition, uid, options) {
     var title = '收费单（学费）详细信息';
     uid = uid || 0;     // 第一次进入 学生详细信息页面 uid 有效，上下翻页时，无法提前获取上下记录的uid
     if (uid <= 0) {
         title +='[新增]'
     }
+    
+    var page = options.page;
+    var url = options.url;
 
     var no = -2;    // 收费单序号，方便翻页。传递 -2 则根据 uid 查询其序号
 
@@ -2065,6 +2072,7 @@ function danceAddTabFeeStudyDatagrid(title, tableId, condition) {
         });
 
         var module = 'dance_receipt_study';
+        var url = '/'+module;
         var opts = {
             queryText: '姓名：',
             queryPrompt: '姓名拼音首字母查找',
@@ -2073,6 +2081,8 @@ function danceAddTabFeeStudyDatagrid(title, tableId, condition) {
             danceModuleTitle: title,          // 导入、导出 窗口 title
             addEditFunc: danceAddReceiptStudyDetailInfo,
             page: '/static/html/_receipt_study.html',     // 上述函数的参数
+            tableId: tableId,
+            url: url,
             columns: [[
                 {field: 'ck', checkbox:true },
                 {field: 'receipt_no', title: '收费单号', width: 140, align: 'center'},
@@ -2094,7 +2104,7 @@ function danceAddTabFeeStudyDatagrid(title, tableId, condition) {
             ]]
         };
 
-        danceCreateCommDatagrid(tableId, '/'+module, condition, opts);
+        danceCreateCommDatagrid(tableId, url, condition, opts);
     }
 }
 

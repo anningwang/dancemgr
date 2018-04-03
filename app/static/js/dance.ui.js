@@ -37,7 +37,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
             iconCls:'icon-add', text:"增加",      ///+++++++++++++++++++++++++++++++++++++++++++++
             handler:function(){
                 var cond = $(dg).datagrid('options').queryParams;
-                options.addEditFunc(options.page, url, cond, 0, options);
+                options.addEditFunc(cond, 0, options);
             }}, {iconCls:'icon-edit', text:"编辑/查看",  ///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             handler:function(){
                 var row = $(dg).datagrid('getSelections');
@@ -46,7 +46,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
                     return false;
                 } else {
                     var cond = $(dg).datagrid('options').queryParams;
-                    options.addEditFunc(options.page, url, cond, row[0].id, options);
+                    options.addEditFunc(cond, row[0].id, options);
                 }
             }},
             {iconCls:'icon-remove', text:"删除",  handler:doDel}, '-',
@@ -64,7 +64,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
             var rows = $(dg).datagrid('getRows');
             var row = rows[index];
             var cond = $(dg).datagrid('options').queryParams;
-            options.addEditFunc(options.page, url, cond, row.id, options);
+            options.addEditFunc(cond, row.id, options);
         }
     });
 

@@ -24,6 +24,7 @@ function danceAddTabTeacher(title, tableId, condition) {
         });
 
         var module = 'dance_teacher';
+        var url = '/'+module;
         var opts = {
             queryText: '姓名：',
             queryPrompt: '姓名拼音首字母查找',
@@ -32,6 +33,8 @@ function danceAddTabTeacher(title, tableId, condition) {
             danceModuleTitle: title,          // 导入、导出 窗口 title
             addEditFunc: danceTeacherDetailInfo,
             page: '/static/html/_teacher_details.html',     // 上述函数的参数
+            tableId: tableId,
+            url: url,
             columns: [[
                 {field: 'ck', checkbox:true },
                 {field: 'school_name', title: '分校名称', width: 110, align: 'center'},
@@ -52,19 +55,23 @@ function danceAddTabTeacher(title, tableId, condition) {
             ]]
         };
 
-        danceCreateCommDatagrid(tableId, '/'+module, condition, opts)
+        danceCreateCommDatagrid(tableId, url, condition, opts)
     }
 }
 
 /**
  * 查看/新增  员工与老师 详细信息
- * @param page          员工与老师详细信息页面
- * @param url           查询信息所用url
  * @param condition     查询条件：
  *         school_id     分校id，取值范围： all  or 具体分校id
  * @param uid           记录id，新增时，可以不传递此参数。
+ * @param options       可选参数
+ *      {
+ *          tableId:    表格id，新增/修改 记录后，需要更新的表格
+ *          page:       详细信息页面
+ *          url:        查询信息所用url
+ *      }
  */
-function danceTeacherDetailInfo( page, url, condition, uid) {
+function danceTeacherDetailInfo(condition, uid, options) {
     var title = '员工与老师详细信息';
     uid = uid || 0;     // 第一次进入 详细信息页面 uid 有效，上下翻页时，无法提前获取上下记录的 id(uid)
     if (uid <= 0) {
@@ -72,6 +79,8 @@ function danceTeacherDetailInfo( page, url, condition, uid) {
     }
 
     var no = -2;    // 记录所在数据库中的序号，方便翻页。传递 -2 则根据 uid 查询该记录的序号
+    var page = options.page;
+    var url = options.url;
 
     var pager = 'pagerTeacher';
     var panel = 'panelTeacher';

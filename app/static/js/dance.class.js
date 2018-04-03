@@ -975,6 +975,7 @@ function danceAddTabNotepad(title, tableId, condition) {
         });
 
         var module = 'notepad';
+        var url = '/'+module;
         var opts = {
             queryText: '查询条件：',
             queryPrompt: '标题或者内容查找',
@@ -984,6 +985,7 @@ function danceAddTabNotepad(title, tableId, condition) {
             addEditFunc: addEditNotepad,
             page: '/static/html/_new_notepad.html',     // 上述函数的参数
             tableId: tableId,
+            url: url,
             columns: [[
                 {field: 'ck', checkbox:true },   // checkbox
                 {field: 'school_no', title: '分校编号', width: 50, align: 'center'},
@@ -995,15 +997,13 @@ function danceAddTabNotepad(title, tableId, condition) {
             ]]
         };
 
-        danceCreateCommDatagrid(tableId, '/'+module, condition, opts);
+        danceCreateCommDatagrid(tableId, url, condition, opts);
     }
 }
 
 
 /**
  * 查看/新增  记事本
- * @param page          记事本所需页面
- * @param url           查询信息所用url
  * @param condition     查询条件：
  *         school_id     分校id，取值范围： all  or 具体分校id
  * @param uid           记录id，新增时，可以不传递此参数。
@@ -1012,7 +1012,7 @@ function danceAddTabNotepad(title, tableId, condition) {
  *          tableId:    表格id，新增/修改记事本后，需要更新的表格
  *      }
  */
-function addEditNotepad( page, url, condition, uid, options) {
+function addEditNotepad(condition, uid, options) {
     var title = '编辑/查看 记事本';
     uid = uid || 0;     // 第一次进入 详细信息页面 uid 有效，上下翻页时，无法提前获取上下记录的 id(uid)
     if (uid <= 0) {
