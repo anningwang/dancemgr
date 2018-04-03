@@ -7,7 +7,8 @@ from forms import DanceLoginForm, DanceRegistrationForm
 from models import ROLE_ADMIN, DanceStudent, DanceClass, DanceSchool, DanceUser,\
     DanceStudentClass, DanceCompany, DanceUserSchool, DcShowDetailFee, DcCommFeeMode, DcShowRecpt, DcFeeItem,\
     DanceOtherFee, DanceReceipt, DanceClassReceipt, DanceTeaching, DcClassType, DanceTeacher, DanceTeacherEdu,\
-    DanceTeacherWork, DcCommon, DanceCourse, DanceCourseItem, DanceClassRoom, UpgradeClass, UpgClassItem
+    DanceTeacherWork, DcCommon, DanceCourse, DanceCourseItem, DanceClassRoom, UpgradeClass, UpgClassItem, \
+    Notepad
 from datetime import datetime
 from translate import microsoft_translate
 from config import LANGUAGES, DATABASE_QUERY_TIMEOUT
@@ -152,7 +153,8 @@ def dance_del_data():
                 'dc_common_job_title': {'func': dc_del_common},
                 'dance_class_room': {'func': dc_del_class_room},
                 'dance_upgrade_class': {'func': dc_del_upgrade_class},
-                'dance_student': {'func': dc_del_student}
+                'dance_student': {'func': dc_del_student},
+                'notepad': {'func': dc_del_notepad}
                 }
 
     if who == 'DanceClass':
@@ -164,7 +166,7 @@ def dance_del_data():
     elif who in entrance:
         return entrance[who]['func'](ids)
     else:
-        return jsonify({'errorCode': 1, "msg": "Table not found!"})     # error
+        return jsonify({'errorCode': 1, "msg": "Module[%s] not found!" % who})     # error
 
     for i in ids:
         rec = dcq.get(i)
@@ -446,6 +448,13 @@ def dc_del_upgrade_class(ids):
     m = UpgradeClass.query.filter(UpgradeClass.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！集体续费单[%d]条，学员续费明细[%d]条。" % (m, n)})
+
+
+def dc_del_notepad(ids):
+    # 删除 记事本
+    Notepad.query.filter(Notepad.id.in_(ids)).delete(synchronize_session=False)
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 
 
 @app.route('/dance_student_get', methods=['POST', 'GET'])
