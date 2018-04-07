@@ -986,6 +986,7 @@ function danceAddTabNotepad(title, tableId, condition) {
             page: '/static/html/_new_notepad.html',     // 上述函数的参数
             tableId: tableId,
             url: url,
+            query: false,       // 搜索框，不用实现自动完成功能。
             columns: [[
                 {field: 'ck', checkbox:true },   // checkbox
                 {field: 'school_no', title: '分校编号', width: 50, align: 'center'},

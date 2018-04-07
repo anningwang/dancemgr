@@ -163,3 +163,20 @@ def dance_tree_finance():
         {"id": 2, "text": "房租"}
     ]
     return tree
+
+
+@app.route('/xxx_get', methods=['POST', 'GET'])
+@login_required
+def xxx_get():
+    """ 表格行内菜单 测试命令 """
+    data = []
+    for i in range(2):
+        data.append({'name': 'row'+str(i), 'oper': 'oper'+str(i), 'mm': 'mm'})
+    return jsonify({'rows': data, 'total': len(data), 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/xxx_query', methods=['POST', 'GET'])
+@login_required
+def xxx_query():
+    """ 表格行内菜单 测试命令 """
+    return jsonify([])

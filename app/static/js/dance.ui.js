@@ -68,14 +68,24 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
         }
     });
 
-    $('#'+ccId).combobox({     // 搜索框 combo box
-        prompt: options.queryPrompt,
-        valueField: 'value',
-        textField: 'text',
-        width: 140,
-        //panelHeight: "auto",
-        onChange:autoComplete
-    });
+    var oComboBox = $('#' + ccId);
+
+    if(options.query !== false) {   // 需要自动完成功能
+        oComboBox.combobox({     // 搜索框 combo box
+            prompt: options.queryPrompt,
+            valueField: 'value',
+            textField: 'text',
+            width: 140,
+            //panelHeight: "auto",
+            onChange:autoComplete
+        });
+    }else {     // 普通 搜索 文本框，不需要下拉列表等功能
+        oComboBox.textbox({     // 搜索框 textbox
+            prompt: options.queryPrompt,
+            width: 140,
+            onChange:autoComplete
+        });
+    }
 
     autoComplete(dance_condition,'');
     function autoComplete (newValue) {  // ,oldValue
@@ -84,9 +94,12 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
         var queryCondition = {};
         $.extend(queryCondition, $(dg).datagrid('options').queryParams);
         queryCondition.name = dance_condition;
-        $.post(url+'_query',queryCondition, function(data){
-            $('#'+ccId).combobox('loadData', data);
-        },'json');
+
+        if(options.query !== false) {
+            $.post(url+'_query',queryCondition, function(data){
+                $('#'+ccId).combobox('loadData', data);
+            },'json');
+        }
     }
 
     $('#'+sbId).switchbutton({
