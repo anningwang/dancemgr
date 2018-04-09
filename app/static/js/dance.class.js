@@ -1020,10 +1020,12 @@ function addEditNotepad(condition, uid, options) {
         title = '新增 记事本'
     }
 
+    options.condition = condition;
+
     if (uid <=0) {
-        dcOpenDialogNewNotepad('dlg-id-new-notepad', title, options.tableId, 0, 'icon-save', condition);
+        dcOpenDialogNewNotepad('dlg-id-new-notepad', title, 0, 'icon-save', options);
     }else {
-        dcOpenDialogNewNotepad('dlg-id-chg-notepad', title, options.tableId, uid, 'icon-save', condition);
+        dcOpenDialogNewNotepad('dlg-id-chg-notepad', title, uid, 'icon-save', options);
     }
 }
 
@@ -1032,12 +1034,15 @@ function addEditNotepad(condition, uid, options) {
  * 打开 新增 或者 编辑/查看 记事本窗口
  * @param id
  * @param title
- * @param dgId      本窗口 关闭后，要更新的 表格 id。
  * @param uuid      记录id，新增时 可以不填或者填写 <=0 ，修改记录时，必须填写记录的 ID
  * @param icon
- * @param options       扩展参数，目前传入 查询条件
+ * @param options       扩展参数
+ * {
+ *      condition:      查询条件
+ *      tableId:        本窗口 关闭后，要更新的 表格 id。
+ * }
  */
-function dcOpenDialogNewNotepad(id, title, dgId, uuid, icon, options){
+function dcOpenDialogNewNotepad(id, title, uuid, icon, options){
 
     var d_title = 'd_title'+id;
     var d_date = 'd_date'+id;
@@ -1047,6 +1052,7 @@ function dcOpenDialogNewNotepad(id, title, dgId, uuid, icon, options){
     var d_content = 'd_content'+id;
     var uid = 'notepadUUID'+id;
     options = options || {};
+    var dgId = options.tableId;
 
     if (document.getElementById(id)) {
         if(uuid > 0)
@@ -1095,8 +1101,8 @@ function dcOpenDialogNewNotepad(id, title, dgId, uuid, icon, options){
                     var data = $(this).combobox('getData');
                     if(data.length){
                         var school_id = null; var idx = 0;
-                        if ('school_id' in options) {
-                            school_id = options['school_id'];
+                        if ('school_id' in options.condition) {
+                            school_id = options.condition['school_id'];
                         }
                         if (school_id != 'all') {
                             for (var m=0; m<data.length; m++) {

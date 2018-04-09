@@ -9,6 +9,7 @@ class FeeItemType(Enum):
     Show = 2
     Common = 3
 
+
 # 班级是否结束
 CLASS_IS_END = 1                # 已结束
 CLASS_IS_ON = 0                 # 未结束
@@ -43,11 +44,15 @@ COMM_TYPE_JOB_TITLE = 3         # 职位
 COMM_TYPE_INFO_SRC = 4          # 信息来源
 COMM_TYPE_CONSULT_MODE = 5      # 咨询方式
 COMM_TYPE_INTENTION = 6         # 意向程度
+COMM_TYPE_EXPENSE = 7           # 支出类别
+COMM_TYPE_INCOME = 8            # 收入类别
 
 STU_CLASS_STATUS_NORMAL = u'正常'
 STU_CLASS_STATUS_UPG = u'已续班'
 STU_CLASS_STATUS_END = u'结束'
 STU_CLASS_STATUS_STOP = u'退班'
+
+DANCE_PRECISION = 1e-5
 
 
 def get_feename(val):

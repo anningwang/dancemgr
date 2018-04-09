@@ -1,12 +1,12 @@
 /**
- * Created by Administrator on 2017/10/17.
+ * Created by WXG on 2017/10/17.
  * 左侧功能导航树及入口函数
  */
 
 'use strict';
 
 $(function() {
-    $('#treeStudent').tree({
+    $('#treeStudent').tree({    // 学员管理
         animate:true,lines:true,
         onClick: function(node){
             var root = getRootNode(this, node);
@@ -30,7 +30,7 @@ $(function() {
         }
     });
 
-    $('#treeTeacher').tree({
+    $('#treeTeacher').tree({    // 员工与老师
         animate:true,lines:true,
         onClick: function(node){
             var root = getRootNode(this, node);
@@ -45,7 +45,7 @@ $(function() {
         }
     });
 
-    $('#treeSchool').tree({
+    $('#treeSchool').tree({     // 教学管理
         animate:true,lines:true,
         onClick:function (node) {
             var root = getRootNode(this, node);
@@ -67,7 +67,7 @@ $(function() {
         }
     });
 
-    $('#treeAsset').tree({
+    $('#treeAsset').tree({  // 物品管理
         animate:true,lines:true,
         onClick: function(node){
             var root = getRootNode(this, node);
@@ -77,33 +77,52 @@ $(function() {
         }
     });
 
-    $('#treeFinance').tree({
+    $('#treeFinance').tree({    // 财务管理
         animate:true,lines:true,
         onClick: function(node){
+
             var root = getRootNode(this, node);
             var tableRootId = this.id + root.id;
             console.log(root.text, ' tableRootId=', tableRootId);
-            $.messager.alert('提示', ' 制作中...', 'info');
+
+            var entrance = {
+                4: {fn: danceAddTabExpense}         //  其他支出
+            };
+
+            var openChild = {   // 仅仅打开子节点
+            };
+
+            if(root.id in entrance){
+                entrance[root.id].fn(root.text, tableRootId, node.attributes);
+            }else if(node.id in openChild){
+                dcExpandOrCollapseNode('treeFinance', node);
+            } else {
+                $.messager.alert('提示', ' 制作中...', 'info');
+            }
         }
     });
 
-    $('#treeDb').tree({
+    $('#treeDb').tree({     // 数据管理
         animate:true,lines:true,
         onClick:function (node) {
             var tableId = this.id + node.id;
             var entrance = {
                 51: {fn: danceAddTabFeeItem},               // 收费项目
-                52: {fn: danceAddTabTeachingMaterial},
-                53: {fn: danceAddTabFeeMode},
-                54: {fn: danceAddTabClassType},
-                55: {fn: danceAddTabDegree},
-                56: {fn: danceAddTabJobTitle},
-                57: {fn: danceAddTabIntention},
-                58: {fn: danceAddTabInfoSrc},
-                59: {fn: danceAddTabConsultMode},
-                3:  {fn: danceAddTabSchool},
-                4:  {fn: danceAddTabUsers},
-                511:{fn: danceAddTabTestButtons}
+                52: {fn: danceAddTabTeachingMaterial},      // 教材信息
+                53: {fn: danceAddTabFeeMode},               // 收费方式
+                54: {fn: danceAddTabClassType},             // 班级类型
+                55: {fn: danceAddTabDegree},                // 文化程度
+                56: {fn: danceAddTabJobTitle},              // 职位信息
+                57: {fn: danceAddTabIntention},             // 意向程度
+                58: {fn: danceAddTabInfoSrc},               // 信息来源
+                59: {fn: danceAddTabConsultMode},           // 咨询方式
+                3:  {fn: danceAddTabSchool},                // 分校信息
+                4:  {fn: danceAddTabUsers},                 // 用户管理
+                511:{fn: danceAddTabTestButtons}            // 表格行内菜单
+            };
+
+            var openChild = {   // 仅仅打开子节点
+                5: {}
             };
 
             if (node.text == '数据库备份') {
@@ -112,14 +131,16 @@ $(function() {
                 danceOpenTab(node.text, '/static/html/_pre_student_details.html')
             }else if(node.id in entrance){
                 entrance[node.id].fn(node.text, tableId);
-            }else {
+            }else if(node.id in openChild){
+                dcExpandOrCollapseNode('treeDb', node);
+            } else {
                 $.messager.alert('提示', ' 制作中...', 'info');
             }
         }
     });
 
     dcLoadTree();
-
+    
 
     $('#danceTabs').tabs({
         fit:true,border:false,plain:false,
@@ -163,4 +184,22 @@ function getRootNode(tree, curNode) {
         parentNode = $(tree).tree('getParent', root.target);
     }
     return root;
+}
+
+/**
+ * 点击tree节点，打开 或者 关闭 该节点下的 子树节点
+ * @param treeId        tree id
+ * @param node          节点
+ */
+function dcExpandOrCollapseNode(treeId, node) {
+    var oTree = $('#'+treeId);
+    if ( oTree.tree('isLeaf', node.target )) {  // is a leaf
+        // do nothing
+    } else {    // not a leaf
+        if (node.state == 'open') {
+            oTree.tree('collapse', node.target);
+        } else {
+            oTree.tree('expand', node.target);
+        }
+    }
 }

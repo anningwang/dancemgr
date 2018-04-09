@@ -158,10 +158,37 @@ def dance_tree_asset():
 
 
 def dance_tree_finance():
+    """ 财务管理 """
     tree = [
-        {"id": 1, "text": "退费单（学费）列表"},
-        {"id": 2, "text": "房租"}
+        {"id": 1, "text": "退费单（学费）列表", 'attributes': {'school_id': 'all'}},
+        {"id": 2, "text": "房租", 'attributes': {'school_id': 'all'}},
+        {"id": 3, "text": "其他收入", 'attributes': {'school_id': 'all'}},
+        {"id": 4, "text": "其他支出", 'attributes': {'school_id': 'all'}}
     ]
+
+    school_ids, school_map = DanceUserSchool.get_school_map_by_uid()
+    if len(school_ids) == 1:
+        pass
+    elif len(school_ids) > 1:
+        t1, t2, t3, t4, = [], [], [], []
+        for i in range(len(school_ids)):
+            name = school_map[school_ids[i]]
+            sid = school_ids[i]
+            t1.append({'text': name, 'attributes': {'school_id': sid}})
+            t2.append({'text': name, 'attributes': {'school_id': sid}})
+            t3.append({'text': name, 'attributes': {'school_id': sid}})
+            t4.append({'text': name, 'attributes': {'school_id': sid}})
+
+        tree[0]['children'] = t1
+        tree[1]['children'] = t2
+        tree[2]['children'] = t3
+        tree[3]['children'] = t4
+
+        tree[0]['state'] = 'closed'
+        tree[1]['state'] = 'closed'
+        tree[2]['state'] = 'closed'
+        tree[3]['state'] = 'closed'
+
     return tree
 
 

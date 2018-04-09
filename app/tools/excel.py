@@ -10,9 +10,6 @@ from app.dcglobal import *
 
 progressbar = {}         # 进度条的值  用户id(key) = {value: 60, sheet: u'收费单'}
 
-DANCE_PRECISION = 1e-5
-
-
 def char2int(s):
     """
     将Excel文件中的列序号（A,B,C,...,Z,AA,AB,...）转换为 列数字(1,2,3,..26,27,28,...)
