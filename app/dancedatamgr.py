@@ -1994,9 +1994,23 @@ def dc_common_consult_mode_update():
     return dc_common_update(COMM_TYPE_CONSULT_MODE, request.form)
 
 
-@app.route('/dc_common_expense_update', methods=['POST'])
+@app.route('/dc_common_expense_type_get', methods=['POST'])
 @login_required
-def dc_common_expense_update():
+def dc_common_expense_type_get():
+    """查询 支出类别 """
+    return dc_common_get(COMM_TYPE_EXPENSE, request.form)
+
+
+@app.route('/dc_common_expense_type_query', methods=['POST'])
+@login_required
+def dc_common_expense_type_query():
+    """条件查询 支出类别"""
+    return dc_common_query(COMM_TYPE_EXPENSE, request.form)
+
+
+@app.route('/dc_common_expense_type_update', methods=['POST'])
+@login_required
+def dc_common_expense_type_update():
     """更新/新增 支出类别"""
     return dc_common_update(COMM_TYPE_EXPENSE, request.form)
 
@@ -3484,8 +3498,9 @@ def expense_modify():
     if 'id' not in obj or int(obj['id']) <= 0:
         """ 新增 """
         """ 判断是否有重复记录（date, payee, cost, school_id, type_id, fee_mode_id 都相同） """
-        has = Expense.query.filter_by(date=obj['date'], payee=obj['payee'], type_id=obj['type_id'],
-                                      fee_mode_id=obj['fee_mode_id'])\
+        date = datetime.datetime.strptime(obj['date'], '%Y-%m-%d')
+        has = Expense.query.filter_by(date=date, payee=obj['payee'], type_id=obj['type_id'],
+                                      fee_mode_id=obj['fee_mode_id'], remark=obj['remark'])\
             .filter(Expense.cost <= float(obj['cost'])+DANCE_PRECISION,
                     Expense.cost >= float(obj['cost'])-DANCE_PRECISION).first()
         if has is not None:

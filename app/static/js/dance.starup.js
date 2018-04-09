@@ -118,7 +118,8 @@ $(function() {
                 59: {fn: danceAddTabConsultMode},           // 咨询方式
                 3:  {fn: danceAddTabSchool},                // 分校信息
                 4:  {fn: danceAddTabUsers},                 // 用户管理
-                511:{fn: danceAddTabTestButtons}            // 表格行内菜单
+                511:{fn: danceAddTabTestButtons},           // 表格行内菜单
+                512:{fn: danceAddTabExpenseType}            // 支出类别
             };
 
             var openChild = {   // 仅仅打开子节点

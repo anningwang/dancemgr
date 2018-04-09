@@ -148,6 +148,7 @@ def dance_del_data():
                 'DanceReceipt': {'func': dc_del_receipt},
                 'dance_fee_item': {'func': dc_del_fee_item},
                 'dc_comm_fee_mode': {'func': dc_del_fee_mode},
+                'dc_common_expense_type': {'func': dc_del_common},
                 'dc_class_type': {'func': dc_del_class_type},
                 'dance_teacher': {'func': dc_del_teacher},
                 'dc_common_job_title': {'func': dc_del_common},
@@ -357,6 +358,10 @@ def dc_del_common(ids):
                 is_use = DanceTeacher.query.filter_by(company_id=g.user.company_id, degree=i).first()
                 if is_use is not None:
                     return jsonify({'errorCode': 811, 'msg': u'[%s]已经被使用，不能删除！' % r.name})
+        elif r.type == COMM_TYPE_EXPENSE:
+            is_use = Expense.query.filter_by(company_id=g.user.company_id, type_id=i).first()
+            if is_use is not None:
+                return jsonify({'errorCode': 811, 'msg': u'[%s]已经被使用，不能删除！' % r.name})
         else:
             return jsonify({'errorCode': 812, 'msg': u'未知类型[%d]！' % r.type})
 

@@ -802,7 +802,7 @@ function dcDialogExpenseType(options){
         // 发送数据
         $.ajax({
             method: 'POST',
-            url: '/dc_common_expense_update',
+            url: '/dc_common_expense_type_update',
             async: true,
             dataType: 'json',
             // contentType: "application/json;charset=UTF-8",
