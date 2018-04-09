@@ -13,11 +13,12 @@ $(function() {
             var tableRootId = this.id + root.id;
             var entrance = {
                 10: {fn: danceAddTabStudentDatagrid},   // 学员列表
-                30: {fn: danceAddTabFeeStudyDatagrid},
-                40: {fn: danceAddTabFeeShowDatagrid},
-                50: {fn: danceAddTabFeeOtherDatagrid},
-                70: {fn: danceAddTabUpgClass},
-                80: {fn: danceAddTabClassCheckIn}
+                30: {fn: danceAddTabFeeStudyDatagrid},  // 收费单（学费）
+                40: {fn: danceAddTabFeeShowDatagrid},   // 收费单（演出）
+                50: {fn: danceAddTabFeeOtherDatagrid},  // 收费单（普通）
+                70: {fn: danceAddTabUpgClass},          // 集体续班
+                80: {fn: danceAddTabClassCheckIn},      // 班级考勤
+                90: {fn: danceAddTabReceiptStatByMonth}     // 收费月统计
             };
 
             if(root.id in entrance){
