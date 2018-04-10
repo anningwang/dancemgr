@@ -2188,52 +2188,22 @@ function danceAddTabReceiptStatByMonth(title, tableId, condition) {
         $(parentDiv).tabs('select', title);
         // $('#'+tableId).datagrid('load', condition);
     } else {
-        var content = '<div style="min-width:1024px;width:100%;height:100%"><div id=' + tableId + ' style="width: 600px;height:300px;"></div></div>';
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><div id=' + tableId + ' style="width: 100%;height:300px;"></div></div>';
         $(parentDiv).tabs('add', {
             title: title,
             content: content,
             closable: true
         });
+    }
 
-        var module = 'dance_class_check_in';
-        var opts = {
-            queryText: '姓名：',
-            queryPrompt: '姓名拼音首字母查找',
-            who: module,
-            danceModuleName: module,
-            danceModuleTitle: title,          // 导入、导出 窗口 title
-            url: '/'+module,        // 从服务器获取数据的url
-            cond: condition,        // 表格数据查询参数
-            addEditFunc: danceClassCheckIn,
-            page: '/static/html/_class_check_in.html',     // 上述函数的参数
-            funcOpts: {
-                title: title
-            },
-            columns: [[
-                {field: 'ck', checkbox:true },
-                {field: 'code', title: '考勤编号', width: 140, align: 'center'},
-                {field: 'school_name', title: '分校名称', width: 110, align: 'center'},
-                {field: 'date', title: '上课日期', width: 140, align: 'center'},
-                {field: 'class_name', title: '班级名称', width: 80, align: 'center'},
-                {field: 'teacher_name', title: '老师名称', width: 90, align: 'center'},
-                {field: 'time', title: '上课时间', width: 80, align: 'center'},
-                {field: 'total', title: '班级总人数', width: 80, align: 'center'},
-                {field: 'come', title: '出勤人数', width: 80, align: 'center'},
-                {field: 'absent', title: '缺勤人数', width: 80, align: 'center'},
-                {field: 'rate', title: '出勤率', width: 80, align: 'center'},
-                {field: 'class_hours', title: '上课时长', width: 80, align: 'center'},
-                {field: 'remark', title: '备注', width: 90, align: 'center'},
-                {field: 'recorder', title: '录入员', width: 90, align: 'center'}
-            ]]
-        };
-
-        // danceOpenCommonDg(tableId, opts);
 
         // 基于准备好的dom，初始化echarts实例
         var myChart = echarts.init(document.getElementById(tableId));
 
         // 指定图表的配置项和数据
-        var option = {
+        var option;
+        /*
+        option = {
             title: {
                 text: 'ECharts 入门示例'
             },
@@ -2251,9 +2221,32 @@ function danceAddTabReceiptStatByMonth(title, tableId, condition) {
                 data: [5, 20, 36, 10, 10, 20]
             }]
         };
+        */
+
+        option = {
+            legend: {},
+            tooltip: {},
+            dataset: {
+                source: [
+                    ['product', '2015', '2016', '2017'],
+                    ['Matcha Latte', 43.3, 85.8, 93.7],
+                    ['Milk Tea', 83.1, 73.4, 55.1],
+                    ['Cheese Cocoa', 86.4, 65.2, 82.5],
+                    ['Walnut Brownie', 72.4, 53.9,39.1]
+                ]
+            },
+            xAxis: {type: 'category'},
+            yAxis: {},
+            // Declare several bar series, each will be mapped
+            // to a column of dataset.source by default.
+            series: [
+                {type: 'bar'},
+                {type: 'bar'},
+                {type: 'bar'}
+            ]
+        };
 
         // 使用刚指定的配置项和数据显示图表。
         myChart.setOption(option);
 
-    }
 }
