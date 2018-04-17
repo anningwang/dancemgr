@@ -351,6 +351,9 @@ function dcOpenDialogNewExpense(id, title, uuid, icon, options){
             data: JSON.stringify(data)
         }).done(function(data) {
             $.messager.alert('提示', data.msg, 'info');
+            if (dgId && document.getElementById(dgId)) {
+                $('#'+dgId).datagrid('reload');
+            }
         }).fail(function(jqXHR, textStatus, errorThrown) {
             $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
         });
