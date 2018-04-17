@@ -282,7 +282,7 @@ function addEvent(obj,xEvent,fn) {
 
 
 /**
- * 更加text域返回value域。 用于 combobox。
+ * 根据text域返回value域。 用于 combobox。
  * 对value域赋值，值域为 someName_text, 则 value域为 someName。若值域不存在 _text，则值域固定为 value
  *      someName_text        -> someName
  *      school_name          -> school_id

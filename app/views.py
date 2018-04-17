@@ -8,7 +8,7 @@ from models import ROLE_ADMIN, DanceStudent, DanceClass, DanceSchool, DanceUser,
     DanceStudentClass, DanceCompany, DanceUserSchool, DcShowDetailFee, DcCommFeeMode, DcShowRecpt, DcFeeItem,\
     DanceOtherFee, DanceReceipt, DanceClassReceipt, DanceTeaching, DcClassType, DanceTeacher, DanceTeacherEdu,\
     DanceTeacherWork, DcCommon, DanceCourse, DanceCourseItem, DanceClassRoom, UpgradeClass, UpgClassItem, \
-    Notepad, Expense
+    Notepad, Expense, HouseRent
 from datetime import datetime
 from translate import microsoft_translate
 from config import LANGUAGES, DATABASE_QUERY_TIMEOUT
@@ -156,6 +156,7 @@ def dance_del_data():
                 'dance_upgrade_class': {'func': dc_del_upgrade_class},
                 'dance_student': {'func': dc_del_student},
                 'notepad': {'func': dc_del_notepad},
+                'house_rent': {'func': dc_del_house_rent},
                 'expense': {'func': dc_del_expense}
                 }
 
@@ -466,6 +467,13 @@ def dc_del_notepad(ids):
 def dc_del_expense(ids):
     # 删除 其他支出单
     Expense.query.filter(Expense.id.in_(ids)).delete(synchronize_session=False)
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
+
+
+def dc_del_house_rent(ids):
+    # 删除 房租
+    HouseRent.query.filter(HouseRent.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 

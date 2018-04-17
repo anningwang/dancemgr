@@ -87,6 +87,7 @@ $(function() {
             console.log(root.text, ' tableRootId=', tableRootId);
 
             var entrance = {
+                2: {fn: danceAddTabHouseRent},      //  房租
                 4: {fn: danceAddTabExpense}         //  其他支出
             };
 

@@ -6,7 +6,7 @@ from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceRece
     DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass, DanceStudentClass, DcShowRecpt, DcCommFeeMode,\
     DcShow, DcShowFeeCfg, DcShowDetailFee, DcClassType, DanceTeacher, DanceTeacherEdu, DanceTeacherWork, DcCommon,\
     DanceCourse, DanceCourseItem, DanceClassRoom, UpgradeClass, UpgClassItem, DanceCheckIn,\
-    Notepad, Expense
+    Notepad, Expense, HouseRent
 from views import dance_student_query
 import json
 import datetime
@@ -3307,7 +3307,7 @@ def notepad_modify():
     obj = request.json
     if 'id' not in obj or int(obj['id']) <= 0:
         ''' 判断是否有重复记录 title 和 content 相同 '''
-        has = Notepad.query.filter_by(company_id=g.user.company_id,
+        has = Notepad.query.filter_by(company_id=g.user.company_id, school_id=obj['school_id'],
                                       title=obj['title'], content=obj['content']).first()
         if has is not None:
             return jsonify({'errorCode': 201, 'msg': u'记事本已存在[%s,%s]！' % (obj['title'], obj['content'])})
@@ -3505,7 +3505,7 @@ def expense_modify():
         """ 新增 """
         """ 判断是否有重复记录（date, payee, cost, school_id, type_id, fee_mode_id 都相同） """
         date = datetime.datetime.strptime(obj['date'], '%Y-%m-%d')
-        has = Expense.query.filter_by(company_id=g.user.company_id,
+        has = Expense.query.filter_by(company_id=g.user.company_id, school_id=obj['school_id'],
                                       date=date, payee=obj['payee'], type_id=obj['type_id'],
                                       fee_mode_id=obj['fee_mode_id'], remark=obj['remark'])\
             .filter(Expense.cost <= float(obj['cost'])+DANCE_PRECISION,
@@ -3585,6 +3585,221 @@ def expense_detail_get():
            'create_at': datetime.datetime.strftime(r.create_at, '%Y-%m-%d'),
            'type_id': r.type_id, 'fee_mode_id': r.fee_mode_id,
            'fee_mode_text': rec[3], 'type_text': rec[4],
+           'remark': r.remark}
+
+    return jsonify({"row": row, 'errorCode': 0, 'msg': 'ok', 'total': 1})
+
+
+@app.route('/house_rent_get', methods=['POST'])
+@login_required
+def house_rent_get():
+    """
+    查询 房租
+    输入参数：
+    {
+        school_id:      分校 id。 'all' 为所有分校。     可选参数，不填表示 all
+        name:           查询条件，payee 或者 remark 中的内容字符串。      可选参数，不填表示不做过滤条件
+        rows:           每页记录数
+        page:           页码，从 1 开始
+    }
+    :return:
+    {
+        errorCode:          错误码
+        msg:                错误信息
+
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   查询成功！
+            600                 您没有管理分校的权限！
+
+        total:              符合条件的记录总数
+        rows:[{
+            id:         记录ID
+            code:       房租单号
+            date:       交纳日期
+            recorder:   录入员
+            no:         记录序号
+            school_id:  分校id
+            school_name:    分校名称
+            school_no:      分校编号
+            create_at:      创建时间
+            payee:          收款人
+            cost:           支出金额
+            begin_month:    开始月份
+            month_num:      交纳月数
+            fee_mode_id:    支付方式 id
+            fee_mode_text:  支付方式
+            remark:         备注
+        }]
+    }
+    """
+
+    if request.json is not None:
+        obj = request.json
+    else:
+        obj = request.form
+
+    page_size = int(obj['rows'])
+    page_no = int(obj['page'])
+    if page_no <= 0:  # 容错处理
+        page_no = 1
+
+    dcq = HouseRent.query.filter_by(company_id=g.user.company_id)
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in obj or obj['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, obj['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(HouseRent.school_id.in_(school_id_intersection))
+
+    if 'name' in obj and obj['name'] != '':
+        name = obj['name']
+        dcq = dcq.filter((HouseRent.payee.like('%' + name + '%')) | (HouseRent.remark.like('%' + name + '%')))
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.join(DanceSchool, DanceSchool.id == HouseRent.school_id)\
+        .join(DcCommFeeMode, DcCommFeeMode.id == HouseRent.fee_mode_id)\
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no, DcCommFeeMode.fee_mode) \
+        .order_by(HouseRent.school_id, HouseRent.date.desc()) \
+        .limit(page_size).offset(offset).all()
+
+    i = offset + 1
+    rows = []
+    for rec in records:
+        r = rec[0]
+        rows.append({'id': r.id, 'code': r.code, 'payee': r.payee,
+                     'date': datetime.datetime.strftime(r.date, '%Y-%m-%d'), 'recorder': r.recorder,
+                     'school_id': r.school_id, 'no': i, 'cost': r.cost,
+                     'school_name': rec[1], 'school_no': rec[2],
+                     'create_at': datetime.datetime.strftime(r.create_at, '%Y-%m-%d'),
+                     'begin_month': r.begin_month, 'month_num': r.month_num,
+                     'fee_mode_id': r.fee_mode_id,
+                     'fee_mode_text': rec[3],
+                     'remark': r.remark})
+        i += 1
+
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': u'查询成功！'})
+
+
+@app.route('/house_rent_modify', methods=['POST'])
+@login_required
+def house_rent_modify():
+    """
+    新增/更新 房租 单。
+    输入参数：
+    {
+        id:             id, > 0 修改记录。 <= 0 新增
+        date:           交纳日期
+        payee:          收款方
+        cost:           房租金额
+        begin_month:    开始月份
+        month_num:      交纳月数
+        school_id:      分校id
+        type_id:        支出类别 id
+        fee_mode_id:    支付方式 id
+        remark:         备注
+    }
+    :return:
+    {
+        errorCode :     错误码
+        msg:            错误信息
+            --------------      -------------------------------------------
+            0                   更新成功！ / 新增成功！
+            201                 房租单已经存在[%s,%s,%s]！
+            301                 房租单id[%s]不存在！
+    }
+    """
+    obj = request.json
+    if 'id' not in obj or int(obj['id']) <= 0:
+        """ 新增 """
+        """ 判断是否有重复记录（date, payee, cost, school_id, fee_mode_id, begin_month, month_num 都相同） """
+        date = datetime.datetime.strptime(obj['date'], '%Y-%m-%d')
+        has = HouseRent.query.filter_by(company_id=g.user.company_id, school_id=obj['school_id'],
+                                        date=date, payee=obj['payee'],
+                                        begin_month=obj['begin_month'], month_num=obj['month_num'],
+                                        fee_mode_id=obj['fee_mode_id'], remark=obj['remark'])\
+            .filter(HouseRent.cost <= float(obj['cost'])+DANCE_PRECISION,
+                    HouseRent.cost >= float(obj['cost'])-DANCE_PRECISION).first()
+        if has is not None:
+            return jsonify({'errorCode': 201, 'msg': u'房租单已经存在[%s,%s,%s]！' % (obj['payee'], obj['cost'], obj['date'])})
+
+        new_rec = HouseRent(obj)
+        db.session.add(new_rec)
+        msg = u'新增成功！'
+    else:
+        """ 修改 """
+        rec = HouseRent.query.get(obj['id'])
+        if rec is None:
+            return jsonify({'errorCode': 301, 'msg': u'房租单id[%s]不存在！' % obj['id']})
+
+        rec.update(obj)
+        db.session.add(rec)
+        msg = u'更新成功！'
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': msg})
+
+
+@app.route('/house_rent_detail_get', methods=['POST'])
+@login_required
+def house_rent_detail_get():
+    """
+    查询 房租 单 详细信息
+    输入信息
+    {
+        id:     记录ID
+    }
+    :return:
+    {
+        errorCode :     错误码
+        msg:            错误信息
+            --------------      -------------------------------------------
+            0                   ok
+            120                 房租信息[id=%d]不存在！
+        row: {
+             id:         记录ID
+            code:       房租单号
+            date:       交纳日期
+            recorder:   录入员
+            school_id:  分校id
+            school_name:    分校名称
+            school_no:      分校编号
+            create_at:      创建时间
+            payee:          收款人
+            cost:           房租金额
+            begin_month:    开始月份
+            month_num:      交纳月数
+            fee_mode_id:    支付方式 id
+            fee_mode_text:  支付方式
+            remark:         备注
+        }
+        total:          记录条数，总是为1
+    }
+    """
+    obj = request.json
+
+    rec = HouseRent.query.filter(HouseRent.id == obj['id']) \
+        .join(DanceSchool, DanceSchool.id == HouseRent.school_id) \
+        .join(DcCommFeeMode, DcCommFeeMode.id == HouseRent.fee_mode_id) \
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no, DcCommFeeMode.fee_mode) \
+        .first()
+    if rec is None:
+        return jsonify({"row": {}, 'errorCode': 120, 'msg': u'房租信息[id=%d]不存在！' % obj['id']})
+
+    r = rec[0]
+    row = {'id': r.id, 'code': r.code, 'payee': r.payee,
+           'date': datetime.datetime.strftime(r.date, '%Y-%m-%d'), 'recorder': r.recorder,
+           'school_id': r.school_id, 'cost': r.cost,
+           'school_name': rec[1], 'school_no': rec[2],
+           'create_at': datetime.datetime.strftime(r.create_at, '%Y-%m-%d'),
+           'begin_month': r.begin_month, 'month_num': r.month_num,
+           'fee_mode_id': r.fee_mode_id,
+           'fee_mode_text': rec[3],
            'remark': r.remark}
 
     return jsonify({"row": row, 'errorCode': 0, 'msg': 'ok', 'total': 1})
