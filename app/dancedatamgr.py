@@ -3300,11 +3300,17 @@ def notepad_modify():
         msg:            错误信息
             --------------      -------------------------------------------
             0                   更新成功！ / 新增成功！
+            201                 记事本已存在[%s,%s]！
             301                 记事本id[%s]不存在！
     }
     """
     obj = request.json
     if 'id' not in obj or int(obj['id']) <= 0:
+        ''' 判断是否有重复记录 title 和 content 相同 '''
+        has = Notepad.query.filter_by(company_id=g.user.company_id,
+                                      title=obj['title'], content=obj['content']).first()
+        if has is not None:
+            return jsonify({'errorCode': 201, 'msg': u'记事本已存在[%s,%s]！' % (obj['title'], obj['content'])})
         new_rec = Notepad(obj)
         db.session.add(new_rec)
         msg = u'新增成功！'
@@ -3499,7 +3505,8 @@ def expense_modify():
         """ 新增 """
         """ 判断是否有重复记录（date, payee, cost, school_id, type_id, fee_mode_id 都相同） """
         date = datetime.datetime.strptime(obj['date'], '%Y-%m-%d')
-        has = Expense.query.filter_by(date=date, payee=obj['payee'], type_id=obj['type_id'],
+        has = Expense.query.filter_by(company_id=g.user.company_id,
+                                      date=date, payee=obj['payee'], type_id=obj['type_id'],
                                       fee_mode_id=obj['fee_mode_id'], remark=obj['remark'])\
             .filter(Expense.cost <= float(obj['cost'])+DANCE_PRECISION,
                     Expense.cost >= float(obj['cost'])-DANCE_PRECISION).first()
