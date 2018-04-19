@@ -1149,7 +1149,8 @@ function danceAddReceiptStudyDetailInfo(condition, uid, options) {
         $('#'+dcMayHide).hide();    // 隐藏 其他费
 
         // 更新 收费单（学费）基本信息
-        $('#'+dgReceiptComm).datagrid('updateRow',{ index: 0,
+        var dg = $('#'+dgReceiptComm);
+        dg.datagrid('updateRow',{ index: 0,
             row: {c2: '[自动生成]',
                 c6: danceFormatter(new Date())
             }
@@ -1179,6 +1180,8 @@ function danceAddReceiptStudyDetailInfo(condition, uid, options) {
             row: {c2: ''
             }
         });
+
+        danceSetDgWithRowData(dg, 4, 'fee_mode_id', '');        /// 新增 收费单，需要重新选择 收费方式
 
         $('#'+btnAdd).linkbutton('disable');
         oldDetails = {};

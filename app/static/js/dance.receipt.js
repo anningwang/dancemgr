@@ -231,8 +231,10 @@ function danceAddReceiptShowDetailInfo(condition, uid, options) {
     function newReceipt() {
         var num = 3;
         danceDgLoadData(dgShow, [], num);
+
         // 更新 收费单（演出）基本信息
-        $('#'+dgRecptComm).datagrid('updateRow',{ index: 0,
+        var dg = $('#'+dgRecptComm);
+        dg.datagrid('updateRow',{ index: 0,
             row: {c2: '[自动生成]',
                 c6: danceFormatter(new Date())
             }
@@ -257,6 +259,8 @@ function danceAddReceiptShowDetailInfo(condition, uid, options) {
             row: {c2: '', c3: '', c4: ''
             }
         });
+
+        danceSetDgWithRowData(dg, 1, 'fee_mode_id', '');        /// 新增 演出 收费单，需要重新选择 收费方式
 
         $('#'+btnAdd).linkbutton('disable');
         oldDetails = {};
