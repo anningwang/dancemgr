@@ -815,6 +815,98 @@ function dcDialogExpenseType(options){
 
 
 /**
+ * 打开 新增 收入类别 窗口
+ * @param options       object 参数
+ * {
+ *      id:         dialog id
+ *      title:      dialog 标题，可选，默认为 '新增 支出类别'
+ *      icon:       dialog 图标
+ *      url:        请求数据的 url 前缀。
+ *      callback:   对话框关闭后的 回调函数
+ * }
+ */
+function dcDialogIncomeType(options){
+    options = options || {};
+    var id = options['id'];
+    var title = options.title === undefined ? '新增 收入类别' : options.title;
+    var icon = options.icon;
+
+    var d_type = 'd_type'+id;       // d for dialog
+    var d_recorder = 'd_recorder'+id;
+
+    if (document.getElementById(id)) {
+        $.messager.alert('提示', '[' + title + ']窗口已打开！', 'info');
+        return;
+    }
+    $('body').append('<div id=' + id + ' style="padding:5px"></div>');
+
+    var ctrls = '<div class="easyui-panel" data-options="fit:true" style="padding:10px;">';
+    ctrls += '<input id='+d_type+'>';
+    ctrls += '<div style="height:3px"></div><input id='+d_recorder+'>';
+    ctrls += '</div>';
+
+    $("#"+id).dialog({
+        title:title,width:320,height:205,cache: false,iconCls:icon,content:ctrls,
+        collapsible: false, minimizable:false,maximizable: false, resizable: false,modal:false,closed:true,
+        buttons: [{text:'保存',iconCls:'icon-ok',width:80,height:30,handler:save },
+            {text:'关闭',iconCls:'icon-cancel',width:80,height:30,handler:function(){ $("#"+id).dialog('close'); }}],
+        onOpen:function () {
+            console.log('onOpen');
+            $('#'+d_type).textbox({
+                label:'收入类别*：',labelAlign:'right',labelWidth:100,width:'100%'
+            }).textbox('textbox').focus();
+            $('#'+d_recorder).textbox({
+                label:'录入员：',labelAlign:'right',labelWidth:100,width:'100%',prompt:'自动生成',disabled:true
+            });
+        },
+        onBeforeClose: function () {
+            if (options.callback) {
+                options.callback();
+            }
+            $("#"+id).dialog('destroy');
+        }
+    }).dialog('open');
+
+
+    function save() {
+        // 校验数据是否合法
+        var type = $('#'+d_type).textbox('getValue');
+        if(!type || type.length > 20) {
+            $.messager.alert({title:'提示', msg:'“收入类别”不能为空，且不能大于20字符！', icon: 'info',
+                fn:function () {
+                    $('#'+d_type).textbox('textbox').focus();
+                }
+            });
+            return false;
+        }
+
+        // 打包数据
+        var data = [{
+            id: 0,
+            row:{
+                name: type
+            }
+        }];
+        console.log('send:', data);
+
+        // 发送数据
+        $.ajax({
+            method: 'POST',
+            url: '/dc_common_income_type_update',
+            async: true,
+            dataType: 'json',
+            // contentType: "application/json;charset=UTF-8",
+            data: {'data': JSON.stringify(data)}
+        }).done(function(data) {
+            $.messager.alert('提示', data.msg, 'info');
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
+        });
+    }
+}
+
+
+/**
  * 创建一个模态 Dialog
  *
  * @param id divId

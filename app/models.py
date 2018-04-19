@@ -2632,3 +2632,79 @@ class HouseRent(db.Model):
         number = 1 if rec is None else int(rec.code.rsplit('-', 1)[1]) + 1
         self.code = search_no + ('%03d' % number)
         return self.code
+
+
+class Income(db.Model):
+    """ 其他收入 """
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(25, collation='NOCASE'), index=True, nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+    school_id = db.Column(db.Integer, index=True, nullable=False)
+    company_id = db.Column(db.Integer, index=True, nullable=False)
+    create_at = db.Column(db.DateTime, nullable=False)
+    type_id = db.Column(db.Integer)  # 收入类别 id
+    payer = db.Column(db.String(20, collation='NOCASE'), index=True)
+    cost = db.Column(db.Float)    # 收入金额
+    fee_mode_id = db.Column(db.Integer)  # 支出方式 id，定义在表 DcCommFeeMode  收费方式
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    remark = db.Column(db.String(40))
+    paper_receipt = db.Column(db.String(15))  # 收据号  例如：1347269
+
+    def __init__(self, param):
+        if 'date' in param and param['date'] != '':
+            self.date = datetime.datetime.strptime(param['date'], '%Y-%m-%d')
+        else:
+            self.date = datetime.datetime.today()
+        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
+        self.create_at = datetime.datetime.today()
+        self.code = self.create_code() if 'code' not in param else param['code']
+        if 'type_id' in param:
+            self.type_id = param['type_id']
+        if 'payer' in param:
+            self.payer = param['payer']
+        if 'cost' in param:
+            self.cost = param['cost']
+        if 'fee_mode_id' in param:
+            self.fee_mode_id = param['fee_mode_id']
+        if 'remark' in param:
+            self.remark = param['remark']
+        if 'paper_receipt' in param:
+            self.paper_receipt = param['paper_receipt']
+
+    def update(self, param):
+        if 'date' in param and param['date'] != '':
+            self.date = datetime.datetime.strptime(param['date'], '%Y-%m-%d')
+        if 'recorder' in param:
+            self.recorder = param['recorder']
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        if 'code' in param:
+            self.code = param['code']
+        if 'type_id' in param:
+            self.type_id = param['type_id']
+        if 'payer' in param:
+            self.payer = param['payer']
+        if 'cost' in param:
+            self.cost = param['cost']
+        if 'fee_mode_id' in param:
+            self.fee_mode_id = param['fee_mode_id']
+        if 'remark' in param:
+            self.remark = param['remark']
+        if 'paper_receipt' in param:
+            self.paper_receipt = param['paper_receipt']
+
+    def create_code(self):
+        if self.school_id is None:
+            raise Exception('Please input school_id first!')
+        school_no = DanceSchool.get_no(self.school_id)
+        if school_no == -1:
+            raise Exception('school id [%s] error.' % self.school_id)
+        search_no = dc_gen_code(school_no, 'QTSR')
+        rec = Income.query.filter(Income.code.like('%' + search_no + '%'))\
+            .order_by(Income.id.desc()).first()
+        number = 1 if rec is None else int(rec.code.rsplit('-', 1)[1]) + 1
+        self.code = search_no + ('%03d' % number)
+        return self.code

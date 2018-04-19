@@ -88,6 +88,7 @@ $(function() {
 
             var entrance = {
                 2: {fn: danceAddTabHouseRent},      //  房租
+                3: {fn: danceAddTabIncome},         //  其他收入
                 4: {fn: danceAddTabExpense}         //  其他支出
             };
 

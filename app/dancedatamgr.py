@@ -6,7 +6,7 @@ from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceRece
     DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass, DanceStudentClass, DcShowRecpt, DcCommFeeMode,\
     DcShow, DcShowFeeCfg, DcShowDetailFee, DcClassType, DanceTeacher, DanceTeacherEdu, DanceTeacherWork, DcCommon,\
     DanceCourse, DanceCourseItem, DanceClassRoom, UpgradeClass, UpgClassItem, DanceCheckIn,\
-    Notepad, Expense, HouseRent
+    Notepad, Expense, HouseRent, Income
 from views import dance_student_query
 import json
 import datetime
@@ -2015,6 +2015,27 @@ def dc_common_expense_type_update():
     return dc_common_update(COMM_TYPE_EXPENSE, request.form)
 
 
+@app.route('/dc_common_income_type_get', methods=['POST'])
+@login_required
+def dc_common_income_type_get():
+    """查询 收入类别 """
+    return dc_common_get(COMM_TYPE_INCOME, request.form)
+
+
+@app.route('/dc_common_income_type_query', methods=['POST'])
+@login_required
+def dc_common_income_type_query():
+    """条件查询 收入类别"""
+    return dc_common_query(COMM_TYPE_INCOME, request.form)
+
+
+@app.route('/dc_common_income_type_update', methods=['POST'])
+@login_required
+def dc_common_income_type_update():
+    """更新/新增 收入类别"""
+    return dc_common_update(COMM_TYPE_INCOME, request.form)
+
+
 def dc_common_get(ty, obj):
     """
     查询 职位
@@ -3801,5 +3822,224 @@ def house_rent_detail_get():
            'fee_mode_id': r.fee_mode_id,
            'fee_mode_text': rec[3],
            'remark': r.remark}
+
+    return jsonify({"row": row, 'errorCode': 0, 'msg': 'ok', 'total': 1})
+
+
+@app.route('/income_get', methods=['POST'])
+@login_required
+def income_get():
+    """
+    查询 其他收入
+    输入参数：
+    {
+        school_id:      分校 id。 'all' 为所有分校。     可选参数，不填表示 all
+        name:           查询条件，payer 或者 remark 中的内容字符串。      可选参数，不填表示不做过滤条件
+        rows:           每页记录数
+        page:           页码，从 1 开始
+    }
+    :return:
+    {
+        errorCode:          错误码
+        msg:                错误信息
+
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   查询成功！
+            600                 您没有管理分校的权限！
+
+        total:              符合条件的记录总数
+        rows:[{
+            id:         记录ID
+            code:       收入单号
+            date:       收入日期
+            recorder:   录入员
+            no:         记录序号
+            school_id:  分校id
+            school_name:    分校名称
+            school_no:      分校编号
+            create_at:      创建时间
+            type_id:        收入类别 id
+            type_text:      收入类别
+            payer:          付款人
+            cost:           收入金额
+            fee_mode_id:    支付方式 id
+            fee_mode_text:  支付方式
+            remark:         备注
+            paper_receipt:  收据号
+        }]
+    }
+    """
+
+    if request.json is not None:
+        obj = request.json
+    else:
+        obj = request.form
+
+    page_size = int(obj['rows'])
+    page_no = int(obj['page'])
+    if page_no <= 0:  # 容错处理
+        page_no = 1
+
+    dcq = Income.query.filter_by(company_id=g.user.company_id)
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in obj or obj['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, obj['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(Income.school_id.in_(school_id_intersection))
+
+    if 'name' in obj and obj['name'] != '':
+        name = obj['name']
+        dcq = dcq.filter((Income.payer.like('%' + name + '%')) | (Income.remark.like('%' + name + '%')))
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.join(DanceSchool, DanceSchool.id == Income.school_id)\
+        .join(DcCommFeeMode, DcCommFeeMode.id == Income.fee_mode_id)\
+        .join(DcCommon, DcCommon.id == Income.type_id) \
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no, DcCommFeeMode.fee_mode, DcCommon.name) \
+        .order_by(Income.school_id, Income.date.desc()) \
+        .limit(page_size).offset(offset).all()
+
+    i = offset + 1
+    rows = []
+    for rec in records:
+        r = rec[0]
+        rows.append({'id': r.id, 'code': r.code, 'payer': r.payer,
+                     'date': datetime.datetime.strftime(r.date, '%Y-%m-%d'), 'recorder': r.recorder,
+                     'school_id': r.school_id, 'no': i, 'cost': r.cost,
+                     'school_name': rec[1], 'school_no': rec[2],
+                     'create_at': datetime.datetime.strftime(r.create_at, '%Y-%m-%d'),
+                     'type_id': r.type_id, 'fee_mode_id': r.fee_mode_id,
+                     'fee_mode_text': rec[3], 'type_text': rec[4],
+                     'remark': r.remark,
+                     'paper_receipt': r.paper_receipt})
+        i += 1
+
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': u'查询成功！'})
+
+
+@app.route('/income_modify', methods=['POST'])
+@login_required
+def income_modify():
+    """
+    新增/更新 其他收入 单。
+    输入参数：
+    {
+        id:             id, > 0 修改记录。 <= 0 新增
+        date:           收入日期
+        payer:          付款人
+        cost:           收入金额
+        school_id:      分校id
+        type_id:        收入类别 id
+        fee_mode_id:    支付方式 id
+        remark:         备注
+        paper_receipt:  收据号
+    }
+    :return:
+    {
+        errorCode :     错误码
+        msg:            错误信息
+            --------------      -------------------------------------------
+            0                   更新成功！ / 新增成功！
+            201                 “其他收入”已经存在[%s,%s,%s]！
+            301                 “其他收入”id[%s]不存在！
+    }
+    """
+    obj = request.json
+    if 'id' not in obj or int(obj['id']) <= 0:
+        """ 新增 """
+        """ 判断是否有重复记录（date, payer, cost, school_id, type_id, fee_mode_id, paper_receipt 都相同） """
+        date = datetime.datetime.strptime(obj['date'], '%Y-%m-%d')
+        has = Income.query.filter_by(company_id=g.user.company_id, school_id=obj['school_id'],
+                                     date=date, payer=obj['payer'], type_id=obj['type_id'],
+                                     fee_mode_id=obj['fee_mode_id'], remark=obj['remark'],
+                                     paper_receipt=obj['paper_receipt'])\
+            .filter(Income.cost <= float(obj['cost'])+DANCE_PRECISION,
+                    Income.cost >= float(obj['cost'])-DANCE_PRECISION).first()
+        if has is not None:
+            return jsonify({'errorCode': 201, 'msg': u'“其他收入”已经存在[%s,%s,%s]！'
+                                                     % (obj['payer'], obj['cost'], obj['date'])})
+
+        new_rec = Income(obj)
+        db.session.add(new_rec)
+        msg = u'新增成功！'
+    else:
+        """ 修改 """
+        rec = Income.query.get(obj['id'])
+        if rec is None:
+            return jsonify({'errorCode': 301, 'msg': u'“其他收入”id[%s]不存在！' % obj['id']})
+
+        rec.update(obj)
+        db.session.add(rec)
+        msg = u'更新成功！'
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': msg})
+
+
+@app.route('/income_detail_get', methods=['POST'])
+@login_required
+def income_detail_get():
+    """
+    查询 其他收入 单 详细信息
+    输入信息
+    {
+        id:     记录ID
+    }
+    :return:
+    {
+        errorCode :     错误码
+        msg:            错误信息
+            --------------      -------------------------------------------
+            0                   ok
+            120                 “其他收入”信息[id=%d]不存在！
+        row: {
+             id:        记录ID
+            code:       收入单号
+            date:       收入日期
+            recorder:   录入员
+            school_id:  分校id
+            school_name:    分校名称
+            school_no:      分校编号
+            create_at:      创建时间
+            type_id:        收入类别 id
+            type_text:      收入类别
+            payer:          付款人
+            cost:           收入金额
+            fee_mode_id:    支付方式 id
+            fee_mode_text:  支付方式
+            remark:         备注
+            paper_receipt:  收据号
+        }
+        total:          记录条数，总是为1
+    }
+    """
+    obj = request.json
+
+    rec = Income.query.filter(Income.id == obj['id']) \
+        .join(DanceSchool, DanceSchool.id == Income.school_id) \
+        .join(DcCommFeeMode, DcCommFeeMode.id == Income.fee_mode_id) \
+        .join(DcCommon, DcCommon.id == Income.type_id) \
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no, DcCommFeeMode.fee_mode, DcCommon.name) \
+        .first()
+    if rec is None:
+        return jsonify({"row": {}, 'errorCode': 120, 'msg': u'“其他收入”信息[id=%d]不存在！' % obj['id']})
+
+    r = rec[0]
+    row = {'id': r.id, 'code': r.code, 'payer': r.payer,
+           'date': datetime.datetime.strftime(r.date, '%Y-%m-%d'), 'recorder': r.recorder,
+           'school_id': r.school_id, 'cost': r.cost,
+           'school_name': rec[1], 'school_no': rec[2],
+           'create_at': datetime.datetime.strftime(r.create_at, '%Y-%m-%d'),
+           'type_id': r.type_id, 'fee_mode_id': r.fee_mode_id,
+           'fee_mode_text': rec[3], 'type_text': rec[4],
+           'remark': r.remark,
+           'paper_receipt': r.paper_receipt}
 
     return jsonify({"row": row, 'errorCode': 0, 'msg': 'ok', 'total': 1})
