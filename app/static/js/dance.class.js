@@ -1,7 +1,12 @@
 
 'use strict';
 
-var danceClassCallFunc = undefined;
+/**
+ * Tab 页面--------    入口函数-------------------------
+ * 班级信息            danceAddTabClassDatagrid
+ * 记事本              danceAddTabNotepad
+
+*/
 
 /**
  * 打开 班级信息 Tab页
@@ -13,7 +18,7 @@ function danceAddTabClassDatagrid(title, tableId, condition) {
     var parentDiv = $('#danceTabs');
     if ($(parentDiv).tabs('exists', title)) {
         $(parentDiv).tabs('select', title);
-        danceClassCallFunc(condition);
+        $('#'+tableId).datagrid('load', condition);
     } else {
         var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
         $(parentDiv).tabs('add', {
@@ -21,247 +26,80 @@ function danceAddTabClassDatagrid(title, tableId, condition) {
             content: content,
             closable: true
         });
-        danceClassCallFunc = danceCreateClassDatagrid(tableId, '/dance_class', condition);
+
+        var module = 'dance_class';
+        var url = '/'+module;
+        var opts = {
+            queryText: '班级名称：',
+            queryPrompt: '班名拼音首字母查找',
+            who: module,
+            danceModuleName:module,
+            danceModuleTitle: title,          // 导入、导出 窗口 title
+            addEditFunc: addEditClass,
+            page: '',     // 上述函数的参数
+            tableId: tableId,
+            url: url,
+            title: title,
+            columns: [[
+                {field: 'ck', checkbox:true },   // checkbox
+                {field: 'cno', title: '班级编号', width: 140, align: 'center'},
+                {field: 'school_name', title: '分校名称', width: 140, align: 'center'},
+                {field: 'class_name', title: '班级名称', width: 160, align: 'left'},
+                {field: 'begin_year', title: '开班年份', width: 60, align: 'center'},
+                {field: 'stuNum', title: '人数', width: 50, align: 'center'},
+                {field: 'class_type', title: '班级类型', width: 60, align: 'center'},
+                {field: 'class_style', title: '班级形式', width: 60, align: 'center'},
+                {field: 'teacher', title: '授课老师姓名', width: 100, align: 'center'},
+                {field: 'cost_mode', title: '收费模式', width: 60, align: 'center'},
+                {field: 'cost', title: '收费标准', width: 60, align: 'center'},
+                {field: 'recorder', title: '记录员', width: 70, align: 'center'}
+            ]]
+        };
+
+        danceCreateCommDatagrid(tableId, url, condition, opts);
     }
 }
 
+
 /**
- * 创建 班级信息 Tab页的 datagrid 表格
- * @param datagridId
- * @param url
- * @param condition
- * @returns {doAjaxGetData}
+ * 查看/新增  班级
+ * @param condition     查询条件：
+ *         school_id     分校id，取值范围： all  or 具体分校id
+ * @param uid           记录id，新增时，可以不传递此参数。
+ * @param options       可选参数
+ *      {
+ *          tableId:    表格id，新增/修改 班级 后，需要更新的表格
+ *      }
  */
-function danceCreateClassDatagrid(datagridId, url, condition) {
-    var _pageSize = 30;
-    var _pageNo = 1;
-    var ccId = 'cc' + datagridId;       // Combo box,班级名称查找框ID
-    var sbId = 'sb' + datagridId;
-    var dg = $('#' + datagridId);
-    var queryCondition = {};
+function addEditClass(condition, uid, options) {
+    var title = '编辑/查看 ' + options.title;
+    uid = uid || 0;     // 第一次进入 详细信息页面 uid 有效，上下翻页时，无法提前获取上下记录的 id(uid)
+    if (uid <= 0) {
+        title = '新增 ' + options.title
+    }
 
-    $.extend(queryCondition, condition);
-    $(dg).datagrid({
-        // title: '班级信息',
-        // iconCls: 'icon-save',
-        fit: true,
-        fitColumns: true,
-        pagination: true,   // True to show a pagination toolbar on datagrid bottom.
-        singleSelect: true, // True to allow selecting only one row.
-        loadMsg: '正在加载数据...',
-        border: false,
-        striped: true,
-        pageNumber: 1,
-        pageSize: _pageSize,     //每页显示条数
-        nowrap: true,   // True to display data in one line. Set to true can improve loading performance.
-        pageList: [20, 30, 40, 50, 100],   //每页显示条数供选项
-        rownumbers: true,   // True to show a row number column.
-        toolbar: [{
-            text:"增加", iconCls:'icon-add',
-            handler:function(){
-                console.log(queryCondition, condition);
-                dcOpenDialogNewClass('dcNewClassWindow', '增加 班级', datagridId, 0, 'icon-save', queryCondition);
-            }
-        }, {
-            text:"编辑/查看", iconCls:'icon-edit',
-            handler:function(){
-                var row = $(dg).datagrid('getSelected');
-                if(row) {
-                    dcOpenDialogNewClass('dcModifyClassWindow', '编辑/查看 班级', datagridId, row.id,  'icon-save');
-                }else {
-                    $.messager.alert('提示', '请选择要查看的数据行！' , 'info');
-                }
-            }
-        }, {
-            text:"删除", iconCls:'icon-remove',
-            handler:function(){
-                var row = $(dg).datagrid('getSelections');
-                if (row.length == 0) {
-                    $.messager.alert('提示', '请选择要删除的数据行！' , 'info');
-                    return false;
-                } else {
-                    var text = '数据删除后不能恢复！是否要删除选中的 ' + row.length + '条 数据？';
-                    $.messager.confirm('确认删除', text , function(r){
-                        if (r){
-                            // 删除数据 //////////////////////////////////////
-                            var ids = [];
-                            for (var i = 0; i < row.length; i++) {
-                                ids.push(row[i].id);
-                            }
-                            //console.log('del:' + ids);
-                            $.ajax({
-                                method: 'POST',
-                                url: '/dance_del_data',
-                                dataType: 'json',
-                                data: {'ids': ids, 'who': 'DanceClass'}
-                            }).done(function(data) {
-                                if (data.errorCode == 0) {
-                                    $(dg).datagrid('loading');
-                                    var gridOpts = $(dg).datagrid('getPager').pagination('options');
-                                    var _total = gridOpts.total - row.length;
-                                    if (_pageNo > 1 && (_pageNo-1)*_pageSize >= _total) { _pageNo--; }
-                                    doAjaxGetData();
-                                } else {
-                                    $.messager.alert('提示', data.msg, 'error');
-                                }
-                            }).fail(function(jqXHR, textStatus, errorThrown) {
-                                dg.datagrid('loaded');
-                                var msg = "请求失败}。错误码：{0}({1})".format(jqXHR.status, errorThrown);
-                                $.messager.alert('提示', msg, 'info');
-                            });
-                            // end of 删除数据 //////////////////////////////////////
-                        }
-                    });
-                }
-            }
-        }, '-',{
-            text: '班级名称：<input id=' + ccId + '>'
-        },{
-            iconCls: 'icon-search', text:"查询",  /// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-            handler: function () {
-                alert('查询');
-            }
-        }, '-', {id: sbId}
-        ],
-        columns: [[
-            {field: 'ck', checkbox:true },   // checkbox
-            // {field: 'no', title: '序号',  width: 15, align: 'center' },  //能自动显示行号，则不再需要自己实现
-            // {field: 'id', title: 'id',  width: 30, align: 'center' },
-            {field: 'cno', title: '班级编号', width: 140, align: 'center'},
-            {field: 'school_name', title: '分校名称', width: 140, align: 'center'},
-            {field: 'class_name', title: '班级名称', width: 160, align: 'left'},
-            {field: 'begin_year', title: '开班年份', width: 60, align: 'center'},
-            {field: 'stuNum', title: '人数', width: 50, align: 'center'},   // stuNum   cur_students
-            {field: 'class_type', title: '班级类型', width: 60, align: 'center'},
-            {field: 'class_style', title: '班级形式', width: 60, align: 'center'},
-            {field: 'teacher', title: '授课老师姓名', width: 100, align: 'center'},
-            {field: 'cost_mode', title: '收费模式', width: 60, align: 'center'},
-            {field: 'cost', title: '收费标准', width: 60, align: 'center'},
-            {field: 'recorder', title: '记录员', width: 70, align: 'center'}
-        ]],
-        onLoadSuccess: function () {
-            $(dg).datagrid("fixRownumber");
-            $(dg).datagrid('loaded');
-        }, onDblClickCell: function (index) {
-            var rows = $(dg).datagrid('getRows');
-            var row = rows[index];
-            dcOpenDialogNewClass('dcModifyClassWindow', '编辑/查看 班级', datagridId, row.id,  'icon-save');
-        }
-    });
-
-    $('#'+ccId).combobox({     // 姓名 搜索框 combo box
-        prompt: '班名拼音首字母查找',
-        valueField: 'id',
-        textField: 'text',
-        width: 140,
-        panelHeight: "auto"
-    });
-
-    $('#'+sbId).switchbutton({
-        onText: '单选', offText: '多选', checked: true,
-        onChange: function (checked) {
-            var gridOpts = $(dg).datagrid('options');
-            gridOpts.singleSelect = checked;
-        }
-    });
-
-    var pager = $(dg).datagrid('getPager');
-    $(pager).pagination({
-        //pageSize: _pageSize,//每页显示的记录条数，默认为10
-        //pageList: [20, 30, 40, 50],//可以设置每页记录条数的列表
-        beforePageText: '第',//页数文本框前显示的汉字
-        afterPageText: '页, 共 {pages} 页',
-        displayMsg: '当前记录 {from} - {to} , 共 {total} 条记录',
-        buttons:[{
-            text:'导入', iconCls: 'icon-page_excel',
-            handler:function(){
-                danceModuleName = 'DanceClass';
-                $(document.body).append('<div id="danceCommWin"></div>');
-                $('#danceCommWin').panel({
-                    href:'/static/html/_import_win.html',
-                    onDestroy: function () {
-                        doAjaxGetData();
-                    }
-                });
-            }
-        },{
-            text:'导出', iconCls:' icon-page_white_excel ',
-            handler:function(){
-                danceModuleName = 'DanceClass';
-                $(document.body).append('<div id="danceCommWin"></div>');
-                $('#danceCommWin').panel({
-                    href:'/static/html/_export_win.html'
-                });
-            }
-        },{
-            text:'打印', iconCls:'icon-printer',
-            handler:function(){
-                alert('print');
-            }
-        }],
-        onSelectPage: function (pageNumber, pageSize) {
-            $(dg).datagrid('loading');  // 打开等待div
-            _pageSize = pageSize;
-            _pageNo = pageNumber;
-            doAjaxGetData();
-        }
-    });
-
-    // 先通过ajax获取数据，然后再传给datagrid
-    var doAjaxGetData = function (cond) {
-        if (cond) {
-            queryCondition = {};
-            $.extend(queryCondition, cond);
-            queryCondition['rows'] = _pageSize;
-            _pageNo = 1;
-            queryCondition['page'] = _pageNo;
-        } else {
-            queryCondition['rows'] = _pageSize;
-            queryCondition['page'] = _pageNo;
-        }
-        $.ajax({
-            method: 'POST',
-            url: url + '_get',
-            async: true,
-            dataType: 'json',
-            data: queryCondition
-        }).done(function(data) {
-            if (data.errorCode == 0) {
-                console.log('doAjaxGetData', data);
-                // 注意此处从数据库传来的data数据有记录总行数的total列和 rows
-                var gridOpts = $(dg).datagrid('options');
-                gridOpts.pageNumber = _pageNo;
-                gridOpts.pageSize = _pageSize;
-                var pagerOpts = $(dg).datagrid('getPager').pagination('options');
-                pagerOpts.pageNumber = _pageNo;
-                pagerOpts.pageSize = _pageSize;
-                dg.datagrid('loadData', data);
-            } else {
-                $.messager.alert({title: '错误', msg: data.msg, icon:'error'});
-            }
-        }).fail(function(jqXHR, textStatus, errorThrown) {
-            var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
-            $.messager.alert('提示', msg, 'info');
-        }).always(function () {
-            dg.datagrid('loaded');
-        });
-    };
-
-    doAjaxGetData();
-    
-    return doAjaxGetData;
+    options.condition = condition;
+    if (uid <=0) {
+        dcOpenDialogNewClass('dcNewClassWindow', title, 0, 'icon-save', options);
+    }else {
+        dcOpenDialogNewClass('dcModifyClassWindow', title, uid,  'icon-save', options);
+    }
 }
 
+
 /**
- * 打开 新增班级 窗口, 编辑/查看 班级
- * @param id
- * @param title
- * @param dgId      本窗口 关闭后，要更新的 表格 id。
+ * 打开 新增 或者 编辑/查看  班级 窗口
+ * @param id        dialog id
+ * @param title     dialog 标题
  * @param uuid      记录id，新增时 可以不填或者填写 <=0 ，修改记录时，必须填写记录的 ID
  * @param icon
- * @param options       扩展参数，目前传入 查询条件
+ * @param options       扩展参数
+ * {
+ *      condition:      查询条件
+ *      tableId:        本窗口 关闭后，要更新的 表格 id。
+ * }
  */
-function dcOpenDialogNewClass(id, title, dgId, uuid, icon, options){
+function dcOpenDialogNewClass(id, title, uuid, icon, options){
 
     var classNo = 'classNo'+id;
     var schoolNo = 'schoolNo'+id;
@@ -280,6 +118,7 @@ function dcOpenDialogNewClass(id, title, dgId, uuid, icon, options){
     var remark = 'classRemark'+id;
     var uid = 'classUUID'+id;
     options = options || {};
+    var dgId = options.tableId;
 
     if (document.getElementById(id)) {
         if(uuid > 0)
@@ -328,8 +167,8 @@ function dcOpenDialogNewClass(id, title, dgId, uuid, icon, options){
                     var data = $(this).combobox('getData');
                     if(data.length){
                         var school_id = null; var idx = 0;
-                        if ('school_id' in options) {
-                            school_id = options['school_id'];
+                        if ('school_id' in options.condition) {
+                            school_id = options.condition['school_id'];
                         }
                         if (school_id != 'all') {
                             for (var m=0; m<data.length; m++) {
@@ -555,6 +394,9 @@ function dcOpenDialogNewClass(id, title, dgId, uuid, icon, options){
             data: JSON.stringify(data)
         }).done(function(data) {
             $.messager.alert('提示', data.msg, 'info');
+            if (dgId && document.getElementById(dgId)) {
+                $('#'+dgId).datagrid('reload');
+            }
         }).fail(function(jqXHR, textStatus, errorThrown) {
             $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
         });
@@ -952,7 +794,7 @@ function danceClassCheckIn(opts) {
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 记事本 begin    notepad notepad notepad
 
 /**
@@ -1220,4 +1062,4 @@ function dcOpenDialogNewNotepad(id, title, uuid, icon, options){
 }
 
 // 记事本 end      notepad notepad notepad
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

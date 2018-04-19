@@ -160,7 +160,7 @@ def dance_del_data():
                 'expense': {'func': dc_del_expense}
                 }
 
-    if who == 'DanceClass':
+    if who == 'dance_class':
         dcq = DanceClass.query
     elif who == 'DanceSchool':
         dcq = DanceSchool.query
@@ -942,6 +942,49 @@ def dance_class_get():
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
 
 
+@app.route('/dance_class_query', methods=['POST'])
+@login_required
+def dance_class_query():
+    """
+    班级信息 界面根据 班级名称 combo box 自动完整功能。
+    输入：
+    {
+        name:           查询条件，必选参数。
+        school_id       分校id， 可选，具体id 或者 all
+        is_ended        是否结束
+    }
+    返回值：
+    {
+        value:          学员姓名
+        text:           学员姓名
+    }
+    """
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if len(school_ids) == 0:
+        return jsonify({'errorCode': 0, 'msg': 'no data'})
+
+    name = request.form['name']
+    if name.encode('UTF-8').isalpha():
+        dcq = DanceClass.query.filter(DanceClass.rem_code.like('%' + name + '%'))
+    else:
+        dcq = DanceClass.query.filter(DanceClass.class_name.like('%' + name + '%'))
+
+    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+        dcq = dcq.filter(DanceClass.school_id.in_(school_ids))
+    else:
+        dcq = dcq.filter(DanceClass.school_id.in_(request.form['school_id']))
+
+    is_ended = request.form['is_ended']
+    dcq = dcq.filter_by(is_ended=is_ended)
+
+    ret = []
+    records = dcq.order_by(DanceClass.id.desc()).all()
+    for rec in records:
+        ret.append({'value': rec.class_name, 'text': rec.class_name})
+
+    return jsonify(ret)
+
+
 @app.route('/dance_class_detail_get', methods=['POST'])
 @login_required
 def dance_class_detail_get():
@@ -1002,7 +1045,7 @@ def dance_class_modify():
         school_id:
     }
     :return:
-        {errorCode :  0  or 其他。 0 表示成功
+        {errorCode :  0  or 其他。 0 表示成功      --- 新增成功！ or  更新成功！
             301     班级记录id[%s]不存在！
             302     u'班级名称重复！'
         msg : 'ok' or 其他错误
@@ -1017,6 +1060,7 @@ def dance_class_modify():
 
         cls = DanceClass(obj)
         db.session.add(cls)
+        msg = u'新增成功！'
     else:
         # 修改记录
         cls = DanceClass.query.get(obj['id'])
@@ -1031,9 +1075,10 @@ def dance_class_modify():
 
         cls.update(obj)
         db.session.add(cls)
+        msg = u'更新成功！'
 
     db.session.commit()
-    return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
+    return jsonify({'errorCode': 0, 'msg': msg})
 
 
 @app.route('/dance_course_modify', methods=['POST'])
