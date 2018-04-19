@@ -879,7 +879,21 @@ def dance_student_modify():
 def dance_class_get():
     """
     查询班级列表
+    输入参数：
+    {
+        page:           查询的页数
+        rows:           每页记录数
+        school_id:      分校id 列表，例如：[1,2,3]， 'all' 为所有分校。
+        is_ended:       班级是否结束
+        name:           查询条件，根据班名称查询。可选参数。
+    }
     返回值:
+    {
+        total:          符合条件的记录总数
+        rows:
+        errorCode:      错误码
+        msg:            错误信息
+    }
     """
     page_size = int(request.form['rows'])
     page_no = int(request.form['page'])
@@ -904,6 +918,9 @@ def dance_class_get():
     if 'is_ended' in request.form:
         is_ended = request.form['is_ended']
         dcq = dcq.filter(DanceClass.is_ended == is_ended)
+
+    if 'name' in request.form and request.form['name'] != '':
+        dcq = dcq.filter(DanceClass.class_name.like('%' + request.form['name'] + '%'))
 
     total = dcq.count()
     offset = (page_no - 1) * page_size
