@@ -77,6 +77,9 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
             textField: 'text',
             width: 140,
             //panelHeight: "auto",
+            onShowPanel: function () {
+                autoComplete(dance_condition,'');
+            },
             onChange:autoComplete
         });
     }else {     // 普通 搜索 文本框，不需要下拉列表等功能
@@ -87,7 +90,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
         });
     }
 
-    autoComplete(dance_condition,'');
+    //autoComplete(dance_condition,'');
     function autoComplete (newValue) {  // ,oldValue
         //console.log('newValue=' + newValue + ' oldValue=' + oldValue);
         dance_condition = $.trim(newValue);
@@ -280,10 +283,13 @@ function danceOpenCommonDg(datagridId, options) {
         textField: 'text',
         width: 140,
         //panelHeight: "auto",
+        onShowPanel: function () {
+            autoComplete(dance_condition,'');
+        },
         onChange:autoComplete
     });
 
-    autoComplete(dance_condition,'');
+    // autoComplete(dance_condition,'');
     function autoComplete (newValue) { // ,oldValue
         //console.log('newValue=' + newValue + ' oldValue=' + oldValue);
         dance_condition = $.trim(newValue);
