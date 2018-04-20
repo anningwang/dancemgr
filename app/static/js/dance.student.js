@@ -5,6 +5,11 @@
  *      收费单（学费）
  */
 
+/**
+ * ---Tab 页面---      ---入口函数---
+ * 学员列表            danceAddTabStudentDatagrid
+ */
+
 'use strict';
 
 var danceModuleName = 'danceStudent';       // 所在模块
@@ -421,7 +426,7 @@ function danceAddStudentDetailInfo(opts) {
     }
 
     /**
-     * 收费单（学费）的 datagrid "班级学费" 单元格点击事件
+     * 学员详细信息的 datagrid "报班信息" 单元格点击事件
      * @param index
      * @param field
      */
@@ -436,13 +441,17 @@ function danceAddStudentDetailInfo(opts) {
 
             var classEd =  $(dg).datagrid('getEditor', {index:index,field:'class_id'});
             if (classEd){
-                $(classEd.target).combobox('loadData' , classlist);
                 $(classEd.target).combobox({
                     //data: classlist,
                     onClick: onClickClassName
                 });
                 var row = $(dg).datagrid("getSelected");
-                $(classEd.target).combobox('setValue', row['class_id']);
+                // 实时查询 学员的可报班信息
+                getStudentClassList(uid, condition.school_id, {callback: function (data) {
+                    classlist = data['classlist'];
+                    $(classEd.target).combobox('loadData' , classlist);
+                    $(classEd.target).combobox('setValue', row['class_id']);
+                }})
             }
 
             var ed = $(dg).datagrid('getEditor', {index:index,field:field});

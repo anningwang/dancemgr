@@ -1129,3 +1129,23 @@ function getClassList(school_id, options) {
     options.data =  {'school_id': school_id};
     ajaxRequest('/dance_receipt_study_details_extras', options);
 }
+
+
+/**
+ * 查询 学员 【id】 可以报 班级列表 及 分校列表
+ * @param student_id:       学员id
+ * @param school_id:        分校id， 'all', 查询出所有分校信息
+ * @param options
+ * {
+ *      callback:       回调函数
+ *          参数 data
+ *          {
+ *              classlist:      学员可以报班级列表
+ *              schoollist:     分校列表
+ *          }
+ */
+function getStudentClassList(student_id, school_id, options) {
+    options = options || {};
+    options.data =  {'student_id': student_id, 'school_id': school_id};
+    ajaxRequest('/dance_student_details_extras', options);
+}
