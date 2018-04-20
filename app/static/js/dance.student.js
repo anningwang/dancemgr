@@ -2,12 +2,8 @@
  * dancestudent.js  界面实现 --by Anningwang
  * 功能：
  *      学员管理
- *      收费单（学费）
- */
-
-/**
- * ---Tab 页面---      ---入口函数---
- * 学员列表            danceAddTabStudentDatagrid
+ *          学员列表               danceAddTabStudentDatagrid
+ *          收费单（学费）         danceAddTabFeeStudyDatagrid
  */
 
 'use strict';
@@ -926,9 +922,15 @@ function danceAddReceiptStudyDetailInfo(condition, uid, options) {
                     var dg = $('#'+dgTm);
                     var editors = dg.datagrid('getEditors', index);
                     var edClass = editors[0].target;   // 注意序号 ***  班级名称
-                    $(edClass).combogrid({
-                        data: filterClassBySchool(classlist)
-                    }).combogrid('setValue', row.class_id);
+
+                    // 点击班级名称单元格，立即刷新 班级列表  2018-04-20 WXG
+                    getClassList(condition.school_id, {callback: function (data) {
+                        classlist = data['classlist'];
+                        $(edClass).combogrid({
+                            data: filterClassBySchool(classlist)
+                        }).combogrid('setValue', row.class_id);
+                    }});
+
 
                     var edTmName = editors[1].target;   // 注意序号 *** 教材名称
                     $(edTmName).combogrid({
@@ -1296,9 +1298,14 @@ function danceAddReceiptStudyDetailInfo(condition, uid, options) {
             $(dg).datagrid('selectRow', index).datagrid('beginEdit', index);
             var row = $(dg).datagrid("getSelected");
             var edc = $(dg).datagrid('getEditor', {index:index,field:'class_name'});
-            $(edc.target).combogrid({       // 班级名称
-                data: filterClassBySchool(classlist)
-            }).combogrid('setValue', row.class_id);
+
+            // 点击班级名称单元格，立即刷新 班级列表  2018-04-20 WXG
+            getClassList(condition.school_id, {callback: function (data) {
+                classlist = data['classlist'];
+                $(edc.target).combogrid({       // 班级名称
+                    data: filterClassBySchool(classlist)
+                }).combogrid('setValue', row.class_id);
+            }});
 
             var edf = $(dg).datagrid('getEditor', {index:index,field:'fee_item'});
             $(edf.target).combobox({       // 收费项目
@@ -1437,9 +1444,14 @@ function danceAddReceiptStudyDetailInfo(condition, uid, options) {
             var classEd =  $(dg).datagrid('getEditor', {index:index,field:'class_name'});
             if (classEd){
                 $(classEd.target).combobox({
-                    data: filterClassBySchool(classlist),
                     onClick: dgStudyFeeOnClickClass
-                }).combobox('setValue', row['class_no']);
+                });
+                // 点击班级名称单元格，立即刷新 班级列表  2018-04-20 WXG
+                getClassList(condition.school_id, {callback: function (data) {
+                    classlist = data['classlist'];
+                    $(classEd.target).combobox('loadData', filterClassBySchool(classlist))
+                        .combobox('setValue', row['class_no']);
+                }});
             }
 
             // 学期长度 editor
