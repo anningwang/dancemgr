@@ -1358,7 +1358,7 @@ function danceAddReceiptStudyDetailInfo(condition, uid, options) {
         }
         var change = dcFindChange(_oldMenuIds[mmId], fa);
         for(var m = 0; m < change[0].length; m++){ // 删除
-            var itemEl = $('#'+change[0][m])[0];  // the menu item element
+            var itemEl = $('#'+change[0][m]+'_'+uid)[0];  // the menu item element
             $(mmId).menu('removeItem',itemEl);
         }
         for(i = 0; i < change[1].length; i++){ // 增加
@@ -1368,7 +1368,7 @@ function danceAddReceiptStudyDetailInfo(condition, uid, options) {
                         text: data[j].class_name,
                         class_name:data[j].class_name,
                         iconCls: 'icon-ok',
-                        id: data[j].class_no,
+                        id: data[j].class_no + '_'+uid,     // bug fix: 菜单id重复，当 收费单（学费）详细信息 和 收费单（学费）详细信息[新增] 同时打开，并同时存在相同学员信息时，导致删错 报班信息。
                         class_id: data[j].class_id,
                         class_no: data[j].class_no,
                         cost_mode: data[j].cost_mode,
