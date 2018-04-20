@@ -1871,7 +1871,7 @@ function danceAddReceiptStudyDetailInfo(condition, uid, options) {
         if (title.indexOf('[新增]') > 0 ){
             newReceipt();
         } else {
-            danceAddReceiptStudyDetailInfo('/static/html/_receipt_study.html', '/dance_receipt_study', condition);
+            danceAddReceiptStudyDetailInfo(condition, 0, options);
         }
     }
 
