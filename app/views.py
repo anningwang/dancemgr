@@ -156,31 +156,33 @@ def dance_del_data():
                 'dc_common_job_title': {'func': dc_del_common},
                 'dance_class_room': {'func': dc_del_class_room},
                 'dance_upgrade_class': {'func': dc_del_upgrade_class},
-                'dance_student': {'func': dc_del_student},
+                'dance_student': {'func': dc_del_student},                              # 学员信息
+
                 'notepad': {'func': dc_del_notepad},                                    # 记事本
+                'dance_class': {'func': dc_del_class},                                  # 班级信息
+
                 'house_rent': {'func': dc_del_house_rent},                              # 房租
                 'expense': {'func': dc_del_expense},                                    # 其他支出
                 'income': {'func': dc_del_income},                                      # 其他收入
 
+                'DanceUser': {'func': dc_del_user},                                     # 用户管理
                 'dance_teaching_material': {'func': dc_del_teaching_material}           # 教材信息
                 }
 
-    if who == 'dance_class':
-        dcq = DanceClass.query
-    elif who == 'DanceSchool':
-        dcq = DanceSchool.query
-    elif who == 'DanceUser':
-        dcq = DanceUser.query
-    elif who in entrance:
+    entrance_no_check = {
+        'DanceSchool': {'table': DanceSchool}
+    }
+
+    if who in entrance:
         return entrance[who]['func'](ids)
+    elif who in entrance_no_check:
+        dcq = entrance_no_check[who]['table'].query
     else:
         return jsonify({'errorCode': 1, "msg": "Module[%s] not found!" % who})     # error
 
     for i in ids:
         rec = dcq.get(i)
         if rec is not None:
-            if who == 'DanceUser' and rec.is_creator == 1:
-                return jsonify({'errorCode': 500, 'msg': u'账号[%s]为初始管理员，不能删除！' % rec.name})
             db.session.delete(rec)
 
     db.session.commit()
@@ -403,6 +405,64 @@ def dc_del_course(ids):
         DanceCourseItem.query.filter_by(course_id=i).delete()
 
     DanceCourse.query.filter(DanceCourse.id.in_(ids)).delete(synchronize_session=False)
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
+
+
+def dc_del_user(ids):
+    """
+    删除 用户
+        不能删除的用户有：
+            1. 初始管理员。
+    :param ids:     记录 id list
+    :return: {
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   删除成功！
+            500                 账号[%s]为初始管理员，不能删除！
+    }
+    """
+    for i in ids:
+        r = DanceUser.query.get(i)
+        if r is None:
+            continue
+
+        if r.is_creator == 1:
+            return jsonify({'errorCode': 500, 'msg': u'账号[%s]为初始管理员，不能删除！' % r.name})
+
+    DanceUser.query.filter(DanceUser.id.in_(ids)).delete(synchronize_session=False)
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
+
+
+def dc_del_class(ids):
+    """
+    删除 班级
+    :param ids:     记录 id list
+    :return: {
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   删除成功！
+            100                 班级[%s]已有学员报名，不能删除！
+    }
+    """
+    for i in ids:
+        r = DanceClass.query.get(i)
+        if r is None:
+            continue
+        ''' 检查是否满足删除条件。 当班级有学员报名后，不能删除该班级 '''
+        is_use = DanceClass.query.join(DanceStudentClass, DanceStudentClass.class_id == DanceClass.id)\
+            .filter(DanceStudentClass.company_id == g.user.company_id, DanceClass.id == i).first()
+        if is_use is not None:
+            return jsonify({'errorCode': 100, 'msg': u'班级[%s]已有学员报名，不能删除！' % r.class_name})
+
+        DanceClass.query.filter(DanceClass.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 
