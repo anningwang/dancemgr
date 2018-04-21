@@ -1,3 +1,12 @@
+/**
+ * dance.datamgr.js  数据管理 界面实现 --by Anningwang
+ * 功能：
+ *      数据管理
+ *          分校信息               danceAddTabSchool
+ *          用户管理               danceAddTabUsers
+ *          分校公共信息
+ *              教材信息               danceAddTabTeachingMaterial
+ */
 
 'use strict';
 
@@ -188,7 +197,7 @@ function danceAddTabTeachingMaterial(title, tableId) {
         var module = 'dance_teaching_material';
         var optsTeachingMaterial = {
             'defaultSelField' : 'material_name',
-            'fieldValidate' : {'material_name': checkNotEmpty},
+            'fieldValidate' : {'material_name': checkNotEmpty, 'tm_type_id': checkNotEmpty},
             'queryText': '教材名称：',
             'queryPrompt': '名称拼音首字母查找',
             'who': module,     // 删除数据时，表明身份
@@ -199,11 +208,34 @@ function danceAddTabTeachingMaterial(title, tableId) {
                 {field: 'material_no', title: '教材编号', width: 100, align: 'center'},
                 {field: 'material_name', title: '教材名称*', width: 180, halign: 'center', align: 'left', editor: 'textbox'},
                 {field: 'unit', title: '单位', width: 60, align: 'center', editor:'textbox'},
-                {field: 'tm_type', title: '类别', width: 60, align: 'center', editor:'textbox'},
+                {field: 'tm_type_id', title: '班级类型*', width: 120, align: 'center',
+                    formatter:function(value,row){
+                        return row['tm_type_name'];
+                    },
+                    editor: {
+                        type: 'combobox', options:{
+                            url: '/api/dance_class_type_get',
+                            valueField: 'ct_id', textField:'ct_name', editable:false,panelHeight:'auto'
+                        }
+                    }
+                },
                 {field: 'price_buy', title: '进价', width: 70, align: 'center', editor:'textbox'},
-                {field: 'price_sell', title: '售价', width: 120, align: 'center', editor:'textbox'},
+                {field: 'price_sell', title: '售价', width: 70, align: 'center', editor:'textbox'},
                 {field: 'summary', title: '内容简介', width: 300, align: 'center', editor:'textbox'},
-                {field: 'is_use', title: '是否启用', width: 60, align: 'center', editor:'textbox'},
+                {field: 'is_use', title: '是否启用', width: 60, align: 'center',
+                    editor: {
+                        type: 'combobox', options:{
+                            valueField: 'type', textField:'type_text', editable:false,panelHeight:'auto',
+                            data: [{
+                                type: '是',
+                                type_text: '是'
+                            },{
+                                type: '否',
+                                type_text: '否'
+                            }]
+                        }
+                    }
+                },
                 {field: 'remark', title: '备注', width: 300, align: 'center', editor:'textbox'},
                 {field: 'recorder', title: '录入员', width: 90, align: 'center'}
             ]]

@@ -8,7 +8,7 @@ from models import ROLE_ADMIN, DanceStudent, DanceClass, DanceSchool, DanceUser,
     DanceStudentClass, DanceCompany, DanceUserSchool, DcShowDetailFee, DcCommFeeMode, DcShowRecpt, DcFeeItem,\
     DanceOtherFee, DanceReceipt, DanceClassReceipt, DanceTeaching, DcClassType, DanceTeacher, DanceTeacherEdu,\
     DanceTeacherWork, DcCommon, DanceCourse, DanceCourseItem, DanceClassRoom, UpgradeClass, UpgClassItem, \
-    Notepad, Expense, HouseRent, Income
+    Notepad, Expense, HouseRent, Income, DcTeachingMaterial
 from datetime import datetime
 from translate import microsoft_translate
 from config import LANGUAGES, DATABASE_QUERY_TIMEOUT
@@ -144,6 +144,8 @@ def dance_del_data():
     who = request.form['who']
     ids = request.form.getlist('ids[]')
     print 'who=', who, 'ids=', ids
+
+    '''  module     ----------      {func: user_function}   '''
     entrance = {'dance_course_list': {'func': dc_del_course},
                 'DanceReceipt': {'func': dc_del_receipt},
                 'dance_fee_item': {'func': dc_del_fee_item},
@@ -155,10 +157,12 @@ def dance_del_data():
                 'dance_class_room': {'func': dc_del_class_room},
                 'dance_upgrade_class': {'func': dc_del_upgrade_class},
                 'dance_student': {'func': dc_del_student},
-                'notepad': {'func': dc_del_notepad},
-                'house_rent': {'func': dc_del_house_rent},
-                'expense': {'func': dc_del_expense},
-                'income': {'func': dc_del_income}
+                'notepad': {'func': dc_del_notepad},                                    # 记事本
+                'house_rent': {'func': dc_del_house_rent},                              # 房租
+                'expense': {'func': dc_del_expense},                                    # 其他支出
+                'income': {'func': dc_del_income},                                      # 其他收入
+
+                'dance_teaching_material': {'func': dc_del_teaching_material}           # 教材信息
                 }
 
     if who == 'dance_class':
@@ -482,6 +486,35 @@ def dc_del_house_rent(ids):
 def dc_del_income(ids):
     # 删除 其他收入单
     Income.query.filter(Income.id.in_(ids)).delete(synchronize_session=False)
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
+
+
+def dc_del_teaching_material(ids):
+    """
+    删除 教材信息： 若 教材信息 被占用（ 收费单——学费 中使用），则不能删除。
+    :param ids:     记录 id list
+    :return: {
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   删除成功！
+            821                 “教材[%s]”已使用，不能删除！
+    }
+    """
+    for i in ids:
+        r = DcTeachingMaterial.query.get(i)
+        if r is None:
+            continue
+        """检查是否占用"""
+        dup = DanceTeaching.query.join(DanceReceipt, DanceReceipt.id == DanceTeaching.receipt_id)\
+            .filter(DanceReceipt.company_id == g.user.company_id, DanceTeaching.material_id == i).first()
+        if dup is not None:
+            return jsonify({'errorCode': 821, 'msg': u'“教材[%s]”已使用，不能删除！' % r.material_name})
+
+        DcTeachingMaterial.query.filter(DcTeachingMaterial.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 

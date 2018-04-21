@@ -1185,12 +1185,14 @@ class DcTeachingMaterial(db.Model):
     is_use = db.Column(db.String(2), nullable=False)   # 是否启用
     remark = db.Column(db.String(40))
     recorder = db.Column(db.String(20, collation='NOCASE'))
-    tm_type = db.Column(db.String(10, collation='NOCASE'))  # 教材类别
+    tm_type_id = db.Column(db.Integer)      # 教材类别 == 班级类别
 
     def __init__(self, param):
         self.company_id = g.user.company_id if 'company_id' not in param else param['company_id']
         if 'material_no' in param:
             self.material_no = param['material_no']
+        else:
+            self.material_no = self.create_no()
         if 'material_name' in param:
             self.material_name = param['material_name']
         if 'rem_code' in param:
@@ -1205,11 +1207,13 @@ class DcTeachingMaterial(db.Model):
             self.summary = param['summary']
         if 'is_use' in param:
             self.is_use = param['is_use']
+        else:
+            self.is_use = u'是'
         if 'remark' in param:
             self.remark = param['remark']
         self.recorder = g.user.name if 'recorder' not in param else param['recorder']
-        if 'tm_type' in param:
-            self.tm_type = param['tm_type']
+        if 'tm_type_id' in param:
+            self.tm_type_id = param['tm_type_id']
 
     def update(self, param):
         """ 更新教材信息， 其中 公司id, 教材编号 不可更改 """
@@ -1229,8 +1233,8 @@ class DcTeachingMaterial(db.Model):
             self.is_use = param['is_use']
         if 'remark' in param:
             self.remark = param['remark']
-        if 'tm_type' in param:
-            self.tm_type = param['tm_type']
+        if 'tm_type_id' in param:
+            self.tm_type_id = param['tm_type_id']
 
     @staticmethod
     def get_records():
@@ -1242,6 +1246,14 @@ class DcTeachingMaterial(db.Model):
         return val
         """
         return dict((k.material_no, k) for k in records)
+
+    def create_no(self):
+        search_sno = 'JC-'
+        r = DcTeachingMaterial.query.filter(DcTeachingMaterial.material_no.like('%' + search_sno + '%'))\
+            .order_by(DcTeachingMaterial.material_no.desc()).first()
+        number = 1 if r is None else int(r.material_no.rsplit('-', 1)[1]) + 1
+        self.material_no = search_sno + ('%04d' % number)
+        return self.material_no
 
 
 class DcCommFeeMode(db.Model):
@@ -1552,6 +1564,22 @@ class DcClassType(db.Model):
         data = {}
         for rec in records:
             data[rec.name] = rec.id
+
+        return data
+
+    @staticmethod
+    def id_name():
+        """
+        查询记录，返回id 和 name 的键值对
+        :return:
+        {
+            id: name:    键值对
+        }
+        """
+        records = DcClassType.query.filter_by(company_id=g.user.company_id).all()
+        data = {}
+        for rec in records:
+            data[rec.id] = rec.name
 
         return data
 

@@ -795,6 +795,8 @@ def dance_teaching_material_get():
 
     total = dcq.count()
 
+    ct_dict = DcClassType.id_name()     # 班级类型 id - name key/value pair
+
     offset = (page_no - 1) * page_size
     records = dcq.order_by(DcTeachingMaterial.id).limit(page_size).offset(offset)
     i = offset + 1
@@ -803,10 +805,79 @@ def dance_teaching_material_get():
         rows.append({'no': i, 'id': rec.id, "material_no": rec.material_no, 'material_name': rec.material_name,
                      'unit': rec.unit, 'price_buy': rec.price_buy, 'price_sell': rec.price_sell,
                      'summary': rec.summary, 'is_use': rec.is_use, 'remark': rec.remark,
-                     'recorder': rec.recorder, 'tm_type': rec.tm_type
+                     'recorder': rec.recorder, 'tm_type_id': rec.tm_type_id,
+                     'tm_type_name': ct_dict.get(rec.tm_type_id, '-')
                      })
         i += 1
     return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': 'ok'})
+
+
+@app.route('/dance_teaching_material_update', methods=['POST'])
+@login_required
+def dance_teaching_material_update():
+    """
+    更新 教材信息。 包括新增 和 修改
+    输入参数
+        data:[{         输入参数
+                id:             id, 大于0 - 修改， 0 - 新增
+                row:{           记录
+                    material_name:  教材名称
+                    unit:           单位
+                    price_buy:      进价
+                    price_sell:     售价
+                    summary:        内容简介
+                    is_use:         是否启用
+                    remark:         备注
+                    tm_type_id:     班级类型 id
+                    }
+            }]
+    :return:
+        errorCode:      错误码
+        msg:            错误信息
+            errorCode       msg
+            ------------    -----------------------------------------------------
+            0               更新成功！
+            600             Parameter error. [data] required.
+            801             名称为[%s]的“教材名称”已经存在！
+            802             教材名称不能超过20个字符!
+            803             请输入“班级类型”！
+            804             请输入“教材名称”！
+    """
+    if 'data' not in request.form:
+        return jsonify({'errorCode': 600, 'msg': 'Parameter error. [data] required.'})
+    json_str = request.form['data']
+    obj = json.loads(json_str)
+    for rec in obj:
+        row = rec['row']
+        if 'material_name' in row:
+            material_name = row['material_name']
+            if len(material_name) > 20:
+                return jsonify({'errorCode': 802, 'msg': u'教材名称不能超过20个字符!'})
+
+        if 'id' not in rec or int(rec['id']) <= 0:
+            '''新增记录'''
+            if 'material_name' not in row:
+                return jsonify({'errorCode': 804, 'msg': u'请输入“教材名称”！'})
+            if 'tm_type_id' not in row:
+                return jsonify({'errorCode': 803, 'msg': u'请输入“班级类型”！'})
+
+            material_name = row['material_name']
+            # 名称不能重复，查询是否有重复记录
+            dup = DcTeachingMaterial.query.filter_by(company_id=g.user.company_id)\
+                .filter_by(material_name=material_name).first()
+            if dup is not None:
+                return jsonify({'errorCode': 801, 'msg': u'名称为[%s]的“教材名称”已经存在！' % material_name})
+            nr = DcTeachingMaterial(row)
+            db.session.add(nr)
+        else:
+            '''修改记录'''
+            nr = DcTeachingMaterial.query.get(rec['id'])
+            if nr is not None:
+                nr.update(row)
+                db.session.add(nr)
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': u'更新成功！'})
 
 
 @app.route('/dance_teaching_material_query', methods=['POST'])
