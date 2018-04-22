@@ -5,7 +5,17 @@
  *          分校信息               danceAddTabSchool
  *          用户管理               danceAddTabUsers
  *          分校公共信息
- *              教材信息               danceAddTabTeachingMaterial
+ *              收费项目                danceAddTabFeeItem
+ *              教材信息                danceAddTabTeachingMaterial
+ *              收费方式                danceAddTabFeeMode
+ *              班级类型                danceAddTabClassType
+ *              文化程度                danceAddTabDegree
+ *              职位信息                danceAddTabJobTitle
+ *              意向程度                danceAddTabIntention
+ *              信息来源                danceAddTabInfoSrc
+ *              咨询方式                danceAddTabConsultMode
+ *              支出类别                danceAddTabExpenseType
+ *              收入类别                danceAddTabIncomeType
  */
 
 'use strict';
@@ -661,8 +671,6 @@ function danceAddTabTestButtons(title, tableId) {
 }
 
 
-
-
 /**
  * 打开 [ 支出类别 ] tab标签
  * @param title     Tab的标题
@@ -693,6 +701,48 @@ function danceAddTabExpenseType(title, tableId) {
             columns: [[
                 {field: 'ck', checkbox:true },   // checkbox
                 {field: 'name', title: '支出类别', width: 140, halign:'center', align: 'left', editor: 'textbox'},
+                {field: 'create_at', title: '创建时间', width: 100, align: 'center'},
+                {field: 'last_upd_at', title: '最后更新日期', width: 100, align: 'center'},
+                {field: 'last_user', title: '最后更新人', width: 100, align: 'center'},
+                {field: 'recorder', title: '录入员', width: 100, align: 'center'}
+            ]]
+        };
+
+        danceCreateEditedDatagrid(tableId, url, options);
+    }
+}
+
+
+/**
+ * 打开 [ 收入类别 ] tab标签
+ * @param title     Tab的标题
+ * @param tableId   Datagrid id,创建在 table 上
+ */
+function danceAddTabIncomeType(title, tableId) {
+    var parentDiv = $('#danceTabs');
+    if ($(parentDiv).tabs('exists', title)) {
+        $(parentDiv).tabs('select', title);
+    } else {
+        var content = '<div style="min-width:1024px;width:100%;height:100%"><table id=' + tableId + '></table></div>';
+        $(parentDiv).tabs('add', {
+            title: title,
+            content: content,
+            closable: true
+        });
+        var module = 'dc_common_income_type';
+        var url = '/' + module;
+        var options = {
+            defaultSelField: 'name',
+            fieldValidate: {name: checkNotEmpty},
+            queryText: '收入类别：',
+            queryPrompt: '收入类别查找',
+            who: module,     // 删除数据时，表明身份
+            danceModuleName: module,   // 传递给 导入、导出 模块的身份标识
+            danceModuleTitle: title,          // 导入、导出 窗口 title
+            url: url,
+            columns: [[
+                {field: 'ck', checkbox:true },   // checkbox
+                {field: 'name', title: '收入类别', width: 140, halign:'center', align: 'left', editor: 'textbox'},
                 {field: 'create_at', title: '创建时间', width: 100, align: 'center'},
                 {field: 'last_upd_at', title: '最后更新日期', width: 100, align: 'center'},
                 {field: 'last_user', title: '最后更新人', width: 100, align: 'center'},

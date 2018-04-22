@@ -146,27 +146,30 @@ def dance_del_data():
     print 'who=', who, 'ids=', ids
 
     '''  module     ----------      {func: user_function}   '''
-    entrance = {'dance_course_list': {'func': dc_del_course},
-                'DanceReceipt': {'func': dc_del_receipt},
-                'dance_fee_item': {'func': dc_del_fee_item},
-                'dc_comm_fee_mode': {'func': dc_del_fee_mode},
-                'dc_common_expense_type': {'func': dc_del_common},
-                'dc_class_type': {'func': dc_del_class_type},
-                'dance_teacher': {'func': dc_del_teacher},
-                'dc_common_job_title': {'func': dc_del_common},
-                'dance_class_room': {'func': dc_del_class_room},
-                'dance_upgrade_class': {'func': dc_del_upgrade_class},
-                'dance_student': {'func': dc_del_student},                              # 学员信息
+    entrance = {
+                'dance_student': {'func': dc_del_student},  # 学员信息
+                'dance_upgrade_class': {'func': dc_del_upgrade_class},  # 集体续班
+                'DanceReceipt': {'func': dc_del_receipt},  # 收费单——学费
 
-                'notepad': {'func': dc_del_notepad},                                    # 记事本
-                'dance_class': {'func': dc_del_class},                                  # 班级信息
+                'dance_teacher': {'func': dc_del_teacher},  # 员工与老师
 
-                'house_rent': {'func': dc_del_house_rent},                              # 房租
-                'expense': {'func': dc_del_expense},                                    # 其他支出
-                'income': {'func': dc_del_income},                                      # 其他收入
+                'dance_class': {'func': dc_del_class},  # 班级信息
+                'dance_course_list': {'func': dc_del_course},  # 课程表
+                'notepad': {'func': dc_del_notepad},  # 记事本
+                'dance_class_room': {'func': dc_del_class_room},  # 教室
 
-                'DanceUser': {'func': dc_del_user},                                     # 用户管理
-                'dance_teaching_material': {'func': dc_del_teaching_material}           # 教材信息
+                'house_rent': {'func': dc_del_house_rent},  # 房租
+                'expense': {'func': dc_del_expense},  # 其他支出
+                'income': {'func': dc_del_income},  # 其他收入
+
+                'DanceUser': {'func': dc_del_user},  # 用户管理
+                'dance_fee_item': {'func': dc_del_fee_item},  # 收费项目
+                'dc_comm_fee_mode': {'func': dc_del_fee_mode},  # 收费方式
+                'dc_common_expense_type': {'func': dc_del_common},  # 支出类别
+                'dc_common_income_type': {'func': dc_del_common},  # 收入类别
+                'dc_class_type': {'func': dc_del_class_type},  # 班级类型
+                'dc_common_job_title': {'func': dc_del_common},  # 职位信息
+                'dance_teaching_material': {'func': dc_del_teaching_material}  # 教材信息
                 }
 
     entrance_no_check = {
@@ -252,7 +255,7 @@ def dc_del_fee_item(ids):
 
 def dc_del_fee_mode(ids):
     """
-    删除 收费模式（支付宝、微信、刷卡、现金）， 若收费模式已经被引用，则不能删除。
+    删除 收费方式（支付宝、微信、刷卡、现金）， 若收费模式已经被引用，则不能删除。
     :param ids:     记录 id list
     :return:
         errorCode       错误码
@@ -368,6 +371,10 @@ def dc_del_common(ids):
                     return jsonify({'errorCode': 811, 'msg': u'[%s]已经被使用，不能删除！' % r.name})
         elif r.type == COMM_TYPE_EXPENSE:
             is_use = Expense.query.filter_by(company_id=g.user.company_id, type_id=i).first()
+            if is_use is not None:
+                return jsonify({'errorCode': 811, 'msg': u'[%s]已经被使用，不能删除！' % r.name})
+        elif r.type == COMM_TYPE_INCOME:
+            is_use = Income.query.filter_by(company_id=g.user.company_id, type_id=i).first()
             if is_use is not None:
                 return jsonify({'errorCode': 811, 'msg': u'[%s]已经被使用，不能删除！' % r.name})
         else:

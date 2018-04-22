@@ -122,7 +122,8 @@ $(function() {
                 3:  {fn: danceAddTabSchool},                // 分校信息
                 4:  {fn: danceAddTabUsers},                 // 用户管理
                 511:{fn: danceAddTabTestButtons},           // 表格行内菜单
-                512:{fn: danceAddTabExpenseType}            // 支出类别
+                512:{fn: danceAddTabExpenseType},           // 支出类别
+                513:{fn: danceAddTabIncomeType}            // 收入类别
             };
 
             var openChild = {   // 仅仅打开子节点
