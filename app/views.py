@@ -703,7 +703,7 @@ def dance_student_get():
     rows = []
     for rec in records:
         r = rec[0]
-        rows.append({"id": r.id, "sno": r.sno, "school_no": rec[2],
+        rows.append({'id': r.id, 'sno': r.sno, 'school_no': rec[2],
                      "school_name": rec[1], "consult_no": r.consult_no, "name": r.name,
                      "rem_code": r.rem_code, 'no': i, 'gender': r.gender,
                      'degree': r.degree, 'birthday': r.birthday,
@@ -718,7 +718,8 @@ def dance_student_get():
                      'mother_company': r.mother_company, 'father_company': r.father_company,
                      'card': r.card, 'is_training': r.is_training,
                      'points': r.points, 'remark': r.remark, 'recorder': r.recorder,
-                     'idcard': r.idcard, 'mother_wechat': r.mother_wechat, 'father_wechat': r.father_wechat
+                     'idcard': r.idcard, 'mother_wechat': r.mother_wechat, 'father_wechat': r.father_wechat,
+                     'nation': r.nation
                      })
         i += 1
     return jsonify({"total": total, "rows": rows})
@@ -890,7 +891,8 @@ def dance_student_details_get():
             'father_phone': r.father_phone, 'mother_tel': r.mother_tel, 'father_tel': r.father_tel,
             'mother_company': r.mother_company, 'father_company': r.father_company, 'card': r.card,
             'is_training': r.is_training, 'points': r.points, 'remark': r.remark, 'recorder': r.recorder,
-            'idcard': r.idcard, 'mother_wechat': r.mother_wechat, 'father_wechat': r.father_wechat
+            'idcard': r.idcard, 'mother_wechat': r.mother_wechat, 'father_wechat': r.father_wechat,
+            'nation': r.nation
             }
 
     class_info = []

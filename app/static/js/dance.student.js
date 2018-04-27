@@ -228,6 +228,7 @@ function danceAddStudentDetailInfo(opts) {
     var footerStu = 'footerStudent';
     var tbLayout = 'tableLayout';
     var stu_rem_code = 'rem_code';
+    var stu_nation = 'nation';
 
     var editIndexClass = undefined;
     var edIndexContact = undefined;
@@ -285,6 +286,8 @@ function danceAddStudentDetailInfo(opts) {
                 $('#'+stu_rem_code).attr('id', stu_rem_code+=uid);
                 $('#'+stu_birthday).attr('id', stu_birthday+=uid);
                 $('#'+stu_remark).attr('id', stu_remark+=uid);
+                $('#'+stu_nation).attr('id', stu_nation+=uid);
+
                 $('#'+footerStu).attr('id', footerStu+=uid);
                 $('#'+tbLayout).attr('id', tbLayout+=uid);
                 $('#'+dgReceiptComm).attr('id', dgReceiptComm+=uid).datagrid({
@@ -365,6 +368,7 @@ function danceAddStudentDetailInfo(opts) {
             $('#'+stu_recorder).textbox('setText',data.rows['recorder']);
             $('#'+stu_gender).combobox('select',data.rows['gender']);
             $('#'+stu_remark).textbox('setText',data.rows['remark']);
+            $('#'+stu_nation).textbox('setText',data.rows['nation']);
 
             // 更新翻页控件 页码
             $('#'+pagerStu).pagination({total: data.total, pageNumber:data.rows.no});
@@ -612,6 +616,7 @@ function danceAddStudentDetailInfo(opts) {
         stuInfo.student.remark = $('#'+stu_remark).textbox('getText');   // 备注
         stuInfo.student.former_name = $('#'+stu_former_name).textbox('getText');    // 曾用名      *** 未使用 ***
         stuInfo.student.rem_code = $('#'+stu_rem_code).textbox('getText'); // 助记码
+        stuInfo.student.nation = $('#'+stu_nation).textbox('getText');
 
         stuInfo.student.information_source = stuInfo.student.information_source.replace('　', '');    // 删除全角空格
         stuInfo.student.counselor = stuInfo.student.counselor.replace('　', '');
@@ -704,6 +709,7 @@ function danceAddStudentDetailInfo(opts) {
         $('#'+stu_recorder).textbox('resize', wd);
 
         $('#'+stu_rem_code).textbox('resize', wd);
+        $('#'+stu_nation).textbox('resize', wd);
 
         $('#'+stu_remark).textbox('resize', parent.width() - 202 - 16);
     }

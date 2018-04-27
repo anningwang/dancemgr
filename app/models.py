@@ -84,6 +84,7 @@ class DanceStudent(db.Model):
     father_wechat = db.Column(db.String(60))    # 微信标识  ***保留
     school_id = db.Column(db.Integer, db.ForeignKey('dance_school.id'))
     company_id = db.Column(db.Integer, index=True)
+    nation = db.Column(db.String(10))      # 民族 2018-04-27 增加新字段
 
     def __init__(self, param):
         if 'school_id' in param:
@@ -160,6 +161,8 @@ class DanceStudent(db.Model):
         if 'father_wechat' in param:
             self.father_wechat = param['father_wechat']
         self.company_id = g.user.company_id
+        if 'nation' in param:
+            self.nation = param['nation']
 
     def getval(self, col_name):
         """
@@ -245,6 +248,8 @@ class DanceStudent(db.Model):
             return self.father_wechat
         elif col_name == 'school_id':
             return self.school_id
+        elif col_name == 'nation':
+            return self.nation
         else:
             return '<Unknown field name>'
 
@@ -322,6 +327,8 @@ class DanceStudent(db.Model):
         if 'father_wechat' in param:
             self.father_wechat = param['father_wechat']
         self.refresh_is_training()
+        if 'nation' in param:
+            self.nation = param['nation']
 
     def refresh_is_training(self):
         has = DanceStudentClass.query.filter_by(student_id=self.id).first()
