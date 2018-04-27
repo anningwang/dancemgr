@@ -741,7 +741,7 @@ function danceAddReceiptStudyDetailInfo(condition, uid, options) {
         title +='[新增]'
     }
 
-    var ori_uid = uid;  // 原始 uid
+    var ori_uid = options.tableId + '_' + uid;  // 原始 uid
     
     var page = options.page;
     var url = options.url;

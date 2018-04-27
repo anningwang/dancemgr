@@ -1,6 +1,12 @@
 /**
  * 实现 收费单——演出 和 普通 功能。
  *  @author Anningwang
+ *
+ * 功能：
+ * 学员管理
+ *      收费单（演出）             danceAddTabFeeShowDatagrid
+ *      收费单（考级）             danceAddTabFeeOtherDatagrid
+ *
  */
 
 'use strict';
@@ -931,32 +937,433 @@ function danceAddTabFeeOtherDatagrid(title, tableId, condition) {
             closable: true
         });
 
-        var url = '/dance_receipt_study';
+        var module = 'receipt_exam';
+        var url = '/' + module;
         var opts = {
-            'queryText': '姓名：',
-            'queryPrompt': '姓名拼音首字母查找',
-            'who': 'DanceReceipt',
-            'danceModuleName': 'DanceReceipt',
-            'addEditFunc': danceAddReceiptStudyDetailInfo,
-            'page': '/static/html/_receipt_study.html',     // 上述函数的参数
+            queryText: '姓名：',
+            queryPrompt: '姓名拼音首字母查找',
+            who: module,
+            danceModuleName: module,
+            danceModuleTitle: title,          // 导入、导出 窗口 title
+            addEditFunc: addEditReceiptExam,
+            page: '',     // 上述函数的参数
+            tableId: tableId,
             url: url,
-            'columns': [[
+            title: title,
+            columns: [[
                 {field: 'ck', checkbox:true },
-                {field: 'show_recpt_no', title: '演出收费单编号', width: 140, align: 'center'},
-                {field: 'show_name', title: '演出名称', width: 110, align: 'center'},
+                {field: 'code', title: '考级收费单号', width: 140, align: 'center'},
+                {field: 'exam_name', title: '考级名称', width: 110, align: 'center'},
                 {field: 'school_name', title: '分校名称', width: 110, align: 'center'},
                 {field: 'student_no', title: '学号', width: 140, align: 'center'},
                 {field: 'student_name', title: '学员姓名', width: 80, align: 'center'},
-                {field: 'deal_date', title: '收费日期', width: 90, align: 'center'},
-                {field: 'join_fee', title: '报名费', width: 80, align: 'center'},
-                {field: 'other_fee', title: '其他费', width: 80, align: 'center'},
-                {field: 'total', title: '费用合计', width: 80, align: 'center'},
-                {field: 'fee_mode', title: '收费方式', width: 70, align: 'center'},
+                {field: 'date', title: '收费日期', width: 90, align: 'center'},
+                {field: 'fee', title: '报名费', width: 80, align: 'center'},
+                {field: 'class_type_name', title: '班级类型', width: 80, align: 'center'},
+                {field: 'degree', title: '等级', width: 80, align: 'center'},
+                {field: 'fee_mode_name', title: '收费方式', width: 70, align: 'center'},
                 {field: 'remark', title: '备注', width: 90, align: 'center'},
                 {field: 'recorder', title: '录入员', width: 90, align: 'center'}
             ]]
         };
 
-        danceCreateCommDatagrid(tableId, url, condition, opts)
+        danceCreateCommDatagrid(tableId, url, condition, opts);
+    }
+}
+
+
+/**
+ * 查看/新增  考级 收费单
+ * @param condition     查询条件：
+ *         school_id     分校id，取值范围： all  or 具体分校id
+ * @param uid           记录id，新增时，可以不传递此参数。
+ * @param options       可选参数
+ *      {
+ *          tableId:    表格id，新增/修改 考级收费单 后，需要更新的表格
+ *          title:      窗口标题
+ *          who:        模块名称
+ *      }
+ */
+function addEditReceiptExam(condition, uid, options) {
+    var title = '编辑/查看 ' + options.title;
+    var dlgId = 'dlg-id-' + options.who;
+    uid = uid || 0;
+    if (uid <= 0) {
+        title = '新增 ' + options.title;
+        dlgId += '-new';
+    }
+    options.condition = condition;
+    dcOpenDialogNewReceiptExam(dlgId, title, uid,  'icon-save', options);
+}
+
+
+/**
+ * 新增 或者 编辑/查看  收费单考级 窗口
+ * @param id        dialog id
+ * @param title     dialog 标题
+ * @param uuid      记录id，新增时 可以不填或者填写 <=0 ，修改记录时，必须填写记录的 ID
+ * @param icon
+ * @param options       扩展参数
+ * {
+ *      condition:      查询条件
+ *      tableId:        本窗口 关闭后，要更新的 表格 id。
+ *      url:            url 前缀
+ * }
+ */
+function dcOpenDialogNewReceiptExam(id, title, uuid, icon, options){
+    var d_receiptCode = 'receiptCode'+id;
+    var d_date = 'date'+id;
+    var d_schoolNo = 'schoolNo'+id;
+    var d_schoolName = 'schoolName'+id;
+    var d_studentNo = 'studentNo'+id;
+    var d_studentName = 'studentName'+id;
+    var d_examName = 'examName'+id;
+    var d_classType = 'classType'+id;
+    var d_degree = 'degree'+id;
+    var d_fee = 'fee'+id;
+    var d_feetMode = 'feeMode'+id;
+    var d_isReceive = 'isReceive'+id;
+    var d_paperReceipt = 'paperReceipt'+id;
+    var d_recorder = 'recorder'+id;
+    var d_remark = 'remark'+id;
+    var d_uid = 'UUID_'+id;
+    options = options || {};
+    var dgId = options.tableId;
+    var mm = 'menu-'+id;
+    var mb = 'menubutton-'+id;
+
+    var school_id = null;
+
+    if (isOpen()) {
+        if(uuid > 0)
+            ajaxRequest();
+        else
+            $.messager.alert('提示', '[' + title + ']窗口已打开！', 'info');
+        return;
+    }
+    $('body').append('<div id=' + id + ' style="padding:5px"></div>');
+
+    var ctrls = '<div class="easyui-panel" data-options="fit:true" style="padding:10px;">';
+    ctrls += '<input id='+d_receiptCode+'><input id='+d_date+'>';
+    ctrls += '<div style="height:3px"></div><input id='+d_schoolNo+'><input id='+d_schoolName+'>';
+    ctrls += '<div style="height:3px"></div><input id='+d_studentNo+'><input id='+d_studentName+'>';
+    ctrls += '<div style="height:3px"></div><input id='+d_examName+'><input id='+d_classType+'>';
+    ctrls += '<div style="height:3px"></div><input id='+d_degree+'><input id='+d_fee+'>';
+    ctrls += '<div style="height:3px"></div><input id='+d_feetMode+'><input id='+d_isReceive+'>';
+    ctrls += '<div style="height:3px"></div><input id='+d_paperReceipt+'><input id='+d_recorder+'>';
+    ctrls += '<div style="height:3px"></div><input id='+d_remark+'>';
+    ctrls += '<div style="height:3px"></div><div id='+mb+'></div><div id='+mm+'></div>';
+    ctrls += '<input id=' + d_uid + ' type="hidden" value="0" />';
+    ctrls += '</div>';
+
+    $("#"+id).dialog({
+        title:title,width:600,height:380,cache: false,iconCls:icon,content:ctrls,inline:true,
+        collapsible: false, minimizable:false,maximizable: true, resizable: false,modal:false,closed:true,
+        buttons: [{text:'保存',iconCls:'icon-ok',width:80,height:30,handler:save },
+            {text:'关闭',iconCls:'icon-cancel',width:80,height:30,handler:function(){ $("#"+id).dialog('close'); }}],
+        onOpen:function () {
+            console.log('onOpen');
+            $('#'+d_receiptCode).textbox({
+                label:'考级收费单号：',labelAlign:'right',labelWidth:100,prompt:'自动生成',disabled:true,width:'48%'
+            });
+            $('#'+d_date).datebox({
+                label:'收费日期：',labelAlign:'right',labelWidth:100,width:'48%'
+            }).datebox('setValue', danceGetDate());
+
+
+            $('#'+d_schoolNo).textbox({
+                label:'分校编号：',labelAlign:'right',labelWidth:100,prompt:'关联分校名称',disabled:true,width:'48%'
+            });
+            $('#'+d_schoolName).combobox({
+                label:'*分校名称：',labelAlign:'right',labelWidth:100,
+                valueField:'school_id', textField:'school_name',editable:false,panelHeight:'auto',width:'48%',
+                url: '/api/dance_school_get',
+                onLoadSuccess: function () {
+                    var data = $(this).combobox('getData');
+                    if(data.length){
+                        var idx = 0;
+                        if ('school_id' in options.condition) {
+                            school_id = options.condition['school_id'];
+                        }
+                        if (school_id != 'all') {
+                            for (var m=0; m<data.length; m++) {
+                                if (data[m].school_id == school_id) {
+                                    idx = m;
+                                    break;
+                                }
+                            }
+                        }
+                        $('#'+d_schoolName).combobox('setValue', data[idx].school_id);
+                        $('#'+d_schoolNo).textbox('setValue', data[idx]['school_no']);
+                    }
+                },
+                onSelect:function (record) {
+                    //console.log(record);
+                    $('#'+d_schoolNo).textbox('setValue', record['school_no']);
+                    school_id = record.school_id;
+                }
+            });
+
+            $('#'+d_studentNo).textbox({
+                label:'学号：',labelAlign:'right',labelWidth:100,prompt:'关联分校名称',disabled:true,width:'48%'
+            });
+            $('#'+d_studentName).combobox({
+                label:'*学员姓名：',labelAlign:'right',prompt:'姓名拼音首字母',labelWidth:100,width:'48%',
+                valueField: 'id', textField: 'name', hasDownArrow: false,
+                onChange: function (newValue) {    // ,oldValue
+                    //console.log('newValue=' + newValue + ' oldValue=' + oldValue);
+                    //console.log('newValue=' + newValue);
+                    var cond = $.trim(newValue);
+                    var dcCond = {'name': cond, 'is_training': '是', 'school_id': school_id};
+                    if (newValue.length >= 1) {    // 等于或者超过 1 个字符，才查询
+                        $.post('/api/dance_student_query',dcCond, function(data){
+                            $('#'+d_studentName).combobox('loadData', data);
+                        },'json');
+                    }
+                },
+                onClick:function (record) {
+                    $('#'+d_studentNo).textbox('setValue', record.code);
+                    console.log(record);
+                    oMb.updateByStudentId(record.id);
+                }
+            });
+
+            $('#'+d_examName).combogrid({
+                label:'考级名称：',labelAlign:'right',labelWidth:100,editable:false,width:'48%',
+                panelWidth:420,
+                idField:'id',
+                textField:'alias',
+                url:'/exam_get',
+                queryParams: {
+                    valid: 1
+                },
+                columns:[[
+                    {field:'name',title:'考级名称',width:120},
+                    {field:'degree',title:'等级',width:50},
+                    {field:'class_type_name',title:'班级类型',width:80},
+                    {field:'fee',title:'考级费',width:60},
+                    {field:'date',title:'考试时间',width:100},
+                    {field:'remark',title:'备注',width:100, hidden:true,formatter: function(value,row){
+                        return row.name + '(' + row.degree + ')';
+                    }}
+                ]],
+                onSelect: function (index,record) {
+                    $('#'+d_classType).textbox('setValue', record['class_type_name']);
+                    $('#'+d_degree).textbox('setValue', record.degree);
+                    $('#'+d_fee).textbox('setValue', record.fee);
+                }
+            });
+            $('#'+d_classType).textbox({
+                label:'*班级类型：',labelAlign:'right',labelWidth:100,prompt:'关联考级名称',disabled:true,width:'48%'
+            });
+
+
+            $('#'+d_degree).textbox({
+                label:'等级：',labelAlign:'right',labelWidth:100,prompt:'关联考级名称',disabled:true,width:'48%'
+            });
+            $('#'+d_fee).textbox({
+                label:'考级费：',labelAlign:'right',labelWidth:100,width:'48%'
+            });
+
+            $('#'+d_feetMode).combobox({
+                label:'*收费方式：',labelAlign:'right',labelWidth:100,width:'48%',
+                editable:false,panelHeight:'auto',
+                valueField: 'fee_mode_id',textField: 'fee_mode',
+                iconWidth:22,
+                icons: [{
+                    iconCls:'icon-add', handler: function () {
+                        dcDialogFeeMode({callback: function () {
+                            if (isOpen()){
+                                $('#'+d_feetMode).combobox('reload');
+                            }
+                        }});
+                    }
+                }],
+                url: '/api/dance_fee_mode_get'
+            });
+
+            $('#'+d_isReceive).combobox({
+                label:'*是否收取：',labelAlign:'right',labelWidth:100,
+                valueField:'value', textField:'text',editable:false,panelHeight:'auto',
+                data:[{
+                    value: 1,
+                    text: '是'
+                },{
+                    value: 0,
+                    text: '否'
+                }],width:'48%'
+            }).combobox('setValue', 1);
+
+            $('#'+d_paperReceipt).textbox({
+                label:'收据号：',labelAlign:'right',labelWidth:100,width:'48%'
+            });
+            $('#'+d_recorder).textbox({
+                label:'录入员：',prompt:'自动生成',disabled:true,labelAlign:'right',labelWidth:100,width:'48%'
+            });
+
+            $('#'+d_remark).textbox({
+                label:'备注：',labelAlign:'right',multiline:true,labelWidth:100,width:'96%', height:50
+            });
+
+            // 创建 menu button
+            var oMb = new wmm.MbAttendClass(mb, mm, {
+                onClick: function (item) {
+                    console.log(item);
+                },
+                plain: false
+            });
+
+            if(uuid > 0){
+                ajaxRequest();
+            }
+        },
+        onBeforeClose: function () {
+            if (dgId && document.getElementById(dgId)) {
+                $('#'+dgId).datagrid('reload');
+            }
+            $("#"+id).dialog('destroy');
+        }
+    }).dialog('open');
+
+    function ajaxRequest(){
+        // 发送数据
+        $.ajax({
+            method: 'POST',
+            url: options.url + '_detail_get',
+            async: true,
+            dataType: 'json',
+            contentType: "application/json;charset=UTF-8",
+            data: JSON.stringify({id: uuid })
+        }).done(function(data) {
+            console.log('ajaxRequest', data);
+            if(data.errorCode == 0)
+            {
+                $('#'+d_receiptCode).textbox('setValue', data.row['code']);
+                $('#'+d_date).datebox('setValue', data.row['date']);
+                $('#'+d_schoolNo).textbox('setValue', data.row['school_no']);
+                $('#'+d_schoolName).combobox('setValue', data.row.school_id).combobox('disable');
+                $('#'+d_studentNo).textbox('setValue', data.row['student_no']);
+                $('#'+d_studentName).combobox('setValue', data.row.student_name);
+                $('#'+d_examName).combogrid('setValue', data.row['exam_id']);
+                $('#'+d_classType).textbox('setValue', data.row['class_type_name']);
+                $('#'+d_degree).textbox('setValue', data.row['degree']);
+                $('#'+d_fee).textbox('setValue', data.row['fee']);
+                $('#'+d_feetMode).combobox('setValue', data.row['fee_mode_id']);
+                $('#'+d_isReceive).combobox('setValue', data.row['is_receive']);
+                $('#'+d_paperReceipt).textbox('setValue', data.row['paper_receipt']);
+                $('#'+d_recorder).textbox('setValue', data.row['recorder']);
+                $('#'+d_remark).textbox('setValue', data.row.remark);
+                $('#'+d_uid).val(data.row.id);
+            }else {
+                $.messager.alert('提示', data.msg, 'info');
+            }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
+        });
+    }
+
+    function save() {
+
+        // 校验数据是否合法
+        var oStuName = $('#'+d_studentName);
+        var studentName = $.trim(oStuName.textbox('getValue'));
+        var studentId = oStuName.combobox('getValue');
+        if(!studentName || !studentId) {
+            $.messager.alert({title:'提示', msg:'“学员姓名”不能为空，且为已经报名学员！', icon: 'info',
+                fn:function () {
+                    $('#'+d_schoolName).textbox('textbox').focus();
+                }
+            });
+            return false;
+        }
+
+        var examId = $('#'+d_examName).combogrid('getValue');
+        if(!examId) {
+            $.messager.alert({title:'提示', msg:'请选“考级名称及等级”！', icon: 'info',
+                fn:function () {
+                    $('#'+d_examName).textbox('textbox').focus();
+                }
+            });
+            return false;
+        }
+
+
+        var fee = $('#'+d_fee).textbox('getValue');
+        if(!fee){
+            $.messager.alert({title:'提示', msg:'请输入“考级费”！', icon: 'info',
+                fn:function () {
+                    $('#'+d_fee).textbox('textbox').focus();
+                }
+            });
+            return false;
+        }
+
+
+        var feeModeId = $('#'+d_feetMode).combobox('getValue');
+        if(!feeModeId) {
+            $.messager.alert({title:'提示', msg:'请输入“收费方式”。', icon: 'info',
+                fn:function () {
+                    $('#'+d_feetMode).textbox('textbox').focus();
+                }
+            });
+            return false;
+        }
+
+        var paperReceipt = $('#'+d_paperReceipt).textbox('getValue');
+        if(paperReceipt.length > 15) {
+            $.messager.alert({title:'提示', msg:'“收据号”不能超过15字符。', icon: 'info',
+                fn:function () {
+                    $('#'+d_paperReceipt).textbox('textbox').focus();
+                }
+            });
+            return false;
+        }
+
+        var remark = $('#'+d_remark).textbox('getValue');
+        if(remark.length > 40) {
+            $.messager.alert({title:'提示', msg:'“备注”不能超过40字符。', icon: 'info',
+                fn:function () {
+                    $('#'+d_remark).textbox('textbox').focus();
+                }
+            });
+            return false;
+        }
+
+        // 打包数据
+        var data = {id: $('#'+d_uid).val(),
+            date: $('#'+d_date).datebox('getValue'),
+            school_id: $('#'+d_schoolName).combobox('getValue'),
+            student_id: studentId,
+            student_name: studentName,
+            exam_id: examId,
+            fee: fee,
+            fee_mode_id: feeModeId,
+            is_receive: $('#'+d_isReceive).combobox('getValue'),
+            paper_receipt: paperReceipt,
+            remark: remark
+        };
+
+        console.log('send:', data);
+
+        // 发送数据
+        $.ajax({
+            method: 'POST',
+            url: options.url + '_modify',
+            async: true,
+            dataType: 'json',
+            contentType: "application/json;charset=UTF-8",
+            data: JSON.stringify(data)
+        }).done(function(data) {
+            $.messager.alert('提示', data.msg, 'info');
+            if (dgId && document.getElementById(dgId)) {
+                $('#'+dgId).datagrid('reload');
+            }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
+        });
+    }
+
+    function isOpen() {
+        return document.getElementById(id);
     }
 }

@@ -8,7 +8,7 @@ from models import ROLE_ADMIN, DanceStudent, DanceClass, DanceSchool, DanceUser,
     DanceStudentClass, DanceCompany, DanceUserSchool, DcShowDetailFee, DcCommFeeMode, DcShowRecpt, DcFeeItem,\
     DanceOtherFee, DanceReceipt, DanceClassReceipt, DanceTeaching, DcClassType, DanceTeacher, DanceTeacherEdu,\
     DanceTeacherWork, DcCommon, DanceCourse, DanceCourseItem, DanceClassRoom, UpgradeClass, UpgClassItem, \
-    Notepad, Expense, HouseRent, Income, DcTeachingMaterial
+    Notepad, Expense, HouseRent, Income, DcTeachingMaterial, Exam, ReceiptExam
 from datetime import datetime
 from translate import microsoft_translate
 from config import LANGUAGES, DATABASE_QUERY_TIMEOUT
@@ -150,6 +150,8 @@ def dance_del_data():
                 'dance_student': {'func': dc_del_student},  # 学员信息
                 'dance_upgrade_class': {'func': dc_del_upgrade_class},  # 集体续班
                 'DanceReceipt': {'func': dc_del_receipt},  # 收费单——学费
+                'receipt_exam': {'func': dc_del_receipt_exam},  # 收费单——考级
+                'exam': {'func': dc_del_exam},  # 考级信息
 
                 'dance_teacher': {'func': dc_del_teacher},  # 员工与老师
 
@@ -214,6 +216,7 @@ def dc_del_receipt(ids):
         DanceTeaching.query.filter_by(receipt_id=i).delete()
         DanceOtherFee.query.filter_by(receipt_id=i).delete()
 
+    ''' 删除 '''
     DanceReceipt.query.filter(DanceReceipt.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
@@ -248,6 +251,7 @@ def dc_del_fee_item(ids):
         else:
             return jsonify({'errorCode': 812, 'msg': u'未知类型[%d]！' % fee.type})
 
+    ''' 删除 '''
     DcFeeItem.query.filter(DcFeeItem.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
@@ -272,6 +276,7 @@ def dc_del_fee_mode(ids):
         """  收费单班级 判断是否使用了收费模式 """
         """  收费单普通 判断是否使用了收费模式 """
 
+    ''' 删除 '''
     DcCommFeeMode.query.filter(DcCommFeeMode.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
@@ -301,6 +306,8 @@ def dc_del_class_type(ids):
             .filter(DanceClass.class_type == i).first()
         if is_use is not None:
             return jsonify({'errorCode': 832, 'msg': u'班级类型[%s]已被使用，不能删除！' % r.name})
+
+    ''' 删除 '''
     DcClassType.query.filter(DcClassType.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
@@ -331,6 +338,8 @@ def dc_del_teacher(ids):
         #    return jsonify({'errorCode': 832, 'msg': u'班级类型[%s]已被使用，不能删除！' % r.name})
         DanceTeacherEdu.query.filter(DanceTeacherEdu.id == i).delete()
         DanceTeacherWork.query.filter(DanceTeacherWork.id == i).delete()
+
+    ''' 删除 '''
     DanceTeacher.query.filter(DanceTeacher.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
@@ -380,6 +389,7 @@ def dc_del_common(ids):
         else:
             return jsonify({'errorCode': 812, 'msg': u'未知类型[%d]！' % r.type})
 
+    ''' 删除 '''
     DcCommon.query.filter(DcCommon.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
@@ -411,6 +421,7 @@ def dc_del_course(ids):
         """删除课程表明细"""
         DanceCourseItem.query.filter_by(course_id=i).delete()
 
+    ''' 删除 '''
     DanceCourse.query.filter(DanceCourse.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
@@ -440,6 +451,7 @@ def dc_del_user(ids):
         if r.is_creator == 1:
             return jsonify({'errorCode': 500, 'msg': u'账号[%s]为初始管理员，不能删除！' % r.name})
 
+    ''' 删除 '''
     DanceUser.query.filter(DanceUser.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
@@ -469,7 +481,8 @@ def dc_del_class(ids):
         if is_use is not None:
             return jsonify({'errorCode': 100, 'msg': u'班级[%s]已有学员报名，不能删除！' % r.class_name})
 
-        DanceClass.query.filter(DanceClass.id.in_(ids)).delete(synchronize_session=False)
+    ''' 删除 '''
+    DanceClass.query.filter(DanceClass.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 
@@ -497,6 +510,7 @@ def dc_del_class_room(ids):
         if dup is not None:
             return jsonify({'errorCode': 821, 'msg': u'教室已使用，不能删除！'})
 
+    ''' 删除 '''
     DanceClassRoom.query.filter(DanceClassRoom.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
@@ -524,6 +538,7 @@ def dc_del_upgrade_class(ids):
         """删除 集体续班 明细表"""
         n += UpgClassItem.query.filter_by(upg_id=i).delete()
 
+    ''' 删除 '''
     m = UpgradeClass.query.filter(UpgradeClass.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！集体续费单[%d]条，学员续费明细[%d]条。" % (m, n)})
@@ -581,7 +596,64 @@ def dc_del_teaching_material(ids):
         if dup is not None:
             return jsonify({'errorCode': 821, 'msg': u'“教材[%s]”已使用，不能删除！' % r.material_name})
 
-        DcTeachingMaterial.query.filter(DcTeachingMaterial.id.in_(ids)).delete(synchronize_session=False)
+    ''' 删除 '''
+    DcTeachingMaterial.query.filter(DcTeachingMaterial.id.in_(ids)).delete(synchronize_session=False)
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
+
+
+def dc_del_exam(ids):
+    """
+    删除 考级信息： 若 考级信息 被占用（ 收费单——考级 中使用），则不能删除。
+    :param ids:     记录 id list
+    :return: {
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   删除成功！
+            821                 “考级信息[%s]”已使用，不能删除！
+    }
+    """
+    for i in ids:
+        r = Exam.query.get(i)
+        if r is None:
+            continue
+        """检查是否占用"""
+        dup = ReceiptExam.query.join(Exam, Exam.id == ReceiptExam.exam_id)\
+            .filter(Exam.id == i).first()
+        if dup is not None:
+            return jsonify({'errorCode': 821, 'msg': u'“考级信息[%s]”已使用，不能删除！' % r.name})
+
+    ''' 删除 '''
+    Exam.query.filter(Exam.id.in_(ids)).delete(synchronize_session=False)
+    db.session.commit()
+    return jsonify({'errorCode': 0, "msg": u"删除成功！"})
+
+
+def dc_del_receipt_exam(ids):
+    """
+    删除 收费单——考级。
+    :param ids:     记录 id list
+    :return: {
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   删除成功！
+    }
+    """
+    for i in ids:
+        r = ReceiptExam.query.get(i)
+        if r is None:
+            continue
+        """检查是否占用"""
+        pass
+
+    ''' 删除 '''
+    ReceiptExam.query.filter(ReceiptExam.id.in_(ids)).delete(synchronize_session=False)
     db.session.commit()
     return jsonify({'errorCode': 0, "msg": u"删除成功！"})
 

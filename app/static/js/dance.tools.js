@@ -664,6 +664,34 @@ function dcNewWindow(dgId, panelId, winId, url, idx, field, title, callback) {
     });
 }
 
+/**
+ * 打开收费方式 窗口
+ * @param options
+ * {
+ *      callback:           回调函数
+ * }
+ */
+function dcDialogFeeMode(options) {
+    options = options || {};
+    var panelId = 'dcFeeModeNewPanel';
+    var winId = 'dcFeeModeNewWin';
+    if(!document.getElementById(panelId)){
+        $(document.body).append('<div id=' + panelId +  '></div>');
+    }
+    if (document.getElementById(winId)) {
+        $.messager.alert('提示', '[' + title + ']窗口已打开！', 'info');
+        return;
+    }
+    $('#'+panelId).panel({
+        href: '/static/html/_add_fee_mode.html',
+        onDestroy: function () {
+            if (options.callback) {
+                options.callback();
+            }
+        }
+    });
+}
+
 // 父窗口要刷新的combobox(id: ccId)。 panel id 在 winId的基础上加上 '-Panel'
 function dcNewWindowEx(winId, url, title, ccId) {
     var panelId = dcGetPanelId(winId);
@@ -1149,3 +1177,441 @@ function getStudentClassList(student_id, school_id, options) {
     options.data =  {'student_id': student_id, 'school_id': school_id};
     ajaxRequest('/dance_student_details_extras', options);
 }
+
+
+(function(window) {
+    'use strict';
+
+    if (!('wmm' in window)) window['wmm'] = {};
+    var wmm = window['wmm'];
+
+    function Dialog() {}
+    Dialog.prototype = {
+        constructor: Dialog
+    };
+
+    function DcStudent() {}
+    DcStudent.prototype = {
+        constructor: DcStudent,
+
+        tabExam: function (title, tableId, condition) {
+            var parentDiv = $('#danceTabs');
+            if ($(parentDiv).tabs('exists', title)) {
+                $(parentDiv).tabs('select', title);
+                $('#'+tableId).datagrid('load', condition);
+            } else {
+                var content = '<table id=' + tableId + '></table>';
+                $(parentDiv).tabs('add', {
+                    title: title,
+                    content: content,
+                    closable: true
+                });
+
+                var module = 'exam';
+                var url = '/' + module;
+                var opts = {
+                    queryText: '姓名：',
+                    queryPrompt: '姓名拼音首字母查找',
+                    who: module,
+                    danceModuleName: module,
+                    danceModuleTitle: title,          // 导入、导出 窗口 title
+                    addEditFunc: addEditExam,
+                    page: '',     // 上述函数的参数
+                    tableId: tableId,
+                    url: url,
+                    title: title,
+                    columns: [[
+                        {field: 'ck', checkbox:true },
+                        {field: 'code', title: '考级编号', width: 140, align: 'center'},
+                        {field: 'name', title: '考级名称', width: 110, align: 'center'},
+                        {field: 'degree', title: '等级', width: 80, align: 'center'},
+                        {field: 'date', title: '考试日期', width: 90, align: 'center'},
+                        {field: 'fee', title: '报名费', width: 80, align: 'center'},
+                        {field: 'class_type_name', title: '班级类型', width: 80, align: 'center'},
+                        {field: 'is_valid', title: '是否有效', width: 70, align: 'center',
+                            formatter:function(value,row){
+                                return row.is_valid == 1 ? '√': '×';
+                            }
+                        },
+                        {field: 'remark', title: '备注', width: 90, align: 'center'},
+                        {field: 'recorder', title: '录入员', width: 90, align: 'center'}
+                    ]]
+                };
+
+                danceCreateCommDatagrid(tableId, url, condition, opts);
+            }
+
+            /**
+             * 查看/新增  考级 收费单
+             * @param condition     查询条件：
+             *         school_id     分校id，取值范围： all  or 具体分校id
+             * @param uid           记录id，新增时，可以不传递此参数。
+             * @param options       可选参数
+             *      {
+             *          tableId:    表格id，新增/修改 考级收费单 后，需要更新的表格
+             *          title:      窗口标题
+             *          who:        模块名称
+             *      }
+             */
+            function addEditExam(condition, uid, options) {
+                var title = '编辑/查看 ' + options.title;
+                var dlgId = 'dlg-id-' + options.who;
+                uid = uid || 0;
+                if (uid <= 0) {
+                    title = '新增 ' + options.title;
+                    dlgId += '-new';
+                }
+                options.condition = condition;
+                dcOpenDialogNewReceiptExam(dlgId, title, uid,  'icon-save', options);
+            }
+
+
+            /**
+             * 新增 或者 编辑/查看  收费单考级 窗口
+             * @param id        dialog id
+             * @param title     dialog 标题
+             * @param uuid      记录id，新增时 可以不填或者填写 <=0 ，修改记录时，必须填写记录的 ID
+             * @param icon
+             * @param options       扩展参数
+             * {
+             *      condition:      查询条件
+             *      tableId:        本窗口 关闭后，要更新的 表格 id。
+             *      url:            url 前缀
+             * }
+             */
+            function dcOpenDialogNewReceiptExam(id, title, uuid, icon, options){
+
+                var d_code = 'code'+id;
+                var d_date = 'date'+id;
+                var d_examName = 'examName'+id;
+                var d_classType = 'classType'+id;
+                var d_degree = 'degree'+id;
+                var d_fee = 'fee'+id;
+                var d_isValid = 'isValid'+id;
+                var d_recorder = 'recorder'+id;
+                var d_remark = 'remark'+id;
+                var d_uid = 'UUID_'+id;
+                options = options || {};
+                var dgId = options.tableId;
+
+                if (isOpen()) {
+                    if(uuid > 0)
+                        ajaxRequest();
+                    else
+                        $.messager.alert('提示', '[' + title + ']窗口已打开！', 'info');
+                    return;
+                }
+                $('body').append('<div id=' + id + ' style="padding:5px"></div>');
+
+                var ctrls = '<div class="easyui-panel" data-options="fit:true" style="padding:10px;">';
+                ctrls += '<input id='+d_code+'><input id='+d_date+'>';
+                ctrls += '<div style="height:3px"></div><input id='+d_examName+'><input id='+d_classType+'>';
+                ctrls += '<div style="height:3px"></div><input id='+d_degree+'><input id='+d_fee+'>';
+                ctrls += '<div style="height:3px"></div><input id='+d_isValid+'><input id='+d_recorder+'>';
+                ctrls += '<div style="height:3px"></div><input id='+d_remark+'>';
+                ctrls += '<input id=' + d_uid + ' type="hidden" value="0" />';
+                ctrls += '</div>';
+
+                $("#"+id).dialog({
+                    title:title,width:600,height:360,cache: false,iconCls:icon,content:ctrls,inline:true,
+                    collapsible: false, minimizable:false,maximizable: true, resizable: false,modal:false,closed:true,
+                    buttons: [{text:'保存',iconCls:'icon-ok',width:80,height:30,handler:save },
+                        {text:'关闭',iconCls:'icon-cancel',width:80,height:30,handler:function(){ $("#"+id).dialog('close'); }}],
+                    onOpen:function () {
+                        console.log('onOpen');
+                        $('#'+d_code).textbox({
+                            label:'考级编号：',labelAlign:'right',labelWidth:100,prompt:'自动生成',disabled:true,width:'48%'
+                        });
+                        $('#'+d_date).datebox({
+                            label:'*考试日期：',labelAlign:'right',labelWidth:100,width:'48%'
+                        }).datebox('setValue', danceGetDate());
+
+
+                        $('#'+d_examName).textbox({
+                            label:'*考级名称：',labelAlign:'right',labelWidth:100,width:'48%'
+                        });
+                        $('#'+d_classType).combobox({
+                            label:'*班级类型：',labelAlign:'right',labelWidth:100,
+                            valueField:'ct_id', textField:'ct_name',editable:false,panelHeight:'auto',width:'48%',
+                            url: '/api/dance_class_type_get',
+                            iconWidth:22,
+                            icons:[{
+                                iconCls:'icon-add',
+                                handler: function () {
+                                    dcOpenDialogNewClassType('dcClassTypeNewWin', '新增班级类型');
+                                }
+                            }]
+                        });
+
+
+                        $('#'+d_degree).textbox({
+                            label:'*等级：',labelAlign:'right',labelWidth:100,width:'48%'
+                        });
+                        $('#'+d_fee).textbox({
+                            label:'*考级费：',labelAlign:'right',labelWidth:100,width:'48%'
+                        });
+
+
+                        $('#'+d_isValid).combobox({
+                            label:'*是否有效：',labelAlign:'right',labelWidth:100,
+                            valueField:'value', textField:'text',editable:false,panelHeight:'auto',
+                            data:[{
+                                value: 1,
+                                text: '是'
+                            },{
+                                value: 0,
+                                text: '否'
+                            }],width:'48%'
+                        }).combobox('setValue', 1);
+                        $('#'+d_recorder).textbox({
+                            label:'录入员：',prompt:'自动生成',disabled:true,labelAlign:'right',labelWidth:100,width:'48%'
+                        });
+
+                        $('#'+d_remark).textbox({
+                            label:'备注：',labelAlign:'right',multiline:true,labelWidth:100,width:'96%', height:140
+                        });
+
+                        if(uuid > 0){
+                            ajaxRequest();
+                        }
+                    },
+                    onBeforeClose: function () {
+                        if (dgId && document.getElementById(dgId)) {
+                            $('#'+dgId).datagrid('reload');
+                        }
+                        $("#"+id).dialog('destroy');
+                    }
+                }).dialog('open');
+
+
+                function ajaxRequest(){
+                    // 发送数据
+                    $.ajax({
+                        method: 'POST',
+                        url: options.url + '_detail_get',
+                        async: true,
+                        dataType: 'json',
+                        contentType: "application/json;charset=UTF-8",
+                        data: JSON.stringify({id: uuid })
+                    }).done(function(data) {
+                        console.log('ajaxRequest', data);
+                        if(data.errorCode == 0)
+                        {
+                             $('#'+d_code).textbox('setValue', data.row['code']);
+                             $('#'+d_date).datebox('setValue', data.row['date']);
+                             $('#'+d_examName).textbox('setValue', data.row['name']);
+                             $('#'+d_classType).combobox('setValue', data.row['class_type_id']);
+                             $('#'+d_degree).textbox('setValue', data.row['degree']);
+                             $('#'+d_fee).textbox('setValue', data.row['fee']);
+                             $('#'+d_isValid).combobox('setValue', data.row['is_valid']);
+                             $('#'+d_recorder).textbox('setValue', data.row['recorder']);
+                             $('#'+d_remark).textbox('setValue', data.row.remark);
+                            $('#'+d_uid).val(data.row.id);
+                        }else {
+                            $.messager.alert('提示', data.msg, 'info');
+                        }
+                    }).fail(function(jqXHR, textStatus, errorThrown) {
+                        $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
+                    });
+                }
+
+                function save() {
+                    // 校验数据是否合法
+                    var name = $('#'+d_examName).textbox('getValue');
+                    if(!name || name.length > 25) {
+                        $.messager.alert({title:'提示', msg:'“考级名称”不能为空，且不能大于25字符！', icon: 'info',
+                            fn:function () {
+                                $('#'+d_examName).textbox('textbox').focus();
+                            }
+                        });
+                        return false;
+                    }
+
+                    var classType = $('#'+d_classType).textbox('getValue');
+                    if(!classType) {
+                        $.messager.alert({title:'提示', msg:'请选择“班级类型”！', icon: 'info',
+                            fn:function () {
+                                $('#'+d_classType).textbox('textbox').focus();
+                            }
+                        });
+                        return false;
+                    }
+
+                    var degree = $('#'+d_degree).textbox('getValue');
+                    if(!degree){
+                        $.messager.alert({title:'提示', msg:'请输入“等级”。', icon: 'info',
+                            fn:function () {
+                                $('#'+d_degree).textbox('textbox').focus();
+                            }
+                        });
+                        return false;
+                    }
+
+
+                    var fee = $.trim($('#'+d_fee).textbox('getValue'));
+                    var feeValue = Number(fee);
+                    if(!fee || isNaN(feeValue)) {
+                        $.messager.alert({title:'提示', msg:'请输入“考级费”。', icon: 'info',
+                            fn:function () {
+                                $('#'+d_fee).textbox('textbox').focus();
+                            }
+                        });
+                        return false;
+                    }
+
+                    // 打包数据
+                    var data = {id: $('#'+d_uid).val(),
+                        name: name,
+                        date: $('#'+d_date).datebox('getValue'),
+                        class_type_id:classType,
+                        degree: degree,
+                        fee: fee,
+                        is_valid: $('#'+d_isValid).textbox('getValue'),
+                        remark:$('#'+d_remark).textbox('getValue')
+                    };
+                    console.log('send:', data);
+
+                    // 发送数据
+                    $.ajax({
+                        method: 'POST',
+                        url: options.url + '_modify',
+                        async: true,
+                        dataType: 'json',
+                        contentType: "application/json;charset=UTF-8",
+                        data: JSON.stringify(data)
+                    }).done(function(data) {
+                        $.messager.alert('提示', data.msg, 'info');
+                        if (dgId && document.getElementById(dgId)) {
+                            $('#'+dgId).datagrid('reload');
+                        }
+                    }).fail(function(jqXHR, textStatus, errorThrown) {
+                        $.messager.alert('提示', "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown), 'info');
+                    });
+                }
+
+                function isOpen() {
+                    return document.getElementById(id);
+                }
+            }
+        }
+
+    };
+
+    /**
+     * 学员 已报班 menubutton ， 实现 mb 中 菜单的增、删操作
+     * @param mbId
+     * @param mmId
+     * @param options
+     * {
+     *      onClick:            menu click 函数, 参数 菜单 item
+     *      text:               mb text
+     *      iconCls:            mb icon
+     *      disabled:           mb 是能状态， 默认 disable = true
+     *      plain:              mb, True to show plain effect. 默认 true
+     * }
+     * @constructor
+     */
+    function MbAttendClass(mbId, mmId, options) {
+        this.mbId = mbId;
+        this.mmId = mmId;
+        options = options || {};
+        this.options = options;
+        this.text = options.text || '已报班';
+        this.iconCls = options.iconCls || 'icon-ok';
+        this.disabled = options.disabled !== false;
+        this.plain = options.plain !== false;
+        this._oldMenuIds = {};
+
+        $('#'+this.mmId).menu({
+            onClick: function (item) {
+                //console.log(item);
+                if (options.onClick) {
+                    options.onClick(item);
+                }
+            }
+        });
+        $('#'+this.mbId).menubutton({
+            text: this.text,
+            iconCls: this.iconCls,
+            disabled: this.disabled,
+            plain: this.plain,
+            menu: '#'+this.mmId
+        });
+    }
+    MbAttendClass.prototype = {
+        constructor: MbAttendClass,
+        
+        updateByStudentId: function (studentId) {
+            var self = this;
+            $.ajax({
+                method: 'POST',
+                url: '/api/dance_class_by_student',
+                async: true,
+                dataType: 'json',
+                data: {student_id: studentId }
+            }).done(function(data) {
+                if (data.errorCode == 0) {
+                    self.updateByClass(data.cls);
+                } else {
+                    $.messager.alert('提示', data.msg, 'info');
+                }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
+                $.messager.alert('提示', msg, 'info');
+            });
+        },
+        
+        updateByClass: function (data) {
+            var mm = $('#'+this.mmId);
+
+            if(!this._oldMenuIds.hasOwnProperty(this.mmId)){
+                this._oldMenuIds[this.mmId] = [];
+            }
+            var i;
+            var fa = [];
+            for(i=0; i< data.length; i++){
+                if (!data[i].class_name){   // 过滤名称为空的
+                    continue;
+                }
+                fa.push(data[i].class_no);
+            }
+            var change = dcFindChange(this._oldMenuIds[this.mmId], fa);
+            for(var m = 0; m < change[0].length; m++){ // 删除
+                var itemEl = $('#'+change[0][m]+'_'+this.mmId)[0];  // the menu item element
+                mm.menu('removeItem',itemEl);
+            }
+
+            for(i = 0; i < change[1].length; i++){ // 增加
+                for(var j = 0; j < data.length; j++){
+                    if(change[1][i] === data[j].class_no){
+                        mm.menu('appendItem', {
+                            text: data[j].class_name,
+                            class_name:data[j].class_name,
+                            iconCls: 'icon-ok',
+                            id: data[j].class_no + '_'+this.mmId,
+                            class_id: data[j].class_id,
+                            class_no: data[j].class_no,
+                            cost_mode: data[j].cost_mode,
+                            cost: data[j].cost
+                        });
+                        break;
+                    }
+                }
+            }
+
+            this._oldMenuIds[this.mmId] = fa.slice(0);        // 使用深拷贝
+
+            var mb = $('#'+this.mbId);
+            if (change[1].length || change[2].length) {
+                mb.menubutton('enable');
+            } else {
+                mb.menubutton('disable');
+            }  
+        }
+    };
+
+    wmm.Dialog = new Dialog();
+    wmm.DcStudent = new DcStudent();
+    wmm.MbAttendClass = MbAttendClass;
+
+})(window);

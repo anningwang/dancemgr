@@ -1,12 +1,12 @@
 
-'use strict';
-
 /**
- * Tab 页面--------    入口函数-------------------------
- * 班级信息            danceAddTabClassDatagrid
- * 记事本              danceAddTabNotepad
+ * 教学管理
+ *      班级信息            danceAddTabClassDatagrid
+ *      记事本              danceAddTabNotepad
 
 */
+
+'use strict';
 
 /**
  * 打开 班级信息 Tab页

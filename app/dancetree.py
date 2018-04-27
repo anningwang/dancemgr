@@ -12,7 +12,7 @@ def api_dance_tree_get():
             {"id": 20, "text": "准学员列表"},
             {"id": 30, "text": "收费单（学费）", 'attributes': {'school_id': 'all'}},
             {"id": 40, "text": "收费单（演出）", 'attributes': {'school_id': 'all'}},
-            {"id": 50, "text": "收费单（普通）", 'attributes': {'school_id': 'all'}},
+            {"id": 50, "text": "收费单（考级）", 'attributes': {'school_id': 'all'}},
             {"id": 60, "text": "班级学员统计", 'attributes': {'school_id': 'all', 'is_ended': 0}},
             {"id": 70, "text": "集体续班", 'attributes': {'school_id': 'all'}, 'state': 'closed'},
             {"id": 80, "text": "班级考勤", 'attributes': {'school_id': 'all'}, 'state': 'closed'},
@@ -34,15 +34,19 @@ def api_dance_tree_get():
             t1.append({'text': name, 'state': 'closed', 'children': t11,
                        'attributes': {'school_id': sid, 'is_training': u'是'}})
             t3.append({'text': name, 'attributes': {'school_id': sid}})
+            t4.append({'text': name, 'attributes': {'school_id': sid}})
+            t5.append({'text': name, 'attributes': {'school_id': sid}})
             t6.append({'text': name, 'attributes': {'school_id': sid, 'is_ended': 0}})
             t7.append({'text': name, 'attributes': {'school_id': sid}})
             t8.append({'text': name, 'attributes': {'school_id': sid}})
             t9.append({'text': name, 'attributes': {'school_id': sid}})
 
+        t5.append({'id': 5001, 'text': '考级信息', 'attributes': {'school_id': 'all'}})
+
         tree[0]['children'] = t1
         tree[2]['children'] = t3
-        tree[3]['children'] = t3
-        tree[4]['children'] = t3
+        tree[3]['children'] = t4
+        tree[4]['children'] = t5
         tree[5]['children'] = t6
         tree[6]['children'] = t7
         tree[7]['children'] = t8

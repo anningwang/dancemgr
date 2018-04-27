@@ -6,7 +6,7 @@ from models import DanceSchool, DanceUser, DanceUserSchool, DcFeeItem, DanceRece
     DanceClassReceipt, DanceTeaching, DanceOtherFee, DanceClass, DanceStudentClass, DcShowRecpt, DcCommFeeMode,\
     DcShow, DcShowFeeCfg, DcShowDetailFee, DcClassType, DanceTeacher, DanceTeacherEdu, DanceTeacherWork, DcCommon,\
     DanceCourse, DanceCourseItem, DanceClassRoom, UpgradeClass, UpgClassItem, DanceCheckIn,\
-    Notepad, Expense, HouseRent, Income
+    Notepad, Expense, HouseRent, Income, Exam, ReceiptExam
 from views import dance_student_query
 import json
 import datetime
@@ -3221,7 +3221,7 @@ def api_dance_class_get():
     查询某分校下的班级列表
     输入参数：
     {
-        school_id:      分校id， 可选。不添加表示查询所有分校
+        school_id:      分校id， 可选。不填表示查询所有分校
     }
     :return:
     [{
@@ -3948,8 +3948,8 @@ def income_get():
     else:
         obj = request.form
 
-    page_size = int(obj['rows'])
-    page_no = int(obj['page'])
+    page_size = int(obj['rows']) if 'rows' in obj else 500
+    page_no = int(obj['page']) if 'page' in obj else 1
     if page_no <= 0:  # 容错处理
         page_no = 1
 
@@ -4112,5 +4112,450 @@ def income_detail_get():
            'fee_mode_text': rec[3], 'type_text': rec[4],
            'remark': r.remark,
            'paper_receipt': r.paper_receipt}
+
+    return jsonify({"row": row, 'errorCode': 0, 'msg': 'ok', 'total': 1})
+
+
+@app.route('/exam_get', methods=['POST'])
+@login_required
+def exam_get():
+    """
+    查询 考级配置
+    输入参数：
+    {
+        name:           查询条件，name 或者 remark 中的内容字符串。 可选参数，不填表示不做过滤条件
+        valid:          查询过滤条件，是否是否有效。可选。 取值范围 1 是， 0 否
+        rows:           每页记录数， 可选参数，默认 500
+        page:           页码，从 1 开始。可选参数， 默认为1
+    }
+    :return:
+    {
+        errorCode:          错误码
+        msg:                错误信息
+
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   查询成功！
+
+        total:              符合条件的记录总数
+        rows:[{
+            id:         记录ID
+            code:       考级单号
+            date:       考级日期
+            recorder:   录入员
+            no:         记录序号
+            school_id:  分校id
+            school_name:    分校名称
+            school_no:      分校编号
+            create_at:      创建时间
+            name:           考级名称
+            fee:            考级费
+            degree:         等级
+            class_type_id:  班级类别 id
+            class_type_name:    班级类别
+            is_valid:       是否有效  1 是, 0 否
+            remark:         备注
+
+            alias:          name + degree
+        }]
+    }
+    """
+
+    if request.json is not None:
+        obj = request.json
+    else:
+        obj = request.form
+
+    page_size = int(obj['rows']) if 'rows' in obj else 500
+    page_no = int(obj['page']) if 'page' in obj else 1
+    if page_no <= 0:  # 容错处理
+        page_no = 1
+
+    dcq = Exam.query.filter_by(company_id=g.user.company_id)
+
+    if 'name' in obj and obj['name'] != '':
+        name = obj['name']
+        dcq = dcq.filter((Exam.name.like('%' + name + '%')) | (Exam.remark.like('%' + name + '%')))
+
+    if 'valid' in obj and (obj['valid'] == '1' or obj['valid'] == '0'):
+        dcq = dcq.filter(Exam.is_valid == obj['valid'])
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.join(DcClassType, DcClassType.id == Exam.class_type_id)\
+        .add_columns(DcClassType.name) \
+        .order_by(DcClassType.name, Exam.date.desc()) \
+        .limit(page_size).offset(offset).all()
+
+    i = offset + 1
+    rows = []
+    for rec in records:
+        r = rec[0]
+        rows.append({'id': r.id, 'code': r.code, 'fee': r.fee, 'no': i,
+                     'date': datetime.datetime.strftime(r.date, '%Y-%m-%d'), 'recorder': r.recorder,
+                     'create_at': datetime.datetime.strftime(r.create_at, '%Y-%m-%d'),
+                     'name': r.name, 'degree': r.degree, 'class_type_id': r.class_type_id,
+                     'is_valid': 0 if r.is_valid == 0 else 1,
+                     'class_type_name': rec[1],
+                     'remark': r.remark,
+                     'alias': r.name + u'【' + r.degree + u'】'})
+        i += 1
+
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': u'查询成功！'})
+
+
+@app.route('/exam_modify', methods=['POST'])
+@login_required
+def exam_modify():
+    """
+    新增/更新 考级配置。
+    输入参数：
+    {
+        id:             id, > 0 修改记录。 <= 0 新增
+        date:           考级日期
+        name:           考级名称
+        fee:            考级费
+        degree:         等级
+        class_type_id:  班级类别 id
+        is_valid:       是否有效  1 是, 0 否
+        remark:         备注
+    }
+    :return:
+    {
+        errorCode :     错误码
+        msg:            错误信息
+            --------------      -------------------------------------------
+            0                   更新成功！ / 新增成功！
+            201                 “考级配置”已经存在[%s,%s,%s]！
+            301                 “考级配置”id[%s]不存在！
+    }
+    """
+    obj = request.json
+    if 'id' not in obj or int(obj['id']) <= 0:
+        """ 新增 """
+        """ 判断是否有重复记录（date, name, degree, class_type_id, fee, is_valid 都相同） """
+        date = datetime.datetime.strptime(obj['date'], '%Y-%m-%d')
+        has = Exam.query.filter_by(company_id=g.user.company_id, name=obj['name'],
+                                   date=date, degree=obj['degree'], fee=obj['fee'], is_valid=obj['is_valid'],
+                                   remark=obj['remark']).first()
+        if has is not None:
+            return jsonify({'errorCode': 201, 'msg': u'“考级配置”已经存在[%s,%s,%s]！'
+                                                     % (obj['name'], obj['fee'], obj['degree'])})
+
+        new_rec = Exam(obj)
+        db.session.add(new_rec)
+        msg = u'新增成功！'
+    else:
+        """ 修改 """
+        rec = Exam.query.get(obj['id'])
+        if rec is None:
+            return jsonify({'errorCode': 301, 'msg': u'“考级配置”id[%s]不存在！' % obj['id']})
+
+        rec.update(obj)
+        db.session.add(rec)
+        msg = u'更新成功！'
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': msg})
+
+
+@app.route('/exam_detail_get', methods=['POST'])
+@login_required
+def exam_detail_get():
+    """
+    查询 考级配置  详细信息
+    输入信息
+    {
+        id:     记录ID
+    }
+    :return:
+    {
+        errorCode :     错误码
+        msg:            错误信息
+            --------------      -------------------------------------------
+            0                   ok
+            120                 “考级配置”信息[id=%d]不存在！
+        row: {
+            id:         记录ID
+            code:       考级单号
+            date:       考级日期
+            recorder:   录入员
+            school_id:  分校id
+            school_name:    分校名称
+            school_no:      分校编号
+            create_at:      创建时间
+            name:           考级名称
+            fee:            考级费
+            degree:         等级
+            class_type_id:  班级类别 id
+            class_type_name:    班级类别
+            is_valid:       是否有效  1 是, 0 否
+            remark:         备注
+        }
+        total:          记录条数，总是为1
+    }
+    """
+    obj = request.json
+
+    rec = Exam.query.filter(Exam.id == obj['id']) \
+        .join(DcClassType, DcClassType.id == Exam.class_type_id) \
+        .add_columns(DcClassType.name) \
+        .first()
+    if rec is None:
+        return jsonify({"row": {}, 'errorCode': 120, 'msg': u'“考级配置”信息[id=%d]不存在！' % obj['id']})
+
+    r = rec[0]
+    row = {'id': r.id, 'code': r.code, 'fee': r.fee,
+           'date': datetime.datetime.strftime(r.date, '%Y-%m-%d'), 'recorder': r.recorder,
+           'create_at': datetime.datetime.strftime(r.create_at, '%Y-%m-%d'),
+           'name': r.name, 'degree': r.degree, 'class_type_id': r.class_type_id,
+           'is_valid': 0 if r.is_valid == 0 else 1,
+           'class_type_name': rec[1],
+           'remark': r.remark}
+
+    return jsonify({"row": row, 'errorCode': 0, 'msg': 'ok', 'total': 1})
+
+
+@app.route('/receipt_exam_get', methods=['POST'])
+@login_required
+def receipt_exam_get():
+    """
+    查询 考级收费单
+    输入参数：
+    {
+        school_id:      分校 id。 'all' 为所有分校。     可选参数，不填表示 all
+        name:           查询条件，学员姓名student.name 。 可选参数，不填表示不做过滤条件
+        rows:           每页记录数
+        page:           页码，从 1 开始
+    }
+    :return:
+    {
+        errorCode:          错误码
+        msg:                错误信息
+
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   查询成功！
+            600                 您没有管理分校的权限！
+
+        total:              符合条件的记录总数
+        rows:[{
+            id:                 记录ID
+            code:               考级收费单单号
+            date:               收费日期
+            recorder:           录入员
+            no:                 记录序号
+            school_id:          分校id
+            school_name:        分校名称
+            school_no:          分校编号
+            create_at:          创建时间
+            student_id:         学员 id
+            student_name:       学员姓名
+            student_no:         学号
+            fee:                考级费
+            fee_mode_id:        收费方式 id
+            fee_mode_name:      收费方式
+            exam_id:            考级 id
+            exam_name:          考级名称
+            exam_code:          考级编号
+            class_type_id:      班级类型 id
+            class_type_name:    班级类型
+            degree:             等级
+            remark:             备注
+            paper_receipt:      收据号
+            is_receive:         是否收取  1 是, 0 否
+        }]
+    }
+    """
+
+    if request.json is not None:
+        obj = request.json
+    else:
+        obj = request.form
+
+    page_size = int(obj['rows'])
+    page_no = int(obj['page'])
+    if page_no <= 0:  # 容错处理
+        page_no = 1
+
+    dcq = ReceiptExam.query.filter_by(company_id=g.user.company_id)
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in obj or obj['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, obj['school_id']))))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+    dcq = dcq.filter(ReceiptExam.school_id.in_(school_id_intersection))
+
+    dcq = dcq.join(DanceStudent, DanceStudent.id == ReceiptExam.student_id)
+    if 'name' in obj and obj['name'] != '':
+        name = obj['name']
+        if name.encode('UTF-8').isalpha():
+            dcq = dcq.filter(DanceStudent.rem_code.like('%' + name + '%'))
+        else:
+            dcq = dcq.filter(DanceStudent.name.like('%' + name + '%'))
+
+    total = dcq.count()
+    offset = (page_no - 1) * page_size
+    records = dcq.join(DanceSchool, DanceSchool.id == ReceiptExam.school_id)\
+        .join(DcCommFeeMode, DcCommFeeMode.id == ReceiptExam.fee_mode_id)\
+        .join(Exam, Exam.id == ReceiptExam.exam_id)\
+        .join(DcClassType, DcClassType.id == Exam.class_type_id) \
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no, DcCommFeeMode.fee_mode,
+                     DanceStudent.name, DanceStudent.sno,
+                     Exam.name, Exam.code, Exam.degree, DcClassType.name, Exam.class_type_id) \
+        .order_by(DanceSchool.school_name, ReceiptExam.date.desc()) \
+        .limit(page_size).offset(offset).all()
+
+    i = offset + 1
+    rows = []
+    for rec in records:
+        r = rec[0]
+        rows.append({'id': r.id, 'code': r.code, 'no': i, 'fee': r.fee,
+                     'date': datetime.datetime.strftime(r.date, '%Y-%m-%d'), 'recorder': r.recorder,
+                     'school_id': r.school_id, 'school_name': rec[1], 'school_no': rec[2],
+                     'create_at': datetime.datetime.strftime(r.create_at, '%Y-%m-%d'),
+                     'fee_mode_id': r.fee_mode_id, 'fee_mode_name': rec[3],
+                     'remark': r.remark, 'is_receive': 1 if r.is_receive == 1 else 0,
+                     'paper_receipt': r.paper_receipt,
+                     'student_id': 1, 'student_name': rec[4], 'student_no': rec[5],
+                     'exam_id': r.exam_id, 'exam_name': rec[6], 'exam_code': rec[7], 'degree': rec[8],
+                     'class_type_name': rec[9], 'class_type_id': rec[10]})
+        i += 1
+
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': u'查询成功！'})
+
+
+@app.route('/receipt_exam_modify', methods=['POST'])
+@login_required
+def receipt_exam_modify():
+    """
+    新增/更新 考级收费单。
+    输入参数：
+    {
+        id:             id, > 0 修改记录。 <= 0 新增
+        date:           收费日期
+        student_id:     学员id
+        student_name:   学员姓名， 核对 student_id 和 student_name 是否相符。 校验用。
+        fee:            考级费
+        school_id:      分校id
+        exam_id:        考级 id
+        fee_mode_id:    支付方式 id
+        remark:         备注
+        paper_receipt:  收据号
+    }
+    :return:
+    {
+        errorCode :     错误码
+        msg:            错误信息
+            --------------      -------------------------------------------
+            0                   更新成功！ / 新增成功！
+            201                 “收费单（考级）”已经存在[%s,%s,%s]！
+            301                 “收费单（考级）”id[%s]不存在！
+    }
+    """
+    obj = request.json
+    if 'id' not in obj or int(obj['id']) <= 0:
+        """ 新增 """
+        """ 判断是否有重复记录（date, fee,school_id, student_id, fee_mode_id,exam_id, paper_receipt 都相同） """
+        date = datetime.datetime.strptime(obj['date'], '%Y-%m-%d')
+        has = ReceiptExam.query.filter_by(company_id=g.user.company_id, school_id=obj['school_id'],
+                                          date=date, student_id=obj['student_id'], exam_id=obj['exam_id'],
+                                          fee_mode_id=obj['fee_mode_id'], remark=obj['remark'],
+                                          paper_receipt=obj['paper_receipt'], fee=obj['fee']).first()
+        if has is not None:
+            return jsonify({'errorCode': 201, 'msg': u'“收费单（考级）”已经存在[%s,%s,%s]！'
+                                                     % (obj['student_id'], obj['fee'], obj['date'])})
+
+        new_rec = ReceiptExam(obj)
+        db.session.add(new_rec)
+        msg = u'新增成功！'
+    else:
+        """ 修改 """
+        rec = ReceiptExam.query.get(obj['id'])
+        if rec is None:
+            return jsonify({'errorCode': 301, 'msg': u'“收费单（考级）”id[%s]不存在！' % obj['id']})
+
+        rec.update(obj)
+        db.session.add(rec)
+        msg = u'更新成功！'
+
+    db.session.commit()
+    return jsonify({'errorCode': 0, 'msg': msg})
+
+
+@app.route('/receipt_exam_detail_get', methods=['POST'])
+@login_required
+def receipt_exam_detail_get():
+    """
+    查询 考级收费单 详细信息
+    输入信息
+    {
+        id:     记录ID
+    }
+    :return:
+    {
+        errorCode :     错误码
+        msg:            错误信息
+            --------------      -------------------------------------------
+            0                   ok
+            120                 “收费单（考级）”信息[id=%d]不存在！
+        row: {
+            id:                 记录ID
+            code:               考级收费单单号
+            date:               收费日期
+            recorder:           录入员
+            school_id:          分校id
+            school_name:        分校名称
+            school_no:          分校编号
+            create_at:          创建时间
+            student_id:         学员 id
+            student_name:       学员姓名
+            student_no:         学号
+            fee:                考级费
+            fee_mode_id:        收费方式 id
+            fee_mode_name:      收费方式
+            exam_id:            考级 id
+            exam_name:          考级名称
+            exam_code:          考级编号
+            class_type_id:      班级类型 id
+            class_type_name:    班级类型
+            degree:             等级
+            remark:             备注
+            paper_receipt:      收据号
+            is_receive:         是否收取  1 是, 0 否
+        }
+        total:          记录条数，总是为1
+    }
+    """
+    obj = request.json
+
+    rec = ReceiptExam.query.filter(ReceiptExam.id == obj['id']) \
+        .join(DanceSchool, DanceSchool.id == ReceiptExam.school_id) \
+        .join(DcCommFeeMode, DcCommFeeMode.id == ReceiptExam.fee_mode_id) \
+        .join(DanceStudent, DanceStudent.id == ReceiptExam.student_id)\
+        .join(Exam, Exam.id == ReceiptExam.exam_id) \
+        .add_columns(DanceSchool.school_name, DanceSchool.school_no, DcCommFeeMode.fee_mode,
+                     DanceStudent.name, DanceStudent.sno,
+                     Exam.name, Exam.code, Exam.degree, DcClassType.name, Exam.class_type_id) \
+        .first()
+    if rec is None:
+        return jsonify({"row": {}, 'errorCode': 120, 'msg': u'“收费单（考级）”信息[id=%d]不存在！' % obj['id']})
+
+    r = rec[0]
+    row = {'id': r.id, 'code': r.code, 'fee': r.fee,
+           'date': datetime.datetime.strftime(r.date, '%Y-%m-%d'), 'recorder': r.recorder,
+           'school_id': r.school_id, 'school_name': rec[1], 'school_no': rec[2],
+           'create_at': datetime.datetime.strftime(r.create_at, '%Y-%m-%d'),
+           'fee_mode_id': r.fee_mode_id, 'fee_mode_name': rec[3],
+           'remark': r.remark, 'is_receive': 1 if r.is_receive == 1 else 0,
+           'paper_receipt': r.paper_receipt,
+           'student_id': 1, 'student_name': rec[4], 'student_no': rec[5],
+           'exam_id': r.exam_id, 'exam_name': rec[6], 'exam_code': rec[7], 'degree': rec[8],
+           'class_type_name': rec[9], 'class_type_id': rec[10]}
 
     return jsonify({"row": row, 'errorCode': 0, 'msg': 'ok', 'total': 1})

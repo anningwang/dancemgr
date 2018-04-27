@@ -15,13 +15,16 @@ $(function() {
                 10: {fn: danceAddTabStudentDatagrid},   // 学员列表
                 30: {fn: danceAddTabFeeStudyDatagrid},  // 收费单（学费）
                 40: {fn: danceAddTabFeeShowDatagrid},   // 收费单（演出）
-                50: {fn: danceAddTabFeeOtherDatagrid},  // 收费单（普通）
+                50: {fn: danceAddTabFeeOtherDatagrid},  // 收费单（考级）
+                5001: {fn: wmm.DcStudent.tabExam},      // 考级信息
                 70: {fn: danceAddTabUpgClass},          // 集体续班
                 80: {fn: danceAddTabClassCheckIn},      // 班级考勤
                 90: {fn: danceAddTabReceiptStatByMonth}     // 收费月统计
             };
 
-            if(root.id in entrance){
+            if(node.id in entrance){
+                entrance[node.id].fn(node.text, this.id + node.id, node.attributes);
+            }else if(root.id in entrance){
                 entrance[root.id].fn(root.text, tableRootId, node.attributes);
             } else if (root.id == 60) {   // 班级学员统计
                 danceAddTabClassStudentStat(root.text, node.attributes);
@@ -123,7 +126,7 @@ $(function() {
                 4:  {fn: danceAddTabUsers},                 // 用户管理
                 511:{fn: danceAddTabTestButtons},           // 表格行内菜单
                 512:{fn: danceAddTabExpenseType},           // 支出类别
-                513:{fn: danceAddTabIncomeType}            // 收入类别
+                513:{fn: danceAddTabIncomeType}             // 收入类别
             };
 
             var openChild = {   // 仅仅打开子节点

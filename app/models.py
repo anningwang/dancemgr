@@ -2736,3 +2736,153 @@ class Income(db.Model):
         number = 1 if rec is None else int(rec.code.rsplit('-', 1)[1]) + 1
         self.code = search_no + ('%03d' % number)
         return self.code
+
+
+class Exam(db.Model):
+    """ 考级信息配置表 """
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(25, collation='NOCASE'), index=True, nullable=False)
+    name = db.Column(db.String(25, collation='NOCASE'), index=True, nullable=False)
+    degree = db.Column(db.String(6, collation='NOCASE'), nullable=False)
+    class_type_id = db.Column(db.Integer, index=True, nullable=False)
+    fee = db.Column(db.Integer)
+    date = db.Column(db.DateTime, nullable=False)
+    is_valid = db.Column(db.Integer)        # 是否有效 1 是, 0 否
+    create_at = db.Column(db.DateTime, nullable=False)
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    remark = db.Column(db.String(40))
+    company_id = db.Column(db.Integer, index=True, nullable=False)
+
+    def __init__(self, param):
+        if 'date' in param and param['date'] != '':
+            self.date = datetime.datetime.strptime(param['date'], '%Y-%m-%d')
+        else:
+            self.date = datetime.datetime.today()
+        if 'recorder' in param:
+            self.recorder = param['recorder']
+        else:
+            self.recorder = g.user.name
+        if 'name' in param:
+            self.name = param['name']
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
+        self.create_at = datetime.datetime.today()
+        self.code = self.create_code() if 'code' not in param else param['code']
+        if 'fee' in param:
+            self.fee = param['fee']
+        if 'class_type_id' in param:
+            self.class_type_id = param['class_type_id']
+        if 'remark' in param:
+            self.remark = param['remark']
+        if 'degree' in param:
+            self.degree = param['degree']
+        if 'is_valid' in param and (param['is_valid'] == '1' or param['is_valid'] == u'是'):
+            self.is_valid = 1
+        else:
+            self.is_valid = 0
+
+    def update(self, param):
+        if 'date' in param and param['date'] != '':
+            self.date = datetime.datetime.strptime(param['date'], '%Y-%m-%d')
+        if 'recorder' in param:
+            self.recorder = param['recorder']
+        if 'name' in param:
+            self.name = param['name']
+        if 'fee' in param:
+            self.fee = param['fee']
+        if 'class_type_id' in param:
+            self.class_type_id = param['class_type_id']
+        if 'remark' in param:
+            self.remark = param['remark']
+        if 'degree' in param:
+            self.degree = param['degree']
+        if 'is_valid' in param:
+            self.is_valid = param['is_valid']
+
+    def create_code(self):
+        search_no = gen_code('KJ')
+        rec = Exam.query.filter(Exam.code.like('%' + search_no + '%'))\
+            .order_by(Exam.id.desc()).first()
+        number = 1 if rec is None else int(rec.code.rsplit('-', 1)[1]) + 1
+        self.code = search_no + ('%03d' % number)
+        return self.code
+
+
+class ReceiptExam(db.Model):
+    """ 收费单——考级 """
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(25, collation='NOCASE'), index=True, nullable=False)
+    school_id = db.Column(db.Integer, db.ForeignKey('dance_school.id'))
+    student_id = db.Column(db.Integer, db.ForeignKey('dance_student.id'))
+    date = db.Column(db.DateTime, nullable=False)      # 收费日期
+    fee = db.Column(db.Integer)
+    exam_id = db.Column(db.Integer, index=True, nullable=False)
+    remark = db.Column(db.String(40))
+    recorder = db.Column(db.String(20, collation='NOCASE'))
+    fee_mode_id = db.Column(db.Integer, index=True, nullable=False)     # 收费方式 支付宝/微信/刷卡/现金
+    paper_receipt = db.Column(db.String(15))    # 收据号  例如：1347269
+    is_receive = db.Column(db.Integer)    # 是否收取  1 是, 0 否
+    company_id = db.Column(db.Integer, index=True, nullable=False)
+    create_at = db.Column(db.DateTime, nullable=False)
+
+    def create_code(self):
+        if self.school_id is None:
+            raise Exception('Please input school_id first!')
+        school_no = DanceSchool.get_no(self.school_id)
+        if school_no == -1:
+            raise Exception('school id [%s] error.' % self.school_id)
+        search_no = dc_gen_code(school_no, 'KJD')
+        rec = ReceiptExam.query.filter(ReceiptExam.code.like('%' + search_no + '%'))\
+            .order_by(ReceiptExam.id.desc()).first()
+        number = 1 if rec is None else int(rec.code.rsplit('-', 1)[1]) + 1
+        self.code = search_no + ('%03d' % number)
+        return self.code
+
+    def __init__(self, param):
+        if 'date' in param and param['date'] != '':
+            self.date = datetime.datetime.strptime(param['date'], '%Y-%m-%d')
+        else:
+            self.date = datetime.datetime.today()
+        self.recorder = param['recorder'] if 'recorder' in param else g.user.name
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        if 'student_id' in param:
+            self.student_id = param['student_id']
+        self.company_id = param['company_id'] if 'company_id' in param else g.user.company_id
+        self.create_at = datetime.datetime.today()
+        self.code = self.create_code() if 'code' not in param else param['code']
+        if 'fee' in param:
+            self.fee = param['fee']
+        if 'fee_mode_id' in param:
+            self.fee_mode_id = param['fee_mode_id']
+        if 'exam_id' in param:
+            self.exam_id = param['exam_id']
+        if 'remark' in param:
+            self.remark = param['remark']
+        if 'paper_receipt' in param:
+            self.paper_receipt = param['paper_receipt']
+        if 'is_receive' in param and (param['is_receive'] == '1' or param['is_receive'] == u'是'):
+            self.is_receive = 1
+        else:
+            self.is_receive = 0
+
+    def update(self, param):
+        if 'date' in param and param['date'] != '':
+            self.date = datetime.datetime.strptime(param['date'], '%Y-%m-%d')
+        if 'recorder' in param:
+            self.recorder = param['recorder']
+        if 'school_id' in param:
+            self.school_id = param['school_id']
+        if 'student_id' in param:
+            self.student_id = param['student_id']
+        if 'fee' in param:
+            self.fee = param['fee']
+        if 'fee_mode_id' in param:
+            self.fee_mode_id = param['fee_mode_id']
+        if 'exam_id' in param:
+            self.exam_id = param['exam_id']
+        if 'remark' in param:
+            self.remark = param['remark']
+        if 'paper_receipt' in param:
+            self.paper_receipt = param['paper_receipt']
+        if 'is_receive' in param:
+            self.is_receive = param['is_receive']
