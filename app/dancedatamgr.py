@@ -3974,7 +3974,7 @@ def income_get():
         .join(DcCommFeeMode, DcCommFeeMode.id == Income.fee_mode_id)\
         .join(DcCommon, DcCommon.id == Income.type_id) \
         .add_columns(DanceSchool.school_name, DanceSchool.school_no, DcCommFeeMode.fee_mode, DcCommon.name) \
-        .order_by(Income.school_id, Income.date.desc()) \
+        .order_by(Income.school_id, Income.date.desc(), Income.id.desc()) \
         .limit(page_size).offset(offset).all()
 
     i = offset + 1
@@ -4408,7 +4408,7 @@ def receipt_exam_get():
         .add_columns(DanceSchool.school_name, DanceSchool.school_no, DcCommFeeMode.fee_mode,
                      DanceStudent.name, DanceStudent.sno,
                      Exam.name, Exam.code, Exam.degree, DcClassType.name, Exam.class_type_id) \
-        .order_by(DanceSchool.school_name, ReceiptExam.date.desc()) \
+        .order_by(DanceSchool.school_name, ReceiptExam.date.desc(), ReceiptExam.id.desc()) \
         .limit(page_size).offset(offset).all()
 
     i = offset + 1
