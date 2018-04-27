@@ -110,7 +110,7 @@ function danceCreateEditedDatagrid(datagridId, url, options) {
         },
         iconWidth: 22,
         icons: [{
-            iconCls:'icon-remove',
+            iconCls:'icon-clear',
             handler: function(e){
                 $(e.data.target).textbox('clear');
                 dance_condition = '';

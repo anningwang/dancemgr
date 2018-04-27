@@ -82,7 +82,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
             },
             iconWidth: 22,
             icons: [{
-                iconCls:'icon-remove',
+                iconCls:'icon-clear',
                 handler: function(e){
                     $(e.data.target).textbox('clear');
                     dance_condition = '';
@@ -96,7 +96,7 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
             width: 200,
             iconWidth: 22,
             icons: [{
-                iconCls:'icon-remove',
+                iconCls:'icon-clear',
                 handler: function(e){
                     $(e.data.target).textbox('clear');
                     dance_condition = '';
@@ -304,7 +304,7 @@ function danceOpenCommonDg(datagridId, options) {
         },
         iconWidth: 22,
         icons: [{
-            iconCls:'icon-remove',
+            iconCls:'icon-clear',
             handler: function(e){
                 $(e.data.target).textbox('clear');
                 dance_condition = '';
