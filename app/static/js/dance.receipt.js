@@ -955,13 +955,14 @@ function danceAddTabFeeOtherDatagrid(title, tableId, condition) {
                 {field: 'code', title: '考级收费单号', width: 140, align: 'center'},
                 {field: 'exam_name', title: '考级名称', width: 110, align: 'center'},
                 {field: 'school_name', title: '分校名称', width: 110, align: 'center'},
-                {field: 'student_no', title: '学号', width: 140, align: 'center'},
+                {field: 'student_no', title: '学号', width: 100, align: 'center'},
                 {field: 'student_name', title: '学员姓名', width: 80, align: 'center'},
                 {field: 'date', title: '收费日期', width: 90, align: 'center'},
                 {field: 'fee', title: '报名费', width: 80, align: 'center'},
                 {field: 'class_type_name', title: '班级类型', width: 80, align: 'center'},
                 {field: 'degree', title: '等级', width: 80, align: 'center'},
                 {field: 'fee_mode_name', title: '收费方式', width: 70, align: 'center'},
+                {field: 'paper_receipt', title: '收据号', width: 90, align: 'center'},
                 {field: 'remark', title: '备注', width: 90, align: 'center'},
                 {field: 'recorder', title: '录入员', width: 90, align: 'center'}
             ]]
@@ -1243,7 +1244,8 @@ function dcOpenDialogNewReceiptExam(id, title, uuid, icon, options){
                 $('#'+d_schoolNo).textbox('setValue', data.row['school_no']);
                 $('#'+d_schoolName).combobox('setValue', data.row.school_id).combobox('disable');
                 $('#'+d_studentNo).textbox('setValue', data.row['student_no']);
-                $('#'+d_studentName).combobox('setValue', data.row.student_name);
+                $('#'+d_studentName).combobox('loadData', [{ id: data.row['student_id'], name: data.row['student_name']}])
+                    .combobox('setValue', data.row['student_id']);
                 $('#'+d_examName).combogrid('setValue', data.row['exam_id']);
                 $('#'+d_classType).textbox('setValue', data.row['class_type_name']);
                 $('#'+d_degree).textbox('setValue', data.row['degree']);
@@ -1266,7 +1268,7 @@ function dcOpenDialogNewReceiptExam(id, title, uuid, icon, options){
 
         // 校验数据是否合法
         var oStuName = $('#'+d_studentName);
-        var studentName = $.trim(oStuName.textbox('getValue'));
+        var studentName = $.trim(oStuName.combobox('getText'));
         var studentId = oStuName.combobox('getValue');
         if(!studentName || !studentId) {
             $.messager.alert({title:'提示', msg:'“学员姓名”不能为空，且为已经报名学员！', icon: 'info',

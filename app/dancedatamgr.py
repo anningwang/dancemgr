@@ -4422,7 +4422,7 @@ def receipt_exam_get():
                      'fee_mode_id': r.fee_mode_id, 'fee_mode_name': rec[3],
                      'remark': r.remark, 'is_receive': 1 if r.is_receive == 1 else 0,
                      'paper_receipt': r.paper_receipt,
-                     'student_id': 1, 'student_name': rec[4], 'student_no': rec[5],
+                     'student_id': r.student_id, 'student_name': rec[4], 'student_no': rec[5],
                      'exam_id': r.exam_id, 'exam_name': rec[6], 'exam_code': rec[7], 'degree': rec[8],
                      'class_type_name': rec[9], 'class_type_id': rec[10]})
         i += 1
@@ -4554,7 +4554,7 @@ def receipt_exam_detail_get():
            'fee_mode_id': r.fee_mode_id, 'fee_mode_name': rec[3],
            'remark': r.remark, 'is_receive': 1 if r.is_receive == 1 else 0,
            'paper_receipt': r.paper_receipt,
-           'student_id': 1, 'student_name': rec[4], 'student_no': rec[5],
+           'student_id': r.student_id, 'student_name': rec[4], 'student_no': rec[5],
            'exam_id': r.exam_id, 'exam_name': rec[6], 'exam_code': rec[7], 'degree': rec[8],
            'class_type_name': rec[9], 'class_type_id': rec[10]}
 
