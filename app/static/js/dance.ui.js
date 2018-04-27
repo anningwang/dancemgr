@@ -75,22 +75,38 @@ function danceCreateCommDatagrid(datagridId, url, condition, options) {
             prompt: options.queryPrompt,
             valueField: 'value',
             textField: 'text',
-            width: 140,
+            width: 200,
             //panelHeight: "auto",
             onShowPanel: function () {
-                autoComplete(dance_condition,'');
+                autoComplete(dance_condition);
             },
+            iconWidth: 22,
+            icons: [{
+                iconCls:'icon-remove',
+                handler: function(e){
+                    $(e.data.target).textbox('clear');
+                    dance_condition = '';
+                }
+            }],
             onChange:autoComplete
         });
     }else {     // 普通 搜索 文本框，不需要下拉列表等功能
         oComboBox.textbox({     // 搜索框 textbox
             prompt: options.queryPrompt,
-            width: 140,
+            width: 200,
+            iconWidth: 22,
+            icons: [{
+                iconCls:'icon-remove',
+                handler: function(e){
+                    $(e.data.target).textbox('clear');
+                    dance_condition = '';
+                }
+            }],
             onChange:autoComplete
         });
     }
 
-    //autoComplete(dance_condition,'');
+    //autoComplete(dance_condition);
     function autoComplete (newValue) {  // ,oldValue
         //console.log('newValue=' + newValue + ' oldValue=' + oldValue);
         dance_condition = $.trim(newValue);
@@ -281,15 +297,22 @@ function danceOpenCommonDg(datagridId, options) {
         prompt: options.queryPrompt,
         valueField: 'value',
         textField: 'text',
-        width: 140,
+        width:200,
         //panelHeight: "auto",
         onShowPanel: function () {
-            autoComplete(dance_condition,'');
+            autoComplete(dance_condition);
         },
+        iconWidth: 22,
+        icons: [{
+            iconCls:'icon-remove',
+            handler: function(e){
+                $(e.data.target).textbox('clear');
+                dance_condition = '';
+            }
+        }],
         onChange:autoComplete
     });
 
-    // autoComplete(dance_condition,'');
     function autoComplete (newValue) { // ,oldValue
         //console.log('newValue=' + newValue + ' oldValue=' + oldValue);
         dance_condition = $.trim(newValue);
