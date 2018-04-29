@@ -814,7 +814,7 @@ def dance_student_query():
 def dance_student_details_get():
     """
     查询学员的详细信息，包括学员的报班信息
-        查询条件：rows          每页显示的条数
+        查询条件：rows          每页显示的条数，可选，默认 30
                   page          页码，第几页，从1开始
                                 特殊值 -2，表示根据 student_id 查询，并求出该学员的 序号
                   student_id    学员id, optional, 当 page==-2,必须传递student_id
@@ -828,25 +828,27 @@ def dance_student_details_get():
                   total         学员个数 == 1
                   class_info    该学员的报班列表
     """
-    page_size = int(request.form['rows'])
-    page_no = int(request.form['page'])
+    obj = request.form
+
+    page_size = int(obj['rows']) if 'rows' in obj else 30
+    page_no = int(obj['page']) if 'page' in obj else -2
     print 'page_size=', page_size, ' page_no=', page_no
 
     school_ids = DanceUserSchool.get_school_ids_by_uid()
     dcq = DanceStudent.query
-    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+    if 'school_id' not in obj or obj['school_id'] == 'all':
         dcq = dcq.filter(DanceStudent.school_id.in_(school_ids))
     else:
-        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+        school_id_intersection = list(set(school_ids).intersection(set(map(int, obj['school_id']))))
         if len(school_id_intersection) == 0:
             return jsonify({"total": 0, "rows": [], 'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
         dcq = dcq.filter(DanceStudent.school_id.in_(school_id_intersection))
 
-    if 'is_training' in request.form:
-        dcq = dcq.filter_by(is_training=request.form['is_training'])
+    if 'is_training' in obj:
+        dcq = dcq.filter_by(is_training=obj['is_training'])
 
-    if 'name' in request.form and request.form['name'] != '':
-        dcq = dcq.filter(DanceStudent.name.like('%' + request.form['name'] + '%'))
+    if 'name' in obj and obj['name'] != '':
+        dcq = dcq.filter(DanceStudent.name.like('%' + obj['name'] + '%'))
 
     total = dcq.count()
 
@@ -855,7 +857,7 @@ def dance_student_details_get():
         .order_by(DanceStudent.school_id, DanceStudent.id.desc())
 
     if page_no <= -2:
-        student_id = int(request.form['student_id'])
+        student_id = int(obj['student_id'])
         # 根据 sno 获取学生详细信息，并求出其序号。
         r = DanceStudent.query.get(student_id)
         if r is None:
@@ -877,7 +879,12 @@ def dance_student_details_get():
 
     ''' bug fix:  按照姓名查找流失学员，再将学员修改为 在读（新增报班信息），此时查询应该为空 '''
     if records is None:
-        return jsonify({"total": total, "rows": {}, 'class_info': [], 'errorCode': 0, 'msg': 'ok'})
+        records = DanceStudent.query\
+            .filter(DanceStudent.id == obj['student_id'], DanceStudent.company_id == g.user.company_id) \
+            .join(DanceSchool, DanceSchool.id == DanceStudent.school_id) \
+            .add_columns(DanceSchool.school_name, DanceSchool.school_no).first()
+        if records is None:
+            return jsonify({"total": total, "rows": {}, 'class_info': [], 'errorCode': 0, 'msg': 'ok'})
 
     r = records[0]
     rows = {"id": r.id, "sno": r.sno, "school_no": records[2], "school_name": records[1], 'school_id': r.school_id,
