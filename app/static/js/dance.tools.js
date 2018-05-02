@@ -1184,6 +1184,7 @@ function getStudentClassList(student_id, school_id, options) {
 
     if (!('wmm' in window)) window['wmm'] = {};
     var wmm = window['wmm'];
+    if( !('Util' in window['wmm']) ) window['wmm']['Util'] = {};
 
     function Dialog() {}
     Dialog.prototype = {
@@ -1194,7 +1195,7 @@ function getStudentClassList(student_id, school_id, options) {
     DcStudent.prototype = {
         constructor: DcStudent,
 
-        tabExam: function (title, tableId, condition) {
+        tabExam: function (title, tableId, condition) {     // 考级信息
             var parentDiv = $('#danceTabs');
             if ($(parentDiv).tabs('exists', title)) {
                 $(parentDiv).tabs('select', title);
@@ -1493,8 +1494,120 @@ function getStudentClassList(student_id, school_id, options) {
                     return document.getElementById(id);
                 }
             }
-        }
+        },
 
+        queryByYearMonth: function (options) {  // 按年月查询
+            var node = options.node;
+            var id = options.node.id;
+            var oTree = $('#'+options.treeId);
+            var children = oTree.tree('getChildren', node.target);
+
+            if (node.state == 'open') {
+                if (children.length == 0) {
+                    openTree();
+                } else {
+                    oTree.tree('collapse', node.target);
+                    node.state = 'close';
+                    for (var j = id * 1000 + 1; j < id * 1000 + 999; j++){
+                        var nodeChild = oTree.tree('find', j);
+                        if (nodeChild) {
+                            oTree.tree('remove', nodeChild.target);
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            } else {
+                openTree();
+            }
+
+            function openTree() {
+                wmm.Util.queryReceiptStudyByYearMonth({callback: function (data) {
+                    for (var i = 0; i< data.rows.length; i++){
+                        var nodeId = id * 1000 + i + 1;
+                        var nodeChild = oTree.tree('find', nodeId);
+                        if (nodeChild) {
+                            continue;
+                        }
+                        var attr = {};
+                        $.extend(true, attr, node.attributes);
+                        attr.year = data.rows[i]['name'];
+                        oTree.tree('append', {
+                            parent: node.target,
+                            data: [{
+                                id: nodeId,
+                                text: data.rows[i]['name'],
+                                // state: 'closed',
+                                attributes: attr
+                            }]
+                        });
+                    }
+                    oTree.tree('expand', node.target);
+                    node.state = 'open';
+                },data: {school_id: options.condition.school_id}});
+            }
+        },
+
+        queryReceiptStudyMonthInYear: function (options) {  // 查询某年中有数据的月份
+            var node = options.node;
+            var id = options.node.id;
+            var oTree = $('#'+options.treeId);
+            var children = oTree.tree('getChildren', node.target);
+
+            if ('date' in node.attributes && node.attributes['date'] == 'year-month') {   // 按月查询
+                danceAddTabFeeStudyDatagrid(options.root.text, options.dgId, node.attributes);
+                return;
+            }
+
+            if (node.state == 'open') {
+                if (children.length == 0) {
+                    openTree();
+                } else {
+                    oTree.tree('collapse', node.target);
+                    node.state = 'close';
+                    for (var j = id * 100 + 1; j < id * 100 + 99; j++){
+                        var nodeChild = oTree.tree('find', j);
+                        if (nodeChild) {
+                            oTree.tree('remove', nodeChild.target);
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            } else {
+                openTree();
+            }
+
+            function openTree() {
+                wmm.Util.queryReceiptStudyByYearMonth({callback: function (data) {
+                    for (var i = 0; i< data.rows.length; i++){
+                        var nodeId = id * 100 + i + 1;
+                        var nodeChild = oTree.tree('find', nodeId);
+                        if (nodeChild) {
+                            continue;
+                        }
+                        var attr = {};
+                        $.extend(true, attr, node.attributes);
+                        var arr = data.rows[i]['name'].split('-');
+                        attr.year = arr[0];
+                        attr.month = arr[1];
+                        attr.date = 'year-month';
+                        attr.dateVal = data.rows[i]['name'];
+                        oTree.tree('append', {
+                            parent: node.target,
+                            data: [{
+                                id: nodeId,
+                                text: data.rows[i]['name'],
+                                // state: 'closed',
+                                attributes: attr
+                            }]
+                        });
+                    }
+                    oTree.tree('expand', node.target);
+                    node.state = 'open';
+                },data: {school_id: options.condition.school_id, year: node.text}});
+            }
+        }
     };
 
     /**
@@ -1609,6 +1722,59 @@ function getStudentClassList(student_id, school_id, options) {
             }  
         }
     };
+
+    // ----------------------------------------------------------------------------
+    // 业务功能 公共 函数
+    // ----------------------------------------------------------------------------
+    wmm.Util.getDate = function (date) {
+        date = date || new Date();
+        var y = date.getFullYear();
+        var m = date.getMonth()+1;
+        var d = date.getDate();
+
+        var H = date.getHours();
+        var M = date.getMinutes();
+        var S = date.getSeconds();
+        return y+'-'+(m<10?('0'+m):m)+'-'+(d<10?('0'+d):d)+' '+
+            (H<10?('0'+H):H)+':'+(M<10?('0'+M):M)+':'+(S<10?('0'+S):S);
+    };
+
+    wmm.Util.jsonRequest = function (url, options) {
+        options = options || {};
+        $.ajax({
+            method: 'POST',
+            url: url,
+            async: true,
+            dataType: 'json',
+            contentType: "application/json;charset=UTF-8",
+            data: JSON.stringify(options.data)
+        }).done(function(data) {
+            if ( !('errorCode' in data) || data.errorCode == 0) {
+                if (options.callback) {
+                    options.callback(data);
+                }
+            } else {
+                $.messager.alert('提示', data.msg, 'info');
+            }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            var msg = "请求失败。错误码：{0}({1})".format(jqXHR.status, errorThrown);
+            $.messager.alert('提示', msg, 'info');
+        });
+    };
+
+    /**
+     * 获取 按年月查询收费单——学费 的 菜单信息
+     * @param options
+     * {
+     *      data:       查询参数
+     *      callback:   回调函数
+     * }
+     */
+    wmm.Util.queryReceiptStudyByYearMonth = function (options) {
+        options = options || {};
+        wmm.Util.jsonRequest('/api/get_receipt_study_by_year_month', options);
+    };
+
 
     wmm.Dialog = new Dialog();
     wmm.DcStudent = new DcStudent();

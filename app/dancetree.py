@@ -20,20 +20,45 @@ def api_dance_tree_get():
             ]
 
     school_ids, school_map = DanceUserSchool.get_school_map_by_uid()
+
+    sid = 'all'
+    l1 = [{'text': '流失学员', 'attributes': {'school_id': sid, 'is_training': u'否'}},
+          {'text': '全部学员', 'attributes': {'school_id': sid}}]
+    v3 = 301001
+    l3 = [{'text': '今日收费', 'attributes': {'school_id': sid, 'date': 'today'}},
+          {'text': '昨日收费', 'attributes': {'school_id': sid}},
+          {'text': '本周收费', 'attributes': {'school_id': sid}},
+          {'text': '上周收费', 'attributes': {'school_id': sid}},
+          {'text': '本月收费', 'attributes': {'school_id': sid}},
+          {'text': '上月收费', 'attributes': {'school_id': sid}},
+          {'id': v3, 'text': '按年月查询', 'attributes':
+              {'school_id': sid, 'module': 'receiptStudy'}}
+          ]
+
     if len(school_ids) == 1:
-        t1 = [{'text': '流失学员', 'attributes': {'school_id': 'all', 'is_training': u'否'}},
-              {'text': '全部学员', 'attributes': {'school_id': 'all'}} ]
-        tree[0]['children'] = t1
+        tree[0]['children'] = l1
+        tree[2]['children'] = l3
     elif len(school_ids) > 1:
         t1, t3, t4, t5, t6, t7, t8, t9 = [], [], [], [], [], [], [], []
         for i in range(len(school_ids)):
             name = school_map[school_ids[i]]
             sid = school_ids[i]
-            t11 = [{'text': '流失学员', 'attributes': {'school_id': sid, 'is_training': u'否'}},
-                   {'text': '全部学员',  'attributes': {'school_id': sid}}]
-            t1.append({'text': name, 'state': 'closed', 'children': t11,
+            l1 = [{'text': '流失学员', 'attributes': {'school_id': sid, 'is_training': u'否'}},
+                  {'text': '全部学员', 'attributes': {'school_id': sid}}]
+            t1.append({'text': name, 'state': 'closed', 'children': l1,
                        'attributes': {'school_id': sid, 'is_training': u'是'}})
-            t3.append({'text': name, 'attributes': {'school_id': sid}})
+
+            v3 += i
+            l3 = [{'text': '今日收费', 'attributes': {'school_id': sid, 'date': 'today'}},
+                  {'text': '昨日收费', 'attributes': {'school_id': sid}},
+                  {'text': '本周收费', 'attributes': {'school_id': sid}},
+                  {'text': '上周收费', 'attributes': {'school_id': sid}},
+                  {'text': '本月收费', 'attributes': {'school_id': sid}},
+                  {'text': '上月收费', 'attributes': {'school_id': sid}},
+                  {'id': v3, 'text': '按年月查询', 'attributes':
+                      {'school_id': sid, 'module': 'receiptStudy'}}
+                  ]
+            t3.append({'text': name,  'state': 'closed', 'children': l3, 'attributes': {'school_id': sid}})
             t4.append({'text': name, 'attributes': {'school_id': sid}})
             t5.append({'text': name, 'attributes': {'school_id': sid}})
             t6.append({'text': name, 'attributes': {'school_id': sid, 'is_ended': 0}})

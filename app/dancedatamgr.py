@@ -11,8 +11,9 @@ from views import dance_student_query
 import json
 import datetime
 import tools.excel
-from tools.tools import dc_records_changed, is_float
+from tools.tools import dc_records_changed, is_float, start_end_time
 from dcglobal import *
+from sqlalchemy import extract, desc, func
 
 
 ERROR_CODE_USER_IS_EXIST = 100
@@ -351,31 +352,46 @@ def dance_receipt_study_query():
 def dance_receipt_study_get():
     """
     查询收费单（学费） list
+    输入参数：
+    {
+        school_id:          分校id, 可选参数。'all' 为 用户所有可管理分校
+        name:               学员姓名，可选。
+        date:               收费日期，可选。
+        dateVal:            收费日期，可选。
+
+    }
     :return:
     """
-    page_size = int(request.form['rows'])
-    page_no = int(request.form['page'])
+    obj = request.form
+
+    page_size = int(obj['rows'])
+    page_no = int(obj['page'])
     if page_no <= 0:    # 补丁
         page_no = 1
 
     dcq = DanceReceipt.query
 
     school_ids = DanceUserSchool.get_school_ids_by_uid()
-    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+    if 'school_id' not in obj or obj['school_id'] == 'all':
         school_id_intersection = school_ids
     else:
-        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+        school_id_intersection = list(set(school_ids).intersection(set(map(int,obj['school_id']))))
     if len(school_id_intersection) == 0:
         return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
     dcq = dcq.filter(DanceReceipt.school_id.in_(school_id_intersection))
 
     dcq = dcq.join(DanceStudent, DanceStudent.id == DanceReceipt.student_id)
-    if 'name' in request.form and request.form['name'] != '':
-        name = request.form['name']
+    if 'name' in obj and obj['name'] != '':
+        name = obj['name']
         if name.encode('UTF-8').isalpha():
             dcq = dcq.filter(DanceStudent.rem_code.like('%' + name + '%'))
         else:
             dcq = dcq.filter(DanceStudent.name.like('%' + name + '%'))
+
+    date = obj.get('date')
+    if date is not None:
+        d1, d2 = start_end_time(date, obj.get('dateVal'))
+        dcq = dcq.filter(DanceReceipt.deal_date >= d1, DanceReceipt.deal_date <= d2)
 
     total = dcq.count()
     offset = (page_no - 1) * page_size
@@ -388,15 +404,9 @@ def dance_receipt_study_get():
         rec = dcr[0]
         rows.append({'no': i, 'id': rec.id, "receipt_no": rec.receipt_no, 'recorder': rec.recorder,
                      'deal_date': datetime.datetime.strftime(rec.deal_date, '%Y-%m-%d'),
-                     'receivable_fee': rec.receivable_fee,
-                     'teaching_fee': rec.teaching_fee,
-                     'other_fee': rec.other_fee,
-                     'total': rec.total,
-                     'real_fee': rec.real_fee,
-                     'arrearage': rec.arrearage,
-                     'counselor': rec.counselor,
-                     'remark': rec.remark,
-                     'fee_mode': rec.fee_mode,
+                     'receivable_fee': rec.receivable_fee, 'teaching_fee': rec.teaching_fee, 'other_fee': rec.other_fee,
+                     'total': rec.total, 'real_fee': rec.real_fee, 'arrearage': rec.arrearage,
+                     'counselor': rec.counselor, 'remark': rec.remark, 'fee_mode': rec.fee_mode,
                      'school_name': dcr[1], 'student_sno': dcr[2], 'student_name': dcr[3],
                      'paper_receipt': rec.paper_receipt
                      })
@@ -3282,6 +3292,72 @@ def api_dance_teacher_get():
         teacher.append({'id': r.id, 'name': r.name, 'no': r.teacher_no})
 
     return jsonify(teacher)
+
+
+@app.route('/api/get_receipt_study_by_year_month', methods=['POST'])
+@login_required
+def api_get_receipt_study_by_year_month():
+    """
+    收费单——学费  按年月查询
+    输入:
+    {
+        year:   查询年份。可选。 有效时，返回该年下 有信息的月份。不填时，返回有信息的年份。
+        school_id:      分校id。 可选。
+    }
+    :return:
+    {
+        total:      符合条件的记录总数
+        rows:       记录详情
+        [{
+                name:       名称
+                num:        数量
+        }]
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   查询成功！
+            600                 您没有管理分校的权限！
+    }
+    """
+    obj = request.json if request.json is not None else request.form
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in obj or obj['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection([obj['school_id']]))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+
+    rows = []
+    total = 0
+    year = obj.get('year')
+    if year is None:
+        records = db.session.query(extract('year', DanceReceipt.deal_date).label('year'),
+                                   func.count('*').label("count"))\
+            .filter(DanceReceipt.school_id.in_(school_id_intersection)) \
+            .group_by('year').order_by(desc('year')).all()
+        for rec in records:
+            rows.append({'name': rec[0], 'num': rec[1]})
+            total += 1
+    else:
+        records = db.session.query(extract('year', DanceReceipt.deal_date).label('year'),
+                                   extract('month', DanceReceipt.deal_date).label('month'),
+                                   func.count('*').label("count")) \
+            .filter(DanceReceipt.school_id.in_(school_id_intersection)) \
+            .filter(year == year) \
+            .order_by(desc('year'), desc('month')) \
+            .group_by('year', 'month') \
+            .all()
+        for rec in records:
+            if rec[0] != year:
+                continue
+            rows.append({'name': '%s-%02d' % (rec[0], rec[1]), 'num': rec[2]})
+            total += 1
+
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': u'查询成功！'})
 
 
 @app.route('/notepad_get', methods=['POST'])

@@ -8,31 +8,55 @@
 $(function() {
     $('#treeStudent').tree({    // 学员管理
         animate:true,lines:true,
-        onClick: function(node){
-            var root = getRootNode(this, node);
-            var tableRootId = this.id + root.id;
-            var entrance = {
-                10: {fn: danceAddTabStudentDatagrid},   // 学员列表
-                30: {fn: danceAddTabFeeStudyDatagrid},  // 收费单（学费）
-                40: {fn: danceAddTabFeeShowDatagrid},   // 收费单（演出）
-                50: {fn: danceAddTabFeeOtherDatagrid},  // 收费单（考级）
-                5001: {fn: wmm.DcStudent.tabExam},      // 考级信息
-                70: {fn: danceAddTabUpgClass},          // 集体续班
-                80: {fn: danceAddTabClassCheckIn},      // 班级考勤
-                90: {fn: danceAddTabReceiptStatByMonth}     // 收费月统计
-            };
-
-            if(node.id in entrance){
-                entrance[node.id].fn(node.text, this.id + node.id, node.attributes);
-            }else if(root.id in entrance){
-                entrance[root.id].fn(root.text, tableRootId, node.attributes);
-            } else if (root.id == 60) {   // 班级学员统计
-                danceAddTabClassStudentStat(root.text, node.attributes);
-            } else {
-                $.messager.alert('提示', ' 制作中...', 'info');
-            }
-        }
+        onClick:treeStudentClick
     });
+
+    function treeStudentClick(node) {
+        console.log('node:', node);
+        var root = getRootNode(this, node);
+        var tableRootId = this.id + root.id;
+        var entrance = {
+            10: {fn: danceAddTabStudentDatagrid},   // 学员列表
+            30: {fn: danceAddTabFeeStudyDatagrid},  // 收费单（学费）
+            40: {fn: danceAddTabFeeShowDatagrid},   // 收费单（演出）
+            50: {fn: danceAddTabFeeOtherDatagrid},  // 收费单（考级）
+            5001: {fn: wmm.DcStudent.tabExam},      // 考级信息
+            70: {fn: danceAddTabUpgClass},          // 集体续班
+            80: {fn: danceAddTabClassCheckIn},      // 班级考勤
+            90: {fn: danceAddTabReceiptStatByMonth}     // 收费月统计
+        };
+
+        var entrance_text = {
+            '按年月查询': {fn: wmm.DcStudent.queryByYearMonth}      // 按年月查询
+        };
+
+        var entrance_module = {
+            receiptStudy: {fn: wmm.DcStudent.queryReceiptStudyMonthInYear}      // 查询某年中有数据的月份
+        };
+
+        var options_root = {
+            title: root.text,
+            dgId: this.id + root.id,
+            condition: node.attributes,
+            treeId: 'treeStudent',
+            node: node,
+            root: root
+        };
+
+        if(node.text in entrance_text){
+            entrance_text[node.text].fn(options_root);
+        }else if ('module' in node.attributes && node.attributes['module'] in entrance_module) {
+            entrance_module[node.attributes['module']].fn(options_root);
+        }else if(node.id in entrance){
+            entrance[node.id].fn(node.text, this.id + node.id, node.attributes);
+        }else if(root.id in entrance){
+            entrance[root.id].fn(root.text, tableRootId, node.attributes);
+        } else if (root.id == 60) {   // 班级学员统计
+            danceAddTabClassStudentStat(root.text, node.attributes);
+        } else {
+            $.messager.alert('提示', ' 制作中...', 'info');
+        }
+    }
 
     $('#treeTeacher').tree({    // 员工与老师
         animate:true,lines:true,

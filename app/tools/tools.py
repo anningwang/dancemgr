@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 import time
 import datetime
+import calendar
 
 
 def get_filename(sheet_name):
@@ -113,3 +114,19 @@ def is_float(val):
         return True
     except ValueError:
         return False
+
+
+def start_end_time(tm, val):
+    one_day = datetime.timedelta(hours=23, minutes=59, seconds=59, microseconds=999999)
+    if tm == 'year-month':
+        ym = val.split('-')
+        year = int(ym[0])
+        month = int(ym[1])
+        d1 = datetime.datetime(year=year, month=month, day=1)
+
+        month_range = calendar.monthrange(year, month)
+        d2 = d1 + datetime.timedelta(days=month_range[1]-1) + one_day
+    else:
+        d1 = datetime.datetime.strptime(tm, '%Y-%m-%d')
+        d2 = d1 + one_day
+    return d1, d2
