@@ -3368,8 +3368,6 @@ def api_get_receipt_study_by_year_month():
             .group_by('year', 'month') \
             .all()
         for rec in records:
-            if rec[0] != year:
-                continue
             rows.append({'name': '%s-%02d' % (rec[0], rec[1]), 'num': rec[2]})
             total += 1
 
@@ -3434,8 +3432,6 @@ def api_get_receipt_show_by_year_month():
             .group_by('year', 'month') \
             .all()
         for rec in records:
-            if rec[0] != year:
-                continue
             rows.append({'name': '%s-%02d' % (rec[0], rec[1]), 'num': rec[2]})
             total += 1
 
@@ -3500,8 +3496,6 @@ def api_get_receipt_exam_by_year_month():
             .group_by('year', 'month') \
             .all()
         for rec in records:
-            if rec[0] != year:
-                continue
             rows.append({'name': '%s-%02d' % (rec[0], rec[1]), 'num': rec[2]})
             total += 1
 
