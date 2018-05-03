@@ -354,11 +354,12 @@ def dance_receipt_study_get():
     查询收费单（学费） list
     输入参数：
     {
+        rows:
+        page:
         school_id:          分校id, 可选参数。'all' 为 用户所有可管理分校
         name:               学员姓名，可选。
         date:               收费日期，可选。
         dateVal:            收费日期，可选。
-
     }
     :return:
     """
@@ -375,7 +376,9 @@ def dance_receipt_study_get():
     if 'school_id' not in obj or obj['school_id'] == 'all':
         school_id_intersection = school_ids
     else:
-        school_id_intersection = list(set(school_ids).intersection(set(map(int,obj['school_id']))))
+        in_school_ids = str(obj['school_id'])
+        in_school_ids = [int(x) for x in in_school_ids.split(',')]
+        school_id_intersection = list(set(school_ids).intersection(in_school_ids))
     if len(school_id_intersection) == 0:
         return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
     dcq = dcq.filter(DanceReceipt.school_id.in_(school_id_intersection))
@@ -916,11 +919,15 @@ def dance_receipt_show_query():
 def dance_receipt_show_get():
     """
     查询收费单（演出）基本信息。界面：收费单（演出）   列表
-        输入参数：
+        输入参数： {
             rows:       需要返回的每页记录条数
             page:       页码
-            school_id:  分校id
-            name:       查询条件，学员姓名或者姓名拼音首字母
+            school_id:  分校id, 可选参数。'all' 为 用户所有可管理分校
+            name:       查询条件，学员姓名或者姓名拼音首字母，可选。
+            date:       收费日期，可选。
+            dateVal:    收费日期，可选。
+        }
+
     :return:
         total       符合条件的总记录条数
         rows        记录。list。
@@ -939,29 +946,38 @@ def dance_receipt_show_get():
         errorCode   错误码，0，正确，其他错误
         msg         错误信息。 'ok' -- 正确
     """
-    page_size = int(request.form['rows'])
-    page_no = int(request.form['page'])
+    obj = request.form
+
+    page_size = int(obj['rows']) if 'rows' in obj else 100
+    page_no = int(obj['page']) if 'page' in obj else 1
     if page_no <= 0:    # 补丁
         page_no = 1
 
     dcq = DcShowRecpt.query
 
     school_ids = DanceUserSchool.get_school_ids_by_uid()
-    if 'school_id' not in request.form or request.form['school_id'] == 'all':
+    if 'school_id' not in obj or obj['school_id'] == 'all':
         school_id_intersection = school_ids
     else:
-        school_id_intersection = list(set(school_ids).intersection(set(map(int, request.form['school_id']))))
+        in_school_ids = str(obj['school_id'])
+        in_school_ids = [int(x) for x in in_school_ids.split(',')]
+        school_id_intersection = list(set(school_ids).intersection(in_school_ids))
     if len(school_id_intersection) == 0:
         return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
     dcq = dcq.filter(DcShowRecpt.school_id.in_(school_id_intersection))
 
     dcq = dcq.join(DanceStudent, DanceStudent.id == DcShowRecpt.student_id)
-    if 'name' in request.form and request.form['name'] != '':
-        name = request.form['name']
+    if 'name' in obj and obj['name'] != '':
+        name = obj['name']
         if name.encode('UTF-8').isalpha():
             dcq = dcq.filter(DanceStudent.rem_code.like('%' + name + '%'))
         else:
             dcq = dcq.filter(DanceStudent.name.like('%' + name + '%'))
+
+    date = obj.get('date')
+    if date is not None:
+        d1, d2 = start_end_time(date, obj.get('dateVal'))
+        dcq = dcq.filter(DcShowRecpt.deal_date.between(d1, d2))
 
     total = dcq.count()
     offset = (page_no - 1) * page_size
@@ -3347,7 +3363,139 @@ def api_get_receipt_study_by_year_month():
                                    extract('month', DanceReceipt.deal_date).label('month'),
                                    func.count('*').label("count")) \
             .filter(DanceReceipt.school_id.in_(school_id_intersection)) \
-            .filter(year == year) \
+            .filter(extract('year', DanceReceipt.deal_date) == year) \
+            .order_by(desc('year'), desc('month')) \
+            .group_by('year', 'month') \
+            .all()
+        for rec in records:
+            if rec[0] != year:
+                continue
+            rows.append({'name': '%s-%02d' % (rec[0], rec[1]), 'num': rec[2]})
+            total += 1
+
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': u'查询成功！'})
+
+
+@app.route('/api/get_receipt_show_by_year_month', methods=['POST'])
+@login_required
+def api_get_receipt_show_by_year_month():
+    """
+    收费单——演出  按年月查询
+    输入:
+    {
+        year:   查询年份。可选。 有效时，返回该年下 有信息的月份。不填时，返回有信息的年份。
+        school_id:      分校id。 可选。
+    }
+    :return:
+    {
+        total:      符合条件的记录总数
+        rows:       记录详情
+        [{
+                name:       名称
+                num:        数量
+        }]
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   查询成功！
+            600                 您没有管理分校的权限！
+    }
+    """
+    obj = request.json if request.json is not None else request.form
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in obj or obj['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection([obj['school_id']]))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+
+    rows = []
+    total = 0
+    year = obj.get('year')
+    if year is None:
+        records = db.session.query(extract('year', DcShowRecpt.deal_date).label('year'),
+                                   func.count('*').label("count"))\
+            .filter(DcShowRecpt.school_id.in_(school_id_intersection)) \
+            .group_by('year').order_by(desc('year')).all()
+        for rec in records:
+            rows.append({'name': rec[0], 'num': rec[1]})
+            total += 1
+    else:
+        records = db.session.query(extract('year', DcShowRecpt.deal_date).label('year'),
+                                   extract('month', DcShowRecpt.deal_date).label('month'),
+                                   func.count('*').label("count")) \
+            .filter(DcShowRecpt.school_id.in_(school_id_intersection)) \
+            .filter(extract('year', DcShowRecpt.deal_date) == year) \
+            .order_by(desc('year'), desc('month')) \
+            .group_by('year', 'month') \
+            .all()
+        for rec in records:
+            if rec[0] != year:
+                continue
+            rows.append({'name': '%s-%02d' % (rec[0], rec[1]), 'num': rec[2]})
+            total += 1
+
+    return jsonify({"total": total, "rows": rows, 'errorCode': 0, 'msg': u'查询成功！'})
+
+
+@app.route('/api/get_receipt_exam_by_year_month', methods=['POST'])
+@login_required
+def api_get_receipt_exam_by_year_month():
+    """
+    收费单——考级  按年月查询
+    输入:
+    {
+        year:   查询年份。可选。 有效时，返回该年下 有信息的月份。不填时，返回有信息的年份。
+        school_id:      分校id。 可选。
+    }
+    :return:
+    {
+        total:      符合条件的记录总数
+        rows:       记录详情
+        [{
+                name:       名称
+                num:        数量
+        }]
+        errorCode:      错误码
+        msg:            错误信息
+            ----------------    ----------------------------------------------
+            errorCode           msg
+            ----------------    ----------------------------------------------
+            0                   查询成功！
+            600                 您没有管理分校的权限！
+    }
+    """
+    obj = request.json if request.json is not None else request.form
+
+    school_ids = DanceUserSchool.get_school_ids_by_uid()
+    if 'school_id' not in obj or obj['school_id'] == 'all':
+        school_id_intersection = school_ids
+    else:
+        school_id_intersection = list(set(school_ids).intersection([obj['school_id']]))
+    if len(school_id_intersection) == 0:
+        return jsonify({'errorCode': 600, 'msg': u'您没有管理分校的权限！'})
+
+    rows = []
+    total = 0
+    year = obj.get('year')
+    if year is None:
+        records = db.session.query(extract('year', ReceiptExam.date).label('year'),
+                                   func.count('*').label("count"))\
+            .filter(ReceiptExam.school_id.in_(school_id_intersection)) \
+            .group_by('year').order_by(desc('year')).all()
+        for rec in records:
+            rows.append({'name': rec[0], 'num': rec[1]})
+            total += 1
+    else:
+        records = db.session.query(extract('year', ReceiptExam.date).label('year'),
+                                   extract('month', ReceiptExam.date).label('month'),
+                                   func.count('*').label("count")) \
+            .filter(ReceiptExam.school_id.in_(school_id_intersection)) \
+            .filter(extract('year', ReceiptExam.date) == year) \
             .order_by(desc('year'), desc('month')) \
             .group_by('year', 'month') \
             .all()
@@ -4404,6 +4552,8 @@ def receipt_exam_get():
         name:           查询条件，学员姓名student.name 。 可选参数，不填表示不做过滤条件
         rows:           每页记录数
         page:           页码，从 1 开始
+        date:               收费日期，可选。
+        dateVal:            收费日期，可选。
     }
     :return:
     {
@@ -4474,6 +4624,11 @@ def receipt_exam_get():
             dcq = dcq.filter(DanceStudent.rem_code.like('%' + name + '%'))
         else:
             dcq = dcq.filter(DanceStudent.name.like('%' + name + '%'))
+
+    date = obj.get('date')
+    if date is not None:
+        d1, d2 = start_end_time(date, obj.get('dateVal'))
+        dcq = dcq.filter(ReceiptExam.date.between(d1, d2))
 
     total = dcq.count()
     offset = (page_no - 1) * page_size

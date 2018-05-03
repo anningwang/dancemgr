@@ -23,7 +23,9 @@ $(function() {
                 90: {fn: danceAddTabReceiptStatByMonth},     // 收费月统计
 
                 '按年月查询': {fn: wmm.DcStudent.queryByYearMonth},      // 按年月查询
-                receiptStudy: {fn: wmm.DcStudent.queryReceiptStudyMonthInYear}      // 查询某年中有数据的月份
+                receiptStudy: {fn: wmm.DcStudent.queryReceiptStudyMonthInYear},     // 查询某年中有数据的月份
+                receiptShow: {fn: wmm.DcStudent.queryReceiptStudyMonthInYear},     // 查询某年中有数据的月份
+                receiptExam: {fn: wmm.DcStudent.queryReceiptStudyMonthInYear}      // 查询某年中有数据的月份
             };
 
             var options_root = {

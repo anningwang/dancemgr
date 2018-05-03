@@ -34,10 +34,28 @@ def api_dance_tree_get():
           {'id': v3, 'text': '按年月查询', 'attributes':
               {'school_id': sid, 'module': 'receiptStudy'}}
           ]
+    l4 = [{'text': '今日收费', 'attributes': {'school_id': sid, 'date': 'today'}},
+          {'text': '昨日收费', 'attributes': {'school_id': sid, 'date': 'yesterday'}},
+          {'text': '本周收费', 'attributes': {'school_id': sid, 'date': 'this-week'}},
+          {'text': '上周收费', 'attributes': {'school_id': sid, 'date': 'last-week'}},
+          {'text': '本月收费', 'attributes': {'school_id': sid, 'date': 'this-month'}},
+          {'text': '上月收费', 'attributes': {'school_id': sid, 'date': 'last-month'}},
+          {'text': '按年月查询', 'attributes': {'school_id': sid, 'module': 'receiptShow'}}
+          ]
+    l5 = [{'text': '今日收费', 'attributes': {'school_id': sid, 'date': 'today'}},
+          {'text': '昨日收费', 'attributes': {'school_id': sid, 'date': 'yesterday'}},
+          {'text': '本周收费', 'attributes': {'school_id': sid, 'date': 'this-week'}},
+          {'text': '上周收费', 'attributes': {'school_id': sid, 'date': 'last-week'}},
+          {'text': '本月收费', 'attributes': {'school_id': sid, 'date': 'this-month'}},
+          {'text': '上月收费', 'attributes': {'school_id': sid, 'date': 'last-month'}},
+          {'text': '按年月查询', 'attributes': {'school_id': sid, 'module': 'receiptExam'}}
+          ]
 
     if len(school_ids) == 1:
         tree[0]['children'] = l1
         tree[2]['children'] = l3
+        tree[3]['children'] = l4
+        tree[4]['children'] = l5
     elif len(school_ids) > 1:
         t1, t3, t4, t5, t6, t7, t8, t9 = [], [], [], [], [], [], [], []
         for i in range(len(school_ids)):
@@ -58,9 +76,25 @@ def api_dance_tree_get():
                   {'id': v3, 'text': '按年月查询', 'attributes':
                       {'school_id': sid, 'module': 'receiptStudy'}}
                   ]
-            t3.append({'text': name,  'state': 'closed', 'children': l3, 'attributes': {'school_id': sid}})
-            t4.append({'text': name, 'attributes': {'school_id': sid}})
-            t5.append({'text': name, 'attributes': {'school_id': sid}})
+            l4 = [{'text': '今日收费', 'attributes': {'school_id': sid, 'date': 'today'}},
+                  {'text': '昨日收费', 'attributes': {'school_id': sid, 'date': 'yesterday'}},
+                  {'text': '本周收费', 'attributes': {'school_id': sid, 'date': 'this-week'}},
+                  {'text': '上周收费', 'attributes': {'school_id': sid, 'date': 'last-week'}},
+                  {'text': '本月收费', 'attributes': {'school_id': sid, 'date': 'this-month'}},
+                  {'text': '上月收费', 'attributes': {'school_id': sid, 'date': 'last-month'}},
+                  {'text': '按年月查询', 'attributes': {'school_id': sid, 'module': 'receiptShow'}}
+                  ]
+            l5 = [{'text': '今日收费', 'attributes': {'school_id': sid, 'date': 'today'}},
+                  {'text': '昨日收费', 'attributes': {'school_id': sid, 'date': 'yesterday'}},
+                  {'text': '本周收费', 'attributes': {'school_id': sid, 'date': 'this-week'}},
+                  {'text': '上周收费', 'attributes': {'school_id': sid, 'date': 'last-week'}},
+                  {'text': '本月收费', 'attributes': {'school_id': sid, 'date': 'this-month'}},
+                  {'text': '上月收费', 'attributes': {'school_id': sid, 'date': 'last-month'}},
+                  {'text': '按年月查询', 'attributes': {'school_id': sid, 'module': 'receiptExam'}}
+                  ]
+            t3.append({'text': name, 'state': 'closed', 'children': l3, 'attributes': {'school_id': sid}})
+            t4.append({'text': name, 'state': 'closed', 'children': l4, 'attributes': {'school_id': sid}})
+            t5.append({'text': name, 'state': 'closed', 'children': l5, 'attributes': {'school_id': sid}})
             t6.append({'text': name, 'attributes': {'school_id': sid, 'is_ended': 0}})
             t7.append({'text': name, 'attributes': {'school_id': sid}})
             t8.append({'text': name, 'attributes': {'school_id': sid}})

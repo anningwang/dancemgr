@@ -1500,7 +1500,6 @@ function getStudentClassList(student_id, school_id, options) {
         // 按年月查询
         queryByYearMonth: function (options) {  // 按年月查询
             var node = options.node;
-            var id = options.node.id;
             var oTree = $('#'+options.treeId);
             var children = oTree.tree('getChildren', node.target);
 
@@ -1510,13 +1509,8 @@ function getStudentClassList(student_id, school_id, options) {
                 } else {
                     oTree.tree('collapse', node.target);
                     node.state = 'close';
-                    for (var j = id * 1000 + 1; j < id * 1000 + 999; j++){
-                        var nodeChild = oTree.tree('find', j);
-                        if (nodeChild) {
-                            oTree.tree('remove', nodeChild.target);
-                        } else {
-                            break;
-                        }
+                    for (var k = 0; k< children.length; k++ ) {
+                        oTree.tree('remove', children[k].target);
                     }
                 }
             } else {
@@ -1524,20 +1518,37 @@ function getStudentClassList(student_id, school_id, options) {
             }
 
             function openTree() {
-                wmm.Util.queryReceiptStudyByYearMonth({callback: function (data) {
+                var entrance = {
+                    receiptStudy: {fn:  wmm.Util.queryReceiptStudyByYearMonth},
+                    receiptShow: {fn:  wmm.Util.queryReceiptShowByYearMonth},
+                    receiptExam: {fn:  wmm.Util.queryReceiptExamByYearMonth}
+                };
+                if ( !('module' in node.attributes) || !(node.attributes['module'] in entrance)) {
+                    return;
+                }
+                entrance[node.attributes['module']].fn({callback: function (data) {
+                    var nodes = oTree.tree('getChildren', node.target);
+
                     for (var i = 0; i< data.rows.length; i++){
-                        var nodeId = id * 1000 + i + 1;
-                        var nodeChild = oTree.tree('find', nodeId);
-                        if (nodeChild) {
+                        var bExist = false;
+                        for (var m=0; m< nodes.length; m++) {
+                            if( data.rows[i]['name'] == nodes[m].text){
+                                bExist = true;
+                                break;
+                            }
+                        }
+
+                        if (bExist) {
+                            console.log('year dup ignored.');
                             continue;
                         }
+
                         var attr = {};
                         $.extend(true, attr, node.attributes);
                         attr.year = data.rows[i]['name'];
                         oTree.tree('append', {
                             parent: node.target,
                             data: [{
-                                id: nodeId,
                                 text: data.rows[i]['name'],
                                 // state: 'closed',
                                 attributes: attr
@@ -1553,12 +1564,27 @@ function getStudentClassList(student_id, school_id, options) {
         // 查询某年中有数据的月份
         queryReceiptStudyMonthInYear: function (options) {  // 查询某年中有数据的月份
             var node = options.node;
-            var id = options.node.id;
             var oTree = $('#'+options.treeId);
             var children = oTree.tree('getChildren', node.target);
 
             if ('date' in node.attributes && node.attributes['date'] == 'year-month') {   // 按月查询
-                danceAddTabFeeStudyDatagrid(options.root.text, options.dgId, node.attributes);
+                if ('module' in node.attributes) {
+                    switch(node.attributes['module'])
+                    {
+                        case 'receiptStudy':
+                            danceAddTabFeeStudyDatagrid(options.root.text, options.dgId, node.attributes);
+                            break;
+                        case 'receiptShow':
+                            danceAddTabFeeShowDatagrid(options.root.text, options.dgId, node.attributes);
+                            break;
+                        case 'receiptExam':
+                            danceAddTabFeeOtherDatagrid(options.root.text, options.dgId, node.attributes);
+                            break;
+                        default:
+                            console.log(node.attributes['module'], 'not find.');
+                    }
+                }
+
                 return;
             }
 
@@ -1568,13 +1594,8 @@ function getStudentClassList(student_id, school_id, options) {
                 } else {
                     oTree.tree('collapse', node.target);
                     node.state = 'close';
-                    for (var j = id * 100 + 1; j < id * 100 + 99; j++){
-                        var nodeChild = oTree.tree('find', j);
-                        if (nodeChild) {
-                            oTree.tree('remove', nodeChild.target);
-                        } else {
-                            break;
-                        }
+                    for (var k = 0; k< children.length; k++ ) {
+                        oTree.tree('remove', children[k].target);
                     }
                 }
             } else {
@@ -1582,13 +1603,31 @@ function getStudentClassList(student_id, school_id, options) {
             }
 
             function openTree() {
-                wmm.Util.queryReceiptStudyByYearMonth({callback: function (data) {
+                var entrance = {
+                    receiptStudy: {fn:  wmm.Util.queryReceiptStudyByYearMonth},
+                    receiptShow: {fn:  wmm.Util.queryReceiptShowByYearMonth},
+                    receiptExam: {fn:  wmm.Util.queryReceiptExamByYearMonth}
+                };
+                if ( !('module' in node.attributes) || !(node.attributes['module'] in entrance)) {
+                    return;
+                }
+                entrance[node.attributes['module']].fn({callback: function (data) {
+                    var nodes = oTree.tree('getChildren', node.target);
+
                     for (var i = 0; i< data.rows.length; i++){
-                        var nodeId = id * 100 + i + 1;
-                        var nodeChild = oTree.tree('find', nodeId);
-                        if (nodeChild) {
+                        var bExist = false;
+                        for (var m=0; m< nodes.length; m++) {
+                            if( data.rows[i]['name'] == nodes[m].text){
+                                bExist = true;
+                                break;
+                            }
+                        }
+
+                        if (bExist) {
+                            console.log('month dup ignored.');
                             continue;
                         }
+
                         var attr = {};
                         $.extend(true, attr, node.attributes);
                         var arr = data.rows[i]['name'].split('-');
@@ -1599,7 +1638,6 @@ function getStudentClassList(student_id, school_id, options) {
                         oTree.tree('append', {
                             parent: node.target,
                             data: [{
-                                id: nodeId,
                                 text: data.rows[i]['name'],
                                 // state: 'closed',
                                 attributes: attr
@@ -1776,6 +1814,16 @@ function getStudentClassList(student_id, school_id, options) {
     wmm.Util.queryReceiptStudyByYearMonth = function (options) {
         options = options || {};
         wmm.Util.jsonRequest('/api/get_receipt_study_by_year_month', options);
+    };
+
+    wmm.Util.queryReceiptShowByYearMonth = function (options) {
+        options = options || {};
+        wmm.Util.jsonRequest('/api/get_receipt_show_by_year_month', options);
+    };
+    
+    wmm.Util.queryReceiptExamByYearMonth = function (options) {
+        options = options || {};
+        wmm.Util.jsonRequest('/api/get_receipt_exam_by_year_month', options);
     };
 
 
