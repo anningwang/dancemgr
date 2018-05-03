@@ -1195,6 +1195,7 @@ function getStudentClassList(student_id, school_id, options) {
     DcStudent.prototype = {
         constructor: DcStudent,
 
+        // 考级信息
         tabExam: function (title, tableId, condition) {     // 考级信息
             var parentDiv = $('#danceTabs');
             if ($(parentDiv).tabs('exists', title)) {
@@ -1496,6 +1497,7 @@ function getStudentClassList(student_id, school_id, options) {
             }
         },
 
+        // 按年月查询
         queryByYearMonth: function (options) {  // 按年月查询
             var node = options.node;
             var id = options.node.id;
@@ -1548,6 +1550,7 @@ function getStudentClassList(student_id, school_id, options) {
             }
         },
 
+        // 查询某年中有数据的月份
         queryReceiptStudyMonthInYear: function (options) {  // 查询某年中有数据的月份
             var node = options.node;
             var id = options.node.id;

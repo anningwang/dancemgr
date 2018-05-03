@@ -118,15 +118,82 @@ def is_float(val):
 
 def start_end_time(tm, val):
     one_day = datetime.timedelta(hours=23, minutes=59, seconds=59, microseconds=999999)
-    if tm == 'year-month':
+    if tm == 'year-month':      # 按照 年 月 查询
         ym = val.split('-')
         year = int(ym[0])
         month = int(ym[1])
         d1 = datetime.datetime(year=year, month=month, day=1)
-
         month_range = calendar.monthrange(year, month)
         d2 = d1 + datetime.timedelta(days=month_range[1]-1) + one_day
+    elif tm == 'today':     # 今天
+        td = datetime.date.today()
+        d1 = datetime.datetime.strptime(str(td), '%Y-%m-%d')
+        d2 = d1 + one_day
+    elif tm == 'yesterday':
+        td = datetime.date.today()
+        d1 = datetime.datetime.strptime(str(td), '%Y-%m-%d') - datetime.timedelta(days=1)
+        d2 = d1 + one_day
+    elif tm == 'this-week':
+        cal = DcCalendar()
+        # cal.set_monday_is_first(False)
+        d1, d2 = cal.this_week()
+    elif tm == 'last-week':
+        cal = DcCalendar()
+        # cal.set_monday_is_first(False)
+        d1, d2 = cal.last_week()
+    elif tm == 'this-month':
+        cal = DcCalendar()
+        d1, d2 = cal.this_month()
+    elif tm == 'last-month':
+        cal = DcCalendar()
+        d1, d2 = cal.last_month()
     else:
         d1 = datetime.datetime.strptime(tm, '%Y-%m-%d')
         d2 = d1 + one_day
     return d1, d2
+
+
+class DcCalendar(object):
+    def __init__(self, date_time=datetime.datetime.today(), monday_is_first=True):
+        self.date_time = date_time
+        self.date = datetime.datetime.strptime(str(date_time.date()), '%Y-%m-%d')
+        self.isoweekday = self.date.isoweekday()
+        self.weekday = self.date.weekday()
+        self.one_day = datetime.timedelta(hours=23, minutes=59, seconds=59, microseconds=999999)
+        self.monday_is_first = monday_is_first
+
+    def last_week(self):
+        date_to = self.date - datetime.timedelta(days=self.isoweekday)
+        date_from = date_to - datetime.timedelta(days=6)
+        date_to += self.one_day
+        if self.monday_is_first is False:
+            date_from -= datetime.timedelta(days=1)
+            date_to -= datetime.timedelta(days=1)
+        return date_from, date_to
+
+    def this_week(self):
+        date_from = self.date - datetime.timedelta(days=self.isoweekday-1)
+        date_to = date_from + self.one_day + datetime.timedelta(days=6)
+        if self.monday_is_first is False:
+            date_from -= datetime.timedelta(days=1)
+            date_to -= datetime.timedelta(days=1)
+        return date_from, date_to
+
+    def set_monday_is_first(self, is_first=True):
+        self.monday_is_first = is_first
+
+    def this_month(self):
+        year = self.date.year
+        month = self.date.month
+        date_from = datetime.datetime(year, month, 1, 0, 0, 0)
+        month_range = calendar.monthrange(year, month)
+        date_to = date_from + datetime.timedelta(days=month_range[1] - 1) + self.one_day
+        return date_from, date_to
+
+    def last_month(self):
+        month = 12 if self.date.month == 1 else self.date.month - 1
+        year = self.date.year if month != 12 else self.date.year - 1
+        date_from = datetime.datetime(year, month, 1, 0, 0, 0)
+        month_range = calendar.monthrange(year, month)
+        date_to = date_from + datetime.timedelta(days=month_range[1] - 1) + self.one_day
+        return date_from, date_to

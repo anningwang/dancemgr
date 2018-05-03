@@ -26,11 +26,11 @@ def api_dance_tree_get():
           {'text': '全部学员', 'attributes': {'school_id': sid}}]
     v3 = 301001
     l3 = [{'text': '今日收费', 'attributes': {'school_id': sid, 'date': 'today'}},
-          {'text': '昨日收费', 'attributes': {'school_id': sid}},
-          {'text': '本周收费', 'attributes': {'school_id': sid}},
-          {'text': '上周收费', 'attributes': {'school_id': sid}},
-          {'text': '本月收费', 'attributes': {'school_id': sid}},
-          {'text': '上月收费', 'attributes': {'school_id': sid}},
+          {'text': '昨日收费', 'attributes': {'school_id': sid, 'date': 'yesterday'}},
+          {'text': '本周收费', 'attributes': {'school_id': sid, 'date': 'this-week'}},
+          {'text': '上周收费', 'attributes': {'school_id': sid, 'date': 'last-week'}},
+          {'text': '本月收费', 'attributes': {'school_id': sid, 'date': 'this-month'}},
+          {'text': '上月收费', 'attributes': {'school_id': sid, 'date': 'last-month'}},
           {'id': v3, 'text': '按年月查询', 'attributes':
               {'school_id': sid, 'module': 'receiptStudy'}}
           ]
@@ -50,11 +50,11 @@ def api_dance_tree_get():
 
             v3 += i
             l3 = [{'text': '今日收费', 'attributes': {'school_id': sid, 'date': 'today'}},
-                  {'text': '昨日收费', 'attributes': {'school_id': sid}},
-                  {'text': '本周收费', 'attributes': {'school_id': sid}},
-                  {'text': '上周收费', 'attributes': {'school_id': sid}},
-                  {'text': '本月收费', 'attributes': {'school_id': sid}},
-                  {'text': '上月收费', 'attributes': {'school_id': sid}},
+                  {'text': '昨日收费', 'attributes': {'school_id': sid, 'date': 'yesterday'}},
+                  {'text': '本周收费', 'attributes': {'school_id': sid, 'date': 'this-week'}},
+                  {'text': '上周收费', 'attributes': {'school_id': sid, 'date': 'last-week'}},
+                  {'text': '本月收费', 'attributes': {'school_id': sid, 'date': 'this-month'}},
+                  {'text': '上月收费', 'attributes': {'school_id': sid, 'date': 'last-month'}},
                   {'id': v3, 'text': '按年月查询', 'attributes':
                       {'school_id': sid, 'module': 'receiptStudy'}}
                   ]
